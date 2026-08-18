@@ -4,9 +4,10 @@
 # violations at write time in an interactive session, but they do not run for a
 # human commit, a rebase, or a branch pushed from another machine. This does.
 #
-# These job names are the status checks that .github/CODEOWNERS asks you to make
-# required in branch protection. Until they are marked required, they inform but
-# do not block.
+# Solo project (D18): there is no code-owner gate, so CI is the strongest
+# automated control that exists. Marking these required in branch protection is
+# still worthwhile — it stops a red build being merged by accident — but the
+# review itself is `/review` plus the human reading the summary.
 
 name: CI
 

@@ -83,11 +83,11 @@ both PSP SDKs have all changed recently.
 | Session start | `.claude/hooks/session-context.mjs` | Current phase, open blockers, the three doc corrections that produce wrong code |
 | Permission | `.claude/settings.json` → `ask` | Migrations, `lib/money`, `lib/psp`, `lib/pricing`, guard edits, destructive Supabase commands |
 | CI | `.github/workflows/ci.yml` | The same rules for commits the hooks never saw — plus pgTAP against a real Postgres |
-| Merge | `.github/CODEOWNERS` + branch protection | Human review on high-risk paths. **A green build is not a review.** |
+| Merge | — | **Solo project (D18): no code-owner gate.** `/review` + green CI + an explicit callout when a diff touches a high-risk path. Restore CODEOWNERS if a second engineer joins. |
 
 The hooks are editable but gated behind a permission prompt, not denied outright — a guardrail that
-can never be maintained is its own failure mode. Weakening one is a reviewable act; `.claude/` is a
-CODEOWNERS path for that reason.
+can never be maintained is its own failure mode. Weakening one is still a deliberate act: say so
+explicitly rather than folding it into an unrelated diff.
 
 Regression suite for the guards themselves: `node .claude/evals/guard.test.mjs` (33 cases, including
 false-positive checks). It runs in CI. A guard that stops firing is worse than no guard.

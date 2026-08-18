@@ -53,12 +53,14 @@ Legend: 🔴 not started · 🟡 in progress · 🟢 done · ⛔ blocked
 | Next.js + TS + Tailwind, strict | 🟢 | Next 16.3.1 · React 19.2.8 · TW 4.3.3, pinned exact |
 | shadcn/ui init (primitives only) | ⏸ | Deferred — init writes a brand palette, blocked on B4. See spec §Most likely failure mode |
 | Three locales, derived direction | 🟢 | ar/tr/en; verified in prerendered HTML |
-| Supabase wired, typed clients | 🟡 | lib/db/{client,server,admin}.ts written; linking blocked on B3 |
+| Supabase wired, typed clients | 🟡 | `lib/db/{client,server,admin}.ts` ✅. Project created + `supabase init` done. **`.env.local` still has 2 placeholders**: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_DB_POOL_URL |
 | Env schema + `.env.example` | 🟢 | Zod, fail-fast via instrumentation.ts; rejects APP_REGION (D14) |
 | Deny-by-default RLS in migration template | 🟢 | supabase/migrations/*.sql.example |
 | Zod setup | 🟢 | lib/validation/index.ts |
 | Test runner + first RLS test | 🟢 | vitest 27 tests; pgTAP "RLS enabled everywhere" |
-| CI: typecheck, lint, test | 🟢 | 6 jobs incl. guardrails + catalogue completeness |
+| CI: typecheck, lint, test | 🟢 | 6 jobs. **Ran and passed on the first push** (run 32118566578) |
+| Repo + CI | 🟢 | `github.com/Moaz-Allam/asma`. CI ran and passed. **No code-owner gate (D18, solo)** |
+| Automated dependency PRs | 🟢 | `.github/dependabot.yml`; eslint held at 9.x deliberately |
 
 ---
 
@@ -100,6 +102,7 @@ Every non-obvious choice. Future sessions rely on this to avoid re-litigating.
 | D9 | 2026-08-17 | Providers may be **individuals or companies, with no profile difference** | One provider account shape; entity type matters only for PSP sub-merchant KYC and invoicing, not for our schema or UI | Yes |
 | D10 | 2026-08-17 | Admins are trusted operators but **never a code-execution boundary** (confirmed) | Pricing formulas stay structured rows; no `eval` of admin input, ever | No — security rule |
 | D11 | 2026-08-17 | Accepted all proposed resolutions in `open-questions.md` G1–G16 | Each closes a silent-failure or unpriced-risk path found in the doc audit | Individually revisable |
+| D18 | 2026-08-18 | **No CODEOWNERS / code-owner merge gate — removed.** High-risk paths are protected by `/review`, green CI, and an explicit callout in the summary instead | One-engineer project: the author and the reviewer are the same person, so the gate was theatre. A control everyone believes in but which does nothing is the `middleware.ts` failure class — better removed than left to rot | Yes — restore `.github/CODEOWNERS` + branch protection the day a second engineer joins |
 | D17 | 2026-08-17 | **The satisfaction guarantee / re-do policy is DROPPED.** Trust rests on escrow + vetting + ratings; disputes handle disagreement | A guarantee of the outcome is a principal's obligation and contradicts D12. Keeping it risked VAT on the full job price. `project-overview.md` §34 rewritten | Yes — revisit if B9 returns "principal", since the constraint would be gone |
 | D16 | 2026-08-17 | **Strict phone/region validation, no override at launch.** `+90` → TR, `+966` → KSA | Phone numbers are country-scoped in practice, so they carry the region naturally under phone-based OTP where one number maps to one identity | Yes — an admin override can be added once the blocked-user volume is known |
 | D15 | 2026-08-17 | **Admins are global** — an admin sees and acts across both regions. No `admin_region` scoping | Matches launch reality: one operator replacing a WhatsApp group. Simplest RLS shape | ⚠️ Yes, but **expensive** — restricting a regional ops hire later means rewriting every admin policy against live data |
@@ -169,6 +172,37 @@ Raised while building; answered by the human. Mirror in `ui-tokens.md` §10.
 ## 8. Handoff notes
 
 > Written at the end of each session for the next one. Be concrete: what you did, what you were mid-way through, what to do next, and anything surprising.
+
+**Session 2 — 2026-08-18 (review pass)**
+
+```
+DID        Verified the human setup steps. Ran /review twice on feature 01 and fixed
+           everything it found. Doc-vs-code consistency swept 4 times.
+FOUND+FIXED (code)  1. lib/db/client.ts used `!` non-null assertions on env — replaced
+                       with Zod validation (code-standards §1 forbids `!` on boundaries).
+                    2. LocaleSwitcher had two `as never` casts — I had copied next-intl's
+                       `pathnames` variant; our routing has none, so the plain call is
+                       fully typed. Added lib/i18n/navigation.ts (createNavigation).
+                    3. No error.tsx / not-found.tsx — ui-rules §4 requires them.
+                    4. lib/env.ts mixed z.url() and .string().url(); postgresql:// is not
+                       a web URL, so the check was wrong as well as inconsistent.
+FOUND+FIXED (docs)  5. architecture.md §11 tree said `lib/supabase-*.ts` (flat) while §6
+                       and build-plan say `lib/db/` — the code follows lib/db/. Fixed in
+                       §11 and §16, and propagated across 4 docs.
+                    6. code-standards §17 said "Utility files: camelCase — contactInfo.ts,
+                       supabase-server.ts" — contradicted §2 (kebab-case) AND itself.
+                       Kebab-case wins.
+                    7. §11 tree was 24 files out of date; now complete, with ✅ markers
+                       separating built from planned.
+                    8. .env.example listed 22 vars that lib/env.ts does not validate —
+                       contradicting §12. Made the two tiers explicit rather than
+                       pretending to validate features that do not exist.
+                    9. Missing .github/dependabot.yml (build-plan 01 required it).
+                   10. SETUP.md had gone stale on every step the human completed.
+STATE      guard 39/39 · tsc 0 · eslint 0/0 · 27 tests · next build green · ar=rtl tr/en=ltr
+COMMITTED  All review-pass fixes committed and pushed.
+NEXT       Branch protection (human), then feature 45.
+```
 
 **Session 1 — 2026-08-18**
 

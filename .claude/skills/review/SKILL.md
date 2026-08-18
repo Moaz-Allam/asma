@@ -92,9 +92,12 @@ End with a verdict and nothing softer:
 - **DONE** — every layer passes; safe to tick in `progress-tracker.md`.
 - **NOT DONE** — list what must close first.
 
-Then: does the diff touch a path in `.github/CODEOWNERS` marked 🔴 (`lib/money`, `lib/psp`,
-`lib/pricing`, `supabase/migrations`, `supabase/functions`)? Say so explicitly. That gate is a
-code-owner review on the pull request — **it cannot be satisfied by this review, or by a green build.**
+Then: does the diff touch a **high-risk path** — `lib/money`, `lib/psp`, `lib/pricing`,
+`supabase/migrations`, `supabase/functions`, `.claude`? **Say so explicitly in the summary.**
+
+This is a solo project (D18), so there is no second reviewer and no code-owner gate. That makes the
+callout the control, not a formality: it is the moment the human decides whether to look closely.
+Never bury it.
 
 On a **DONE** verdict, set `Status: reviewed` in `specs/<NN>-<slug>/plan.md`.
 

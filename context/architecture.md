@@ -321,6 +321,17 @@ A scheduled job asserts `held = released + refunded + remaining` across all escr
 
 ```
 /
+│  ✅ = built (feature 01) · everything else is the target layout, not yet created.
+│
+├── .gitignore                              ✅ NOTES.md, .env*, .next, node_modules
+├── .nvmrc                                  ✅ node 22
+├── package.json                            ✅ exact-pinned deps; `npm run verify` = the whole chain
+├── tsconfig.json                           ✅ strict + noUncheckedIndexedAccess; `@/*` alias
+├── next.config.ts                          ✅ next-intl plugin; no `eslint` key (removed in Next 16)
+├── postcss.config.mjs                      ✅ Tailwind v4 via PostCSS; no tailwind.config by design
+├── eslint.config.mjs                       ✅ flat config; ESLint pinned to 9.x — see progress-tracker
+├── vitest.config.ts                        ✅ `@/` alias + server-only stub
+├── instrumentation.ts                      ✅ calls getEnv() once at server boot = real fail-fast
 ├── CLAUDE.md                               → Agent rules + task-to-doc routing. Always loaded
 ├── AGENTS.md                               → Cross-tool pointer to CLAUDE.md; skill + MCP inventory
 ├── SETUP.md                                → Human-only setup steps, sequenced by what they unblock
@@ -334,8 +345,8 @@ A scheduled job asserts `held = released + refunded + remaining` across all escr
 │   ├── skills/                             → architect · review · recover · remember · imprint
 │   └── tools/docx-to-md.py                 → Convert context/docs/*.docx on demand
 ├── .github/
-│   ├── CODEOWNERS                          → Human review gate on 🔴 paths
-│   └── workflows/ci.yml                    → guardrails · typecheck · lint · test · pgTAP
+│   ├── dependabot.yml                      ✅ weekly npm PRs; eslint held at 9.x deliberately
+│   └── workflows/ci.yml                    ✅ guardrails · typecheck · lint · test · catalogues · pgTAP
 ├── specs/<NN>-<slug>/plan.md               → /architect output. The contract /review checks against
 ├── context/
 │   ├── project-overview.md                 → What and why. Business rules, stop-and-ask
@@ -353,12 +364,14 @@ A scheduled job asserts `held = released + refunded + remaining` across all escr
 │   ├── open-questions.md                   → Gaps, ambiguities, unstated assumptions
 │   └── docs/                               → Human-authored .docx/.xlsx originals (agent cannot read)
 ├── app/
-│   ├── globals.css                         → Tailwind v4 @theme tokens — the ONLY token definition
+│   ├── globals.css                         ✅ Tailwind v4 @theme tokens — the ONLY token definition
 │   ├── [locale]/                           → EVERY user-facing route lives under here. ar | tr | en
 │   │   ├── layout.tsx                      → renders <html lang={locale} dir={dirFor(locale)}>,
 │   │   │                                     generateStaticParams, hasLocale→notFound,
-│   │   │                                     setRequestLocale, NextIntlClientProvider, fonts
-│   │   ├── page.tsx                        → Landing page
+│   │   │                                     setRequestLocale, NextIntlClientProvider, fonts  ✅
+│   │   ├── page.tsx                        ✅ Landing page (placeholder content until B4)
+│   │   ├── not-found.tsx                   ✅ reached by hasLocale→notFound(); localised
+│   │   ├── error.tsx                       ✅ route error boundary; logs digest, never renders it
 │   │   ├── (auth)/
 │   │   │   └── login/page.tsx              → OTP request + verify
 │   │   ├── (customer)/
@@ -402,11 +415,16 @@ A scheduled job asserts `held = released + refunded + remaining` across all escr
 │   ├── provider.ts                         → Profile, zones, availability, documents
 │   └── admin.ts                            → Catalog, pricing, settings, approvals
 ├── lib/
-│   ├── supabase-client.ts                  → Browser client — anon key only
-│   ├── supabase-server.ts                  → Server client — session-scoped, RLS applies
-│   ├── supabase-admin.ts                   → service_role client — webhooks/cron ONLY
+│   ├── db/                                 → typed Supabase clients (⚠️ NOT flat `lib/supabase-*.ts`
+│   │   │                                     — an earlier draft of this tree said that; §6 and
+│   │   │                                     build-plan.md both say `lib/db/`, which is what exists)
+│   │   ├── client.ts                       ✅ Browser client — anon key only, Zod-validated env
+│   │   ├── server.ts                       ✅ Server client — session-scoped, RLS APPLIES. The default
+│   │   └── admin.ts                        ✅ service_role — BYPASSES RLS. Webhooks/cron ONLY
+│   ├── env.ts                              ✅ Zod env schema; REJECTS APP_REGION/APP_CURRENCY (D14)
 │   ├── pricing/                            → Price engine — server-only
-│   ├── money/                              → Money type, ledger posting, idempotency
+│   ├── money/
+│   │   └── money.ts                        ✅ Money type, integer minor units. Arithmetic = feature 14
 │   ├── psp/
 │   │   ├── index.ts                        → getPaymentProvider() factory
 │   │   ├── types.ts                        → PaymentProvider interface
@@ -415,21 +433,26 @@ A scheduled job asserts `held = released + refunded + remaining` across all escr
 │   ├── auth/
 │   │   ├── session.ts                      → requireRole, requireUser
 │   │   └── otp-channel.ts                  → Swappable phone/email OTP adapter
-│   ├── validation/                         → Zod schemas per boundary
+│   ├── validation/index.ts                 ✅ shared Zod primitives; one schema per boundary elsewhere
 │   ├── scanner/contact-info.ts             → Application message scanner (Arabic-Indic + Turkish digits)
-│   ├── i18n/                               → routing.ts, request.ts, dirFor() — see i18n.md
+│   ├── i18n/                               → see i18n.md
+│   │   ├── direction.ts                    ✅ LOCALES + dirFor() — the ONLY place direction is decided
+│   │   ├── routing.ts                      ✅ defineRouting, localePrefix 'as-needed'
+│   │   ├── request.ts                      ✅ per-request locale + messages
+│   │   └── navigation.ts                   ✅ createNavigation — use these, not next/link
 │   ├── invoicing/                          → region adapter: zatca/ (KSA) + efatura/ (TR) — see §41
-│   ├── region/                             → resolve region from the owning row; NEVER from env
+│   ├── region/index.ts                     ✅ getRegion(row); throws if asked to read env (D14)
 │   └── utils.ts                            → Shared constants + helpers
-├── proxy.ts                                → Locale negotiation + route redirects. NOT middleware.ts,
+├── proxy.ts                                ✅ Locale negotiation + route redirects. NOT middleware.ts,
 │                                             and NOT a security boundary — requireRole() does that
-├── messages/
-│   ├── ar.json                             → every key must exist in all three; CI enforces
+├── messages/                               ✅ every key must exist in all three; CI enforces
+│   ├── ar.json
 │   ├── tr.json
 │   └── en.json
 ├── components/
 │   ├── ui/                                 → shadcn/ui only
 │   ├── layout/                             → Navbar, Footer, RoleNav
+│   │   └── LocaleSwitcher.tsx              ✅ Intl.DisplayNames — never hardcoded language names
 │   ├── shared/                             → MoneyDisplay, StatusBadge, EmptyState...
 │   └── features/
 │       ├── requests/
@@ -438,13 +461,23 @@ A scheduled job asserts `held = released + refunded + remaining` across all escr
 │       ├── provider/
 │       └── admin/
 ├── supabase/
-│   ├── migrations/                         → Schema + RLS policies, version controlled
+│   ├── config.toml                         ✅ from `supabase init`
+│   ├── migrations/
+│   │   └── *_template.sql.example          ✅ mandatory order: RLS → policies → constraints → indexes
+│   ├── tests/
+│   │   └── 00_rls_enabled_everywhere.test.sql  ✅ pgTAP; standing negative test, predates the first table
 │   └── functions/
 │       ├── auto-release/                   → Cron: release expired holds
 │       ├── unlock-expiry/                  → Cron: reopen expired selections
 │       ├── reconcile/                      → Cron: ledger vs PSP
 │       └── invariants/                     → Cron: assert held = released + refunded + remaining
-└── tests/
+└── tests/                                  ✅ 27 passing
+    ├── i18n.test.ts                        ✅ dirFor per locale + catalogue completeness
+    ├── region.test.ts                      ✅ region from row not env; phone/region match (D16)
+    ├── money.test.ts                       ✅ integer minor units; refuses mixed currency
+    ├── env.test.ts                         ✅ fail-fast; pooler url; rejects APP_REGION (D14)
+    ├── turkish-casing.test.ts              ✅ I/ı/İ/i round-trip through identifier comparison
+    ├── stubs/server-only.ts                ✅ test-only; the real guarantee is Next's, at build time
     ├── rls/                                → Policy tests — every table
     ├── money/                              → Concurrency, idempotency, invariants
     └── integration/                        → Full flow
@@ -716,14 +749,14 @@ Projection only. Updated in the same transaction as the ledger.
 
 ```typescript
 // Browser — Client Components only. Anon key. RLS always applies.
-import { supabase } from "@/lib/supabase-client";
+import { createSupabaseBrowser } from "@/lib/db/client";
 
 // Server — Server Components, Server Actions, Route Handlers. Session-scoped. RLS applies.
-import { createSupabaseServer } from "@/lib/supabase-server";
+import { createSupabaseServer } from "@/lib/db/server";
 const supabase = await createSupabaseServer();
 
 // Admin — service_role. BYPASSES RLS. Webhooks and cron ONLY.
-import { createSupabaseAdmin } from "@/lib/supabase-admin";
+import { createSupabaseAdmin } from "@/lib/db/admin";
 ```
 
 - Never use the browser client in server context, or the server client in browser context.

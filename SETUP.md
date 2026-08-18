@@ -14,44 +14,37 @@ does not know it.
 | | |
 | --- | --- |
 | Agent rules and routing | `CLAUDE.md`, `AGENTS.md` |
-| Write-time guardrails | `.claude/hooks/guard.mjs` — 16 rules, 33-case regression suite |
+| Write-time guardrails | `.claude/hooks/guard.mjs` — 19 rules, 39-case regression suite |
 | Session state injection | `.claude/hooks/session-context.mjs` |
 | Workflow skills | `/architect` `/review` `/recover` `/remember` `/imprint` |
 | Vendor skills | `supabase`, `supabase-postgres-best-practices`, `tailwind-design-system` |
 | App skeleton | Feature 01 built: Next 16 · 3 locales · proxy.ts · pgTAP · 27 tests green |
-| MCP servers | `context7` (live docs), `playwright` (RTL verification), `supabase` (needs §1.2) |
-| CI | `.github/workflows/ci.yml` — 6 jobs. **Inert until §1.1–1.2** |
-| Merge gate | `.github/CODEOWNERS` — **inert until §1.1–1.2** |
+| MCP servers | `context7` (live docs), `playwright` (RTL verification), `supabase` (needs §1.3) |
+| CI | `.github/workflows/ci.yml` — 6 jobs. Runs on push once §1.2 protection is on |
+| Dependency PRs | `.github/dependabot.yml` — weekly npm, eslint held at 9.x |
+| Merge gate | — removed (D18, solo project). `/review` + green CI + an explicit high-risk callout |
+| Git | ✅ own repo, pushed to `github.com/Moaz-Allam/asma` (branch `master`) |
 
 ---
 
 ## 1. Do these first — they block everything
 
-### 1.1 Make `asma` a git repository  ⏱ 2 min  🔴 highest value
+### 1.1 Make `asma` a git repository — ✅ **DONE 2026-08-18**
 
-**It is not one today.** `git rev-parse --show-toplevel` returns `D:/work`, so every commit
-currently mixes this project with `bots/`, `flutter/`, `shalan/` and the rest.
+Verified: `git rev-parse --show-toplevel` → `D:/work/web/asma`, branch `master`, pushed.
+Previously the root was `D:/work`, which meant CI could never take effect.
 
-Consequence: **`.github/CODEOWNERS` does nothing and `.github/workflows/ci.yml` never runs.** Both
-only take effect at a repository root. The human review gate on `lib/money`, `lib/psp`,
-`supabase/migrations` is currently enforced by nothing at all.
+### 1.2 GitHub — ✅ **DONE 2026-08-18**
 
-```bash
-git init -b main && git add -A && git commit -m "chore: agent methodology + feature 01 project setup"
-```
+Pushed to `github.com/Moaz-Allam/asma`, branch `master`. **CI ran and passed** (run 32118566578).
 
-### 1.2 Push to GitHub and turn on branch protection  ⏱ 10 min
+**No CODEOWNERS, deliberately (D18).** This is a one-engineer project, so a code-owner review gate
+would have the author approving their own change — a control that looks real and does nothing, which
+is the same failure class as a `middleware.ts` that never runs. The file was removed rather than left
+to rot. Restore it, plus branch protection, the day a second engineer joins.
 
-1. Create an empty repo on GitHub (private). Do **not** let it add a README or .gitignore.
-2. `git remote add origin <url> && git push -u origin main`
-3. Replace the **15** `@OWNER` placeholders in `.github/CODEOWNERS` with your handle or team.
-4. Settings → Branches → protect `main`:
-   - ✔ Require a pull request before merging
-   - ✔ Require review from Code Owners
-   - ✔ Require status checks: `guardrails`, `typecheck`, `lint`, `test`, `supabase test db`
-   - ✔ Do not allow bypassing the above settings
-
-Until step 4, CODEOWNERS is advisory and an agent can merge a change to `lib/money` unreviewed.
+Branch protection is optional now. Enabling "require status checks to pass" on `master` is still
+worth a minute — it stops a red build being merged by accident.
 
 ### 1.3 Supabase — ONE project  ⏱ 15 min
 
@@ -60,7 +53,10 @@ project, not two.
 
 1. Create it at supabase.com. Save the **project ref**.
 2. Account → Access Tokens → generate a personal access token (this is what the MCP server uses).
-3. Copy the real values into `.env.local` — it currently holds placeholders so the build can run:
+3. Copy the real values into `.env.local`. **Two are still placeholders as of 2026-08-18** —
+   `NEXT_PUBLIC_SUPABASE_URL` (still `https://placeholder.supabase.co`) and `SUPABASE_DB_POOL_URL`
+   (still the `postgres.ref:pw@aws-0-region…` template). The anon and service keys look real, so the
+   app currently holds valid keys pointing at a non-existent project:
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Settings → API)
    - `SUPABASE_SERVICE_ROLE_KEY` (same page — **secret**, never `NEXT_PUBLIC_`)
    - `SUPABASE_DB_POOL_URL` — Settings → Database → **Connection pooling**, *Transaction* mode.
@@ -72,8 +68,8 @@ project, not two.
    ```bash
    npm i -D supabase && npx supabase init && npx supabase link --project-ref <ref>
    ```
-   `supabase init` creates `supabase/config.toml`, which does not exist yet. `supabase/tests/` and
-   the migration template are already written and will be picked up.
+   ✅ `supabase/config.toml` now exists. `supabase/tests/` and the migration template are already
+   written and will be picked up. **Commit `config.toml`** — it is currently untracked.
 
 ### 1.4 Verify the whole chain  ⏱ 1 min
 
@@ -82,6 +78,9 @@ npm run verify
 ```
 
 Runs guardrails (39) → typecheck → lint → tests (27). All four pass today.
+
+Note `npm run verify` does **not** include `next build` or `supabase test db` — CI runs those.
+Run `npx next build` yourself after any change to routing, i18n config, or `next.config.ts`.
 
 ---
 

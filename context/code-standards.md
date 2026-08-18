@@ -239,11 +239,17 @@ The AI agent on this project operates as a senior engineer. This means:
 
 - Folders: kebab-case — `provider-feed`, `unlock-fee`
 - Component files: PascalCase — `ApplicantCard.tsx`, `EarningsSummary.tsx`
-- Utility files: camelCase — `contactInfo.ts`, `supabase-server.ts`
+- **Everything else: kebab-case** — `contact-info.ts`, `money.ts`, `direction.ts`
 - API route files: always `route.ts`
-- Server Action files: camelCase by domain — `requests.ts`, `unlock.ts`
+- Server Action files: kebab-case by domain — `requests.ts`, `unlock.ts`, `unlock-fee.ts`
 - One component per file — never export multiple components from one file
 - Index files only in `components/ui/` — never barrel export from other folders
+
+> ⚠️ **Corrected 2026-08-18.** This previously said *"Utility files: camelCase — `contactInfo.ts`,
+> `supabase-server.ts`"*, which contradicted §2 (*Files/folders: kebab-case*) **and** contradicted
+> itself — `supabase-server.ts` is kebab-case, not camelCase. It also named a file that no longer
+> exists: the Supabase clients live in `lib/db/{client,server,admin}.ts` (see `architecture.md` §6
+> and §11), not flat at `lib/supabase-*.ts`. **Kebab-case wins**, everywhere except components.
 
 ---
 
@@ -289,7 +295,7 @@ export function UnlockFeePanel({ requestId, unlockFee }: Props) {
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServer } from "@/lib/supabase-server";
+import { createSupabaseServer } from "@/lib/db/server";
 import { requireRole } from "@/lib/auth/session";
 import { UnlockSchema } from "@/lib/validation/unlock";
 
@@ -363,7 +369,7 @@ Always use `@/` — never relative imports that go up more than one level.
 ```typescript
 // Correct
 import { Button } from "@/components/ui/button";
-import { createSupabaseServer } from "@/lib/supabase-server";
+import { createSupabaseServer } from "@/lib/db/server";
 import { DEFAULT_HOLD_HOURS } from "@/lib/utils";
 
 // Never
@@ -378,9 +384,9 @@ All env vars defined in `.env.local` for development, validated at startup. Neve
 
 | Variable | Used in | Secret |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `lib/supabase-client.ts` | No |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `lib/supabase-client.ts` | No |
-| `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase-admin.ts` | **Yes** |
+| `NEXT_PUBLIC_SUPABASE_URL` | `lib/db/client.ts` | No |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `lib/db/client.ts` | No |
+| `SUPABASE_SERVICE_ROLE_KEY` | `lib/db/admin.ts` | **Yes** |
 | `SUPABASE_DB_POOL_URL` | server data access | **Yes** |
 | `IYZICO_API_KEY` / `IYZICO_SECRET_KEY` | `lib/psp/iyzico/*` | **Yes** |
 | `IYZICO_WEBHOOK_SECRET` | `app/api/webhooks/psp` | **Yes** |
@@ -547,16 +553,28 @@ The framework ships frequent security releases, including auth-bypass classes (1
 - **Security patches applied within 72 hours** of disclosure.
 - Release checklist includes: "framework is on a patched version."
 
-## 35. Human review gate (non-negotiable)
+## 35. High-risk paths (extra care, not a merge gate)
 
-Any diff touching these paths requires **human review before merge**, regardless of who or what wrote it:
+> ⚠️ **Changed 2026-08-18 (D18).** This previously required a code-owner review before merge,
+> enforced by `.github/CODEOWNERS`. **This is a one-engineer project** — the author and the reviewer
+> are the same person, so that gate was theatre, and a control everyone believes in but which does
+> nothing is the `middleware.ts` failure class. CODEOWNERS has been removed rather than left to rot.
+>
+> The paths still matter. What replaces the gate: run `/review` before marking done, require green
+> CI (guard suite + pgTAP), and **state explicitly in the summary when a diff touches one of them**
+> so the human chooses to look. Restore CODEOWNERS + branch protection the day a second engineer
+> joins.
+
+These paths carry the risk, regardless of who or what wrote the change:
 
 - `lib/money/**`, `lib/psp/**`, the outbox relay
 - `supabase/migrations/**` (especially any RLS policy or `REVOKE`)
 - `lib/pricing/**`
 - Anything that changes an idempotency key derivation
 
-An agent that can weaken a policy to make a test pass is a data-breach vector. This gate is the control.
+An agent that can weaken a policy to make a test pass is a data-breach vector. With no second
+reviewer, the controls that remain are mechanical: the guard hooks refuse the write, CI refuses the
+merge, and `/review` refuses the "done".
 
 ## 36. Updated Definition of Done — money and policy work
 
@@ -568,4 +586,4 @@ An agent that can weaken a policy to make a test pass is a data-breach vector. T
 - [ ] pgTAP suite green, including the schema-wide "RLS enabled everywhere" test
 - [ ] `EXPLAIN ANALYZE` reviewed for any policy-bearing query
 - [ ] Concurrency + idempotency + invariant tests pass
-- [ ] Human review completed on the paths in §35
+- [ ] `/review` run, and any §35 path touched is called out explicitly in the summary

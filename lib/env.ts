@@ -3,10 +3,21 @@ import 'server-only';
 import { z } from 'zod';
 
 /**
- * Environment validation. Parsed once, at import. Fails fast and loudly.
+ * Environment validation. Fails fast and loudly at server boot (instrumentation.ts).
  *
  * code-standards.md §12: every variable validated at startup; missing means the
  * app does not boot, rather than failing at first use in production.
+ *
+ * ⚠️ SCOPE — this schema covers only what the CURRENTLY BUILT features consume.
+ * `.env.example` lists more (IYZICO_*, PAYTABS_*, SMS_API_KEY, EMAIL_API_KEY, the
+ * feature flags…) because it documents the whole system. Those are deliberately
+ * NOT validated yet: requiring a PSP key before the PSP adapter exists would stop
+ * the app booting for a feature nobody can call.
+ *
+ * **Each feature adds its own keys here as it lands** — 15 (PSP), 25
+ * (notifications), 42 (flags). Adding the key to `.env.example` without adding it
+ * here means it is silently optional, which is exactly the failure §12 forbids.
+ * Keep the two files in step.
  */
 
 const REMOVED_BY_D14 = ['APP_REGION', 'APP_CURRENCY', 'PSP_PROVIDER'] as const;

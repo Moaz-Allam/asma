@@ -1,6 +1,6 @@
 # 01 Project Setup + Tokens
 
-Status: **confirmed**
+Status: **reviewed**
 Date: 2026-08-18 · confirmed 2026-08-18
 
 ```

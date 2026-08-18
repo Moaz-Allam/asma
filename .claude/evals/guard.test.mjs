@@ -90,7 +90,7 @@ const CASES = [
     name: 'service_role client reached from a component',
     expect: 'service-role-in-client',
     path: 'components/features/admin/Reports.tsx',
-    content: 'import { createSupabaseAdmin } from "@/lib/supabase-admin";',
+    content: 'import { createSupabaseAdmin } from "@/lib/db/admin";',
   },
   {
     name: "select('*') risking a gated column",

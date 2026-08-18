@@ -95,12 +95,21 @@ A hook firing is information, not an obstacle. **Never work around one** — fix
 
 ---
 
-## Human review gate — cannot be self-approved
+## High-risk paths — say so out loud
 
 `lib/money/**` · `lib/psp/**` · `lib/pricing/**` · `supabase/migrations/**` · `supabase/functions/**` · `.claude/**` · any change to an idempotency key derivation.
 
-Enforced by `.github/CODEOWNERS` plus branch protection, not by a rule in a document. A green build
-is not a review. Say explicitly when a diff lands in one of these paths.
+A silent bug in these loses real money or leaks PII. **This is a solo project (D18)** — there is no
+second reviewer, so a code-owner gate would be theatre. What actually protects these paths:
+
+1. **`/review` before marking anything done** — it checks these rules specifically.
+2. **CI must be green**, including pgTAP and the guard suite. A green build is not a review, but a
+   red one is a definitive stop.
+3. **Announce it.** When a diff lands in one of these paths, say so plainly in your summary so the
+   human chooses to look, rather than discovering it later.
+
+If a second engineer ever joins, restore `.github/CODEOWNERS` + branch protection — that is the
+mechanism this replaces, not a rule that stopped mattering.
 
 ---
 

@@ -1,0 +1,37 @@
+# Automated dependency PRs.
+#
+# Required by build-plan feature 01 and library-docs.md §34: this framework ships
+# frequent security releases — including authorisation-bypass classes in the
+# middleware/proxy layer — and the standing rule is that security patches land
+# within 72 HOURS of disclosure. That is not achievable by remembering to check.
+#
+# Versions are pinned EXACTLY in package.json on purpose, so every bump arrives as
+# a reviewable PR that must pass the full CI chain (guardrails, typecheck, lint,
+# test, pgTAP) rather than drifting in silently through a caret range.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    groups:
+      # Framework moves together — Next, React and the ESLint config are coupled.
+      next:
+        patterns: ['next', 'react', 'react-dom', '@types/react', '@types/react-dom', 'eslint-config-next']
+      types:
+        patterns: ['@types/*']
+    ignore:
+      # ⚠️ ESLint is pinned to 9.x deliberately. ESLint 10 removes
+      # context.getFilename(), which eslint-config-next's bundled
+      # eslint-plugin-react still calls — linting crashes outright.
+      # Remove this ignore only once that plugin supports ESLint 10.
+      - dependency-name: eslint
+        versions: ['>=10']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
