@@ -121,6 +121,8 @@ Domain components. Path: `components/features/<domain>/`.
 
 | Layout | Path | Purpose | Status |
 | --- | --- | --- | --- |
+| `NotFound` | `app/[locale]/not-found.tsx` | Unknown locale or missing route; localised | ✅ done |
+| `ErrorBoundary` | `app/[locale]/error.tsx` | Route error boundary; logs digest, never renders it | ✅ done |
 | `RootLayout` | `app/[locale]/layout.tsx` | `lang={locale}` + `dir={dirFor(locale)}` — **derived, never hardcoded** — providers, `setRequestLocale` | ✅ done |
 | `LocaleSwitcher` | `components/layout/LocaleSwitcher.tsx` | ar / tr / en; persists to cookie | ✅ done |
 | `CustomerLayout` | `app/[locale]/(customer)/layout.tsx` | Customer nav | 📋 planned |
@@ -207,6 +209,35 @@ Notes: language names come from `Intl.DisplayNames` at runtime, **never hardcode
 literal Arabic or Turkish string in a component is copy that cannot be translated, and
 the guard hook rejects it. Colour is not the only signal: `aria-current` carries the
 active state too (`ui-rules.md` §8).
+
+### NotFound
+**Path:** app/[locale]/not-found.tsx
+**Used by:** reached by `notFound()` in the locale layout (unknown locale segment), and any missing route
+**RTL checked:** ✅ — logical properties only, no physical direction
+
+```
+Main:    mx-auto flex min-h-svh max-w-3xl flex-col items-start justify-center gap-4 p-4 sm:p-8
+Heading: text-2xl font-semibold text-text-primary
+Link:    text-sm font-medium text-accent underline-offset-4 hover:underline
+```
+
+Notes: uses `Link` from `@/lib/i18n/navigation`, **never `next/link`** — the plain one drops the
+locale. Copy comes from `messages.Error.notFound` / `.backHome`.
+
+### ErrorBoundary
+**Path:** app/[locale]/error.tsx
+**Used by:** route-level error boundary for everything under `[locale]`
+**RTL checked:** ✅
+
+```
+Main:    mx-auto flex min-h-svh max-w-3xl flex-col items-start justify-center gap-4 p-4 sm:p-8
+Heading: text-2xl font-semibold text-text-primary
+Button:  rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground
+```
+
+Notes: ⚠️ **`ui-rules.md` §7 — never render the error.** The `digest` is logged in a `useEffect`;
+the user sees plain-language copy from `messages.Error.generic` plus a retry that calls `reset()`.
+No stack trace, no SQL, no PSP payload. Must stay a Client Component (`'use client'`).
 
 ### Landing page
 **Path:** app/[locale]/page.tsx

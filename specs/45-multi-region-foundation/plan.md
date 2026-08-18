@@ -1,6 +1,6 @@
 # 45 Multi-region foundation
 
-Status: **confirmed**
+Status: **reviewed**
 Date: 2026-08-18
 
 ```

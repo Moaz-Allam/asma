@@ -36,7 +36,7 @@ Legend: 🔴 not started · 🟡 in progress · 🟢 done · ⛔ blocked
 | Phase | Status | Gate passed? | Notes |
 | --- | --- | --- | --- |
 | 0 — Foundations | 🟢 | ☑ | Feature 01 built and verified 2026-08-18 |
-| 1 — Identity and roles | 🟡 | ☐ | 01 done. Next: 45 → 02 → 50 → 03 → 04 |
+| 1 — Identity and roles | 🟡 | ☐ | 01 ✅ · 45 ✅. Next: 02 → 50 → 03 → 04 |
 | 2 — Catalog and pricing | 🔴 | ☐ | |
 | 3 — Requests and applications | 🔴 | ☐ | |
 | 4 — Money core | 🔴 | ☐ | **Do not start Phase 5 until all 3 gate tests pass** |
@@ -174,6 +174,40 @@ Raised while building; answered by the human. Mirror in `ui-tokens.md` §10.
 ## 8. Handoff notes
 
 > Written at the end of each session for the next one. Be concrete: what you did, what you were mid-way through, what to do next, and anything surprising.
+
+**Session 4 — 2026-08-18 (feature 45 CLOSED)**
+
+```
+DID        Feature 45 built, reviewed, closed. `regions` + `platform_settings` with RLS,
+           16 pgTAP assertions, and the CI gate that makes a region-less domain table
+           impossible to ship. Commit bea3103, pushed.
+           Resolved three context-vs-code mismatches found while planning (below).
+           /imprint registered NotFound + ErrorBoundary, which feature 01 had missed.
+IN FLIGHT  Nothing. Working tree clean, CI green.
+NEXT       Feature 02 Auth + Roles. `/architect 02`. It creates `profiles`, which needs
+           `region` NOT NULL + FK to regions(code) and the D16 dial-code CHECK — the CI
+           gate will reject the migration without the region column.
+SURPRISES  1. pgTAP does NOT need Docker locally. The CI job (supabase/setup-cli +
+              db start) runs it on every push — run 32129285600 applied the migration
+              and passed 16 assertions. Docker Desktop only buys local iteration speed.
+           2. D19: localePrefix 'as-needed' was incompatible with a per-region default
+              locale. One unprefixed route can only mean one language, and region is
+              unknown until login. Now 'always'; `/` is a negotiation endpoint.
+           3. The `regions` table spec and lib/region REGION_CONFIG had drifted —
+              dial_code lived only in code, `active` only in the doc. Table is now the
+              source of truth, with a unit test parsing the migration seed to prove it.
+           4. tsconfig's noUncheckedIndexedAccess caught a real bug in my own new test
+              the same day I enabled it.
+           5. Dependabot opened typescript 5.9.3 → 7.0.2 and CI REJECTED it. The exact
+              pinning rule from feature 01 working. That PR should be closed.
+DO NOT     - Run `supabase db push` — the remote project (syrhavojjpabwwcaezee) is linked
+             but nothing has been pushed to it, deliberately. Local + CI only for now.
+           - Add a write policy to `regions`. It is reference data: adding a market is a
+             deploy. A pgTAP assertion fails if anyone adds one.
+           - Key platform_settings on `key` alone — that made TR and KSA share values.
+           - Create a domain table without `region`. CI rejects it; the exempt list is
+             in .github/workflows/ci.yml and is meant to be visible.
+```
 
 **Session 3 — 2026-08-18 (feature 01 CLOSED)**
 
