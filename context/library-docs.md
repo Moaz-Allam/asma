@@ -198,7 +198,9 @@ The i18n layer. Full project spec: [`i18n.md`](i18n.md). Library-level notes:
 - Each locale layout: validate with `hasLocale()` → `notFound()`, then `setRequestLocale(locale)`.
   **Repeat `setRequestLocale` in each `page.tsx`** — without it the page opts out of static rendering.
 - `proxy.ts` (never `middleware.ts`) handles locale negotiation. Routing/UX only — not authorisation.
-- `localePrefix: 'as-needed'` keeps the default locale unprefixed.
+- **`localePrefix: 'always'` (D19)** — every locale is prefixed; there is no unprefixed route.
+  `as-needed` gives exactly one locale the bare URL, which cannot express a per-region default
+  (`tr` for TR, `ar` for KSA), and region is unknown until login. `/` is a negotiation endpoint.
 - Formatting comes from the same layer: `useFormatter` / global `formats` for dates, numbers, lists.
 - **Gotcha:** `dir` is not managed for you. Derive it from the locale (`i18n.md` §4) and set it on
   `<html>` alongside `lang`. Hardcoding either direction is the bug this whole model exists to avoid.

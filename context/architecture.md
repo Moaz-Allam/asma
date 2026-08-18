@@ -82,7 +82,7 @@ Names are canonical. Use these exact table names.
 | `questions` | Admin-defined questions per category/service | `id`, `category_id`, `service_id`, `key` (immutable), `label` (localised jsonb), `type`, `affects_pricing` |
 | `pricing_formulas` | One active formula per service | `id`, `service_id`, `base_price`, `version`, `active` |
 | `pricing_modifiers` | The formula body — **structured rows, never an expression string** | `id`, `formula_id`, `question_key`, `match_type`, `match_value`, `effect_type`, `amount`, `factor`, `apply_order` |
-| `regions` | The two markets | `code` PK (`TR`\|`KSA`), `currency`, `default_locale`, `psp_provider`, `active` |
+| `regions` | The two markets. **Reference data — seeded by migration, never written at runtime** | `code` PK (`TR`\|`KSA`), `currency`, `default_locale`, `psp_provider`, **`dial_code`** (D16), `active` |
 | `platform_settings` | Fees, commission %, windows | **`(region, key)` composite PK**, `value` — admin-editable. **G24: keyed on `key` alone, changing TR's commission would silently change KSA's** |
 
 ### Transaction
@@ -437,7 +437,7 @@ A scheduled job asserts `held = released + refunded + remaining` across all escr
 │   ├── scanner/contact-info.ts             → Application message scanner (Arabic-Indic + Turkish digits)
 │   ├── i18n/                               → see i18n.md
 │   │   ├── direction.ts                    ✅ LOCALES + dirFor() — the ONLY place direction is decided
-│   │   ├── routing.ts                      ✅ defineRouting, localePrefix 'as-needed'
+│   │   ├── routing.ts                      ✅ defineRouting, localePrefix 'always' (D19)
 │   │   ├── request.ts                      ✅ per-request locale + messages
 │   │   └── navigation.ts                   ✅ createNavigation — use these, not next/link
 │   ├── invoicing/                          → region adapter: zatca/ (KSA) + efatura/ (TR) — see §41

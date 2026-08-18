@@ -76,6 +76,32 @@ jobs:
             process.exit(bad);
           '
 
+      # D14: both markets live in one database, so a domain table without a
+      # `region` column cannot be isolated per market. Nothing fails when it is
+      # missing — queries work, tests pass — until the second market goes live and
+      # a KSA user sees a TR row. By then the table has data and adding a NOT NULL
+      # FK means a backfill under load. Exemptions are an explicit list, never a
+      # silent omission.
+      - name: Region column on every domain table
+        run: |
+          # Reference/global tables that are deliberately region-less.
+          exempt='regions|ledger_accounts|idempotency_records|psp_events|audit_log|notification_templates'
+          fail=0
+          for f in $(git ls-files 'supabase/migrations/*.sql' 2>/dev/null); do
+            for t in $(grep -oiE 'create table (if not exists )?(public\.)?[a-z_]+' "$f"                        | awk '{print tolower($NF)}' | sed 's/^public\.//'); do
+              echo "$t" | grep -qE "^($exempt)$" && continue
+              # The region column must appear inside that table's own CREATE block.
+              awk -v tbl="$t" '
+                tolower($0) ~ "create table (if not exists )?(public[.])?" tbl "[ (]" {inb=1}
+                inb {print}
+                inb && /^\);/ {inb=0}
+              ' "$f" | grep -qiE '^\s*region\s' || {
+                echo "::error file=$f::table '"'"'$t'"'"' has no region column (D14). Add one, or add it to the exempt list in ci.yml with a reason."
+                fail=1; }
+            done
+          done
+          exit $fail
+
       # Rule 7: a table created without RLS raises no error. It just returns every
       # row to every authenticated user.
       - name: RLS enabled on every created table

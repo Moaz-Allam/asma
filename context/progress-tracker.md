@@ -61,6 +61,7 @@ Legend: 🔴 not started · 🟡 in progress · 🟢 done · ⛔ blocked
 | CI: typecheck, lint, test | 🟢 | 6 jobs. **Ran and passed on the first push** (run 32118566578) |
 | Repo + CI | 🟢 | `github.com/Moaz-Allam/asma`. CI ran and passed. **No code-owner gate (D18, solo)** |
 | Automated dependency PRs | 🟢 | `.github/dependabot.yml`; eslint held at 9.x deliberately |
+| 45 Multi-region foundation | 🟢 | `regions` + `platform_settings` with RLS, 14 pgTAP assertions, seed matching `lib/region` (tested), CI region-column gate proven on a bad fixture |
 
 ---
 
@@ -102,6 +103,7 @@ Every non-obvious choice. Future sessions rely on this to avoid re-litigating.
 | D9 | 2026-08-17 | Providers may be **individuals or companies, with no profile difference** | One provider account shape; entity type matters only for PSP sub-merchant KYC and invoicing, not for our schema or UI | Yes |
 | D10 | 2026-08-17 | Admins are trusted operators but **never a code-execution boundary** (confirmed) | Pricing formulas stay structured rows; no `eval` of admin input, ever | No — security rule |
 | D11 | 2026-08-17 | Accepted all proposed resolutions in `open-questions.md` G1–G16 | Each closes a silent-failure or unpriced-risk path found in the doc audit | Individually revisable |
+| D19 | 2026-08-18 | **`localePrefix: 'always'` — every locale is prefixed (`/ar`, `/tr`, `/en`); there is no unprefixed route.** Supersedes D13's `as-needed` | `as-needed` gives exactly one locale the unprefixed URL, which cannot express a per-region default (`tr` for TR, `ar` for KSA) — and region is unknown until login, so nothing can derive it when the URL is served. `/` becomes a negotiation endpoint | Yes, but expensive once SEO exists |
 | D18 | 2026-08-18 | **No CODEOWNERS / code-owner merge gate — removed.** High-risk paths are protected by `/review`, green CI, and an explicit callout in the summary instead | One-engineer project: the author and the reviewer are the same person, so the gate was theatre. A control everyone believes in but which does nothing is the `middleware.ts` failure class — better removed than left to rot | Yes — restore `.github/CODEOWNERS` + branch protection the day a second engineer joins |
 | D17 | 2026-08-17 | **The satisfaction guarantee / re-do policy is DROPPED.** Trust rests on escrow + vetting + ratings; disputes handle disagreement | A guarantee of the outcome is a principal's obligation and contradicts D12. Keeping it risked VAT on the full job price. `project-overview.md` §34 rewritten | Yes — revisit if B9 returns "principal", since the constraint would be gone |
 | D16 | 2026-08-17 | **Strict phone/region validation, no override at launch.** `+90` → TR, `+966` → KSA | Phone numbers are country-scoped in practice, so they carry the region naturally under phone-based OTP where one number maps to one identity | Yes — an admin override can be added once the blocked-user volume is known |
@@ -133,7 +135,7 @@ seed defaults and the constants in `lib/utils.ts` are the fallbacks.
 | Default locale — TR deployment | `tr` | ✅ D13 |
 | Default locale — KSA deployment | `ar` | ✅ D13 |
 | `en` customer-facing? | Yes, both regions | ✅ D13 |
-| URL locale strategy | `localePrefix: 'as-needed'` | ✅ D13 |
+| URL locale strategy | `localePrefix: 'always'` — every locale prefixed | ✅ **D19** (supersedes D13) |
 | Legally authoritative T&C language | ⛔ **No default — needs legal (B10)** | ☐ |
 
 ---
@@ -312,8 +314,8 @@ Update after each phase gate.
 | Suite | Status | Last run | Notes |
 | --- | --- | --- | --- |
 | Typecheck / lint | 🟢 | 2026-08-18 | tsc clean, eslint 0 errors 0 warnings |
-| Unit | 🟢 | 2026-08-18 | 27 passed (i18n, region, money, env, Turkish casing) |
-| **RLS policy tests** | 🟡 | 2026-08-18 | pgTAP wired + schema-wide "RLS enabled everywhere" test written. Passes trivially — **no tables exist yet**. Becomes the real backstop at feature 03 |
+| Unit | 🟢 | 2026-08-18 | **30 passed** — i18n, region, money, env, Turkish casing, and REGION_CONFIG-vs-migration drift |
+| **RLS policy tests** | 🟢 | 2026-08-18 | pgTAP: schema-wide "RLS enabled everywhere" + 14 assertions on `regions`/`platform_settings`, incl. the negative cases (no write policy on reference data; unknown region rejected). **Not yet run against a live DB** — needs `.env.local` filled |
 | Guard suite (`npm run guardrails`) | 🟢 | 2026-08-18 | 39/39, incl. false-positive cases |
 | Build (`npx next build`) | 🟢 | 2026-08-18 | 3 locales SSG; `ar=rtl`, `tr/en=ltr` verified in the emitted HTML |
 | CI (GitHub Actions) | 🟢 | 2026-08-18 | Ran green on push. **Not** in `npm run verify` — run `next build` + `supabase test db` yourself |
@@ -344,8 +346,8 @@ Update after each phase gate.
 > [`contradictions.md`](contradictions.md). Read it before trusting any single section.
 
 > ⚠️ **Read the v3 CORRECTIONS sections** in `project-overview.md` (§21–25), `architecture.md` (§20–22), and `build-plan.md` before starting. The payment order was corrected: **customer pays, then provider unlocks.**
-**Last completed:** 01 Project Setup + Tokens
-**Next:** 45 Multi-region foundation (must land before 03)
+**Last completed:** 45 Multi-region foundation
+**Next:** 02 Auth + Roles (then 50 → 03 → 04)
 
 ---
 
@@ -355,6 +357,7 @@ Numbers map 1:1 to `build-plan.md`.
 
 ### Phase 1 — Foundation
 - [x] 01 Project Setup + Tokens ✅ 2026-08-18
+- [x] 45 Multi-region foundation ✅ 2026-08-18 — `regions` + `platform_settings`, RLS + pgTAP, and the CI check that makes a region-less table impossible
 - [ ] 02 Auth + Roles
 - [ ] 03 Database Schema + RLS Baseline
 - [ ] 04 App Shell + Navigation

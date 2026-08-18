@@ -13,8 +13,12 @@
 create table public.example (
   id uuid primary key default gen_random_uuid(),
 
-  -- D14: both regions live in one database. Region is a COLUMN, never an env
-  -- constant, and it is part of the isolation story.
+  -- D14: both markets live in ONE database, so region is a COLUMN, never an env
+  -- constant. It is REQUIRED on every domain table and enforced by CI — the
+  -- exempt list lives in .github/workflows/ci.yml and is deliberately visible.
+  -- Omitting it fails nothing today; it fails the day the second market goes
+  -- live, when the table already has data and adding a NOT NULL FK means a
+  -- backfill under load.
   region text not null references public.regions(code),
 
   owner_id uuid not null references public.profiles(id),
@@ -47,6 +51,8 @@ create policy example_owner_reads
 -- 5. INDEXES — every policy column and every foreign key. --------------------
 create index example_owner_id_idx on public.example (owner_id);
 create index example_region_idx on public.example (region);
+-- Index every policy column and every FK. architecture.md §32: an unindexed
+-- policy column turns a list query into a sequential scan under RLS.
 
 -- 6. IDENTIFIER COLLATION ----------------------------------------------------
 -- i18n.md §6: lower() is COLLATION-DEPENDENT. Under a Turkish collation it maps

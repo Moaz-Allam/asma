@@ -18,13 +18,27 @@ export type Currency = 'TRY' | 'SAR';
 export type PspProvider = 'iyzico' | 'paytabs';
 
 /**
- * Static facts per region. The authoritative copy lives in the `regions` table
- * (feature 45); this mirrors it for code that needs the mapping before a query,
- * such as choosing which PSP adapter to construct.
+ * Static facts per region.
+ *
+ * ⚠️ The `regions` TABLE is the source of truth. This mirrors it, field for field,
+ * for code that needs the mapping before it can run a query — choosing which PSP
+ * adapter to construct, validating a dialling code at signup. A pgTAP test and a
+ * unit test assert the two match; if they ever diverge, the table wins and this
+ * constant is the bug.
+ *
+ * `active` is deliberately absent here: deactivating a region is a runtime state
+ * question that must be read live, never from a compiled-in constant.
  */
-export const REGION_CONFIG: Readonly<
-  Record<Region, { currency: Currency; psp: PspProvider; dialCode: string; defaultLocale: string }>
-> = {
+export type RegionFacts = {
+  currency: Currency;
+  psp: PspProvider;
+  /** D16 — a TR account uses +90, a KSA account +966. Enforced at signup. */
+  dialCode: string;
+  /** The locale a new account in this region STARTS in. Not a URL rule (D19). */
+  defaultLocale: string;
+};
+
+export const REGION_CONFIG: Readonly<Record<Region, RegionFacts>> = {
   TR: { currency: 'TRY', psp: 'iyzico', dialCode: '+90', defaultLocale: 'tr' },
   KSA: { currency: 'SAR', psp: 'paytabs', dialCode: '+966', defaultLocale: 'ar' },
 } as const;
