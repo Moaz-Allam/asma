@@ -1,0 +1,60 @@
+-- MIGRATION TEMPLATE — copy, rename with a real timestamp, then fill in.
+--
+-- The order below is mandatory, not stylistic. Every step exists because its
+-- absence fails SILENTLY:
+--   * no RLS      -> every row readable by every authenticated user, no error
+--   * no policy   -> RLS on with no policy denies all, usually unintentionally
+--   * no index    -> a policy-bearing list query becomes a sequential scan
+--   * no test     -> the leak ships and nobody learns until it matters
+--
+-- code-standards.md §4 §11 · architecture.md §32 · Rule 7.
+
+-- 1. TABLE ------------------------------------------------------------------
+create table public.example (
+  id uuid primary key default gen_random_uuid(),
+
+  -- D14: both regions live in one database. Region is a COLUMN, never an env
+  -- constant, and it is part of the isolation story.
+  region text not null references public.regions(code),
+
+  owner_id uuid not null references public.profiles(id),
+
+  -- Rule 4: money is integer MINOR UNITS. bigint, never float/double/numeric.
+  -- amount_minor bigint not null,
+
+  created_at timestamptz not null default now()
+);
+
+-- 2. RLS — in the SAME migration that creates the table. No exceptions. -------
+alter table public.example enable row level security;
+
+-- 3. POLICIES — one per role, deny by default. -------------------------------
+-- architecture.md §32: wrap auth.uid() in a subselect so it is evaluated ONCE
+-- per query rather than once per row. A bare auth.uid() in a predicate is a
+-- correctness-neutral, performance-fatal mistake.
+create policy example_owner_reads
+  on public.example for select
+  using (owner_id = (select auth.uid()));
+
+-- D15: admins are global — no region predicate on admin policies.
+-- create policy example_admin_reads on public.example for select
+--   using ((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+-- 4. CONSTRAINTS -------------------------------------------------------------
+-- Make the bad state impossible in the database, not merely unlikely in code.
+-- alter table public.example add constraint example_amount_nonneg check (amount_minor >= 0);
+
+-- 5. INDEXES — every policy column and every foreign key. --------------------
+create index example_owner_id_idx on public.example (owner_id);
+create index example_region_idx on public.example (region);
+
+-- 6. IDENTIFIER COLLATION ----------------------------------------------------
+-- i18n.md §6: lower() is COLLATION-DEPENDENT. Under a Turkish collation it maps
+-- I -> ı, silently breaking case-insensitive email uniqueness and identifier
+-- lookup. Pin identifier columns to a deterministic collation; keep locale-aware
+-- collation for SORTING display lists only.
+--   email text not null collate "C",
+
+-- 7. TEST --------------------------------------------------------------------
+-- Write the NEGATIVE case in supabase/tests/: prove the WRONG user is denied.
+-- A policy without a negative test is an assumption, not a control.

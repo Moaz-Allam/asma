@@ -1,0 +1,146 @@
+# CI — the layer an agent cannot talk its way past.
+#
+# Documentation can be ignored; a red pipeline cannot. The hooks in .claude/ stop
+# violations at write time in an interactive session, but they do not run for a
+# human commit, a rebase, or a branch pushed from another machine. This does.
+#
+# These job names are the status checks that .github/CODEOWNERS asks you to make
+# required in branch protection. Until they are marked required, they inform but
+# do not block.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Guards the guards. A guardrail that silently stops firing is worse than none,
+  # because everyone still believes it works. Runs even before the app exists.
+  guardrails:
+    name: guardrails
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard rule regression suite
+        run: node .claude/evals/guard.test.mjs
+
+      # Rule 11: Next.js 16 silently ignores middleware.ts — no error, and route
+      # protection becomes dead code. Cheapest possible check for the most
+      # invisible failure in the stack.
+      - name: No middleware.ts (must be proxy.ts)
+        run: |
+          if ls middleware.ts middleware.js src/middleware.ts 2>/dev/null | grep -q .; then
+            echo "::error::middleware.ts is inert on Next.js 16. Rename to proxy.ts, exporting proxy()."
+            exit 1
+          fi
+
+      # Rule 3: the outbox relay is the only mutating caller of lib/psp. An inline
+      # PSP call in a request path cannot be made atomic with a database commit.
+      - name: No PSP call in a request path
+        run: |
+          hits=$(grep -rlE "from ['\"](@/lib/psp|.*(iyzico|iyzipay|paytabs))" \
+                   --include='*.ts' --include='*.tsx' \
+                   actions app lib components 2>/dev/null \
+                 | grep -vE '^lib/psp/|outbox|relay|\.test\.|\.spec\.' || true)
+          if [ -n "$hits" ]; then
+            echo "::error::PSP imported outside lib/psp and the relay:"; echo "$hits"; exit 1
+          fi
+
+      # Rule 10: a key present in one catalogue and missing from another renders a
+      # raw message key to a customer in production. Cheap to catch here.
+      - name: Message catalogues complete across ar/tr/en
+        run: |
+          test -d messages || { echo "no messages/ yet — skipping"; exit 0; }
+          node -e '
+            const fs = require("fs");
+            const flat = (o, p = "") => Object.entries(o).flatMap(([k, v]) =>
+              v && typeof v === "object" ? flat(v, p + k + ".") : [p + k]);
+            const locales = ["ar", "tr", "en"];
+            const keys = Object.fromEntries(locales.map(l =>
+              [l, new Set(flat(JSON.parse(fs.readFileSync(`messages/${l}.json`, "utf8"))))]));
+            const all = new Set(locales.flatMap(l => [...keys[l]]));
+            let bad = 0;
+            for (const l of locales)
+              for (const k of all)
+                if (!keys[l].has(k)) { console.error(`::error::messages/${l}.json missing key: ${k}`); bad = 1; }
+            process.exit(bad);
+          '
+
+      # Rule 7: a table created without RLS raises no error. It just returns every
+      # row to every authenticated user.
+      - name: RLS enabled on every created table
+        run: |
+          fail=0
+          for f in $(git ls-files 'supabase/migrations/*.sql' 2>/dev/null); do
+            for t in $(grep -oiE 'CREATE TABLE (IF NOT EXISTS )?(public\.)?[a-z_]+' "$f" \
+                       | awk '{print tolower($NF)}' | sed 's/^public\.//'); do
+              grep -qiE "ALTER TABLE (public\.)?$t ENABLE ROW LEVEL SECURITY" "$f" || {
+                echo "::error file=$f::table '$t' created without RLS in the same migration"; fail=1; }
+            done
+          done
+          exit $fail
+
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      # Skipped cleanly until Phase 0 lands package.json — a red X on an empty
+      # repo teaches people to ignore red X's.
+      - run: test -f package.json || { echo "no package.json yet — skipping"; exit 0; }
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: test -f package.json || { echo "no package.json yet — skipping"; exit 0; }
+      - run: npm ci
+      - run: npm run lint --if-present
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: test -f package.json || { echo "no package.json yet — skipping"; exit 0; }
+      - run: npm ci
+      - run: npm test --if-present
+
+  # pgTAP against a real Postgres with our migrations applied. RLS cannot be
+  # tested against a mocked database — see library-docs.md (v5 testing section).
+  rls-tests:
+    name: supabase test db
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: test -d supabase/migrations || { echo "no migrations yet — skipping"; exit 0; }
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase db start
+      - name: pgTAP suite (includes schema-wide "RLS enabled everywhere")
+        run: supabase test db

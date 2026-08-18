@@ -1,0 +1,19 @@
+{
+  "App": {
+    "name": "Asma",
+    "tagline": "Home services, priced up front."
+  },
+  "Landing": {
+    "title": "Asma",
+    "heading": "Home services, priced up front.",
+    "body": "Post what you need, compare providers, and pay only when the job is done.",
+    "statusHeading": "Foundations",
+    "statusBody": "Project skeleton. Three locales with runtime-derived direction. Visual design pending."
+  },
+  "Error": {
+    "notFound": "Page not found.",
+    "generic": "Something went wrong. Please try again.",
+    "backHome": "Back to home",
+    "retry": "Try again"
+  }
+}

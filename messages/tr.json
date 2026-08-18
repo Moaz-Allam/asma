@@ -1,0 +1,19 @@
+{
+  "App": {
+    "name": "Asma",
+    "tagline": "Ev hizmetleri, fiyatı baştan belli."
+  },
+  "Landing": {
+    "title": "Asma",
+    "heading": "Ev hizmetleri, fiyatı baştan belli.",
+    "body": "İhtiyacınızı paylaşın, hizmet verenleri karşılaştırın ve yalnızca iş bittiğinde ödeyin.",
+    "statusHeading": "Temeller",
+    "statusBody": "Proje iskeleti. Çalışma zamanında belirlenen yön ile üç dil. Görsel tasarım beklemede."
+  },
+  "Error": {
+    "notFound": "Sayfa bulunamadı.",
+    "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "backHome": "Ana sayfaya dön",
+    "retry": "Tekrar dene"
+  }
+}

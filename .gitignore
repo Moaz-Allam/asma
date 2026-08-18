@@ -1,0 +1,39 @@
+# Agent working memory — session scratch, not project state.
+# Durable state belongs in context/progress-tracker.md, which IS committed.
+NOTES.md
+
+# Secrets — never committed. .env.example is committed with dummy values.
+.env
+.env.local
+.env*.local
+.env.production
+*.pem
+*.key
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Test + coverage
+coverage/
+playwright-report/
+test-results/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Personal agent overrides (team-wide config in .claude/settings.json IS committed)
+.claude/settings.local.json
