@@ -4,8 +4,8 @@
 > This is how context survives between sessions. If it isn't written here, the next session doesn't know it.
 
 **Last updated:** 2026-08-18
-**Current phase:** Phase 1 — Foundation (feature 01 done)
-**Overall status:** 🟡 Phase 1 in progress — feature 01 built
+**Current phase:** Phase 1 — Foundation (01 ✅ · 45 ✅ · next 02)
+**Overall status:** 🟡 Phase 1 in progress — 01 and 45 closed, CI green
 
 ---
 
@@ -53,7 +53,7 @@ Legend: 🔴 not started · 🟡 in progress · 🟢 done · ⛔ blocked
 | Next.js + TS + Tailwind, strict | 🟢 | Next 16.3.1 · React 19.2.8 · TW 4.3.3, pinned exact |
 | shadcn/ui init (primitives only) | ⏸ | Deferred — init writes a brand palette, blocked on B4. See spec §Most likely failure mode |
 | Three locales, derived direction | 🟢 | ar/tr/en; verified in prerendered HTML |
-| Supabase wired, typed clients | 🟡 | `lib/db/{client,server,admin}.ts` ✅. Project created + `supabase init` done. **`.env.local` still has 2 placeholders**: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_DB_POOL_URL |
+| Supabase wired, typed clients | 🟢 | `lib/db/{client,server,admin}.ts` ✅. Project `syrhavojjpabwwcaezee` created, linked, `.env.local` filled. **Nothing pushed to the remote yet** — local + CI only |
 | Env schema + `.env.example` | 🟢 | Zod, fail-fast via instrumentation.ts; rejects APP_REGION (D14) |
 | Deny-by-default RLS in migration template | 🟢 | supabase/migrations/*.sql.example |
 | Zod setup | 🟢 | lib/validation/index.ts |
@@ -61,7 +61,7 @@ Legend: 🔴 not started · 🟡 in progress · 🟢 done · ⛔ blocked
 | CI: typecheck, lint, test | 🟢 | 6 jobs. **Ran and passed on the first push** (run 32118566578) |
 | Repo + CI | 🟢 | `github.com/Moaz-Allam/asma`. CI ran and passed. **No code-owner gate (D18, solo)** |
 | Automated dependency PRs | 🟢 | `.github/dependabot.yml`; eslint held at 9.x deliberately |
-| 45 Multi-region foundation | 🟢 | `regions` + `platform_settings` with RLS, 14 pgTAP assertions, seed matching `lib/region` (tested), CI region-column gate proven on a bad fixture |
+| 45 Multi-region foundation | 🟢 | `regions` + `platform_settings` with RLS. **pgTAP ran for real in CI** (run 32129285600 — migration applied, 16 assertions across 2 files, all passed). Seed matches `lib/region`, asserted by a unit test. CI region-column gate proven on a bad fixture |
 
 ---
 
