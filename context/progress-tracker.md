@@ -173,6 +173,44 @@ Raised while building; answered by the human. Mirror in `ui-tokens.md` §10.
 
 > Written at the end of each session for the next one. Be concrete: what you did, what you were mid-way through, what to do next, and anything surprising.
 
+**Session 3 — 2026-08-18 (feature 01 CLOSED)**
+
+```
+DID        Feature 01 is done, reviewed, committed (5590445) and pushed to
+           github.com/Moaz-Allam/asma. specs/01-project-setup/plan.md → Status: reviewed.
+           Verified the human setup: repo is its own git root, remote set, CI ran GREEN
+           on the first push, supabase init done.
+           CODEOWNERS REMOVED (D18) — solo project, so the gate was theatre.
+IN FLIGHT  Nothing. Working tree clean.
+NEXT       Feature 45 — multi-region foundation. `/architect 45`. It MUST land before
+           feature 03: it adds `region` to nearly every table, and retrofitting that
+           after Phase 3 means rewriting every RLS policy. Plan already drafted and
+           confirmed at specs/45-51-accepted-fixes/plan.md.
+SURPRISES  1. ESLint 10 CRASHES eslint-config-next — its bundled eslint-plugin-react
+              calls context.getFilename(), removed in v10. Pinned to 9.39.5 and held
+              there by .github/dependabot.yml. Latest is not the same as compatible.
+           2. `npx shadcn init` writes a full brand palette into globals.css as a side
+              effect. Deferred the init (B4) and added guard rule brand-value-in-globals.
+           3. architecture.md §11/§16 said lib/supabase-*.ts while §6 and build-plan.md
+              said lib/db/ — a doc-vs-doc contradiction the code had already resolved.
+           4. code-standards §17 said "Utility files: camelCase" while §2 said
+              kebab-case, and its own example was kebab. Kebab wins.
+           5. .env.example listed 22 vars lib/env.ts does not validate, contradicting
+              §12's "all env vars validated at startup". Two tiers now explicit.
+           6. `server-only` cannot import in a plain test runner — stubbed in vitest
+              only; Next's build-time guarantee is untouched.
+           7. Eager parseEnv() at module scope made lib/env untestable. Now getEnv() +
+              instrumentation.ts, which is genuinely fail-fast at boot.
+DO NOT     - Run `npx shadcn init` until B4 lands.
+           - Upgrade ESLint past 9.x (dependabot ignores it; that ignore is deliberate).
+           - Create app/layout.tsx — app/[locale]/layout.tsx renders <html>.
+           - Add APP_REGION or APP_CURRENCY — lib/env.ts rejects them by design (D14).
+           - Assume .env.local is real: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_DB_POOL_URL
+             are still placeholders, so nothing can actually reach Supabase yet.
+           - Guess past any blocker in §4. Moaz is working through them and will feed
+             each one in.
+```
+
 **Session 2 — 2026-08-18 (review pass)**
 
 ```
@@ -275,7 +313,10 @@ Update after each phase gate.
 | --- | --- | --- | --- |
 | Typecheck / lint | 🟢 | 2026-08-18 | tsc clean, eslint 0 errors 0 warnings |
 | Unit | 🟢 | 2026-08-18 | 27 passed (i18n, region, money, env, Turkish casing) |
-| **RLS policy tests** | 🟡 | | pgTAP wired; passes trivially — no tables yet |
+| **RLS policy tests** | 🟡 | 2026-08-18 | pgTAP wired + schema-wide "RLS enabled everywhere" test written. Passes trivially — **no tables exist yet**. Becomes the real backstop at feature 03 |
+| Guard suite (`npm run guardrails`) | 🟢 | 2026-08-18 | 39/39, incl. false-positive cases |
+| Build (`npx next build`) | 🟢 | 2026-08-18 | 3 locales SSG; `ar=rtl`, `tr/en=ltr` verified in the emitted HTML |
+| CI (GitHub Actions) | 🟢 | 2026-08-18 | Ran green on push. **Not** in `npm run verify` — run `next build` + `supabase test db` yourself |
 | Concurrency (money) | 🔴 | | Required before Phase 5 |
 | Idempotency | 🔴 | | Required before Phase 5 |
 | Invariant (`held = released + refunded + remaining`) | 🔴 | | Required before Phase 5 |
