@@ -139,7 +139,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: test -d supabase/migrations || { echo "no migrations yet — skipping"; exit 0; }
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: latest
       - run: supabase db start
