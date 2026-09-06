@@ -107,19 +107,45 @@ A worked example for one category beats a complete spec for none. Start with hom
 - **KSA:** PayTabs marketplace/split. **mada support is mandatory** for Saudi cards. KYC is slow —
   start it early.
 
-### 3.2 Answer these before writing adapter code
+### 3.2 🔴 DO THIS WEEK — can an individual be a sub-merchant? (B11)
 
-`progress-tracker.md` §6 — all nine are still blank, and several change the design:
+**Free, self-serve, and potentially existential.** If individuals cannot onboard as sub-merchants in
+a region, that region needs a different provider structure entirely — and four more phases would
+otherwise be built on the assumption that they can.
 
-1. Maximum hold duration. Must exceed `payment window + (unlock window × re-selections) + work duration + 72h`, not just 72h (G2).
-2. **Can an individual be a sub-merchant?** And which sub-merchant type does each provider entity map to? iyzico has three, with **different required fields** — a company needs a tax number (G17).
-3. **Settlement delay after release.** Public sources suggest up to ~60 days for new sub-merchants, 7–14 once established. Providers coming from same-day cash will not accept "released" meaning "paid in 60 days" (G16). Confirm the real figure and show two dates in the earnings UI.
-4. Webhook signature scheme, retry policy, and event id for dedupe.
-5. Partial refund while held — required for `PARTIALLY_RELEASED` dispute outcomes.
-6. **The actual processing fee, per card type** — it must be posted as its own ledger leg (G3), never estimated.
-7. Required user agreements to surface at signup (iyzico marketplace agreements are mandatory and must be accepted digitally).
-8. **KSA e-invoicing scope.** We act as an **agent** (D12), so we invoice providers for commission and unlock fees — not customers for the job. Confirm the PSP does not already issue these on our behalf, and whether it can. Note the invoice type branches on each provider's own VAT registration status (G18).
-9. Phone/SMS OTP availability per region.
+Sign up for both sandboxes and try to onboard a test individual (not a company):
+
+- iyzico sandbox → Marketplace / *Pazaryeri* → create a `PERSONAL` sub-merchant
+- PayTabs sandbox → marketplace / split setup → same
+
+Record the answer in §6 as a confirmed PSP fact, not a guess.
+
+### 3.3 Four more answers the sandbox gives you free
+
+No sales call needed. Sign up, poke, record:
+
+| Question | How |
+| --- | --- |
+| Sub-merchant **types** and the required fields per type (G17) | The onboarding form itself |
+| Webhook **signature scheme** + the event id used for dedupe | Trigger a sandbox payment, read the raw payload |
+| **Partial refund** while held — needed for `PARTIALLY_RELEASED` | Try one in sandbox |
+| Hold / approve / release API shape | Run the flow end to end |
+
+### 3.4 Only two actually need asking
+
+Sandbox will not reveal these. Open a pre-sales or support ticket with both PSPs:
+
+1. **Maximum hold duration.** Must cover `payment window + (unlock window × up to 3 re-selections) +
+   scheduled work duration + 72h release` — **not** just 72h (G2).
+   *Meanwhile:* design to the worst plausible answer. Store `psp_max_hold_hours` in
+   `platform_settings`, and have the invariants job alert when any escrow approaches it. Nothing waits.
+2. **The real per-card processing fee.** Must be posted as its own ledger leg from the **actual**
+   settlement figure, never estimated — it varies by scheme, and mada prices differently from
+   international cards (G3).
+
+Also worth asking while you have their attention: settlement delay after release (public sources
+suggest up to ~60 days for new sub-merchants — a **product** problem, not just copy), and which user
+agreements must be surfaced at signup.
 
 ### 3.3 Legal — blockers B2 and B9
 

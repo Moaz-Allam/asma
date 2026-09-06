@@ -1228,6 +1228,29 @@ Also: `provider_balances.available >= 0` CHECK (already specified) **plus** a jo
 > ledger never exceeds `Σ(commission) + Σ(unlock fees)`.
 >
 > The agent position itself is **asserted, not yet legally verified** — blocker B9.
+>
+> ### D20 — the POSTINGS are shape-neutral; only the CLASSIFICATION is agent-shaped
+>
+> A "principal" verdict on B9 does **not** require re-posting anything. Both views are derivable
+> from the same rows:
+>
+> | | Revenue | Cost |
+> | --- | --- | --- |
+> | **Agent** (current) | `platform:revenue:commission` + `platform:revenue:unlock_fee` | `expense:psp_fees` |
+> | **Principal** | full job price = commission + provider portion | provider portion + `expense:psp_fees` |
+>
+> The provider portion is already recorded (`escrow:held` → `provider:available:{id}`), and commission
+> is already its own leg. **Gross is therefore reconstructable without a migration** — a principal
+> verdict costs a reporting view and the invoicing module, not a schema change.
+>
+> **This is exactly why §30's no-netting rule matters beyond bookkeeping.** The moment anyone posts
+> `escrow = price − commission` as one line, the commission is gone from the record and the two views
+> stop being derivable from each other. Netting does not just hide a fee — it destroys your ability
+> to restate under a different tax treatment.
+>
+> **Consequence:** B9 no longer blocks features 14, 38 or 39. It gates only 49 (PSP fee accounting,
+> where "who absorbs the fee on refund" depends on the treatment) and 51 (invoicing scope).
+> Keep tax classification in a **reporting layer**, never in the posting logic.
 
 ## 30. 🔴 Commission is its own posting
 
