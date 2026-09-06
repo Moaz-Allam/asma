@@ -144,19 +144,22 @@ seed defaults and the constants in `lib/utils.ts` are the fallbacks.
 
 ## 6. PSP facts to confirm
 
-Fill in before Phase 5. Source: the PSP's docs or support — **not** assumption.
+Fill in before Phase 5. Source: the PSP's docs, sandbox, or support — **not** assumption.
+Split 2026-08-18 by *how each is obtainable* — most need no sales call. Steps: `SETUP.md` §3.2–3.4.
 
-| # | Question | Answer | Confirmed |
-| --- | --- | --- | --- |
-| 1 | Max hold duration (must exceed 72h) | | ☐ |
-| 2 | Can individual (non-company) providers be sub-merchants? | | ☐ |
-| 3 | Settlement delay after release | | ☐ |
-| 4 | Webhook signature scheme + retry policy | | ☐ |
-| 5 | Event id available for dedupe? | | ☐ |
-| 6 | Partial refund supported while held? | | ☐ |
-| 7 | Required user agreements to surface at signup | | ☐ |
-| 8 | (KSA) ZATCA e-invoicing responsibility | | ☐ |
-| 9 | Phone/SMS OTP available in this market? | | ☐ |
+| # | Question | How to get it | Answer | Confirmed |
+| --- | --- | --- | --- | --- |
+| **2** | 🔴 **Can individual (non-company) providers be sub-merchants?** — **B11, business-model check, do this week** | **sandbox** — try onboarding a test individual | | ☐ |
+| 4 | Webhook signature scheme + retry policy | **sandbox** — trigger a payment, read the raw payload | | ☐ |
+| 5 | Event id available for dedupe? | **sandbox** — same payload | | ☐ |
+| 6 | Partial refund supported while held? | **sandbox** — needed for `PARTIALLY_RELEASED` | | ☐ |
+| — | Sub-merchant **types** + required fields per type (G17) | **sandbox** — the onboarding form | | ☐ |
+| 1 | Max hold duration — must cover `payment window + (unlock window × up to 3 re-selections) + work duration + 72h release`, **not** just 72h (G2) | **must ask.** Meanwhile: `psp_max_hold_hours` in `platform_settings` + invariant alert | | ☐ |
+| 3 | Settlement delay after release — public sources suggest up to ~60d for new sub-merchants. A **product** problem, not just copy (G16) | **must ask** | | ☐ |
+| — | Real per-card processing fee — posted from the **actual** settlement figure, never estimated (G3) | **must ask** — varies by scheme; mada ≠ international | | ☐ |
+| 7 | Required user agreements to surface at signup | must ask / docs | | ☐ |
+| 8 | (KSA) ZATCA e-invoicing responsibility | must ask — see B9/G18 | | ☐ |
+| 9 | Phone/SMS OTP available in this market? | docs | | ☐ |
 
 ---
 
@@ -176,6 +179,39 @@ Raised while building; answered by the human. Mirror in `ui-tokens.md` §10.
 ## 8. Handoff notes
 
 > Written at the end of each session for the next one. Be concrete: what you did, what you were mid-way through, what to do next, and anything surprising.
+
+**Session 5 — 2026-08-18 (blocker strategy — no code)**
+
+```
+DID        No code. Reduced two blockers instead of waiting on them.
+           D20: proved the ledger postings are TAX-SHAPE-NEUTRAL. Agent and principal
+           views are both derivable from the same rows — commission is already its own
+           leg and the provider portion is already recorded — so a "principal" verdict
+           costs a reporting view and the invoicing module, NOT a migration.
+           → B9 no longer blocks 14/38/39. It gates only 49 and 51. Phase 4 is open.
+           B3 split by how each fact is obtainable: 4 of 6 are free in a self-serve
+           sandbox, only 2 need a conversation. SETUP.md §3.2–3.4 has the exact steps.
+           B11 raised as a separate PRIORITY blocker.
+IN FLIGHT  Nothing. Working tree clean, pushed.
+NEXT       Feature 02 Auth + Roles — `/architect 02`. Creates `profiles`, which needs
+           region NOT NULL + FK to regions(code) and the D16 dial-code CHECK. First real
+           test of the region CI gate that 45 shipped.
+           In parallel (human, ~1h): the B11 sandbox check.
+SURPRISES  1. I had overstated B9. "The chart changes" was wrong — the POSTINGS do not.
+              Only the classification does, and that belongs in a reporting layer.
+           2. That gives §30's no-netting rule a second reason to exist: netting does not
+              merely hide a fee, it destroys the ability to restate under a different tax
+              treatment. Same rule, two failure modes prevented.
+           3. Most of B3 never needed a sales call. Four of six facts are answerable in a
+              free sandbox, which nobody had checked.
+           4. My own B3 restructure created a duplicate "### 3.3" in SETUP.md, and §1.3
+              still claimed placeholders that were already filled.
+DO NOT     - Treat B9 as blocking the money core. It does not, post-D20. Blocking 14/38/39
+             on it wastes the longest phase in the plan.
+           - Put tax classification in the posting logic. It is a REPORTING concern.
+           - Net commission into the escrow amount. It breaks D20 and §30 together.
+           - Assume individuals can be sub-merchants. That is B11 and it is unanswered.
+```
 
 **Session 4 — 2026-08-18 (feature 45 CLOSED)**
 
