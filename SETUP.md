@@ -46,17 +46,22 @@ to rot. Restore it, plus branch protection, the day a second engineer joins.
 Branch protection is optional now. Enabling "require status checks to pass" on `master` is still
 worth a minute — it stops a red build being merged by accident.
 
-### 1.3 Supabase — ONE project  ⏱ 15 min
+### 1.3 Supabase — ✅ **DONE 2026-08-18**
+
+Project `syrhavojjpabwwcaezee` created and linked, `.env.local` filled, `supabase/config.toml`
+committed. **Nothing has been pushed to the remote** — local + CI only, deliberately.
+
+<details>
+<summary>Original steps, for reference</summary>
+
+**ONE project, not two.**
 
 Both regions run from one deployment separated by a `region` column (D14), so this is **one**
 project, not two.
 
 1. Create it at supabase.com. Save the **project ref**.
 2. Account → Access Tokens → generate a personal access token (this is what the MCP server uses).
-3. Copy the real values into `.env.local`. **Two are still placeholders as of 2026-08-18** —
-   `NEXT_PUBLIC_SUPABASE_URL` (still `https://placeholder.supabase.co`) and `SUPABASE_DB_POOL_URL`
-   (still the `postgres.ref:pw@aws-0-region…` template). The anon and service keys look real, so the
-   app currently holds valid keys pointing at a non-existent project:
+3. Copy the real values into `.env.local`:
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Settings → API)
    - `SUPABASE_SERVICE_ROLE_KEY` (same page — **secret**, never `NEXT_PUBLIC_`)
    - `SUPABASE_DB_POOL_URL` — Settings → Database → **Connection pooling**, *Transaction* mode.
@@ -68,8 +73,14 @@ project, not two.
    ```bash
    npm i -D supabase && npx supabase init && npx supabase link --project-ref <ref>
    ```
-   ✅ `supabase/config.toml` now exists. `supabase/tests/` and the migration template are already
-   written and will be picked up. **Commit `config.toml`** — it is currently untracked.
+   `supabase init` creates `supabase/config.toml`; `supabase/tests/` and the migration template are
+   picked up automatically.
+
+</details>
+
+**pgTAP does not need Docker.** The `supabase test db` CI job runs it on every push — it applied the
+45 migration to a real Postgres and passed 16 assertions (run 32129285600). Docker Desktop only buys
+faster local iteration.
 
 ### 1.4 Verify the whole chain  ⏱ 1 min
 
@@ -147,7 +158,7 @@ Also worth asking while you have their attention: settlement delay after release
 suggest up to ~60 days for new sub-merchants — a **product** problem, not just copy), and which user
 agreements must be surfaced at signup.
 
-### 3.3 Legal — blockers B2 and B9
+### 3.5 Legal — blockers B2 and B9
 
 - **B9 — confirm the agent position with a tax advisor, in both regions.** We have decided we act as
   an intermediary (D12), which keeps the job price off our books and shrinks e-invoicing to our own
