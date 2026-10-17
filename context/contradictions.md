@@ -1,5 +1,9 @@
 # Known contradictions in the context docs
 
+> **Note, 2026-10-17:** `CLAUDE.md` is now a one line pointer to `AGENTS.md`, which holds the routing
+> table and rules summary, and the precedence order is the playbook's eight levels (`AGENTS.md`,
+> `project-overview.md` §0). Mentions of `CLAUDE.md` below are part of the historical record.
+
 > **Read this before trusting any single section.** The docs grew in layers — v2 → v3 → v4 → v5 —
 > and earlier sections were left in place rather than corrected. That is defensible as a history,
 > but it means an agent reading top-to-bottom **reads the wrong answer first** and only later meets

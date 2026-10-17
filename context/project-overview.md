@@ -1,43 +1,53 @@
 # Project Overview
 
-> **Read this first.** Every other document assumes you have read this one.
-> This file is the single source of truth for **what** we are building and **why**. `architecture.md` covers **how**.
+v3, 2026-10-17: §0 doc map and precedence rewritten for the playbook layout; §1 gains the launch date,
+scope test, and Turkey first launch; §5 becomes the canonical text of the rules that never bend.
+
+> **Read this first** (after `AGENTS.md`). This file is the source of truth for **what** we are
+> building and **why**. `architecture.md` covers **how**. Until the owner's brief is imported into
+> `docs/brief/`, the product sections of this file stand in for it.
 
 ---
 
 ## 0. Document map
 
-Read in this order on first contact. Afterwards, consult by need.
+Read order: `AGENTS.md` (auto loaded) → this file (§1, §5, §6, §8) → `progress-tracker.md` → the
+current position's spec in `docs/specs/` → only the one doc the task needs. **Do not read every doc**:
+`context/` is about 6,000 lines and reading it all degrades output before any work begins.
+`AGENTS.md` has the task to document routing table.
 
-| # | File | Read it for |
-| --- | --- | --- |
-| 1 | **project-overview.md** (this) | The business model, the flow, the non-negotiables, when to stop and ask |
-| 2 | **architecture.md** | Stack, trust boundaries, data model, PSP adapter, folder layout |
-| 3 | **build-plan.md** | What to build next, in what order, and each phase's gate |
-| 4 | **code-standards.md** | How to write it: money, RLS, validation, errors, testing |
-| 5 | **library-docs.md** | Approved dependencies and their real-world gotchas |
-| 6 | **ui-rules.md** | Any visual work: shadcn, RTL, states, accessibility |
-| 7 | **ui-tokens.md** | Every visual value. No value may come from anywhere else |
-| 8 | **ui-registry.md** | Check before building any component; update after |
-| 9 | **progress-tracker.md** | Current state, blockers, decisions. **Read at session start, update at session end** |
-| 10 | **i18n.md** | Locales, direction, region model, translatable content, the Turkish casing hazard |
-| 11 | **architecture-review.md** | The v5 corrections in full, with reasoning (P0-1…P0-6). Converted from `docs/ARCHITECTURE-REVIEW.docx` |
-| 12 | **contradictions.md** | 13 places these documents disagreed with each other. All fixed; kept as a record of the failure modes |
-| 13 | **open-questions.md** | Gaps, ambiguities, and unstated assumptions. **Check before designing a feature it names** |
-
-> ⚠️ **Do not read all thirteen at session start.** That is ~6,000 lines and it degrades output
-> quality before any work begins. `CLAUDE.md` carries a task-to-document routing table — read the row
-> that matches the task. The order above is for first contact only.
+| File | Read it for |
+| --- | --- |
+| **project-overview.md** (this) | The business model, the flow, the rules that never bend, when to stop and ask |
+| **progress-tracker.md** | Current state, blockers, decision log, open questions, owner steps. **Session start and end** |
+| **build-plan.md** | Positions in order, gates G0–G3, cut list, target schedule |
+| **architecture.md** | Stack, trust boundaries, single doors, data model, PSP adapter, folder layout |
+| **code-standards.md** | How to write it: money, RLS, validation, errors, testing, tooling |
+| **library-docs.md** | Approved dependencies and their real world gotchas |
+| **ui-rules.md** / **ui-tokens.md** / **ui-registry.md** | Composition rules / raw values / every built component |
+| **i18n.md** | Locales, direction, region model, translatable content, the Turkish casing hazard |
+| **feature-notes-v2.md** | The old per feature notes, verbatim: requirement seeds for position specs |
+| **architecture-review.md** | The v5 corrections in full (P0-1…P0-6) |
+| **contradictions.md** | 13 places these documents disagreed. All fixed; a record of the failure modes |
+| **open-questions.md** | Archive of gaps G1–G27 and their resolutions. Live questions are Q rows in the tracker |
+| `docs/specs/` | One decision each, the contract a position is built and checked against |
+| `docs/brief/`, `docs/design/`, `docs/reviews/` | The owner's brief · design references · dated review and verify reports |
+| `docs/engineering-approach.md` | The general methodology (the playbook) |
 
 ### Precedence when documents conflict
 
-1. `project-overview.md` §5 (non-negotiables) and §6 (custody) — **override everything**
-2. `progress-tracker.md` decision log — a recorded human decision beats a general rule
-3. `architecture.md`
-4. `code-standards.md` / `ui-rules.md`
-5. `build-plan.md` task wording
+1. **Rules that never bend** (§5) and money custody (§6) override everything
+2. The `progress-tracker.md` decision log: a recorded owner decision beats a general rule
+3. The spec being built, for its own feature (`docs/specs/`)
+4. The product brief (`docs/brief/`; until imported, the product sections of this file)
+5. `architecture.md`
+6. `code-standards.md`, `ui-tokens.md`, `ui-rules.md`
+7. `build-plan.md` task wording
+8. `docs/engineering-approach.md`
 
-If a conflict is not resolved by this order, **stop and ask**. Do not pick one silently.
+A `v5` section overrides an earlier `v3`/`v4` section in the same file. A context doc that contradicts
+the brief with no decision log entry explaining why is a bug in the context doc. If a conflict is not
+resolved by this order, **stop and ask**. Do not pick one silently.
 
 ---
 
@@ -53,9 +63,19 @@ The platform is the intermediary. It sets prices, controls matching, and earns m
 The business currently runs manually in a WhatsApp group of 400+ members. This platform replaces that.
 
 **This release ships:** responsive web app (customer + provider + admin), in **three languages —
-Arabic (RTL), Turkish, English** — serving **Turkey** and **Saudi Arabia** from **one deployment**,
+Arabic (RTL), Turkish, English** — built for **Turkey** and **Saudi Arabia** from **one deployment**,
 separated by a `region` column (D14). See [`i18n.md`](i18n.md).
 **Not in this release:** native mobile apps, multi-city expansion, AI features.
+
+**Launch: 2026-11-07, Turkey only (D22).** iyzico Marketplace holds the funds (D23). KSA stays in
+the schema with its region switched off until a Saudi PSP is chosen (Q7); nothing may hardcode Turkey,
+because the second region is a data change, not a rewrite.
+
+**Priority** (D35, confirmed by the owner, D42): correct money and private data > the core journey
+working end to end in all three locales > design polish > extra features.
+
+**In scope test:** a feature is in scope only if it directly helps sell, operate, or learn. Anything not
+in the brief is asked about before it is built, and logged as an override in the decision log.
 
 ---
 
@@ -154,20 +174,64 @@ Terminal states: `RELEASED`, `REFUNDED`, `PARTIALLY_RELEASED`, `CANCELLED`.
 
 ---
 
-## 5. Non-negotiable rules
+## 5. Rules that never bend
 
-These are correctness requirements, not preferences. Violating any of them is a bug, even if tests pass.
+**Canonical text** (v3, 2026-10-17, D33). These are correctness requirements, not preferences: a change
+that breaks one is a bug even when every test passes, and most break **silently**, with a leak or lost
+money instead of an error. Each rule names the layer that enforces it, lowest first. Refer to them by
+number everywhere ("rule 3"); `AGENTS.md` carries a one line summary and this text wins.
 
-1. **Price, commission, and fees are computed server-side.** Never trust a value from the client.
-2. **Customer PII is invisible until unlock.** Enforced by Row-Level Security in the database, not by hiding it in the UI.
-3. **A provider can never read another provider's application, wallet, or earnings.**
-4. **Every money operation is idempotent** (has an idempotency key with a unique constraint).
-5. **Every money operation is atomic** (debit and credit commit together or not at all).
-6. **Balances can never go negative** — enforced by a database constraint, never by application code alone.
-7. **Held funds leave exactly once.** `held = released + refunded + remaining` must always hold.
-8. **The ledger is append-only.** Corrections are new compensating entries. Never UPDATE or DELETE a ledger row.
-9. **The platform never takes custody of money.** See §6.
-10. **All UI is localised into `ar` / `tr` / `en`, with direction derived from the locale at runtime.** No hardcoded user-facing strings, no hardcoded direction, logical properties only. Never case-fold an identifier with a Turkish locale (`I`↔`ı`). See [`i18n.md`](i18n.md).
+1. **Price, commission, and fees are computed on the server.** The client sends answers, never a price.
+   `lib/pricing/` (server only) evaluates structured formula rows; the request stores
+   `pricing_snapshot`; a client supplied price is ignored. Enforced by the server action and a tamper
+   test. *Why:* §1, §20; a tampered price loses money on every job.
+2. **Customer PII is visible only after a paid unlock, and no provider ever reads another provider's
+   data.** RLS on the PII tables requires a `paid` row in `unlock_fees` for that `(request, provider)`;
+   request status `FUNDED` is **not** sufficient. A provider can never read another provider's
+   application, earnings, or balance. Enforced by RLS with negative pgTAP tests, never by hiding a
+   field in React. *Why:* §3, §14, §21; the reveal is what the unlock fee sells.
+3. **No external call in a request path; money state changes only on verified PSP facts.** Money flow
+   is DB transaction → `outbox_events` → relay worker → PSP; the relay is the only mutating caller of
+   `lib/psp`. A payment, refund, or release is recorded only from a verified callback or a server to
+   server lookup, never from a browser redirect. Enforced by lint (single door), the write guard, CI,
+   and callback tests. *Why:* `architecture-review.md` P0-1; an inline call cannot be atomic with the
+   commit.
+4. **Money is integer minor units.** No float or double anywhere money flows, no client side money
+   arithmetic, one rounding step at the documented place in the pricing pipeline. Enforced by the
+   `Money` type, column types, and the write guard. *Why:* D6; float rounding is unacceptable in a
+   ledger.
+5. **`ledger_entries` and `ratings` are append only.** `UPDATE` and `DELETE` are `REVOKE`d at the
+   database level; corrections are new compensating postings; a rating may be hidden, never edited.
+   Enforced by grants and pgTAP. *Why:* `architecture.md` §28; history must be reconstructible.
+6. **Every money operation is idempotent, atomic, and balanced.** Deterministic keys derived from domain
+   ids with a unique constraint; a replay returns the **stored** response; debits and credits commit
+   together or not at all; balances never go negative (database constraint); held funds leave exactly
+   once (`held = released + refunded + remaining`, per `(region, currency)`); **commission is its own
+   ledger leg**, never `escrow = price − commission` as one line. Enforced by the posting function,
+   constraints, property and race tests. *Why:* §6, D20; a double charge or a lost fee is real money.
+7. **RLS enabled + policy written + negative test proving the wrong user is denied, in the same
+   migration and commit as the table.** Default deny; each position adds only its own write path; meta
+   pgTAP tests enumerate every table and function so a new one cannot slip past. *Why:* a missing
+   policy throws no error, it just leaks.
+8. **Never execute an admin authored string.** No `eval`, `new Function`, or dynamic import of admin
+   input. Pricing formulas are structured rows interpreted by our own code. Enforced by the write guard
+   and lint. *Why:* D10; an admin account is not a code execution boundary.
+9. **The platform never holds user funds.** A licensed PSP holds everything (iyzico Marketplace in
+   Turkey); our database is a ledger that mirrors it. No wallet top up, no stored balance;
+   `FEATURE_STORED_BALANCE_WALLET` stays OFF until legal sign off is recorded. *Why:* §6; custody makes
+   the platform a regulated money transmitter.
+10. **Three locales and two regions, by construction.** `ar` (RTL), `tr`, `en`; direction derived from
+    the locale at runtime, never hardcoded; logical properties and semantic tokens only; no hardcoded
+    user facing strings; region is a column on the owning row, never an env var; never case fold an
+    identifier with a Turkish locale (`I`↔`ı`). Enforced by the write guard, `lint:rtl`, the catalogue
+    check, and e2e in all three locales. *Why:* D8, D14, [`i18n.md`](i18n.md).
+11. **`proxy.ts`, never `middleware.ts`; authorization runs in every action.** The proxy is routing and
+    UX only; `requireRole()` runs inside every Server Action and Route Handler, proven by a meta test
+    over every exported action. *Why:* Next 16 silently ignores `middleware.ts`, so route protection
+    would be dead code.
+
+Candidate rules waiting for the owner (Q10): user written content is always rendered escaped,
+including in emails; a secret is read only inside its single door.
 
 ---
 
@@ -179,7 +243,7 @@ Holding customer money in escrow, or holding stored balances in provider wallets
 
 **Therefore:**
 
-- All funds are held by a **licensed PSP** (iyzico in Turkey, PayTabs in Saudi Arabia — see `architecture.md` §5).
+- All funds are held by a **licensed PSP**: iyzico Marketplace in Turkey (D23); the Saudi PSP is chosen before the KSA launch (Q7). See `architecture.md` §5.
 - Providers are onboarded to the PSP as **sub-merchants**; the PSP pays them directly.
 - Escrow "hold" and "release" are **PSP operations we trigger by API**, not money sitting in our account.
 - Our database stores a **ledger that mirrors** the PSP's state. It is a record, not a treasury.
@@ -224,8 +288,14 @@ The unlock fee is charged **per transaction**, either:
 
 ## 8. When you MUST stop and ask the human
 
-Do not guess on these. Stop, state the question, and wait.
+Do not guess on these. Stop, state the question (multiple choice, one recommended option), and wait.
 
+- Something is **not in the brief**, or a decision has **no spec**.
+- A value an action must produce, compute, or display has **no named source** (an input, a column, a
+  derivation, or a prior spec).
+- Two documents disagree and the precedence order in §0 does not settle it.
+- Money, auth, or personal data is touched and the spec is silent on it.
+- The same problem survives one corrective attempt: stop patching and run `/debug` from a reproduction.
 - A task requires **holding user funds** in a platform account, or implementing **wallet top-up / stored balance**.
 - A change would let a provider see **customer PII before unlock**, or see **another provider's data**.
 - You need to **weaken, disable, or bypass an RLS policy** to make something work.
@@ -243,7 +313,7 @@ Do not invent answers. If blocked, use the default and flag it in `progress-trac
 
 | # | Decision | Default until decided |
 | --- | --- | --- |
-| 1 | Target market: Turkey or Saudi Arabia (or both) | Build PSP-agnostic; do not hardcode either |
+| 1 | ~~Target market: Turkey or Saudi Arabia (or both)~~ | ✅ Both, one deployment (D14); Turkey launches first, KSA later (D22). Still never hardcode either |
 | 2 | Unlock fee: flat amount or % band of price | Flat, admin-configurable |
 | 3 | Hold period before auto-release | 72 hours |
 | 4 | Unlock window before request reopens | 24 hours |

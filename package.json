@@ -4,20 +4,25 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.9.0"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "lint:rtl": "node scripts/check-logical-classes.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "node scripts/e2e.mjs",
     "guardrails": "node .claude/evals/guard.test.mjs",
     "db:test": "supabase test db",
     "db:types": "supabase gen types typescript --local > lib/db/database.types.ts",
-    "verify": "npm run guardrails && npm run typecheck && npm run lint && npm run test"
+    "verify": "npm run guardrails && npm run typecheck && npm run lint && npm run lint:rtl && npm run format:check && npm run test",
+    "prepare": "husky"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",
@@ -30,16 +35,37 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "26.2.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.1",
-    "supabase": "^2.114.0",
+    "fast-check": "4.10.2",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "prettier": "3.9.9",
+    "supabase": "2.114.0",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
-    "typescript-eslint": "^8.67.0",
-    "vitest": "4.1.10"
+    "typescript-eslint": "8.67.0",
+    "vitest": "5.0.2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "prettier --write",
+      "eslint --max-warnings=0 --no-warn-ignored"
+    ],
+    "*.{json,css}": "prettier --write"
+  },
+  "overrides": {
+    "playwright-core": "1.63.0"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true,
+    "@swc/core@1.15.47": true,
+    "unrs-resolver@1.12.2": true
   }
 }

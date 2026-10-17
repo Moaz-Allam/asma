@@ -30,9 +30,7 @@ describe('direction is derived from the locale, never hardcoded (Rule 10)', () =
 describe('message catalogues (Rule 10 — no raw key ever reaches a customer)', () => {
   const flatten = (o: Record<string, unknown>, p = ''): string[] =>
     Object.entries(o).flatMap(([k, v]) =>
-      v && typeof v === 'object'
-        ? flatten(v as Record<string, unknown>, `${p}${k}.`)
-        : [`${p}${k}`],
+      v && typeof v === 'object' ? flatten(v as Record<string, unknown>, `${p}${k}.`) : [`${p}${k}`],
     );
 
   it('has every key in all three locales', async () => {

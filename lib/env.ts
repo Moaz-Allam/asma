@@ -40,6 +40,11 @@ const EnvSchema = z.object({
   // Transaction-mode pooler (port 6543) with prepared statements disabled.
   // architecture.md §33: the direct connection is for migrations only, and
   // serverless on a direct connection exhausts Postgres under the launch spike.
+  //
+  // Optional until the first direct Postgres consumer exists (D38): nothing reads
+  // it yet, and requiring it stopped the local stack and the e2e build from
+  // booting without cloud values. When present, a wrong shape is still refused.
+  // The position that adds the consumer makes it required again.
   SUPABASE_DB_POOL_URL: z
     .string()
     .min(1)
@@ -49,12 +54,17 @@ const EnvSchema = z.object({
     })
     .refine((u) => u.includes('pgbouncer=true'), {
       message: 'must set pgbouncer=true so prepared statements are disabled',
-    }),
+    })
+    .optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
 
-function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
+function parseEnv(raw: NodeJS.ProcessEnv = process.env): Env {
+  // An empty value means "not set". The e2e wrapper blanks every documented variable so a
+  // developer's cloud env file can never fill one in; a blank required variable still fails below.
+  const source = Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== '')) as NodeJS.ProcessEnv;
+
   // D14 — region is a COLUMN on the owning row, not a deployment-wide constant.
   // A global here would be trusted as truth and silently mis-scope every query
   // the moment the second market goes live, so its presence is a hard error

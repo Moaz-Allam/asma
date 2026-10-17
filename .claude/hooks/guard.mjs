@@ -2,7 +2,8 @@
 /**
  * PreToolUse guard for Write|Edit|MultiEdit.
  *
- * Enforces the rules from CLAUDE.md that fail SILENTLY in production — a missing
+ * Enforces the rules that never bend (project-overview.md §5, summarised in AGENTS.md) that fail
+ * SILENTLY in production — a missing
  * RLS policy, a float in a ledger, a PSP call in a request path, a leaked secret.
  * Prose in a 4,500-line context directory gets forgotten. A hook does not.
  *
@@ -66,14 +67,16 @@ const RULES = [
     id: 'rls-missing-on-new-table',
     when: (p) => /\.sql$/.test(p),
     check: (text) => {
-      const created = [...text.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?["']?(\w+)/gi)].map(
-        (m) => m[1].toLowerCase(),
-      );
+      const created = [
+        ...text.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?["']?(\w+)/gi),
+      ].map((m) => m[1].toLowerCase());
       if (!created.length) return null;
       const guarded = new Set(
-        [...text.matchAll(/ALTER\s+TABLE\s+(?:public\.)?["']?(\w+)["']?\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi)].map((m) =>
-          m[1].toLowerCase(),
-        ),
+        [
+          ...text.matchAll(
+            /ALTER\s+TABLE\s+(?:public\.)?["']?(\w+)["']?\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi,
+          ),
+        ].map((m) => m[1].toLowerCase()),
       );
       const naked = created.filter((t) => !guarded.has(t));
       return naked.length ? `table(s) without RLS: ${[...new Set(naked)].join(', ')}` : null;
@@ -128,8 +131,7 @@ const RULES = [
     id: 'client-storage-for-trust',
     when: (p) => SOURCE.test(p),
     find: /(?:localStorage|sessionStorage)\.setItem\(\s*['"`][^'"`]*(?:token|auth|session|balance|amount|price|role)/i,
-    why:
-      'localStorage/sessionStorage is not a trust boundary. Auth and money state live in the server session. See ui-rules.md §10.',
+    why: 'localStorage/sessionStorage is not a trust boundary. Auth and money state live in the server session. See ui-rules.md §10.',
   },
 
   // ------------------------------------------------------- framework contracts
@@ -145,8 +147,7 @@ const RULES = [
     id: 'colours-in-tailwind-config',
     when: (p) => /tailwind\.config\.(ts|js|mjs|cjs)$/.test(p),
     find: /colors?\s*:/,
-    why:
-      'Tailwind v4 defines tokens with @theme in app/globals.css. Colours never go in tailwind.config. See ui-tokens.md §11.',
+    why: 'Tailwind v4 defines tokens with @theme in app/globals.css. Colours never go in tailwind.config. See ui-tokens.md §11.',
   },
 
   // -------------------------------------------------------------- i18n (rule 10)
@@ -194,7 +195,7 @@ const RULES = [
         : null;
     },
     why:
-      'Rule 10 + blocker B4: the theme (palette, font, logo, dark mode) is the human\'s to supply, and inventing brand ' +
+      "Rule 10 + blocker B4: the theme (palette, font, logo, dark mode) is the human's to supply, and inventing brand " +
       'values is explicitly forbidden by ui-rules.md §11. This fires most often right after `npx shadcn init`, which ' +
       'writes a full generated palette into globals.css as a side effect. Replace the values with the placeholder token ' +
       'names from ui-tokens.md §12 and mark each line `/* placeholder */`. Token NAMES are stable — when the theme ' +
@@ -235,7 +236,7 @@ function body(input) {
 
 function stripComments(src) {
   // Rules describe code, not prose about code. A doc comment quoting a forbidden
-  // pattern (as CLAUDE.md and the context files do constantly) must not trip.
+  // pattern (as AGENTS.md and the context files do constantly) must not trip.
   return src
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
@@ -257,8 +258,11 @@ process.stdin.on('end', () => {
   const path = String(input.file_path ?? '');
   if (!path) process.exit(0);
 
-  // The agent's own config and the context docs quote these patterns by design.
-  if (/[\\/]\.claude[\\/]|[\\/]context[\\/]|CLAUDE\.md$|AGENTS\.md$/.test(path)) process.exit(0);
+  // The agent's own config, the context docs, and the prose under docs/ (specs, reviews, the brief,
+  // the playbook) quote these patterns by design. Only Markdown under docs/ is exempt: a page.tsx in
+  // a `docs` route is still code and still guarded.
+  if (/[\\/]\.claude[\\/]|[\\/]context[\\/]|(^|[\\/])docs[\\/].*\.md$|CLAUDE\.md$|AGENTS\.md$/.test(path))
+    process.exit(0);
 
   const isWholeFile = payload.tool_name === 'Write';
   const text = stripComments(body(input));

@@ -1,5 +1,9 @@
 # Architecture
 
+v3, 2026-10-17: stack table, regions (Turkey first), §5 PSP wording, §11 folder tree, and §42 single
+doors updated for the playbook adoption. Per position sections are appended at the end as positions
+ship ("Position NN, spec NNNN: …"), so the next position inherits a precedent.
+
 > Read `project-overview.md` first. This file covers **how** we build what that file describes.
 
 ---
@@ -11,13 +15,17 @@
 | Framework | **Next.js (App Router) + TypeScript** | Server Components by default |
 | Styling | **Tailwind CSS** | See `ui-tokens.md` — no arbitrary values |
 | Components | **shadcn/ui** | See `ui-rules.md`. Theme/templates supplied later |
-| Backend | **Supabase** | Postgres, Auth, Storage, Edge Functions, Realtime |
+| Backend | **Supabase** (Pro) | Postgres, Auth, Storage, Edge Functions, Realtime, pg_cron, pg_net, Vault |
 | Database | **PostgreSQL** with **Row-Level Security on every table** | RLS is the security backbone |
 | Validation | **Zod** | One schema per boundary, shared client/server |
-| Hosting | **Vercel** (web) + **Supabase Cloud** (backend) | |
-| Payments | **PSP adapter** — iyzico (TR) / PayTabs (KSA) | See §5. Never call a PSP SDK directly from feature code |
+| Hosting | **Vercel** (web) + **Supabase Cloud** (backend) | Hobby while building, Pro from G3 (D25). Functions pinned to one region near the database (Q6) |
+| Payments | **PSP adapter**: iyzico Marketplace (TR, D23). KSA PSP chosen later (Q7) | See §5. Never call a PSP SDK directly from feature code |
+| Email | **Resend** over plain `fetch`, one door (`lib/email/`) | Position 13. Supabase Auth SMTP also goes through Resend (S5) |
+| Bot check | **Cloudflare Turnstile** | Before OTP send and request posting (position 01) |
+| Errors, analytics | **Sentry**, **PostHog** | Position 00b; §37. Personal data never leaves (scrubbers) |
 
-**Do not add a dependency** without recording it in `library-docs.md` with a justification.
+**Do not add a dependency** without pinning its exact version in the `AGENTS.md` stack table and
+recording its gotchas in `library-docs.md`.
 
 ---
 
@@ -133,8 +141,13 @@ calculation must throw. Do not build multi-currency conversion — it is out of 
 ### Regions — single deployment, `region` discriminator (D14)
 
 **Both regions run from one deployment and one database**, distinguished by a `region` column:
-Turkey (`TR`, TRY, iyzico) and Saudi Arabia (`KSA`, SAR, PayTabs). Chosen for operational simplicity —
-one codebase, one migration run, one place to look.
+Turkey (`TR`, TRY, iyzico) and Saudi Arabia (`KSA`, SAR, PSP to be chosen). Chosen for operational
+simplicity — one codebase, one migration run, one place to look.
+
+> **Turkey launches first (D22, 2026-10-17).** KSA stays in the schema with `regions.active = false`
+> until a Saudi PSP is chosen (Q7). Nothing may hardcode Turkey: turning KSA on must be a data change
+> plus its PSP adapter, never a rewrite. The `regions` seed still says `paytabs` for KSA; that value is
+> revisited when Q7 is answered.
 
 **An account belongs to exactly one region.** A person operating in both markets creates a second,
 separate account. This is the decision that keeps the money model simple, and it is load-bearing:
@@ -205,7 +218,10 @@ CREATE UNIQUE INDEX one_escrow_per_request ON escrows (request_id);
 
 ## 5. PSP adapter (important)
 
-The target market is **not yet decided** (Turkey vs Saudi Arabia). **Never call a PSP SDK from feature code.** All payment work goes through one interface.
+Turkey launches on **iyzico Marketplace** (D23): sub-merchants, split payment, and the approval call
+that releases held funds. The Saudi PSP is chosen later (Q7). **Never call a PSP SDK from feature
+code.** All payment work goes through one interface, and a fake implementation sits behind it for
+tests and local work (refused on deployments, §42).
 
 ```ts
 // lib/psp/types.ts
@@ -220,11 +236,13 @@ export interface PaymentProvider {
 }
 ```
 
-- Implementations live in `lib/psp/iyzico/` and `lib/psp/paytabs/`.
-- **Both are live at once** (D14 — one deployment, two regions). The implementation is selected from
-  `regions.psp_provider` for **the row being processed**, never from an env var. Feature code calls
-  `getPaymentProvider(region)` and knows nothing about which one it got.
-- Credentials are per PSP: `IYZICO_*` and `PAYTABS_*`. There is no `PSP_PROVIDER` global.
+- Implementations live in `lib/psp/iyzico/` (and the Saudi PSP's folder once Q7 is answered), plus
+  `lib/psp/fake/` for tests and local work.
+- **Several can be live at once** (D14 — one deployment, two regions); at launch only iyzico is. The
+  implementation is selected from `regions.psp_provider` for **the row being processed**, never from
+  an env var. Feature code calls `getPaymentProvider(region)` and knows nothing about which one it got.
+- Credentials are per PSP: `IYZICO_*` (and the Saudi PSP's prefix later). There is no `PSP_PROVIDER`
+  global.
 - Build against the interface. If a provider lacks a capability, **STOP and ask** — do not silently degrade.
 
 **What both providers give us:** funds held by the PSP, split payment with commission, hold-and-release triggered by our API call, sub-merchant onboarding and payouts.
@@ -321,33 +339,50 @@ A scheduled job asserts `held = released + refunded + remaining` across all escr
 
 ```
 /
-│  ✅ = built (feature 01) · everything else is the target layout, not yet created.
+│  ✅ = built · everything else is the target layout, not yet created.
 │
 ├── .gitignore                              ✅ NOTES.md, .env*, .next, node_modules
-├── .nvmrc                                  ✅ node 22
-├── package.json                            ✅ exact-pinned deps; `npm run verify` = the whole chain
+├── .nvmrc                                  ✅ node 24
+├── .npmrc                                  ✅ save-exact=true
+├── package.json                            ✅ exact-pinned deps; `npm run verify` = the local chain
 ├── tsconfig.json                           ✅ strict + noUncheckedIndexedAccess; `@/*` alias
 ├── next.config.ts                          ✅ next-intl plugin; no `eslint` key (removed in Next 16)
 ├── postcss.config.mjs                      ✅ Tailwind v4 via PostCSS; no tailwind.config by design
-├── eslint.config.mjs                       ✅ flat config; ESLint pinned to 9.x — see progress-tracker
+├── eslint.config.mjs                       ✅ flat config, single door rules (§42); ESLint pinned to 9.x
+├── .prettierrc.json, .prettierignore       ✅ formatting; Markdown excluded
+├── .husky/pre-commit                       ✅ lint-staged: format + lint changed files
 ├── vitest.config.ts                        ✅ `@/` alias + server-only stub
+├── playwright.config.ts                    ✅ 390px, projects ar · tr · en
 ├── instrumentation.ts                      ✅ calls getEnv() once at server boot = real fail-fast
-├── CLAUDE.md                               → Agent rules + task-to-doc routing. Always loaded
-├── AGENTS.md                               → Cross-tool pointer to CLAUDE.md; skill + MCP inventory
-├── SETUP.md                                → Human-only setup steps, sequenced by what they unblock
-├── .env.example                            → Every variable, secret-classified. No global APP_REGION
+├── AGENTS.md                               ✅ Entrypoint: status, stack, commands, rules, loop, skills, MCP
+├── CLAUDE.md                               ✅ One line: @AGENTS.md
+├── test-preferences.json                   ✅ Read by /test
+├── .env.example                            → Every variable name, secret-classified. No global APP_REGION
 ├── .mcp.json                               → context7 · supabase · playwright
 ├── .claude/
-│   ├── settings.json                       → Hooks + permission rules
-│   ├── hooks/guard.mjs                     → PreToolUse: 18 silent-failure rules
-│   ├── hooks/session-context.mjs           → SessionStart: phase, blockers, standing facts
-│   ├── evals/guard.test.mjs                → Regression suite for the guards themselves
-│   ├── skills/                             → architect · review · recover · remember · imprint
-│   └── tools/docx-to-md.py                 → Convert context/docs/*.docx on demand
+│   ├── settings.json                       ✅ Deny and ask rules + hook wiring
+│   ├── hooks/guard.mjs                     ✅ PreToolUse Write|Edit: 20 content rules
+│   ├── hooks/guard-bash.mjs                ✅ PreToolUse Bash|PowerShell: dangerous commands, exit 2
+│   ├── hooks/format-on-write.mjs           ✅ PostToolUse: Prettier on code files
+│   ├── hooks/session-context.mjs           ✅ SessionStart: status, blockers, next position
+│   ├── evals/guard.test.mjs                ✅ Regression suite for the write guard
+│   ├── agents/                             ✅ slice-reviewer · security-reviewer
+│   ├── skills/                             ✅ workflow skills + vendored skills (see AGENTS.md)
+│   ├── launch.json                         ✅ asma-dev preview config
+│   └── tools/docx-to-md.py                 ✅ Convert the owner's .docx/.xlsx on demand
 ├── .github/
 │   ├── dependabot.yml                      ✅ weekly npm PRs; eslint held at 9.x deliberately
-│   └── workflows/ci.yml                    ✅ guardrails · typecheck · lint · test · catalogues · pgTAP
-├── specs/<NN>-<slug>/plan.md               → /architect output. The contract /review checks against
+│   └── workflows/ci.yml                    ✅ three jobs: checks · database · e2e
+├── docs/
+│   ├── brief/                              → The owner's brief, verbatim, numbered (S12)
+│   ├── specs/NNNN-title(.md | /index.md)   ✅ /architect output. The contract a position is checked against
+│   ├── reviews/                            ✅ Dated verify, review, security, cross check reports
+│   ├── design/                             → Design references and the screen → page mapping (S13)
+│   └── engineering-approach.md             ✅ The playbook (methodology), verbatim
+├── scripts/
+│   ├── check-logical-classes.mjs           ✅ `npm run lint:rtl`
+│   └── e2e.mjs                             ✅ `npm run test:e2e` wrapper: local values, never cloud
+├── e2e/                                    ✅ Playwright journeys at 390px in ar · tr · en
 ├── context/
 │   ├── project-overview.md                 → What and why. Business rules, stop-and-ask
 │   ├── architecture.md                     → This file. Schema, trust boundaries, outbox, pricing
@@ -361,8 +396,8 @@ A scheduled job asserts `held = released + refunded + remaining` across all escr
 │   ├── progress-tracker.md                 → Living state. Read at session start
 │   ├── architecture-review.md              → The v5 corrections in full (P0-1…P0-6)
 │   ├── contradictions.md                   → 13 doc conflicts, all fixed. Kept as a record
-│   ├── open-questions.md                   → Gaps, ambiguities, unstated assumptions
-│   └── docs/                               → Human-authored .docx/.xlsx originals (agent cannot read)
+│   ├── open-questions.md                   → Archive of gaps G1–G27 and their resolutions
+│   └── feature-notes-v2.md                 → Old per feature notes, verbatim: spec seeds
 ├── app/
 │   ├── globals.css                         ✅ Tailwind v4 @theme tokens — the ONLY token definition
 │   ├── [locale]/                           → EVERY user-facing route lives under here. ar | tr | en
@@ -1437,3 +1472,26 @@ admin/PSP-facing, none of it on the public profile.**
 Build the seam and the outbox event types now — they are cheap and they prevent a refactor. Do **not**
 implement clearance until the agent position is confirmed, because the answer changes what gets
 invoiced, not just how.
+
+---
+
+## 42. Single doors (v3, 2026-10-17)
+
+Every risky integration lives behind **one module with an adapter interface**. Only that module may
+import the SDK or read the secret. A fake implementation sits behind the same interface for tests and
+local work and **refuses to run on a deployment** (`isDeployment()`, position 00b): there, a missing
+secret or a fake adapter is a boot error. Email is the one exception that degrades with a warning.
+
+| Door | Module | Only it may | Status |
+| --- | --- | --- | --- |
+| PSP mutations | `lib/psp/` (called only by the outbox relay) | Import a PSP SDK or call its API; read `IYZICO_*` | Lint rule active; module lands in 08 |
+| Service role client | `lib/db/admin.ts` | Read `SUPABASE_SERVICE_ROLE_KEY`; bypass RLS (webhooks and cron only) | Lint rule active |
+| Supabase clients | `lib/db/` | Import `@supabase/supabase-js` and `@supabase/ssr` | Lint rule active |
+| Email | `lib/email/` | Call Resend; read the email API key | Rule added in 13 |
+| Bot check | `lib/turnstile/` | Call siteverify; read the Turnstile secret | Rule added in 01 |
+| Errors, analytics | `lib/observability/`, `lib/analytics/` | Import the Sentry and PostHog SDKs; hold the scrubbers | Rules added in 00b |
+
+**Enforcement, lowest layer first:** ESLint `no-restricted-imports` and `no-restricted-syntax` in
+`eslint.config.mjs` (secrets matched as identifier, string literal, and template text), each rule proven
+to fire by `tests/lint/eslint-rules.test.ts`; the write guard and the CI grep keep the older checks as a
+second layer. A new door adds its lint rule and its proof in the same change that creates the module.
