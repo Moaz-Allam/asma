@@ -91,13 +91,31 @@ const env = {
   ...localSupabase(),
 };
 
-const reusable = reuse && existsSync(MARKER) && existsSync(join(root, '.next', 'BUILD_ID'));
+function buildId() {
+  const file = join(root, '.next', 'BUILD_ID');
+  return existsSync(file) ? readFileSync(file, 'utf8').trim() : null;
+}
+
+// Reuse only the exact build this wrapper made. A later plain `npm run build` changes the BUILD_ID,
+// and that build may carry values from a developer's env file, so it is never reused.
+function lastE2eBuildId() {
+  try {
+    return JSON.parse(readFileSync(MARKER, 'utf8')).buildId ?? null;
+  } catch {
+    return null;
+  }
+}
+const current = buildId();
+const reusable = reuse && current !== null && current === lastE2eBuildId();
 if (reusable) {
   console.log('e2e: reusing the last e2e build.');
 } else {
   const build = run('npx', ['next', 'build'], env);
   if (build.status !== 0) process.exit(build.status ?? 1);
-  writeFileSync(MARKER, JSON.stringify({ builtAt: new Date().toISOString(), by: 'scripts/e2e.mjs' }));
+  writeFileSync(
+    MARKER,
+    JSON.stringify({ buildId: buildId(), builtAt: new Date().toISOString(), by: 'scripts/e2e.mjs' }),
+  );
 }
 
 const test = run('npx', ['playwright', 'test', ...passThrough], env);

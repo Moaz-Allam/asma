@@ -167,7 +167,7 @@ Add here as you hit them; the human answers.
 | --- | --- | --- |
 | 1 | Brand colour palette | ⏳ awaiting |
 | 2 | Arabic-capable font family | ⏳ awaiting |
-| 3 | Logo and favicon assets | 🟡 **Partly answered 2026-10-17 (D40).** Name **Aldebyani**, slogan **Aldebyani Home Care**. The round logo (blue disc, yellow buildings and swoosh, white "ALDEBYANI / HOME CARE", cleaner figure) is the **browser favicon**. The **navbar logo is the word "Aldebyani" only**, set in **Archivo Black** (D43, OFL, self hosted with `next/font/google`), the closest free match to the logo's wordmark. Waiting on Q11: the logo source file in `docs/design/brand/` (for the favicons), the Arabic spelling. The logo's colours are **not** tokens until the design handoff confirms the palette (row 1) |
+| 3 | Logo and favicon assets | ✅ **Answered 2026-10-17 (D40, D43, D44).** Logo: `docs/design/logo.jpg`; favicons generated into `app/` (see `docs/design/README.md`). The name is written exactly **Aldebyani** in every locale, never transliterated. Original notes: Name **Aldebyani**, slogan **Aldebyani Home Care**. The round logo (blue disc, yellow buildings and swoosh, white "ALDEBYANI / HOME CARE", cleaner figure) is the **browser favicon**. The **navbar logo is the word "Aldebyani" only**, set in **Archivo Black** (D43, OFL, self hosted with `next/font/google`), the closest free match to the logo's wordmark. The logo's colours are **not** tokens until the design handoff confirms the palette (row 1) |
 | 4 | Dark mode in scope for v1? | ⏳ awaiting |
 | 5 | Colours for `success`/`warning`/`pending` in the brand palette | ⏳ awaiting |
 

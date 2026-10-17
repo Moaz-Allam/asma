@@ -33,6 +33,20 @@ test('the landing page renders in its locale, with the right direction, and fits
   expect(scan.violations).toEqual([]);
 });
 
+test('the brand icons are served and linked (D40)', async ({ page }, testInfo) => {
+  await page.goto(`/${testInfo.project.name}`);
+  for (const [rel, path] of [
+    ['icon', '/favicon.ico'],
+    ['icon', '/icon.png'],
+    ['apple-touch-icon', '/apple-icon.png'],
+  ] as const) {
+    await expect(page.locator(`head link[rel="${rel}"][href^="${path}"]`)).toHaveCount(1);
+    const response = await page.request.get(path);
+    expect(response.status(), path).toBe(200);
+    expect(response.headers()['content-type'], path).toMatch(/^image\//);
+  }
+});
+
 test('the bare root negotiates a locale prefix (D19)', async ({ page }, testInfo) => {
   await page.goto('/');
   await expect(page).toHaveURL(new RegExp(`/${testInfo.project.name}$`));

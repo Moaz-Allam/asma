@@ -5,6 +5,22 @@
 Put the exported screens, brand masters (logo files, colour values, fonts), and any reference
 screenshots here. Then fill the mapping below, so every page spec can say where its design comes from.
 
+## Brand masters
+
+| File | What | Notes |
+| --- | --- | --- |
+| `logo.jpg` | The Aldebyani logo, supplied by the owner (807 × 807 JPEG, white corners) | Source for every icon below. Never edit it; add a new version beside it |
+
+**Generated from `logo.jpg` on 2026-10-17** (D40) with `sharp` (already installed with Next), no other tool:
+
+| Output | How |
+| --- | --- |
+| `app/favicon.ico` | Circle masked (radius 99% of half the width, so the JPEG's white rim does not show as a halo), PNG frames at 16, 32, 48 px in one ICO container |
+| `app/icon.png` | Same circle mask, 512 × 512, transparent corners, palette PNG |
+| `app/apple-icon.png` | The logo as supplied (white corners: iOS fills transparency with black), 180 × 180 |
+
+The navbar wordmark is the word **Aldebyani** in Archivo Black (D43), not an image.
+
 ## Rules
 
 - Copy layout and component shapes from the references. **Colours, fonts, radius, and spacing come

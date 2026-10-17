@@ -35,7 +35,8 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 ## Stack (pinned exactly)
 
 `.npmrc` sets `save-exact=true`. **Never add a dependency without pinning its exact version and
-recording it here.**
+recording it here.** Install scripts run only for packages listed per version in `package.json`
+`allowScripts` (D45); a version bump needs the script reviewed again before `npm install-scripts approve`.
 
 | Layer | Package · version | Why this version |
 | --- | --- | --- |
@@ -279,7 +280,8 @@ branch prefix: feat/
 commit: per-milestone
 ```
 
-- One position = one branch = one PR, named after the position (`feat/01-sign-in`). Base: `master`.
+- One position = one branch = one PR, named after the position (`feat/01-sign-in`). Base: `master`,
+  which is protected: `checks`, `database`, `e2e` must pass and the branch must be up to date (D46).
 - Conventional Commits. Commit or push only when the owner asks; a per milestone commit is an offer,
   never automatic. Never force push. Never commit `.env*` except `.env.example`.
 - Long messages: write to a file, `git commit -F <file>`.

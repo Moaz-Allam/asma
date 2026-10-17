@@ -46,6 +46,9 @@ Dated bullets, newest at the bottom.
   includes the new function grant meta tests) and gitleaks; both run in CI. Nothing committed yet.
   `playwright-core` pinned to 1.63.0 with an npm override (axe had pulled 1.64.1). The dev server
   refuses to boot because `.env.local` holds a malformed `SUPABASE_DB_POOL_URL` (S19).
+- **2026-10-17** · PR #17 CI green on all three jobs (first gitleaks and function grant meta test runs
+  passed). `master` protection on (D46). Install scripts approved (D45). Favicons generated from the
+  owner's logo (D44); e2e now 9/9, including icons linked and served in every locale.
 
 ---
 
@@ -85,6 +88,9 @@ struck through, with the replacement named.
 
 | # | Date | Decision | By | Where |
 | --- | --- | --- | --- | --- |
+| D46 | 2026-10-17 | `master` protected: the `checks`, `database`, `e2e` jobs are required (bound to GitHub Actions), branches must be up to date before merging, force pushes and deletion blocked. Admins are not enforced, so the owner keeps an explicit bypass (S14) | Owner (asked in chat) | GitHub settings |
+| D45 | 2026-10-17 | npm install scripts approved for `@parcel/watcher` 2.6.0, `@swc/core` 1.15.47, `unrs-resolver` 1.12.2 after review (each is a no op unless the native binary is missing). npm records them per version in `package.json` `allowScripts`, so any version bump needs a fresh review | Owner (asked in chat) | `package.json`, `AGENTS.md` |
+| D44 | 2026-10-17 | **The name is written exactly "Aldebyani" in every locale**, `ar` included (no Arabic transliteration). The slogan stays as written, "Aldebyani Home Care", in all three locales unless the owner asks for a translation. Favicons generated from `docs/design/logo.jpg` | Owner | `messages/*.json`, `docs/design/README.md` |
 | D43 | 2026-10-17 | **Navbar wordmark font: Archivo Black** (OFL), self hosted through `next/font/google` (no third party requests at runtime), the closest free match to the logo's heavy grotesque. Replaced by an SVG wordmark only if the owner supplies one. Built with the app shell in position 01 | Owner | ui-tokens §10 |
 | D42 | 2026-10-17 | Priority line confirmed (D35): correct money and private data > core journey end to end in three locales > design polish > extra features | Owner | `AGENTS.md`, project-overview §1 |
 | D41 | 2026-10-17 | **Build plan v3 confirmed as drafted**: 22 positions (16 P0), gates G0–G3, the cut list, the target schedule to 2026-11-07. Bootstrap ships as branch `chore/playbook-bootstrap` + PR | Owner | `build-plan.md` |
@@ -161,7 +167,7 @@ question moves to the decision log and is struck through here.
 | # | Question | Blocks |
 | --- | --- | --- |
 | ~~Q2~~ | ~~Confirm the build order~~ → resolved by D41 | — |
-| Q11 | **Brand assets (D40).** (a) Put the logo source file in `docs/design/brand/` (an attached chat image cannot be saved by the agent) so the favicons can be generated; ~~(b) wordmark font~~ → Archivo Black (D43); (c) the Arabic spelling of the name, and whether the slogan is translated in `ar`/`tr` | Favicon, `messages` brand strings |
+| ~~Q11~~ | ~~Brand assets~~ → resolved by D43 (wordmark font) and D44 (logo file, favicons, exact name) | — |
 | ~~Q1~~ | ~~Confirm the priority line~~ → resolved by D42 | — |
 | Q4 | **Sign in channel at launch.** Email OTP through Resend SMTP (no extra cost; recommended for the 3 weeks) or phone SMS OTP (needs a paid SMS provider; D16 assumed phone identity). Asked again in the 01 spec interview | Spec for 01 |
 | Q5 | **Sentry and PostHog data region:** EU (recommended: nearest to TR, GDPR grade) or US | S7, S8, 00b |
@@ -198,7 +204,7 @@ them.
 | S11 | **Docker Desktop** (optional): install and start it so `npm run db:test` and `npm run test:e2e` run locally. CI runs both regardless | — | Local runs only | ☐ |
 | S12 | **Import the brief.** Put the original brief files (the `.docx` / `.xlsx` that used to be in `context/docs/`) into `docs/brief/`, or tell me where they are | Converts them with numbered sections | Precedence level 4 | ☐ |
 | S13 | **Design handoff (B4).** Export the Claude Design screens, logo, colours, fonts into `docs/design/` and say which screen is which page | Records tokens with a contrast table; maps screens | UI layer from 01 | ☐ (~2026-10-19) |
-| S14 | **Branch protection.** GitHub → Settings → Branches → rule for `master`: require the `checks`, `database`, `e2e` jobs; block force pushes | — | Protects merges | ☐ |
+| S14 | **Branch protection.** GitHub → Settings → Branches → rule for `master`: require the `checks`, `database`, `e2e` jobs; block force pushes | — | Protects merges | ✅ 2026-10-17, done by the agent at the owner's request (D46) |
 | S15 | **Close the stale dependabot PR** (TypeScript 5.9.3 → 7.0.2; CI rejected it) | — | — | ☐ |
 | S16 | **Legal (B2, B9, B10).** Custody confirmation; agent position; authoritative language; T&C (the service contract is customer to provider; we are intermediary and payment facilitator), privacy notice (KVKK), provider agreement with a data processing clause | Builds the legal pages | G3 | ☐ |
 | S17 | **Catalog data (B5, B6).** Launch categories; per category: questions (key, type, options, required, validation), labels in `ar`/`tr`/`en`, base price, modifiers, zones and multipliers; TR commission %, unlock fee, windows. Start with home cleaning | Seeds through admin UI, never invented | 03 content, G3 | ☐ |
