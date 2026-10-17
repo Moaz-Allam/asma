@@ -1,510 +1,279 @@
 # Progress Tracker
 
-> **The living state of the project.** Read this at the start of every session; update it at the end of every task.
-> This is how context survives between sessions. If it isn't written here, the next session doesn't know it.
+v3, 2026-10-17, restructured to the playbook's five parts (`docs/engineering-approach.md` §18). Read
+at the start of every session, update at the end. If it is not written here, the next session does
+not know it.
 
-**Last updated:** 2026-08-18
-**Current phase:** Phase 1 — Foundation (01 ✅ · 45 ✅ · next 02)
-**Overall status:** 🟡 Phase 1 in progress — 01 and 45 closed, CI green
-
----
-
-## 1. Session start checklist
-
-- [ ] Read `project-overview.md` (model + non-negotiables)
-- [ ] Read this file: current phase, open blockers, recent decisions
-- [ ] Check §4 Blockers — is anything waiting on the human?
-- [ ] Pick the next unchecked task in `build-plan.md` for the current phase
-- [ ] Re-read the doc relevant to that task (`architecture.md` / `code-standards.md` / `ui-rules.md`)
-
-## 2. Session end checklist
-
-- [ ] Phase progress table updated
-- [ ] Any decision made → §5 Decision Log
-- [ ] Anything needing the human → §4 Blockers
-- [ ] Design gap → §7 Design Questions
-- [ ] PSP fact confirmed → §6
-- [ ] §8 Handoff Notes written for the next session
-- [ ] `Last updated` date changed
+**Last updated:** 2026-10-17
+**Phase:** Bootstrap done (playbook adopted) · position 00 ✅ · next 00b
+**Status:** 🟡 Build plan v3 confirmed (D41); bootstrap PR open, waiting for CI and merge
+**Next:** Merge the bootstrap PR on green CI → `/architect` position 00b (scaffold completion)
 
 ---
 
-## 3. Phase progress
+## 1. Current state
 
-Legend: 🔴 not started · 🟡 in progress · 🟢 done · ⛔ blocked
+Dated bullets, newest at the bottom.
 
-| Phase | Status | Gate passed? | Notes |
-| --- | --- | --- | --- |
-| 0 — Foundations | 🟢 | ☑ | Feature 01 built and verified 2026-08-18 |
-| 1 — Identity and roles | 🟡 | ☐ | 01 ✅ · 45 ✅. Next: 02 → 50 → 03 → 04 |
-| 2 — Catalog and pricing | 🔴 | ☐ | |
-| 3 — Requests and applications | 🔴 | ☐ | |
-| 4 — Money core | 🔴 | ☐ | **Do not start Phase 5 until all 3 gate tests pass** |
-| 5 — Unlock, escrow, release | 🔴 | ☐ | |
-| 6 — Completion, ratings, admin | 🔴 | ☐ | |
-| 7 — Hardening and launch | 🔴 | ☐ | |
-
-### Current phase detail
-
-**Phase 0 — Foundations**
-
-| Task | Status | Notes |
-| --- | --- | --- |
-| Next.js + TS + Tailwind, strict | 🟢 | Next 16.3.1 · React 19.2.8 · TW 4.3.3, pinned exact |
-| shadcn/ui init (primitives only) | ⏸ | Deferred — init writes a brand palette, blocked on B4. See spec §Most likely failure mode |
-| Three locales, derived direction | 🟢 | ar/tr/en; verified in prerendered HTML |
-| Supabase wired, typed clients | 🟢 | `lib/db/{client,server,admin}.ts` ✅. Project `syrhavojjpabwwcaezee` created, linked, `.env.local` filled. **Nothing pushed to the remote yet** — local + CI only |
-| Env schema + `.env.example` | 🟢 | Zod, fail-fast via instrumentation.ts; rejects APP_REGION (D14) |
-| Deny-by-default RLS in migration template | 🟢 | supabase/migrations/*.sql.example |
-| Zod setup | 🟢 | lib/validation/index.ts |
-| Test runner + first RLS test | 🟢 | vitest 27 tests; pgTAP "RLS enabled everywhere" |
-| CI: typecheck, lint, test | 🟢 | 6 jobs. **Ran and passed on the first push** (run 32118566578) |
-| Repo + CI | 🟢 | `github.com/Moaz-Allam/asma`. CI ran and passed. **No code-owner gate (D18, solo)** |
-| Automated dependency PRs | 🟢 | `.github/dependabot.yml`; eslint held at 9.x deliberately |
-| 45 Multi-region foundation | 🟢 | `regions` + `platform_settings` with RLS. **pgTAP ran for real in CI** (run 32129285600 — migration applied, 16 assertions across 2 files, all passed). Seed matches `lib/region`, asserted by a unit test. CI region-column gate proven on a bad fixture |
+- **2026-08-17** · Docs prepared (overview, architecture, build plan, standards, UI docs). Market
+  decided: both regions in one deployment (D14), three locales (D8). Gaps G1–G27 catalogued in
+  `open-questions.md`; resolutions accepted (D11 and later decisions).
+- **2026-08-18** · Position 00, part one (old feature 01): Next 16.3.1, three locales with derived
+  direction, `proxy.ts`, Zod env schema with fail fast boot, Supabase clients, pgTAP "RLS enabled
+  everywhere", CI (run 32118566578 green). CODEOWNERS removed (D18).
+- **2026-08-18** · Position 00, part two (old feature 45): `regions` + `platform_settings` with RLS,
+  16 pgTAP assertions, the CI check that rejects a domain table without `region` (run 32129285600).
+- **2026-08-18** · D20: postings are tax shape neutral, so B9 gates only invoicing and refund fee
+  absorption. B3 split by how each fact is obtainable; B11 raised as the priority business check.
+- **2026-10-17** · **Playbook adopted** (bootstrap). Done: `AGENTS.md` entrypoint with `CLAUDE.md` as a
+  one line pointer; `docs/` layout (brief, specs 0001–0003 moved in, reviews, design,
+  `engineering-approach.md`); rules canonical in `project-overview.md` §5; build plan v3 (positions,
+  gates G0–G3, cut list, schedule to 2026-11-07); this tracker restructured; `SETUP.md` folded into
+  §5 owner steps; four old skills retired; resend, react-email, Turnstile reference vendored and
+  the Supabase skills re-pinned; harness (deny and ask rules, bash guard, format hook, review agents,
+  launch config); quality tooling (Prettier, husky, lint-staged, Vitest 5, Playwright in three
+  locales, fast-check, axe, lint enforced doors, `lint:rtl`, meta pgTAP tests, gitleaks, three CI
+  jobs). Test counts are in §8.
+- **2026-10-17** · Found: the Supabase CLI login sees only project `alqafila` and the claude.ai
+  Supabase connector only `Jawla`. Neither sees `syrhavojjpabwwcaezee` (R1, S6). Owner: the remote
+  projects for Aldebyani are not created yet; connect the right accounts when they are (D40).
+- **2026-10-17** · Brand recorded (D40): Aldebyani, slogan "Aldebyani Home Care"; `App.name` and the
+  landing title updated in all three catalogues (Arabic spelling and slogan translation pending, Q11).
+- **2026-10-17** · Bootstrap verified locally: `npm run verify` green (write guard 41/41, typecheck,
+  lint with the single door rules, `lint:rtl`, Prettier, **127 unit tests in 10 files**: unit, money
+  property tests, lint rule proofs, bash guard, `lint:rtl`); `next build` green; **e2e 6/6** (ar, tr, en
+  at 390px with axe, through `scripts/e2e.mjs`, no database). Not run locally: pgTAP (needs Docker;
+  includes the new function grant meta tests) and gitleaks; both run in CI. Nothing committed yet.
+  `playwright-core` pinned to 1.63.0 with an npm override (axe had pulled 1.64.1). The dev server
+  refuses to boot because `.env.local` holds a malformed `SUPABASE_DB_POOL_URL` (S19).
 
 ---
 
-## 4. Blockers — waiting on the human
+## 2. Blockers and risks
 
-> Anything here stops the related work. Do **not** guess and proceed.
+> Anything open here stops the related work. Do **not** guess and proceed. The B rows stay open until
+> the owner supplies the answer (owner's standing instruction).
 
-| # | Blocker | Blocks | Raised | Status |
+| # | Blocker or risk | Blocks | Mitigation meanwhile | Status |
 | --- | --- | --- | --- | --- |
-| B1 | ~~Target market: Turkey or Saudi Arabia (or both)?~~ | — | at handover | ✅ **RESOLVED 2026-08-17: BOTH**, in **one deployment** separated by a `region` column (D14) — TR (TRY, iyzico) and KSA (SAR, PayTabs). Three locales in each. An account belongs to exactly one region. See `i18n.md` |
-| B2 | **Legal sign-off on money custody model.** Confirm the platform never holds funds and no licence is required | Phase 7 release gate | at handover | ⏳ open |
-| B3 | **PSP sandbox + the six facts.** Split 2026-08-18: **four are answerable in a free self-serve sandbox** (individual sub-merchant? · sub-merchant types and required fields · webhook signature scheme and event id · partial refund while held). Only **two need asking**: max hold duration, and the real per-card processing fee. Design to the worst plausible answer meanwhile — `psp_max_hold_hours` in `platform_settings` with an invariant alert — so nothing waits | Phase 4 | at handover | ⏳ open — **sandbox path available now** |
-| B11 | 🔴 **CAN AN INDIVIDUAL BE A SUB-MERCHANT?** Answer this week, before more building. It is a **business-model check, not a Phase 4 detail**: if individuals cannot onboard in KSA or TR, that region needs a different provider structure entirely — and four more phases would otherwise be built on the assumption. Answerable free in the PSP sandbox | **The provider model itself** | 2026-08-18 | ⏳ open — **priority** |
-| B4 | **shadcn theme, brand colours, fonts, templates** | Styling (structure can proceed) | at handover | ⏳ open |
-| B5 | **Pricing formula specifics** — for each category: the question list, types, options, base price, and modifier values | Phase 2 (07a–07c) | at handover | ⏳ open |
-| B7 | **Public quality claim wording** — must be backed by a computed acceptance rate or a verifiable criterion. Do not ship "top 1%" unsubstantiated | 34 | v4 | ⏳ open |
-| B8 | **Legacy provider job counts + past customer list** for the launch migration | 35 | v4 | ⏳ open |
-| B6 | **Category list for launch** — which categories, and each one's questions | Phase 2 (07a) | at handover | ⏳ open |
-| B10 | **Legally authoritative language for T&C and provider agreements.** Three locales ship, but one text must govern in a dispute. Also decides whether translations carry a "for convenience only" notice | T&C copy; provider signup | 2026-08-17 | ⏳ open |
-| B9 | **Professional confirmation of the AGENT position (D12).** We set the price server-side and control matching — both are classic *principal* indicators, even though we never hold funds. Being wrong means VAT owed on the full job price, not just our fees. **Scope narrowed by D20:** the postings are shape-neutral, so this now gates only **49** (who absorbs the PSP fee on refund) and **51** (invoicing scope) — not 14/38/39. Free signal first: ask both PSPs' compliance teams, who onboard marketplaces in this exact position daily | Features 49, 51; Phase 7 release gate | 2026-08-17 | ⏳ open — **narrowed 2026-08-18** |
+| B1 | ~~Target market~~ | — | — | ✅ RESOLVED 2026-08-17: both regions, one deployment (D14). Narrowed 2026-10-17: Turkey launches first, KSA later (D22) |
+| B11 | 🔴 **Can an individual be a sub-merchant?** A business model check: if individuals cannot onboard, the provider structure changes | 02 (sub-merchant data), 08–12 | Evidence: iyzico's marketplace docs list three sub-merchant types including `PERSONAL`. Not confirmed: run it in the sandbox (S1) | ⏳ open, priority |
+| B3 | **PSP facts.** Sandbox answerable: sub-merchant types and fields, callback signature scheme and event id, partial refund while unapproved, approval API shape. Must ask: max hold duration, real per-card fee (§7) | 08–12 | Design to the worst case: `psp_max_hold_hours` in `platform_settings` plus an invariant alert | ⏳ open; sandbox path available (S1, S2) |
+| B4 | **Brand: theme, colours, fonts, logo, templates**, plus: Arabic capable font, dark mode in v1? | UI layer from 01 (structure can proceed on placeholder tokens) | Claude Design handoff expected around 2026-10-19 (S13) | ⏳ open |
+| B5 | **Pricing formula specifics** per category: questions, types, options, base price, modifiers | 03 content, G3 | The engine is generic; build it against test fixtures, never invented data | ⏳ open |
+| B6 | **Launch categories** and each one's questions | 03 content, G3 | Same as B5; start with one worked category (home cleaning) | ⏳ open |
+| B2 | **Legal sign off on the custody model**: the platform never holds funds and needs no licence | G3 | None; owner track S16 | ⏳ open |
+| B9 | **Professional confirmation of the agent position (D12)** | 20 (invoicing), refund fee absorption, G3 | D20 keeps the ledger shape neutral, so the money core is not blocked | ⏳ open, narrowed 2026-08-18 |
+| B10 | **Legally authoritative language** for T&C and provider agreements | T&C copy, provider signup, G3 | None; owner track S16 | ⏳ open |
+| B7 | **Public quality claim wording**, backed by a computed rate or verifiable criterion | Public copy, 19 | Ship no claim until decided | ⏳ open |
+| B8 | **Legacy provider job counts and past customer list** for the reputation migration | 19 (Q9) | Not in P0 | ⏳ open |
+| R1 | **Remote projects not created yet; wrong accounts signed in.** The Supabase, Vercel, Sentry, and PostHog projects for Aldebyani do not exist yet (owner, 2026-10-17). The Supabase CLI sees only `alqafila` and the claude.ai connector only `Jawla` (other work); the old ref `syrhavojjpabwwcaezee` in `supabase/.temp` is unverified | Any cloud push, connector use, previews (G0) | The owner creates the projects (S3, S6, S7, S8), then connects the right accounts. Before any push, `npx supabase projects list` must show the Aldebyani project as linked. Each connector stays off limits until it shows the Aldebyani project | ⏳ open |
+| R2 | **Deadline.** P0 is 16 positions in 19 days; owner tracks are on the critical path | Launch date | Cut list decided in advance (`build-plan.md`); replan honestly at each gate | ⏳ watching |
+| R3 | **Free plan limits.** Vercel Hobby forbids commercial use; Sentry and PostHog free quotas | G3 | Test data only before G3; Vercel Pro at G3 (D25); recheck quotas at G3 | ⏳ planned |
+| R4 | **Shared pre launch database.** Previews and production share the one Supabase project until G3 (D37) | G3 | Test data only; G3 wipes it, reapplies migrations, creates a staging project | ⏳ deliberate |
 
-> ⚠️ **Never implement wallet top-up / stored balance.** Blocked by design, not just by B2 — see `project-overview.md` §6.
+> ⚠️ **Never implement wallet top up or a stored balance.** Blocked by design (`project-overview.md`
+> §6), not only by B2.
 
 ---
 
-## 5. Decision log
+## 3. Decision log
 
-Every non-obvious choice. Future sessions rely on this to avoid re-litigating.
+Newest first. **By:** Owner (asked in chat), or Default (chosen by the agent, in force until the owner
+overrides). A recorded owner decision beats a general rule (precedence level 2). Superseded rows stay,
+struck through, with the replacement named.
 
-| # | Date | Decision | Reason | Reversible? |
+| # | Date | Decision | By | Where |
 | --- | --- | --- | --- | --- |
-| D1 | at handover | PSP behind an adapter interface; no SDK in feature code | Market undecided (B1); keeps both options open | Yes |
-| D2 | at handover | Wallet is a **read-only earnings mirror**; unlock fee charged per transaction | Stored balance risks e-money/money-transmitter classification | Behind flag `FEATURE_STORED_BALANCE_WALLET` (OFF) |
-| D3 | at handover | Auto-release after hold period (default 72h) | Prevents an inactive customer stranding provider funds | Configurable |
-| D4 | at handover | Rating never gates payment release | Prevents rating coercion and trapped funds | No — design rule |
-| D5 | at handover | No number masking | Model deliberately reveals contact post-unlock; leakage handled economically | Yes |
-| D6 | at handover | Money stored as integer minor units | Float rounding errors are unacceptable in a ledger | No |
-| ~~D7~~ | 2026-08-17 | ~~Both regions ship as two independent deployments~~ | ⚠️ **SUPERSEDED same day by D14** — one deployment, `region` column. Both regions still ship; only the deployment topology changed | — |
-| D8 | 2026-08-17 | **Three locales — `ar` (RTL), `tr` (LTR), `en` (LTR) — in every deployment.** Direction derived from locale at runtime | Core segment includes Arabic speakers in Turkey; region and locale are independent axes | No — replaces the Arabic-only assumption |
-| D9 | 2026-08-17 | Providers may be **individuals or companies, with no profile difference** | One provider account shape; entity type matters only for PSP sub-merchant KYC and invoicing, not for our schema or UI | Yes |
-| D10 | 2026-08-17 | Admins are trusted operators but **never a code-execution boundary** (confirmed) | Pricing formulas stay structured rows; no `eval` of admin input, ever | No — security rule |
-| D11 | 2026-08-17 | Accepted all proposed resolutions in `open-questions.md` G1–G16 | Each closes a silent-failure or unpriced-risk path found in the doc audit | Individually revisable |
-| D20 | 2026-08-18 | **Ledger postings are tax-shape-neutral; tax classification lives in a reporting layer.** B9 no longer blocks features 14/38/39 — only 49 and 51 | Agent and principal views are both derivable from the same rows, because commission is already its own leg and the provider portion is already recorded. A principal verdict costs a report + the invoicing module, not a migration. Reinforces §30: netting destroys derivability, not just the fee record | No — this is what keeps B9 cheap |
-| D19 | 2026-08-18 | **`localePrefix: 'always'` — every locale is prefixed (`/ar`, `/tr`, `/en`); there is no unprefixed route.** Supersedes D13's `as-needed` | `as-needed` gives exactly one locale the unprefixed URL, which cannot express a per-region default (`tr` for TR, `ar` for KSA) — and region is unknown until login, so nothing can derive it when the URL is served. `/` becomes a negotiation endpoint | Yes, but expensive once SEO exists |
-| D18 | 2026-08-18 | **No CODEOWNERS / code-owner merge gate — removed.** High-risk paths are protected by `/review`, green CI, and an explicit callout in the summary instead | One-engineer project: the author and the reviewer are the same person, so the gate was theatre. A control everyone believes in but which does nothing is the `middleware.ts` failure class — better removed than left to rot | Yes — restore `.github/CODEOWNERS` + branch protection the day a second engineer joins |
-| D17 | 2026-08-17 | **The satisfaction guarantee / re-do policy is DROPPED.** Trust rests on escrow + vetting + ratings; disputes handle disagreement | A guarantee of the outcome is a principal's obligation and contradicts D12. Keeping it risked VAT on the full job price. `project-overview.md` §34 rewritten | Yes — revisit if B9 returns "principal", since the constraint would be gone |
-| D16 | 2026-08-17 | **Strict phone/region validation, no override at launch.** `+90` → TR, `+966` → KSA | Phone numbers are country-scoped in practice, so they carry the region naturally under phone-based OTP where one number maps to one identity | Yes — an admin override can be added once the blocked-user volume is known |
-| D15 | 2026-08-17 | **Admins are global** — an admin sees and acts across both regions. No `admin_region` scoping | Matches launch reality: one operator replacing a WhatsApp group. Simplest RLS shape | ⚠️ Yes, but **expensive** — restricting a regional ops hire later means rewriting every admin policy against live data |
-| D14 | 2026-08-17 | **Single deployment for both regions, separated by a `region` column** — not two deployments. Chosen for operational simplicity. **An account belongs to exactly one region**; a person operating in both markets creates a second account | One codebase, one migration run, one place to look. Single-region accounts keep one currency per account and per posting group, so the money model stays simple. **Supersedes D7** | ❌ Very hard after Phase 3 — it changes the shape of nearly every table |
-| D13 | 2026-08-17 | **Seed defaults set for every open numeric/policy value** — grace periods, re-selection cap, price ceiling, application rate limit, PSP-fee absorption, locale defaults and URL strategy (see the table below) | Unblocks Phases 2–5 without waiting on non-critical decisions; every value is admin-editable in `platform_settings`, so a wrong default is a settings change, not a migration | Yes — all runtime-configurable |
-| D12 | 2026-08-17 | **We are an AGENT / intermediary, not the principal.** The provider sells the service to the customer; we sell intermediation (commission) and lead access (unlock fee) to the provider | Determines VAT liability, invoice obligations, and the shape of the chart of accounts | ⚠️ **Business decision, NOT yet legally verified — see B9** |
+| D43 | 2026-10-17 | **Navbar wordmark font: Archivo Black** (OFL), self hosted through `next/font/google` (no third party requests at runtime), the closest free match to the logo's heavy grotesque. Replaced by an SVG wordmark only if the owner supplies one. Built with the app shell in position 01 | Owner | ui-tokens §10 |
+| D42 | 2026-10-17 | Priority line confirmed (D35): correct money and private data > core journey end to end in three locales > design polish > extra features | Owner | `AGENTS.md`, project-overview §1 |
+| D41 | 2026-10-17 | **Build plan v3 confirmed as drafted**: 22 positions (16 P0), gates G0–G3, the cut list, the target schedule to 2026-11-07. Bootstrap ships as branch `chore/playbook-bootstrap` + PR | Owner | `build-plan.md` |
+| D40 | 2026-10-17 | **Brand: the platform is "Aldebyani", slogan "Aldebyani Home Care".** The supplied round logo is the browser favicon; the navbar logo is the word "Aldebyani" only, in the font of the logo's wordmark (font to confirm, Q11). Repo codename stays `asma`. Remote projects (Supabase, Vercel, Sentry, PostHog) are not created yet; connect the right accounts when they are (R1, S6) | Owner | `AGENTS.md`, B4 |
+| D39 | 2026-10-17 | Server Action and Route Handler errors return a **stable code** listed in the message catalogues, never display text. Fixes the §19 template, which returned a hardcoded Arabic string (rule 10) | Default | code-standards §19, §37 |
+| D38 | 2026-10-17 | `SUPABASE_DB_POOL_URL` is optional until the first direct Postgres consumer exists (shape still validated when present), so the local stack and e2e boot without cloud values | Default | `lib/env.ts`, code-standards §22 |
+| D37 | 2026-10-17 | Previews and production share the one Supabase Pro project until G3, test data only; G3 wipes it, reapplies migrations, creates a staging project | Default (playbook §17.4) | build-plan G3, R4 |
+| D36 | 2026-10-17 | Specs moved to `docs/specs/` (0001 setup, 0002 review fixes 45–51, 0003 multi-region); `SETUP.md` folded into the owner checklist (§5) and removed; v2 feature notes archived verbatim in `feature-notes-v2.md` | Default | `docs/specs/`, §5 |
+| D35 | 2026-10-17 | Priority line: correct money and private data > core journey end to end in three locales > design polish > extra features | Default (confirm: Q1) | `AGENTS.md` |
+| D34 | 2026-10-17 | Precedence order: rules → decision log → the spec being built → brief → architecture → standards and UI docs → build plan wording → methodology | Default | `AGENTS.md`, project-overview §0 |
+| D33 | 2026-10-17 | Rules that never bend: canonical text in project-overview §5, keeping the 1–11 numbering the guard and code already cite; the old §5 list folded into rules 2 and 6. No rule added or removed | Default | project-overview §5 |
+| D32 | 2026-10-17 | Node 24 LTS everywhere (local was already 24.11.1; CI was 22) | Default | `.nvmrc`, `ci.yml`, `package.json` |
+| D31 | 2026-10-17 | Quality stack pinned: Vitest 5.0.2, pgTAP (`supabase test db`), Playwright 1.63.0, ESLint 9.39.5, Prettier 3.9.9, husky 9.1.7, lint-staged 17.6.0 | Owner | `AGENTS.md` stack |
+| D30 | 2026-10-17 | Services: Supabase Pro, Resend Pro, own domain (paid); Sentry, PostHog, Cloudflare, an uptime monitor (free tiers); Vercel per D25 | Owner | `AGENTS.md` |
+| D29 | 2026-10-17 | Vendored after line by line review: resend + react-email @ `247779a`, Turnstile Next.js reference @ `86505e4`; Supabase skills re-pinned @ `c9be0e9` | Owner | `AGENTS.md` skills |
+| D28 | 2026-10-17 | Connectors: every write tool ask gated; PostHog MCP added at G1. Declined: removing the two failing local MCP servers (kept) | Owner | `AGENTS.md` MCP, `settings.json` |
+| D27 | 2026-10-17 | Added fast-check (money property tests, resolves G14), @axe-core/playwright, Cloudflare Turnstile, gitleaks in CI | Owner | `AGENTS.md` stack |
+| D26 | 2026-10-17 | Retired project skills `review`, `recover`, `remember`, `imprint` | Owner | `AGENTS.md` declined list |
+| D25 | 2026-10-17 | Hosting: Vercel Hobby while building (test data only), Pro from G3 (Hobby forbids commercial use) | Owner | build-plan G3 |
+| D24 | 2026-10-17 | End to end tests at 390px in `ar`, `tr`, and `en` (all three, not only English and Arabic) | Owner | code-standards §10 |
+| D23 | 2026-10-17 | Turkey's PSP is **iyzico Marketplace** (Pazaryeri): sub-merchants and the approval API; the owner already has the account | Owner | architecture §5 |
+| D22 | 2026-10-17 | **Launch 2026-11-07, Turkey only.** KSA stays in the schema, switched off, until a Saudi PSP is chosen (no evidence iyzico supports SAR or Saudi sub-merchants) | Owner | project-overview §1, architecture regions |
+| D21 | 2026-10-17 | **Adopted the AI Assisted Build Playbook**: `AGENTS.md` entrypoint, `docs/` layout, specs with cross checks, the per position loop, gates G0–G3, tracer bullets. Supersedes build plan v2's phases, its "full UI with mock data first" principle, and "03: all tables first" (each position now adds its own tables) | Owner | `AGENTS.md`, build-plan v3 |
+| D20 | 2026-08-18 | Ledger postings are tax shape neutral; tax classification lives in a reporting layer. B9 gates only invoicing and refund fee absorption. Netting would destroy derivability as well as hide a fee | Owner | architecture §29 |
+| D19 | 2026-08-18 | `localePrefix: 'always'`: every locale prefixed (`/ar`, `/tr`, `/en`), no unprefixed route; `/` negotiates. Supersedes D13's `as-needed` (one unprefixed locale cannot express a per region default) | Owner | `i18n.md` |
+| D18 | 2026-08-18 | No CODEOWNERS or code owner merge gate (solo project: author and reviewer are the same person). Restore it and branch protection when a second engineer joins | Owner | `AGENTS.md` |
+| D17 | 2026-08-17 | The satisfaction guarantee is dropped. Trust rests on escrow, vetting, ratings, disputes. A guarantee of the outcome is a principal's obligation (D12). Revisit if B9 says principal | Owner | project-overview §34 |
+| D16 | 2026-08-17 | Strict phone and region validation at launch: `+90` → TR, `+966` → KSA, no override | Owner | `lib/region` |
+| D15 | 2026-08-17 | Admins are global (both regions); no `admin_region` scoping. Expensive to change later | Owner | architecture |
+| D14 | 2026-08-17 | One deployment for both regions, separated by a `region` column. An account belongs to exactly one region. Supersedes D7 | Owner | architecture §4 |
+| D13 | 2026-08-17 | Seed defaults for every open numeric or policy value (table below); all admin editable in `platform_settings` | Owner | below |
+| D12 | 2026-08-17 | We are an **agent**, not the principal: the provider sells the service; we sell intermediation and lead access. Not yet legally verified (B9) | Owner | architecture §29 |
+| D11 | 2026-08-17 | Accepted the proposed resolutions for G1–G16 in `open-questions.md` | Owner | `open-questions.md` |
+| D10 | 2026-08-17 | Admins are trusted operators but never a code execution boundary | Owner | rule 8 |
+| D9 | 2026-08-17 | Providers may be individuals or companies with no profile difference | Owner | project-overview §25 |
+| D8 | 2026-08-17 | Three locales, `ar` (RTL), `tr`, `en`, direction derived at runtime | Owner | `i18n.md` |
+| ~~D7~~ | 2026-08-17 | ~~Two independent deployments~~. Superseded the same day by D14 | Owner | — |
+| D6 | handover | Money stored as integer minor units | Owner (brief) | rule 4 |
+| D5 | handover | No number masking; leakage handled economically | Owner (brief) | project-overview §3 |
+| D4 | handover | Rating never gates payment release | Owner (brief) | project-overview §3 |
+| D3 | handover | Auto release after the hold period (default 72h) | Owner (brief) | `platform_settings` |
+| D2 | handover | Wallet is a read only earnings mirror; unlock fee charged per transaction | Owner (brief) | project-overview §6 |
+| D1 | handover | PSP behind an adapter interface; no SDK in feature code | Owner (brief) | architecture §5 |
 
-### Defaults in use until decided (from `project-overview.md` §9)
-
-All of these live in `platform_settings` and are admin-editable at runtime; the values below are the
-seed defaults and the constants in `lib/utils.ts` are the fallbacks.
+### Defaults in use (`platform_settings` seeds, admin editable at runtime)
 
 | Setting | Default | Confirmed |
 | --- | --- | --- |
-| Unlock fee basis | Flat, admin-configurable | ☐ |
-| Hold period (auto-release) | 72 hours | ☐ |
-| Payment window (SELECTED → OPEN) | 24 hours | ☐ |
-| Unlock window (FUNDED → OPEN) | 24 hours | ☐ |
-| Max applications/request | 10 | ☐ |
-| Unlock fee refund on post-unlock cancellation | **Only when not provider-attributable** (G4) | ✅ D11 |
-| Fee charge method | (A) card **at unlock**, via outbox (G9/C9) | ✅ D11 |
-| **Start grace period** (G1) | 24h after `scheduled_start_at` | ✅ D13 |
-| **Completion grace period** (G1) | 24h after `scheduled_end_at` | ✅ D13 |
-| **Max re-selections before auto-refund** (G2) | 3 | ✅ D13 |
-| **Max price multiple of base** (G11) | 20× — computed price above this fails loudly | ✅ D13 |
-| **Applications per provider per hour** (G10) | 20 | ✅ D13 |
-| **PSP fee absorbed on refund by** (G3) | Platform | ✅ D13 |
-| Default locale — TR deployment | `tr` | ✅ D13 |
-| Default locale — KSA deployment | `ar` | ✅ D13 |
-| `en` customer-facing? | Yes, both regions | ✅ D13 |
-| URL locale strategy | `localePrefix: 'always'` — every locale prefixed | ✅ **D19** (supersedes D13) |
-| Legally authoritative T&C language | ⛔ **No default — needs legal (B10)** | ☐ |
+| Unlock fee basis | Flat, admin configurable | ☐ |
+| Hold period (auto release) | 72 hours | ☐ |
+| Payment window (`SELECTED → OPEN`) | 24 hours | ☐ |
+| Unlock window (`FUNDED → OPEN`) | 24 hours | ☐ |
+| Max applications per request | 10 | ☐ |
+| Unlock fee refund after unlock | Only when not provider attributable (G4) | ✅ D11 |
+| Fee charge method | Card at unlock, via the outbox | ✅ D11 |
+| Start grace period | 24h after `scheduled_start_at` | ✅ D13 |
+| Completion grace period | 24h after `scheduled_end_at` | ✅ D13 |
+| Max re-selections before auto refund | 3 | ✅ D13 |
+| Max price multiple of base | 20× | ✅ D13 |
+| Applications per provider per hour | 20 | ✅ D13 |
+| PSP fee absorbed on refund by | Platform | ✅ D13 |
+| Default locale, TR / KSA | `tr` / `ar` | ✅ D13 |
+| `en` customer facing | Yes, both regions | ✅ D13 |
+| URL locale strategy | `localePrefix: 'always'` | ✅ D19 |
+| Legally authoritative T&C language | No default (B10) | ☐ |
 
 ---
 
-## 6. PSP facts to confirm
+## 4. Open questions
 
-Fill in before Phase 5. Source: the PSP's docs, sandbox, or support — **not** assumption.
-Split 2026-08-18 by *how each is obtainable* — most need no sales call. Steps: `SETUP.md` §3.2–3.4.
+Ordered by what they block soonest. Check before designing anything that touches one. A resolved
+question moves to the decision log and is struck through here.
+
+| # | Question | Blocks |
+| --- | --- | --- |
+| ~~Q2~~ | ~~Confirm the build order~~ → resolved by D41 | — |
+| Q11 | **Brand assets (D40).** (a) Put the logo source file in `docs/design/brand/` (an attached chat image cannot be saved by the agent) so the favicons can be generated; ~~(b) wordmark font~~ → Archivo Black (D43); (c) the Arabic spelling of the name, and whether the slogan is translated in `ar`/`tr` | Favicon, `messages` brand strings |
+| ~~Q1~~ | ~~Confirm the priority line~~ → resolved by D42 | — |
+| Q4 | **Sign in channel at launch.** Email OTP through Resend SMTP (no extra cost; recommended for the 3 weeks) or phone SMS OTP (needs a paid SMS provider; D16 assumed phone identity). Asked again in the 01 spec interview | Spec for 01 |
+| Q5 | **Sentry and PostHog data region:** EU (recommended: nearest to TR, GDPR grade) or US | S7, S8, 00b |
+| Q6 | **Region for the new Supabase project** (S6). Recommended: `eu-central-1` (Frankfurt), nearest to Turkey; Vercel functions then pin to `fra1` | S6, 00b |
+| Q3 | **Uptime monitor:** Better Stack free (10 monitors, 3 min checks, status page) or UptimeRobot free (50 monitors, 5 min; its May 2026 terms reportedly allow commercial use, verify) | S10, G1 |
+| Q10 | **Candidate rules** from the playbook's security pass: (12) user written content is always rendered escaped, including in emails; (13) a secret is read only inside its single door (now lint enforced). Promote into §5? | Nothing; strengthens review |
+| Q9 | **Reputation migration** (old 35, needs B8) at launch or after? | Priority of position 19 |
+| Q7 | **Saudi PSP** for the KSA launch (PayTabs or another with mada) | KSA go live only |
+| Q8 | `tailwind-design-system` skill has no recorded source. Re-vendor from a known source at a pinned commit, or remove it? | Nothing |
+
+Gap reasoning behind earlier decisions stays in `open-questions.md` (an archive now).
+
+---
+
+## 5. Owner setup checklist
+
+The agent never creates accounts, accepts terms, adds payment methods, or reads or pastes secret keys.
+Values go straight into Vercel env, GitHub secrets, or `.env.local`; say only variable **names** in
+chat. Exact variable names for new services are added to `.env.example` by the position that uses
+them.
+
+| # | Owner action (exact steps) | Agent does after | Blocks | Status |
+| --- | --- | --- | --- | --- |
+| S1 | **iyzico sandbox.** Sign up at the iyzico sandbox merchant panel, copy the sandbox API key and secret into `.env.local` as `IYZICO_API_KEY` and `IYZICO_SECRET_KEY`. In the sandbox: create a `PERSONAL` sub-merchant (B11); run one marketplace payment; note the callback payload, its signature scheme, the event id, whether a partial refund works before approval, and how approval behaves | Records §7 facts; specs 08 | 08–12 | ☐ |
+| S2 | **iyzico live terms** (in writing from iyzico): max time a payment can stay unapproved; real per-card fees (domestic, foreign, installments); settlement delay for new sub-merchants; agreements users must accept; whether `PERSONAL` sub-merchants work in production | Records §7; sets `psp_max_hold_hours` | G3 | ☐ |
+| S3 | **Vercel.** vercel.com → Add New → Project → import `Moaz-Allam/asma`, name it `aldebyani` → framework Next.js, Node 24 → add env vars for Preview and Production (names from `.env.example`) → stay on Hobby until G3 | Preview checks, region pin (00b) | G0 | ☐ |
+| S4 | **Domain and DNS.** Buy the domain (Cloudflare Registrar sells at cost; it does not sell `.com.tr` or `.sa`) → DNS in Cloudflare → add it to Vercel with DNS only (grey cloud) records → tell me the name | Wires `appOrigin()`, Resend, Turnstile hostnames | S5, S9, G3 | ☐ |
+| S5 | **Resend and Supabase SMTP.** Resend → Domains → add the sending domain → add its SPF, DKIM, DMARC records in Cloudflare → verify → create a sending only API key → Vercel env and `.env.local` as `EMAIL_API_KEY` → turn off open and click tracking. Supabase → Authentication → SMTP settings → Resend SMTP (`smtp.resend.com`, port 465, user `resend`, password: an API key) with a `no-reply@` sender. Supabase's built in email only reaches project team members | Email OTP (Q4), position 13 | 01, 13 | ☐ |
+| S6 | **Create the Supabase project, then connect the right accounts (R1).** supabase.com → New project `aldebyani` in your own org, Pro plan, region per Q6 → `npx supabase login` with that account (unset any `SUPABASE_ACCESS_TOKEN` that points at another account) → `npx supabase link --project-ref <new ref>` → `npx supabase projects list` must show it as linked. For the MCP: a **scoped** personal access token limited to that project; set `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` in your shell profile. Reconnect the claude.ai Supabase connector to that org. **Same rule for every service:** connect the account that owns the Aldebyani project (Vercel team S3, Sentry org S7, PostHog project S8) before anything uses it | Verifies each link read only; updates `AGENTS.md` and the tracker with the new refs | Any cloud push, previews (G0) | ☐ |
+| S7 | **Sentry.** sentry.io → organisation (region per Q5) → project `aldebyani`, platform Next.js → keep the DSN ready → create an org auth token for source maps (Vercel env only) → tell me the org and project slugs | 00b wires it | 00b, G1 | ☐ |
+| S8 | **PostHog.** Sign up (cloud per Q5) → project `aldebyani` → keep the project API key and host ready → session replay: mask all inputs on; autocapture off for now | 00b wires it | 00b | ☐ |
+| S9 | **Turnstile.** Cloudflare → Turnstile → Add widget → hostnames: your domain and `localhost` → Managed mode → keep the site key and secret ready | 01 wires it | 01 | ☐ |
+| S10 | **Uptime monitor** (Q3): an HTTP monitor on `/api/health` of the production URL, every 5 minutes or faster, alerting your phone and email | Verifies at G1 | G1 | ☐ |
+| S11 | **Docker Desktop** (optional): install and start it so `npm run db:test` and `npm run test:e2e` run locally. CI runs both regardless | — | Local runs only | ☐ |
+| S12 | **Import the brief.** Put the original brief files (the `.docx` / `.xlsx` that used to be in `context/docs/`) into `docs/brief/`, or tell me where they are | Converts them with numbered sections | Precedence level 4 | ☐ |
+| S13 | **Design handoff (B4).** Export the Claude Design screens, logo, colours, fonts into `docs/design/` and say which screen is which page | Records tokens with a contrast table; maps screens | UI layer from 01 | ☐ (~2026-10-19) |
+| S14 | **Branch protection.** GitHub → Settings → Branches → rule for `master`: require the `checks`, `database`, `e2e` jobs; block force pushes | — | Protects merges | ☐ |
+| S15 | **Close the stale dependabot PR** (TypeScript 5.9.3 → 7.0.2; CI rejected it) | — | — | ☐ |
+| S16 | **Legal (B2, B9, B10).** Custody confirmation; agent position; authoritative language; T&C (the service contract is customer to provider; we are intermediary and payment facilitator), privacy notice (KVKK), provider agreement with a data processing clause | Builds the legal pages | G3 | ☐ |
+| S17 | **Catalog data (B5, B6).** Launch categories; per category: questions (key, type, options, required, validation), labels in `ar`/`tr`/`en`, base price, modifiers, zones and multipliers; TR commission %, unlock fee, windows. Start with home cleaning | Seeds through admin UI, never invented | 03 content, G3 | ☐ |
+| S19 | **Fix `.env.local`.** `npm run dev` stops at boot: its `SUPABASE_DB_POOL_URL` lacks `pgbouncer=true`. Delete that line (it is optional now, D38, and the old project is unverified), or correct it once the new project exists (S6). The agent cannot read or edit this file, by design | Re-runs the dev server preview | Local `npm run dev` | ☐ |
+| S18 | **Claims and legacy data (B7, B8).** The public quality claim and how it is computed; legacy provider job counts and the past customer list | 19, public copy | 19 | ☐ |
+
+---
+
+## 6. Bootstrap checklist (playbook §21.1)
+
+| Step | Status |
+| --- | --- |
+| 1 Brief imported to `docs/brief/` with numbered sections | ☐ S12 |
+| 2 `AGENTS.md` and one line `CLAUDE.md` | ✅ 2026-10-17 |
+| 3 `project-overview.md`: what, actors, flow, rules (canonical §5), stop and ask, doc map | ✅ 2026-10-17 |
+| 4 `architecture.md`, `code-standards.md`, `build-plan.md`, tracker | ✅ |
+| 5 Tracer bullet unit in `build-plan.md` | ✅ 2026-10-17 |
+| 6 Build order with gates and cut list | ✅ drafted · ☐ owner confirmation (Q2) |
+| 7 Deny and ask rules, bash guard with its test, format hook | ✅ 2026-10-17 |
+| 8 `slice-reviewer` and `security-reviewer` | ✅ 2026-10-17 |
+| 9 Tooling gap scan for the stack | ✅ 2026-10-17 (D26–D29) |
+| 10 Scaffold spec | ✅ 0001, 0003 (before the playbook) · ☐ 00b |
+| 11 Position 00 build | ✅ 00 · ☐ 00b |
+| 12 Gate G0 on a clean clone | ☐ |
+| 13 UI docs and design reference mapping | ✅ docs exist · ☐ mapping (S13) |
+| 14 Per position loop from 01 | ☐ |
+| 15 Independent security review planned before the first money milestone | ✅ G1 in `build-plan.md` |
+
+---
+
+## 7. PSP facts (iyzico, Turkey)
+
+Fill before position 08. Source: iyzico docs, sandbox, or a written answer, **never** assumption.
+KSA facts are deferred with the KSA launch (D22).
 
 | # | Question | How to get it | Answer | Confirmed |
 | --- | --- | --- | --- | --- |
-| **2** | 🔴 **Can individual (non-company) providers be sub-merchants?** — **B11, business-model check, do this week** | **sandbox** — try onboarding a test individual | | ☐ |
-| 4 | Webhook signature scheme + retry policy | **sandbox** — trigger a payment, read the raw payload | | ☐ |
-| 5 | Event id available for dedupe? | **sandbox** — same payload | | ☐ |
-| 6 | Partial refund supported while held? | **sandbox** — needed for `PARTIALLY_RELEASED` | | ☐ |
-| — | Sub-merchant **types** + required fields per type (G17) | **sandbox** — the onboarding form | | ☐ |
-| 1 | Max hold duration — must cover `payment window + (unlock window × up to 3 re-selections) + work duration + 72h release`, **not** just 72h (G2) | **must ask.** Meanwhile: `psp_max_hold_hours` in `platform_settings` + invariant alert | | ☐ |
-| 3 | Settlement delay after release — public sources suggest up to ~60d for new sub-merchants. A **product** problem, not just copy (G16) | **must ask** | | ☐ |
-| — | Real per-card processing fee — posted from the **actual** settlement figure, never estimated (G3) | **must ask** — varies by scheme; mada ≠ international | | ☐ |
-| 7 | Required user agreements to surface at signup | must ask / docs | | ☐ |
-| 8 | (KSA) ZATCA e-invoicing responsibility | must ask — see B9/G18 | | ☐ |
-| 9 | Phone/SMS OTP available in this market? | docs | | ☐ |
+| 2 | 🔴 Can individual providers be sub-merchants? (B11) | Sandbox (S1) | Docs list `PERSONAL`, `PRIVATE_COMPANY`, `LIMITED_OR_JOINT_STOCK_COMPANY` | ☐ |
+| — | Sub-merchant types and required fields per type (G17) | Sandbox onboarding (S1) | | ☐ |
+| 4 | Callback or webhook signature scheme, retry policy | Sandbox payment (S1) | | ☐ |
+| 5 | Event id available for dedupe | Sandbox payment (S1) | | ☐ |
+| 6 | Partial refund while unapproved (for `PARTIALLY_RELEASED`) | Sandbox (S1) | | ☐ |
+| — | Approval (release) API behaviour and failure modes | Sandbox (S1) | | ☐ |
+| 1 | Max time a payment may stay unapproved; must cover payment window + unlock window × up to 3 + work + 72h release (G2) | Ask (S2) | | ☐ |
+| 3 | Settlement delay after approval for new sub-merchants (G16) | Ask (S2) | | ☐ |
+| — | Real per-card fee, posted from the actual settlement figure (G3) | Ask (S2) | | ☐ |
+| 7 | Agreements users must accept at signup | Ask / docs (S2) | | ☐ |
 
 ---
 
-## 7. Design questions
-
-Raised while building; answered by the human. Mirror in `ui-tokens.md` §10.
-
-| # | Question | Raised | Status |
-| --- | --- | --- | --- |
-| Q1 | Brand palette | at handover | ⏳ |
-| Q2 | Arabic-capable font | at handover | ⏳ |
-| Q3 | Logo/favicon | at handover | ⏳ |
-| Q4 | Dark mode in v1? | at handover | ⏳ |
-
----
-
-## 8. Handoff notes
-
-> Written at the end of each session for the next one. Be concrete: what you did, what you were mid-way through, what to do next, and anything surprising.
-
-**Session 5 — 2026-08-18 (blocker strategy — no code)**
-
-```
-DID        No code. Reduced two blockers instead of waiting on them.
-           D20: proved the ledger postings are TAX-SHAPE-NEUTRAL. Agent and principal
-           views are both derivable from the same rows — commission is already its own
-           leg and the provider portion is already recorded — so a "principal" verdict
-           costs a reporting view and the invoicing module, NOT a migration.
-           → B9 no longer blocks 14/38/39. It gates only 49 and 51. Phase 4 is open.
-           B3 split by how each fact is obtainable: 4 of 6 are free in a self-serve
-           sandbox, only 2 need a conversation. SETUP.md §3.2–3.4 has the exact steps.
-           B11 raised as a separate PRIORITY blocker.
-IN FLIGHT  Nothing. Working tree clean, pushed.
-NEXT       Feature 02 Auth + Roles — `/architect 02`. Creates `profiles`, which needs
-           region NOT NULL + FK to regions(code) and the D16 dial-code CHECK. First real
-           test of the region CI gate that 45 shipped.
-           In parallel (human, ~1h): the B11 sandbox check.
-SURPRISES  1. I had overstated B9. "The chart changes" was wrong — the POSTINGS do not.
-              Only the classification does, and that belongs in a reporting layer.
-           2. That gives §30's no-netting rule a second reason to exist: netting does not
-              merely hide a fee, it destroys the ability to restate under a different tax
-              treatment. Same rule, two failure modes prevented.
-           3. Most of B3 never needed a sales call. Four of six facts are answerable in a
-              free sandbox, which nobody had checked.
-           4. My own B3 restructure created a duplicate "### 3.3" in SETUP.md, and §1.3
-              still claimed placeholders that were already filled.
-DO NOT     - Treat B9 as blocking the money core. It does not, post-D20. Blocking 14/38/39
-             on it wastes the longest phase in the plan.
-           - Put tax classification in the posting logic. It is a REPORTING concern.
-           - Net commission into the escrow amount. It breaks D20 and §30 together.
-           - Assume individuals can be sub-merchants. That is B11 and it is unanswered.
-```
-
-**Session 4 — 2026-08-18 (feature 45 CLOSED)**
-
-```
-DID        Feature 45 built, reviewed, closed. `regions` + `platform_settings` with RLS,
-           16 pgTAP assertions, and the CI gate that makes a region-less domain table
-           impossible to ship. Commit bea3103, pushed.
-           Resolved three context-vs-code mismatches found while planning (below).
-           /imprint registered NotFound + ErrorBoundary, which feature 01 had missed.
-IN FLIGHT  Nothing. Working tree clean, CI green.
-NEXT       Feature 02 Auth + Roles. `/architect 02`. It creates `profiles`, which needs
-           `region` NOT NULL + FK to regions(code) and the D16 dial-code CHECK — the CI
-           gate will reject the migration without the region column.
-SURPRISES  1. pgTAP does NOT need Docker locally. The CI job (supabase/setup-cli +
-              db start) runs it on every push — run 32129285600 applied the migration
-              and passed 16 assertions. Docker Desktop only buys local iteration speed.
-           2. D19: localePrefix 'as-needed' was incompatible with a per-region default
-              locale. One unprefixed route can only mean one language, and region is
-              unknown until login. Now 'always'; `/` is a negotiation endpoint.
-           3. The `regions` table spec and lib/region REGION_CONFIG had drifted —
-              dial_code lived only in code, `active` only in the doc. Table is now the
-              source of truth, with a unit test parsing the migration seed to prove it.
-           4. tsconfig's noUncheckedIndexedAccess caught a real bug in my own new test
-              the same day I enabled it.
-           5. Dependabot opened typescript 5.9.3 → 7.0.2 and CI REJECTED it. The exact
-              pinning rule from feature 01 working. That PR should be closed.
-DO NOT     - Run `supabase db push` — the remote project (syrhavojjpabwwcaezee) is linked
-             but nothing has been pushed to it, deliberately. Local + CI only for now.
-           - Add a write policy to `regions`. It is reference data: adding a market is a
-             deploy. A pgTAP assertion fails if anyone adds one.
-           - Key platform_settings on `key` alone — that made TR and KSA share values.
-           - Create a domain table without `region`. CI rejects it; the exempt list is
-             in .github/workflows/ci.yml and is meant to be visible.
-```
-
-**Session 3 — 2026-08-18 (feature 01 CLOSED)**
-
-```
-DID        Feature 01 is done, reviewed, committed (5590445) and pushed to
-           github.com/Moaz-Allam/asma. specs/01-project-setup/plan.md → Status: reviewed.
-           Verified the human setup: repo is its own git root, remote set, CI ran GREEN
-           on the first push, supabase init done.
-           CODEOWNERS REMOVED (D18) — solo project, so the gate was theatre.
-IN FLIGHT  Nothing. Working tree clean.
-NEXT       Feature 45 — multi-region foundation. `/architect 45`. It MUST land before
-           feature 03: it adds `region` to nearly every table, and retrofitting that
-           after Phase 3 means rewriting every RLS policy. Plan already drafted and
-           confirmed at specs/45-51-accepted-fixes/plan.md.
-SURPRISES  1. ESLint 10 CRASHES eslint-config-next — its bundled eslint-plugin-react
-              calls context.getFilename(), removed in v10. Pinned to 9.39.5 and held
-              there by .github/dependabot.yml. Latest is not the same as compatible.
-           2. `npx shadcn init` writes a full brand palette into globals.css as a side
-              effect. Deferred the init (B4) and added guard rule brand-value-in-globals.
-           3. architecture.md §11/§16 said lib/supabase-*.ts while §6 and build-plan.md
-              said lib/db/ — a doc-vs-doc contradiction the code had already resolved.
-           4. code-standards §17 said "Utility files: camelCase" while §2 said
-              kebab-case, and its own example was kebab. Kebab wins.
-           5. .env.example listed 22 vars lib/env.ts does not validate, contradicting
-              §12's "all env vars validated at startup". Two tiers now explicit.
-           6. `server-only` cannot import in a plain test runner — stubbed in vitest
-              only; Next's build-time guarantee is untouched.
-           7. Eager parseEnv() at module scope made lib/env untestable. Now getEnv() +
-              instrumentation.ts, which is genuinely fail-fast at boot.
-DO NOT     - Run `npx shadcn init` until B4 lands.
-           - Upgrade ESLint past 9.x (dependabot ignores it; that ignore is deliberate).
-           - Create app/layout.tsx — app/[locale]/layout.tsx renders <html>.
-           - Add APP_REGION or APP_CURRENCY — lib/env.ts rejects them by design (D14).
-           - Assume .env.local is real: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_DB_POOL_URL
-             are still placeholders, so nothing can actually reach Supabase yet.
-           - Guess past any blocker in §4. Moaz is working through them and will feed
-             each one in.
-```
-
-**Session 2 — 2026-08-18 (review pass)**
-
-```
-DID        Verified the human setup steps. Ran /review twice on feature 01 and fixed
-           everything it found. Doc-vs-code consistency swept 4 times.
-FOUND+FIXED (code)  1. lib/db/client.ts used `!` non-null assertions on env — replaced
-                       with Zod validation (code-standards §1 forbids `!` on boundaries).
-                    2. LocaleSwitcher had two `as never` casts — I had copied next-intl's
-                       `pathnames` variant; our routing has none, so the plain call is
-                       fully typed. Added lib/i18n/navigation.ts (createNavigation).
-                    3. No error.tsx / not-found.tsx — ui-rules §4 requires them.
-                    4. lib/env.ts mixed z.url() and .string().url(); postgresql:// is not
-                       a web URL, so the check was wrong as well as inconsistent.
-FOUND+FIXED (docs)  5. architecture.md §11 tree said `lib/supabase-*.ts` (flat) while §6
-                       and build-plan say `lib/db/` — the code follows lib/db/. Fixed in
-                       §11 and §16, and propagated across 4 docs.
-                    6. code-standards §17 said "Utility files: camelCase — contactInfo.ts,
-                       supabase-server.ts" — contradicted §2 (kebab-case) AND itself.
-                       Kebab-case wins.
-                    7. §11 tree was 24 files out of date; now complete, with ✅ markers
-                       separating built from planned.
-                    8. .env.example listed 22 vars that lib/env.ts does not validate —
-                       contradicting §12. Made the two tiers explicit rather than
-                       pretending to validate features that do not exist.
-                    9. Missing .github/dependabot.yml (build-plan 01 required it).
-                   10. SETUP.md had gone stale on every step the human completed.
-STATE      guard 39/39 · tsc 0 · eslint 0/0 · 27 tests · next build green · ar=rtl tr/en=ltr
-COMMITTED  All review-pass fixes committed and pushed.
-NEXT       Branch protection (human), then feature 45.
-```
-
-**Session 1 — 2026-08-18**
-
-```
-DID        Feature 01 built and verified. Next.js 16 skeleton boots; /ar renders RTL,
-           /tr and /en render LTR — confirmed in the prerendered HTML, not assumed.
-           27 unit tests, guard suite 39/39, tsc clean, eslint 0/0, next build green.
-           pgTAP "RLS enabled everywhere" wired BEFORE the first table exists.
-IN FLIGHT  Nothing. Feature 01 is complete.
-NEXT       Feature 45 (multi-region foundation). It MUST land before 03, because it
-           adds a `region` column to nearly every table and retrofitting it after
-           Phase 3 means rewriting every RLS policy.
-SURPRISES  1. ESLint 10 breaks eslint-config-next's bundled react plugin. Pinned to 9.39.5.
-           2. `npx shadcn init` writes a full generated brand palette into globals.css.
-              Deferred the init and added guard rule `brand-value-in-globals` to block it.
-           3. `server-only` cannot be imported in a plain test runner — stubbed in
-              vitest config only. The real build-time guarantee is untouched.
-           4. Eager `parseEnv()` at module scope made lib/env untestable and would fail
-              on any import without env. Moved to `getEnv()` + instrumentation.ts, which
-              is genuinely fail-fast at server boot rather than at first use.
-           5. Next 16 removed the `eslint` key from NextConfig along with `next lint`.
-DO NOT     - Run `npx shadcn init` until B4 lands; it will invent a brand palette.
-           - Upgrade ESLint past 9.x (see Versions).
-           - Create app/layout.tsx — [locale]/layout.tsx renders <html>.
-           - Add APP_REGION or APP_CURRENCY; lib/env rejects them by design (D14).
-```
-
-**Session 0 — handover**
-
-- Nothing built yet. Docs prepared: overview, architecture, build plan, standards, libraries, UI rules/tokens/registry.
-- **Start at:** `build-plan.md` Phase 0, first unchecked task.
-- **Watch out for:** B1 (market) affects PSP work in Phases 4–5. It does **not** block Phases 0–3, because auth is built as a swappable OTP-channel adapter (phone default) and the PSP sits behind an interface. Proceed with foundations.
-- **Do not:** implement wallet top-up, weaken RLS, or compute price/money client-side.
-
----
-
-## 9. Versions
-
-Pin once installed; keeps future sessions consistent.
-
-| Package | Version | Pinned |
-| --- | --- | --- |
-| next | 16.3.1 | ☑ |
-| react / react-dom | 19.2.8 | ☑ |
-| typescript | 5.9.3 | ☑ |
-| tailwindcss + @tailwindcss/postcss | 4.3.3 | ☑ |
-| next-intl | 4.13.7 | ☑ |
-| zod | 4.4.3 | ☑ |
-| @supabase/supabase-js | 2.112.3 | ☑ |
-| @supabase/ssr | 0.12.4 | ☑ |
-| eslint | **9.39.5** | ☑ |
-| typescript-eslint | 8.67.0 | ☑ |
-| vitest | 4.1.10 | ☑ |
-| shadcn/ui (CLI) | — | ☐ deferred, blocked on B4 |
-| PSP SDK | — | ☐ blocked on B3 |
-
-> ⚠️ **ESLint is pinned to 9.x deliberately.** ESLint 10 is released, but
-> `eslint-config-next@16` bundles `eslint-plugin-react`, which calls
-> `context.getFilename()` — removed in ESLint 10. Linting crashes outright.
-> Do not "update" this until the Next config ships an ESLint-10-compatible react
-> plugin. Latest is not the same as compatible.
-
----
-
-## 10. Test health
-
-Update after each phase gate.
+## 8. Test health
 
 | Suite | Status | Last run | Notes |
 | --- | --- | --- | --- |
-| Typecheck / lint | 🟢 | 2026-08-18 | tsc clean, eslint 0 errors 0 warnings |
-| Unit | 🟢 | 2026-08-18 | **30 passed** — i18n, region, money, env, Turkish casing, and REGION_CONFIG-vs-migration drift |
-| **RLS policy tests** | 🟢 | 2026-08-18 | pgTAP: schema-wide "RLS enabled everywhere" + 14 assertions on `regions`/`platform_settings`, incl. the negative cases (no write policy on reference data; unknown region rejected). **Not yet run against a live DB** — needs `.env.local` filled |
-| Guard suite (`npm run guardrails`) | 🟢 | 2026-08-18 | 39/39, incl. false-positive cases |
-| Build (`npx next build`) | 🟢 | 2026-08-18 | 3 locales SSG; `ar=rtl`, `tr/en=ltr` verified in the emitted HTML |
-| CI (GitHub Actions) | 🟢 | 2026-08-18 | Ran green on push. **Not** in `npm run verify` — run `next build` + `supabase test db` yourself |
-| Concurrency (money) | 🔴 | | Required before Phase 5 |
-| Idempotency | 🔴 | | Required before Phase 5 |
-| Invariant (`held = released + refunded + remaining`) | 🔴 | | Required before Phase 5 |
-| Integration (full flow) | 🔴 | | |
+| Guard suite (`npm run guardrails`) | 🟢 | 2026-10-17 | 41/41, including false positive cases |
+| Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-17 | Lint includes the single door rules |
+| Unit (Vitest 5) | 🟢 | 2026-10-17 | 127 tests in 10 files, about 4s |
+| Build (`next build`) | 🟢 | 2026-10-17 | ar, tr, en prerendered |
+| pgTAP (`supabase test db`) | 🟢 in CI (2026-08-18) · ⏳ new meta tests | — | Needs Docker locally (S11); `02_function_grants` first runs in CI |
+| End to end (Playwright, 390px, ar/tr/en) | 🟢 local | 2026-10-17 | 6/6 with axe, no database (`E2E_NO_DB=1`); first CI run after the push |
+| Secret scan (gitleaks 8.30.1) | ⏳ | — | First run in CI after the push |
+| Money: property, race, idempotency, invariant | 🔴 | — | Required before position 09 |
 
 ---
 
-## 11. Current Status
+## 9. Standing cautions
 
-**Phase:** Phase 1 — Foundation
-
-> ℹ️ **On phase numbering.** §3's "Phase 0 — Foundations" and this "Phase 1 — Foundation" are the
-> **same phase** described twice — §3 as a checklist, §12 as numbered features 01–04. The numbered
-> features in §12 are authoritative because they map 1:1 to `build-plan.md`. Treat §3's Phase 0 row
-> as the gate summary for features 01–04, not as separate work.
-
-> 🔴 **READ [`architecture-review.md`](architecture-review.md) FIRST** (converted from
-> `docs/ARCHITECTURE-REVIEW.docx`; the `.docx` is the human-authored original). It documents six
-> pre-money-flow blockers P0-1…P0-6, including one outright error in the earlier docs: the money
-> write path called the PSP inline, which is not transactionally possible. **Use the outbox pattern
-> (feature 38).** Also: the file is `proxy.ts`, not `middleware.ts` — a leftover `middleware.ts` is
-> silently ignored on Next 16 and route protection becomes dead code.
->
-> Known conflicts across all context docs are catalogued in
-> [`contradictions.md`](contradictions.md). Read it before trusting any single section.
-
-> ⚠️ **Read the v3 CORRECTIONS sections** in `project-overview.md` (§21–25), `architecture.md` (§20–22), and `build-plan.md` before starting. The payment order was corrected: **customer pays, then provider unlocks.**
-**Last completed:** 45 Multi-region foundation
-**Next:** 02 Auth + Roles (then 50 → 03 → 04)
-
----
-
-## 12. Feature Progress
-
-Numbers map 1:1 to `build-plan.md`.
-
-### Phase 1 — Foundation
-- [x] 01 Project Setup + Tokens ✅ 2026-08-18
-- [x] 45 Multi-region foundation ✅ 2026-08-18 — `regions` + `platform_settings`, RLS + pgTAP, and the CI check that makes a region-less table impossible
-- [ ] 02 Auth + Roles
-- [ ] 03 Database Schema + RLS Baseline
-- [ ] 04 App Shell + Navigation
-
-### Phase 2 — Catalog and Pricing
-- [ ] 05 Admin Catalog — Full UI
-- [ ] 06 Catalog CRUD Logic
-- [ ] 07 Pricing Rules + Engine
-- [ ] 07a Admin Question Builder
-- [ ] 07b Pricing Formula Builder
-- [ ] 07c Dynamic Question Renderer + Server Pricing
-- [ ] 08 Customer Browse + Price Preview
-
-### Phase 3 — Requests and Applications
-- [ ] 09 Post Request — Full UI + Logic
-- [ ] 10 Provider Feed — Short Details Only
-- [ ] 11 Apply + Contact Scanner
-- [ ] 12 Applicant List + Choose Provider
-- [ ] 13 Request Status + Realtime
-- [ ] 40 RLS Performance Hardening 🔴
-
-### Phase 4 — Money Core
-- [ ] 14 Money Primitives + Ledger
-- [ ] 38 Transactional Outbox + Relay 🔴
-- [ ] 39 Ledger Integrity Enforcement 🔴
-- [ ] 15 PSP Adapter
-- [ ] 16 Webhook Receiver
-- [ ] 17 Invariant + Reconciliation Jobs
-
-### Phase 5 — Unlock, Escrow, Release
-- [ ] 18 Unlock Fee + Reveal
-- [ ] 19 Unlock Expiry Job
-- [ ] 20 Customer Payment + Escrow Hold
-- [ ] 21 Completion + Confirm + Auto-Release
-- [ ] 22 Disputes + Admin Resolution
-- [ ] 23 Earnings + Payouts
-
-### Phase 6 — Completion and Admin
-- [ ] 29 In-App Notification Centre
-- [ ] 30 Provider Profile + Verification
-- [ ] 31 Request Scheduling
-- [ ] 24 Ratings
-- [ ] 25 Notifications
-- [ ] 26 Admin Dashboard + Reports + Leakage
-
-### Phase 6b — Trust and Quality
-- [ ] 32 Rating System
-- [ ] 33 Provider Quality Metrics
-- [ ] 34 Vetting Funnel
-- [ ] 35 Reputation Migration (launch only)
-- [ ] 36 Structured Application Answers
-- [ ] 37 Quality Floor + Cold Start
-
-### Phase 6c — Operability
-- [ ] 41 Observability
-- [ ] 42 Feature Flags + Kill Switches
-- [ ] 43 Admin Operational Tooling
-
-### Phase 7 — Hardening
-- [ ] 44 Incident Runbooks + DR
-- [ ] 27 Security + Load Testing
-- [ ] 28 Launch Prep
-
-**47 features total** (28 + 07a/07b/07c + 29/30/31 + 32–37 + 38–44).
-
----
-
-## 13. Decisions Made During Build
-
-_Add decisions here as they are made during implementation. Pre-existing decisions are in §5._
-
----
-
-## 14. Notes
-
-_Add notes here as the build progresses — workarounds, patterns, anything that differs from the context files._
-
-> If something in this file contradicts a context file, the context file wins **unless** the note records an explicit human decision. In that case, update the context file too so they stop disagreeing.
+- Do not run `npx shadcn init` until B4 lands; it writes a palette into `globals.css`.
+- Do not upgrade ESLint past 9.x (dependabot ignores it deliberately).
+- Do not create `app/layout.tsx`; `app/[locale]/layout.tsx` renders `<html>`.
+- Do not add `APP_REGION` or `APP_CURRENCY`; `lib/env.ts` rejects them (D14).
+- Do not run `supabase db push` unless the owner asks, after a dry run and after R1's link check.
+- Do not add a write policy to `regions` (reference data; a pgTAP assertion fails if one appears).
+- Do not key `platform_settings` on `key` alone (TR and KSA would share values).
+- Do not create a domain table without `region`; CI rejects it.
+- Do not put tax classification in posting logic (D20), and never net commission into escrow (rule 6).
+- Do not assume individuals can be sub-merchants until B11 is confirmed in the sandbox.
+- Do not use any connector or the Supabase CLI against a cloud project until it shows the Aldebyani project (R1).

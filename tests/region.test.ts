@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  REGIONS,
-  currencyFor,
-  getRegion,
-  isRegion,
-  phoneMatchesRegion,
-  regionFromEnv,
-} from '@/lib/region';
+import { REGIONS, currencyFor, getRegion, isRegion, phoneMatchesRegion, regionFromEnv } from '@/lib/region';
 
 describe('region is a row value, never an environment constant (D14)', () => {
   it('reads the region off the owning row', () => {

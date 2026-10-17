@@ -166,16 +166,37 @@ A redirect back from the PSP is **UX only** — it is never proof of payment. Th
 
 ## 10. Testing
 
-Required per feature:
+v3, 2026-10-17: three layers, the tests first list, and the e2e wrapper (D24, D27, D31).
 
-| Type | What |
-| --- | --- |
-| **RLS policy tests** | The negative case: wrong user is denied. **Every table.** Non-optional. |
-| Unit | Pricing formula, commission, state transitions, contact-info scanner |
-| Concurrency | Parallel debits never go negative; parallel release moves funds once |
-| Idempotency | Duplicate webhook / retried action applies once |
-| Invariant | `held = released + refunded + remaining` after randomised sequences |
-| Integration | Full flow: post → apply → choose → unlock → pay → complete → release |
+**Three layers.**
+
+| Layer | Tool | Location | Covers |
+| --- | --- | --- | --- |
+| Database | pgTAP via `supabase test db` | `supabase/tests/NN_*.test.sql` | Migrations, RLS (negative cases), functions, triggers, constraints, two session races, meta tests over every table and function |
+| Unit | Vitest 5 (+ fast-check for properties) | `tests/**/*.test.ts` | Data layer, logic, server actions with a database mock, lint rules, harness hooks, scripts |
+| End to end | Playwright + axe | `e2e/*.spec.ts`, run by `npm run test:e2e` | Journeys at 390px in `ar`, `tr`, `en`, each with an accessibility scan |
+
+**Tests first** (a failing test before the code) on every risky path:
+
+- Every access rule: who can and cannot read and write, including anonymous, another region, another
+  provider, and each role.
+- Every money function (post, hold, release, refund, unlock fee), plus a two session race where exactly
+  one wins, and a fast-check property: random operation sequences always balance and never go negative.
+- Every computed amount and its snapshot (price, commission, PSP fee leg).
+- Every state machine transition, including illegal transitions refused.
+- Time boundaries (payment, unlock, start, completion, release deadlines) exactly at, just before, just
+  after; time comes from the database clock (`clock_timestamp()` after a lock wait), never the browser.
+- Every PSP callback: bad signature refused, replay idempotent, late arrival, amount mismatch.
+- Audit rows record who, when, old, new.
+- Anything inside a single door (`architecture.md` §42).
+
+**Race tests** use two real sessions (`dblink`), commit the fixtures through the second session, clean
+up after, and scope every assertion to the test's own rows so leftover e2e data cannot break them.
+
+**The e2e wrapper** (`scripts/e2e.mjs`) builds and serves the app with **local** values passed as
+process variables (they beat env files, so cloud values are never used), turns analytics and error
+reporting off, and runs Playwright. Later positions extend it: seeded accounts with random passwords,
+time moved with one SQL statement, sent email read from a local outbox directory, per visitor IPs.
 
 A money feature without a concurrency test is **not done**.
 
@@ -199,8 +220,12 @@ Comment **why**, not what. Mandatory comments on: money rounding, any concurrenc
 
 ## 14. Git
 
-- Small, focused commits. Conventional style: `feat:`, `fix:`, `refactor:`, `test:`, `chore:`.
+- One position = one branch (`feat/NN-slug`) = one PR into `master`. Conventional Commits:
+  `feat:`, `fix:`, `refactor:`, `test:`, `chore:`, `docs:`.
 - Migration + policy + test land **in the same commit** as the feature.
+- Commit or push only when the owner asks. Never force push. Long messages go in a file:
+  `git commit -F <file>` (the bash guard scans message text).
+- Pre commit: husky runs lint-staged (Prettier + ESLint on staged files). Never `--no-verify`.
 - Never commit generated `.env`, keys, or real user data.
 
 ---
@@ -319,13 +344,16 @@ export async function payUnlockFee(input: unknown) {
     return { success: true };
   } catch (error) {
     console.error("[actions/unlock]", error);
-    return { success: false, error: "تعذر إتمام العملية" };
+    // A stable code, never a user facing string: the client maps it through
+    // messages/{ar,tr,en}.json (rule 10). Unexpected errors also go to the error tracker.
+    return { success: false, error: "action_failed" };
   }
 }
 ```
 
 - Every Server Action has a try/catch
-- Every Server Action returns `{ success: boolean, data?: T, error?: string }`
+- Every Server Action returns `{ success: boolean, data?: T, error?: string }`, where `error` is a
+  **stable code** listed in the message catalogues, never display text (D39)
 - **Never throw from a Server Action** — always return the error
 - Always `revalidatePath` after mutations that affect page data
 - Always validate, then authenticate, then authorise the **object** (does this user own this row?)
@@ -387,13 +415,13 @@ All env vars defined in `.env.local` for development, validated at startup. Neve
 | `NEXT_PUBLIC_SUPABASE_URL` | `lib/db/client.ts` | No |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `lib/db/client.ts` | No |
 | `SUPABASE_SERVICE_ROLE_KEY` | `lib/db/admin.ts` | **Yes** |
-| `SUPABASE_DB_POOL_URL` | server data access | **Yes** |
+| `SUPABASE_DB_POOL_URL` | server data access; **optional until a direct Postgres consumer exists** (D38), shape validated when present | **Yes** |
 | `IYZICO_API_KEY` / `IYZICO_SECRET_KEY` | `lib/psp/iyzico/*` | **Yes** |
 | `IYZICO_WEBHOOK_SECRET` | `app/api/webhooks/psp` | **Yes** |
 | `IYZICO_BASE_URL` | `lib/psp/iyzico/*` | No |
-| `PAYTABS_PROFILE_ID` / `PAYTABS_SERVER_KEY` | `lib/psp/paytabs/*` | **Yes** |
-| `PAYTABS_WEBHOOK_SECRET` | `app/api/webhooks/psp` | **Yes** |
-| `PAYTABS_BASE_URL` | `lib/psp/paytabs/*` | No |
+| `PAYTABS_PROFILE_ID` / `PAYTABS_SERVER_KEY` | KSA, deferred (D22, Q7) | **Yes** |
+| `PAYTABS_WEBHOOK_SECRET` | KSA, deferred (D22, Q7) | **Yes** |
+| `PAYTABS_BASE_URL` | KSA, deferred (D22, Q7) | No |
 | `OTP_CHANNEL` | `lib/auth/otp-channel.ts` | No (`phone` \| `email`) |
 | `SMS_API_KEY` | `lib/auth/otp-channel.ts` | **Yes** |
 | `WHATSAPP_API_KEY` | notifications | **Yes** |
@@ -425,6 +453,10 @@ Runtime-configurable equivalents live in `platform_settings` and **override thes
 ---
 
 ## 24. Approved Dependencies
+
+> v3, 2026-10-17: the **authoritative, pinned** list is the `AGENTS.md` stack table (`.npmrc` has
+> `save-exact=true`). Adding anything goes through the tooling gap scan: ask first, pin exactly,
+> record it there. The list below is the original intent and still applies as guidance.
 
 Never install a package without a reason. Before installing, check: does Next.js provide it? Does shadcn/ui have it? Is there a simpler native solution?
 
@@ -560,10 +592,11 @@ The framework ships frequent security releases, including auth-bypass classes (1
 > are the same person, so that gate was theatre, and a control everyone believes in but which does
 > nothing is the `middleware.ts` failure class. CODEOWNERS has been removed rather than left to rot.
 >
-> The paths still matter. What replaces the gate: run `/review` before marking done, require green
-> CI (guard suite + pgTAP), and **state explicitly in the summary when a diff touches one of them**
-> so the human chooses to look. Restore CODEOWNERS + branch protection the day a second engineer
-> joins.
+> The paths still matter. What replaces the gate (v3, 2026-10-17): `/check review` on a different
+> model, the `slice-reviewer` agent, and `security-reviewer` whenever money, auth, PII, or storage is
+> touched; green CI on all three jobs; and **an explicit statement in the summary when a diff touches
+> one of them** so the human chooses to look. Restore CODEOWNERS + branch protection the day a second
+> engineer joins.
 
 These paths carry the risk, regardless of who or what wrote the change:
 
@@ -574,7 +607,7 @@ These paths carry the risk, regardless of who or what wrote the change:
 
 An agent that can weaken a policy to make a test pass is a data-breach vector. With no second
 reviewer, the controls that remain are mechanical: the guard hooks refuse the write, CI refuses the
-merge, and `/review` refuses the "done".
+merge, and the reviewer agents refuse the "done".
 
 ## 36. Updated Definition of Done — money and policy work
 
@@ -586,4 +619,23 @@ merge, and `/review` refuses the "done".
 - [ ] pgTAP suite green, including the schema-wide "RLS enabled everywhere" test
 - [ ] `EXPLAIN ANALYZE` reviewed for any policy-bearing query
 - [ ] Concurrency + idempotency + invariant tests pass
-- [ ] `/review` run, and any §35 path touched is called out explicitly in the summary
+- [ ] `/check review`, `slice-reviewer`, and `security-reviewer` run, and any §35 path touched is called out explicitly in the summary
+
+---
+
+## 37. Quality tooling (v3, 2026-10-17)
+
+| Tool | Where | Rule |
+| --- | --- | --- |
+| Prettier 3.9.9 | `.prettierrc.json`, `.prettierignore` | Code and JSON and CSS only; Markdown is never formatted, so prose diffs stay clean. The `format-on-write` hook formats every file an agent writes |
+| husky + lint-staged | `.husky/pre-commit`, `package.json` | Staged code files: Prettier, then ESLint with `--max-warnings=0` |
+| ESLint single door rules | `eslint.config.mjs` | One door per risky system (`architecture.md` §42); each rule has a proof in `tests/lint/eslint-rules.test.ts` |
+| `lint:rtl` | `scripts/check-logical-classes.mjs` | Fails on physical direction classes with the logical replacement; its own test in `tests/scripts/` |
+| Meta pgTAP tests | `supabase/tests/00_*`, `02_*` | Every table has RLS; no function is executable by `PUBLIC` or `anon` unless listed; every `SECURITY DEFINER` function pins `search_path` |
+| Action guard meta test | added by position 01 | Imports every Server Action module and proves each refuses an anonymous caller |
+| gitleaks | CI `checks` job | Secret scan of the full history on every push and PR |
+| CI | `.github/workflows/ci.yml` | Three jobs: `checks` (guards, typecheck, lint, `lint:rtl`, format check, unit, build), `database` (pgTAP on a clean local stack), `e2e` (Playwright at 390px in three locales) |
+
+Expected failures are return values (`{ success: false, error: '<code>' }`, §19) whose code maps to a
+message in all three catalogues; unexpected errors also go to the error tracker. Users never see raw
+codes or internals (D39).

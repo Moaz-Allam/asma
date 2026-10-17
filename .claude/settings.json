@@ -3,13 +3,7 @@
   "hooks": {
     "SessionStart": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/session-context.mjs",
-            "timeout": 10
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "node .claude/hooks/session-context.mjs", "timeout": 10 }]
       }
     ],
     "PreToolUse": [
@@ -23,6 +17,16 @@
             "statusMessage": "Checking never-negotiable rules"
           }
         ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [{ "type": "command", "command": "node .claude/hooks/guard-bash.mjs", "timeout": 10 }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [{ "type": "command", "command": "node .claude/hooks/format-on-write.mjs", "timeout": 30 }]
       }
     ]
   },
@@ -36,6 +40,9 @@
       "Bash(npm run typecheck*)",
       "Bash(npm run lint*)",
       "Bash(npm run test*)",
+      "Bash(npm run format*)",
+      "Bash(npm run guardrails*)",
+      "Bash(npm run verify*)",
       "Bash(npx tsc --noEmit*)",
       "Bash(git status*)",
       "Bash(git diff*)",
@@ -44,7 +51,46 @@
     "deny": [
       "Read(./.env)",
       "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Read(./.env.development)",
       "Read(./.env.production)",
+      "Read(./.env.test)",
+      "Read(./.env.staging)",
+      "Read(./.env.preview)",
+      "Read(./.env.keys)",
+      "Read(./.env.vercel)",
+      "Read(./.env.sentry-build-plugin)",
+      "Read(./**/.env)",
+      "Read(./**/.env.local)",
+      "Read(./**/.env.*.local)",
+      "Edit(./.env)",
+      "Edit(./.env.local)",
+      "Edit(./.env.*.local)",
+      "Edit(./.env.development)",
+      "Edit(./.env.production)",
+      "Edit(./.env.test)",
+      "Edit(./.env.staging)",
+      "Edit(./.env.preview)",
+      "Edit(./.env.keys)",
+      "Edit(./.env.vercel)",
+      "Edit(./.env.sentry-build-plugin)",
+      "Edit(./**/.env)",
+      "Edit(./**/.env.local)",
+      "Edit(./**/.env.*.local)",
+      "Write(./.env)",
+      "Write(./.env.local)",
+      "Write(./.env.*.local)",
+      "Write(./.env.development)",
+      "Write(./.env.production)",
+      "Write(./.env.test)",
+      "Write(./.env.staging)",
+      "Write(./.env.preview)",
+      "Write(./.env.keys)",
+      "Write(./.env.vercel)",
+      "Write(./.env.sentry-build-plugin)",
+      "Write(./**/.env)",
+      "Write(./**/.env.local)",
+      "Write(./**/.env.*.local)",
       "Read(./**/*.pem)",
       "Read(./**/*.key)"
     ],
@@ -55,8 +101,44 @@
       "Edit(lib/money/**)",
       "Edit(lib/psp/**)",
       "Edit(lib/pricing/**)",
+      "Bash(git push*)",
+      "Bash(gh repo*)",
+      "Bash(vercel*)",
+      "Bash(npx vercel*)",
+      "Bash(supabase db push*)",
+      "Bash(npx supabase db push*)",
+      "Bash(supabase db reset*)",
       "Bash(npx supabase db reset*)",
-      "Bash(npx supabase db push*)"
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__apply_migration",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__execute_sql",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__deploy_edge_function",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__create_project",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__create_branch",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__merge_branch",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__reset_branch",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__rebase_branch",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__delete_branch",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__pause_project",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__restore_project",
+      "mcp__8787483a-97e7-488b-b2cc-ec2a2a6e3892__confirm_cost",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__create_project",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__update_project",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__create_project_env",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__edit_project_env",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__create_deployment",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__request_promote",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__request_rollback",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__buy_domain",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__add_project_domain",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__create_or_transfer_domain",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__create_record",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__update_record",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__replace_domain_dns_records",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__put_firewall_config",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__update_firewall_config",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__pause_project",
+      "mcp__bc92d493-0163-413d-922c-f3c2489e918f__unpause_project",
+      "mcp__25d90970-2d11-4551-9f98-0d5bb907c433__update_issue"
     ]
   }
 }

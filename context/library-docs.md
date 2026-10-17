@@ -97,6 +97,10 @@ Customer pays → **funds are held by the PSP**, not by us → we call an API to
 - Buyers and sellers must **accept iyzico's marketplace agreements once**, digitally — this must exist in our signup flows.
 
 ### PayTabs (Saudi Arabia)
+
+> **Deferred with the KSA launch (D22, 2026-10-17).** PayTabs was the earlier assumption for KSA; the
+> Saudi PSP is chosen later (Q7). Kept as research notes for that decision.
+
 - Split payouts are **API-only** (dashboard is monitoring only). Marketplace/sub-merchant and escrow-style payout rules are configurable.
 - **mada support is mandatory** for Saudi cards.
 - Onboarding KYC is slower than alternatives — plan for it.

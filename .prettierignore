@@ -1,0 +1,17 @@
+# Prose is never formatted: Markdown diffs stay readable and reviewable.
+*.md
+
+# Generated, vendored, or tool owned.
+node_modules/
+.next/
+coverage/
+playwright-report/
+test-results/
+package-lock.json
+next-env.d.ts
+tsconfig.tsbuildinfo
+lib/db/database.types.ts
+.agents/
+.claude/skills/
+supabase/.temp/
+supabase/.branches/

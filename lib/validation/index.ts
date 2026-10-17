@@ -31,10 +31,7 @@ export const PhoneSchema = z
  * negative on an inbound amount — a refund is a separate operation, not a
  * negative charge.
  */
-export const MinorUnitsSchema = z
-  .number()
-  .int('Money must be an integer in minor units')
-  .nonnegative();
+export const MinorUnitsSchema = z.number().int('Money must be an integer in minor units').nonnegative();
 
 /** A localised label: the default locale is required, the others optional. */
 export const LocalisedTextSchema = z

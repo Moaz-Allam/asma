@@ -218,6 +218,18 @@ const CASES = [
     content: 'Use ml-4 and #ffffff and eval() freely in prose.',
   },
   {
+    name: 'a spec under docs/ may quote a forbidden secret name',
+    expect: null,
+    path: 'D:/work/web/asma/docs/specs/0004-sign-in.md',
+    content: 'Never name a variable NEXT_PUBLIC_SERVICE_ROLE_KEY; the service role stays server side.',
+  },
+  {
+    name: 'a page in a docs ROUTE is code and stays guarded',
+    expect: 'physical-direction',
+    path: 'D:/work/web/asma/app/[locale]/docs/page.tsx',
+    content: 'const c = "ml-4 text-text-primary";',
+  },
+  {
     name: 'migration that creates a table AND enables RLS',
     expect: null,
     path: 'supabase/migrations/0004_applications.sql',

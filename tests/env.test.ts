@@ -29,6 +29,16 @@ describe('environment fails fast and loudly', () => {
     ).toThrow(/POOLER/);
   });
 
+  it('allows the pool url to be absent until a direct Postgres consumer exists (D38)', () => {
+    const { SUPABASE_DB_POOL_URL: _omitted, ...rest } = valid;
+    expect(parseEnv(rest as NodeJS.ProcessEnv).SUPABASE_DB_POOL_URL).toBeUndefined();
+  });
+
+  it('treats an empty value as unset: optional passes, required fails', () => {
+    expect(parseEnv({ ...valid, SUPABASE_DB_POOL_URL: '' }).SUPABASE_DB_POOL_URL).toBeUndefined();
+    expect(() => parseEnv({ ...valid, SUPABASE_SERVICE_ROLE_KEY: '' })).toThrow(/SUPABASE_SERVICE_ROLE_KEY/);
+  });
+
   it('refuses a pooler url that has not disabled prepared statements', () => {
     expect(() =>
       parseEnv({ ...valid, SUPABASE_DB_POOL_URL: 'postgresql://u:p@x.pooler.supabase.com:6543/postgres' }),

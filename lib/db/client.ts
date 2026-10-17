@@ -35,8 +35,5 @@ export function createSupabaseBrowser() {
     );
   }
 
-  return createBrowserClient(
-    parsed.data.NEXT_PUBLIC_SUPABASE_URL,
-    parsed.data.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  );
+  return createBrowserClient(parsed.data.NEXT_PUBLIC_SUPABASE_URL, parsed.data.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }

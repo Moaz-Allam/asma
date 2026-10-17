@@ -43,9 +43,7 @@ export function LocaleSwitcher() {
             className={[
               'rounded-md px-2 py-1 text-sm font-medium transition-colors',
               // Colour is never the only signal — aria-current carries it too.
-              isActive
-                ? 'bg-accent-muted text-accent'
-                : 'text-text-secondary hover:bg-surface-secondary',
+              isActive ? 'bg-accent-muted text-accent' : 'text-text-secondary hover:bg-surface-secondary',
             ].join(' ')}
           >
             {label}

@@ -1,5 +1,10 @@
 # Open questions, gaps, and unexamined assumptions
 
+> **Archive since 2026-10-17 (playbook adoption).** The resolutions below are recorded; **live open
+> questions are the Q rows in `progress-tracker.md` §4**, and open business items are its B rows. Read
+> this file only for the reasoning behind a past resolution. The two items still open here map to
+> tracker rows: G17 → B3/B11, G18 → B9.
+
 > Companion to `contradictions.md`. That file catalogued places where the docs **disagree with each
 > other** — all 13 are now fixed. This file is different: these are places where the docs **agree,
 > and are silent, ambiguous, or resting on an assumption nobody has tested.**
@@ -321,7 +326,7 @@ single posting group cannot contain two currencies. Reconciliation runs per PSP,
 two-deployment model. `project-overview.md` §16 still lists multi-country-in-one-deployment as
 **out of scope** — the thing D14 just chose.
 
-**Fix:** rewrite all four. Listed in `specs/45-51-accepted-fixes/plan.md` under D14. Not yet applied —
+**Fix:** rewrite all four. Listed in `docs/specs/0002-review-fixes-45-51.md` under D14. Not yet applied —
 the plan is `proposed`, and rewriting the architecture on an unconfirmed plan is how docs and
 intentions drift apart.
 
