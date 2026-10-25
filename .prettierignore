@@ -15,3 +15,5 @@ lib/db/database.types.ts
 .claude/skills/
 supabase/.temp/
 supabase/.branches/
+# The Claude Design export, kept verbatim as the visual reference (docs/design/README.md).
+docs/design/source/

@@ -2,120 +2,249 @@
 
 > The **only** source of visual values. If a value isn't here, you may not use it.
 >
-> **Status: 🟡 AWAITING THEME.** The human will supply the shadcn theme, brand colours, and typography. Until then use the shadcn/Tailwind defaults below and **do not invent brand values**.
+> **Status: ✅ THEME RECEIVED 2026-10-25.** Every value below comes from the owner's Claude Design handoff
+> (`docs/design/`, decisions D48 to D51): the palette as the case study names it, and the type, spacing,
+> radius and borders measured from the screens themselves (`docs/design/tools/measure.mjs`). Token
+> **names** stayed stable; the placeholder values are gone. Look at `docs/design/screens/` for the
+> picture, `docs/design/source/` for the exact markup.
 
 ---
 
-## 1. Rules (apply now, and after the theme lands)
+## 1. Rules
 
-1. **No arbitrary values in Tailwind.** `p-[13px]`, `text-[#1a1a1a]`, `w-[437px]` are forbidden. Use the scale.
+1. **No arbitrary values in Tailwind.** `p-[13px]`, `text-[#1a1a1a]`, `w-[437px]` are forbidden. Use the
+   scale. Tailwind v4 already covers every whole pixel: spacing is a multiple of `--spacing` (4px) in
+   quarter steps, so 26px is `p-6.5` and 14px is `gap-3.5` (verified against the installed Tailwind 4.3.3:
+   quarter steps compile, `p-6.3` does not).
 2. **No raw hex, rgb, or hsl in components.** Colours come from semantic tokens only.
 3. **No inline styles** for anything a token covers.
-4. **Semantic names, not literal ones.** `bg-destructive`, never `bg-red-500`. When the theme changes, semantics survive; literals break.
-5. **Add a token here before using it.** If you need a value that doesn't exist, add it to this file (or flag it) — don't inline it.
-6. shadcn primitives consume these tokens via CSS variables; **do not hardcode inside a primitive**.
-7. Spacing, radius, and typography use the defined scales — no in-between values.
+4. **Semantic names, not literal ones.** `bg-surface-secondary`, never the ramp step. The ramps (§2) are
+   plain CSS variables precisely so they generate **no** utility classes.
+5. **Add a token here before using it.** A value the design uses that is missing here: add it with its
+   source screen, or flag it. Never inline it.
+6. shadcn primitives consume these tokens via CSS variables; **never hardcode inside a primitive**.
+7. Spacing, radius and type use the scales below; no in-between values.
 
 ---
 
-## 2. Colour tokens (semantic)
+## 2. Palette (the design's ramps)
 
-shadcn's CSS-variable convention. Values are placeholders until the theme arrives — **names are stable, values are not.**
+Named as the case study names them ("الأساسي", "النصوص والسطح", "الحالات"). Defined as `:root` variables
+`--ramp-*` in `app/globals.css` (§13), consumed only through the semantic tokens of §3.
 
-| Token | Use |
-| --- | --- |
-| `background` / `foreground` | Page base |
-| `card` / `card-foreground` | Cards, panels |
-| `popover` / `popover-foreground` | Menus, popovers |
-| `primary` / `primary-foreground` | Primary actions |
-| `secondary` / `secondary-foreground` | Secondary actions |
-| `muted` / `muted-foreground` | De-emphasised text, placeholders |
-| `accent` / `accent-foreground` | Hover/selected surfaces |
-| `destructive` / `destructive-foreground` | Delete, cancel, dispute |
-| `border` / `input` / `ring` | Borders, field borders, focus ring |
+### Primary (blue)
 
-### Project-specific semantic tokens
-
-Defined here because the domain needs them. Add to the theme when it arrives.
-
-| Token | Use | Rule |
+| Step | Hex | What it paints in the design |
 | --- | --- | --- |
-| `success` / `success-foreground` | Released, completed, approved | Never the only signal — pair with text/icon |
-| `warning` / `warning-foreground` | Awaiting action, deadline near | |
-| `info` / `info-foreground` | Neutral status | |
-| `pending` / `pending-foreground` | Held funds, awaiting confirmation | |
+| 900 | `#0F3A73` | Main text and headings, primary buttons, navy hero panels, the admin rail, selected chips |
+| 700 | `#1E5FB3` | Links and hover |
+| 300 | `#C3D0E4` | Rare: strong dividers, inactive progress |
+| 250 | `#D0DBEB` | Toggle tracks (off), decoration |
+| 200 | `#DBE7F6` | Emphasis panels (price and summary cards), avatar discs, count badges, the "verified" chip, active status chips |
+| 150 | `#E4ECF7` | Card borders and dividers (2px) |
+| 100 | `#EAF1FA` | Quiet fills: chips, star rating buttons, notice cards, waiting status chips |
+| 50 | `#F2F6FC` | Tinted cards and rows, secondary buttons, closed status chips |
 
-### Request-status colour map
+### Text (ink) and surface
 
-One badge style per state, defined once, reused everywhere (see `ui-rules.md` §6).
+| Step | Hex | Use |
+| --- | --- | --- |
+| ink 900 | `#22324F` | Dense data where navy is too loud (tables, long figures) |
+| ink 800 | `#2C3C5E` | Secondary headings in data views |
+| ink 700 | `#3D4D6C` | Body text on tinted panels |
+| ink 600 | `#4B5B78` | Descriptions, labels, secondary text (the design's second most used colour) |
+| ink 500 | `#6A7A97` | Muted text, **large or non-essential only** (4.34:1 on white, §11) |
+| surface | `#FFFFFF` | Page, cards on tinted areas, fields |
 
-| State | Token |
-| --- | --- |
-| `OPEN` | `info` |
-| `SELECTED` | `warning` |
-| `UNLOCKED` | `info` |
-| `FUNDED` | `pending` |
-| `IN_PROGRESS` | `info` |
-| `AWAITING_CONFIRMATION` | `warning` |
-| `RELEASED` | `success` |
-| `DISPUTED` | `destructive` |
-| `REFUNDED` | `muted` |
-| `PARTIALLY_RELEASED` | `warning` |
-| `CANCELLED` | `muted` |
+### States
+
+| Token | Hex | Use |
+| --- | --- | --- |
+| danger | `#C0262D` | Error text, destructive actions (text on white) |
+| danger alert | `#E5484D` | Unread dots and alert marks. **Never text** (3.91:1) |
+| danger 50 | `#FDE2E2` | Error panels, the dispute chip, the "release suspended" chip, the rejected provider chip |
+| shadow | `rgb(15 58 115 / 0.18)` | The design's one shadow colour (overlays only, §8) |
+
+**There is no green and no amber.** By decision D49 the statuses stay on the blue ramp; meaning comes
+from each chip's label, never from colour alone (§4).
+
+**Off-palette values in the design's HTML** (drift, a few uses each) snap to the nearest step:
+`#DFE7F3` (field borders, placeholder stripes) → 200, `#D5DFEE` and `#DBE4F1` → 250 and 150,
+`#F2F7FD` → 50, `#EEF1F6` / `#EEF2F8` / `#EEF3FA` / `#EEF4FD` → 100.
 
 ---
 
-## 3. Typography
+## 3. Semantic colour tokens
 
-**Status: 🟡 awaiting font choice.** Requirement: **one family covering Arabic *and* Latin Extended** — Turkish needs `ı İ ş ğ ç ö ü`, and many Arabic-capable fonts ship a weak or absent Latin Extended range. Verify glyph coverage in all three locales before committing; a missing `ğ` renders as tofu to every Turkish user. Do not pick one — flag it. See `i18n.md` §7.
+Defined in `@theme inline` (§13), so each one becomes `bg-*`, `text-*`, `border-*`. These are the only
+colour names a component may use.
 
-| Token | Use |
-| --- | --- |
-| `text-xs` | Meta, timestamps |
-| `text-sm` | Secondary text, labels |
-| `text-base` | Body (default) |
-| `text-lg` | Emphasised body |
-| `text-xl` / `text-2xl` | Section headings |
-| `text-3xl`+ | Page titles |
+| Token | Value | Use |
+| --- | --- | --- |
+| `background` | white | Page base |
+| `surface` | white | Cards on tinted areas, fields, popovers, dialogs |
+| `surface-secondary` | primary 50 | The default tinted card, list rows, secondary buttons |
+| `surface-inverse` | primary 900 | Navy panels: the landing hero, the provider hero, the dispute call to action, the admin rail |
+| `border` | primary 150 | Card borders, dividers (2px) |
+| `border-light` | primary 50 | Dividers inside white cards |
+| `input` | ink 500 | Field borders (2px). **D59:** ink 500 (4.34:1) instead of the design's `#DFE7F3` (1.25:1), so fields meet WCAG AA; cards keep their light borders |
+| `ring` | primary 900 | Focus outline (2px). With `ring-halo` (primary 200, 5px) as the soft glow the design shows |
+| `text-primary` | primary 900 | Headings and main text. **Navy is the text colour of this design** |
+| `text-secondary` | ink 600 | Descriptions, labels, meta |
+| `text-muted` | ink 500 | Large or non-essential text only |
+| `text-strong` | ink 900 | Dense data (admin tables) |
+| `text-inverse` | white | Text on `surface-inverse` and `accent` |
+| `link` | primary 700 | Inline links, hover on navy text links |
+| `accent` | primary 900 | Primary buttons, selected chips, active nav |
+| `accent-foreground` | white | Text on `accent` |
+| `accent-light` | primary 200 | Emphasis panels (price, summary), avatar discs, count badges |
+| `accent-muted` | primary 100 | Quiet chips, star buttons, notice cards, hover on secondary |
+| `info` / `info-light` / `info-foreground` | primary 900 / primary 100 / primary 900 | Neutral and waiting states |
+| `pending` / `pending-light` / `pending-foreground` | primary 900 / primary 200 / primary 900 | Active states: chosen, held, unlocked, in progress |
+| `success` / `success-light` / `success-foreground` | primary 900 / primary 50 / primary 900 | Finished: released, completed (quiet, by design) |
+| `warning` / `warning-light` / `warning-foreground` | primary 900 / primary 100 / primary 900 | Waiting on someone: awaiting confirmation, under review |
+| `error` / `error-light` / `error-foreground` | danger / danger 50 / danger | Errors, disputes, destructive actions |
+| `alert` | danger alert | Unread dots, alert marks (non-text) |
+
+`success`, `warning`, `pending`, `info` keep separate names although several share values: the names
+carry meaning for the code, and a later palette change touches values only.
+
+---
+
+## 4. Request status chips (D49: one blue ramp)
+
+One badge component, reused everywhere (`ui-rules.md` §17). Labels come from the message catalogue; the
+Arabic below is the design's wording. Chips are pills: 12px Cairo 700, `px-3 py-1.5`, text
+`text-text-primary` unless stated.
+
+| State | Design label (ar) | Background | Notes |
+| --- | --- | --- | --- |
+| `OPEN` | مفتوح | `bg-info-light` | Provider feed shows «مفتوح · N من 10 عروض» |
+| `SELECTED` | بانتظار الدفع (customer) · اختارك العميل (provider) | `bg-pending-light` | |
+| `FUNDED` | بانتظار فتح البيانات | `bg-pending-light` | Provider side adds «· المبلغ محفوظ» |
+| `UNLOCKED` | فُتحت البيانات | `bg-pending-light` | |
+| `IN_PROGRESS` | قيد التنفيذ | `bg-pending-light` | The design also shows an inverted variant (`bg-accent text-accent-muted`) for the current step in a stepper |
+| `AWAITING_CONFIRMATION` | بانتظار تأكيدك (customer) · بانتظار تأكيد العميل (provider) | `bg-warning-light` | |
+| `RELEASED` | مكتمل | `bg-success-light` | |
+| `DISPUTED` | نزاع · مفتوح · التحرير موقوف | `bg-error-light` | The only red chip; text stays navy |
+| `REFUNDED` | (not in the design) | `bg-success-light` | Follows the closed states; label from the catalogue |
+| `PARTIALLY_RELEASED` | (not in the design) | `bg-success-light` | Same |
+| `CANCELLED` | ملغى | `bg-success-light` | **D59:** this spelling and colour (the design also had «ملغي» on primary 100) |
+| Closed to new offers | مقفل | `bg-success-light` | Feed row at the applicant cap |
+
+Provider verification chips (**D59**): «معتمد» (approved) and «قيد المراجعة» (under review) use
+`bg-warning-light`, as designed; «مرفوض» (rejected) uses `bg-error-light`, so red always means a negative
+outcome. The design drew all three alike.
+
+---
+
+## 5. Typography
+
+### Families (D48)
+
+| Token | Family | Use | Weights loaded |
+| --- | --- | --- | --- |
+| `font-display` | **Alexandria** | Headings, numbers, money, the big price, initials avatars | 700, 800, 900 |
+| `font-sans` | **Cairo** | Body, labels, buttons, chips, fields (the default) | 400, 500, 600, 700, 800 |
+| `font-wordmark` | **Archivo Black** | The navbar word "Aldebyani" only (D43) | 400 |
+| `font-mono` | system monospace | Reference numbers and codes (request `#8412`, IBAN tails) | 400 |
+
+All three load through `next/font/google` with subsets `arabic` (not Archivo Black), `latin`,
+`latin-ext`. **Verified 2026-10-25** by rendering: Alexandria and Cairo draw every Turkish letter
+(`ğ Ğ ı İ ş Ş ç Ç ö Ö ü Ü`). **Cairo has no `₺` glyph** (it falls back to a system font), Alexandria
+does: **every amount and every currency sign is set in `font-display`**, including inside buttons and
+breakdown rows whose words are Cairo (`MoneyDisplay` owns this). Both families support tabular figures
+(`tnum`); money uses `tabular-nums`.
+
+### Scale (measured from the screens)
+
+Each role is a named Tailwind size (`--text-*` in §13, which carries the line height, tracking and
+weight), so the design's sizes never need arbitrary values. Pair Alexandria roles with `font-display`.
+
+| Role | Class | Size | Family · weight | Line height | Tracking | Where |
+| --- | --- | --- | --- | --- | --- | --- |
+| Display XL | `text-display` | 84px | Alexandria 900 | 1.24 | -0.055em | Case study and landing section display |
+| Hero | `text-hero` | 76px | Alexandria 700 | 1.24 | -0.05em | Landing hero «خلّها علينا» (kashida stretched, as designed) |
+| Price XL | `text-price-xl` | 72px | Alexandria 900 | 1 | -0.05em | The fixed price on the request form (s4), the countdown card |
+| Price L | `text-price-l` | 66px | Alexandria 900 | 1 | -0.05em | Request value (p8), wallet balance |
+| Display L | `text-display-l` | 48px | Alexandria 900 | 1.24 | -0.045em | Landing section titles (the design varies 46–52px) |
+| Page title (h1) | `text-title` | 44px | Alexandria 900 | 1.24 | -0.04em | Every page title |
+| Section (h2) | `text-section` | 28px | Alexandria 900 | 1.24 | -0.02em | Section headings |
+| Card title (h3) | `text-card` | 22px | Alexandria 800 | 1.24 | -0.02em | Card and panel titles |
+| Small title | `text-group` | 15px | Alexandria 800 | 1.24 | -0.02em | List group titles, card labels |
+| Body L | `text-body-l` | 16px | Cairo 500 | 1.65 | 0 | Hero and intro paragraphs |
+| Body | `text-body` | 15px | Cairo 500 | 1.7 | 0 | Default body, field text |
+| Body S | `text-body-s` | 13px | Cairo 500 | 1.7 | 0 | Descriptions under titles, helper text, field labels (600) |
+| Label | `text-label` | 14px | Cairo 700 | 1.3 | 0 | List rows, strong inline text, choice chips |
+| Meta | `text-meta` | 12px | Cairo 500 | 1.5 | 0 | Timestamps, captions |
+| Chip | `text-chip` | 12px | Cairo 700 | 1.3 | 0 | Status and info chips, count badges |
+| Eyebrow | `text-eyebrow` | 12px | Cairo 700 | 1.3 | +0.06em | Small labels above values («السعر الثابت») |
+| Button sm · md · lg | `text-btn-sm` · `text-btn` · `text-btn-lg` | 13 · 15 · 17px | Cairo 700 | 1 | 0 | By button size (`ui-rules.md` §18; md 13–14px uses `text-btn-sm` or `text-label`) |
+| Nav link | `text-nav` | 15px | Cairo 600 | 1.3 | 0 | Header links, phone tabs |
+| Wordmark | `text-wordmark` | 22px (18px on phones: `text-wordmark-sm`) | Archivo Black | 1.4 | -0.01em | Navbar |
 
 Rules:
-- Body text never below `text-sm`.
-- Weight: `normal`, `medium`, `semibold`, `bold` only.
-- Arabic needs slightly more line-height than Latin — use the defined leading scale, don't hand-tune per component.
-- **Numbers and currency: use tabular figures** so amounts align in tables and lists.
+
+- Body text never below 13px; 12px only for chips, meta and eyebrows.
+- Headings always Alexandria with negative tracking; body never.
+- Arabic headings keep line height 1.24 (the design forces it for every `h1`–`h4`); body 1.65–1.7.
+- **Digits are Western (`0-9`) in all three locales, as designed** (₺3,200, 4.8, 01 تفاصيل الطلب). In
+  `ar`, format with the `ar-u-nu-latn` locale, because plain `ar` renders Arabic-Indic digits
+  (`i18n.md` §7).
 
 ---
 
-## 4. Spacing
+## 6. Spacing
 
-Tailwind's 4px-based scale. Use `1, 2, 3, 4, 6, 8, 12, 16, 20, 24`. Nothing between.
+Tailwind v4 `--spacing` stays 4px; the design's values map to quarter steps.
 
-| Context | Value |
-| --- | --- |
-| Inside a control | `2`–`3` |
-| Between related elements | `2`–`4` |
-| Between groups | `6`–`8` |
-| Section separation | `12`–`16` |
-| Page padding (mobile → desktop) | `4` → `8` |
+| Context | Design value | Classes |
+| --- | --- | --- |
+| Page padding, desktop | 26px top, 34px sides, 34px bottom | `pt-6.5 px-8.5 pb-8.5` |
+| Page padding, phone | 20px sides | `px-5` |
+| Default gap (cards, grids, columns) | 14px | `gap-3.5` |
+| Tight gap (chip rows, inline groups) | 6, 8, 10px | `gap-1.5` · `gap-2` · `gap-2.5` |
+| Group gap | 12, 16px | `gap-3` · `gap-4` |
+| Section gap | 22, 24, 26, 30px | `gap-5.5` · `gap-6` · `gap-6.5` · `gap-7.5` |
+| Card padding | 24px 26px · 28px 30px · 16px 20px | `py-6 px-6.5` · `py-7 px-7.5` · `py-4 px-5` |
+| Chip padding | 6px 12px | `py-1.5 px-3` |
+| Field padding | 14px 18px (compact 11px 14px) | `py-3.5 px-4.5` (`py-2.75 px-3.5`) |
 
-**Always use logical spacing utilities** (`ms/me/ps/pe`) — see `ui-rules.md` §3.
-
----
-
-## 5. Radius, borders, shadows
-
-| Token | Use |
-| --- | --- |
-| `rounded-sm` / `rounded-md` | Inputs, small controls |
-| `rounded-lg` | Cards, dialogs |
-| `rounded-full` | Avatars, pills, badges |
-
-- Borders: `border` token only; width `1px` default.
-- Shadows: use the defined `shadow-sm` / `shadow-md` / `shadow-lg` steps for elevation (dropdown → dialog). Don't invent shadows.
+`px-*` and `py-*` are logical in v4 (`padding-inline`, `padding-block`). Never `pl-*` / `pr-*`.
 
 ---
 
-## 6. Motion
+## 7. Radius
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `rounded-full` | pill / circle | Buttons, chips, avatars, toggles, search field (the design's 99px and 50%) |
+| `rounded-panel` | 26px | Big panels: hero, price card, summary card, page shell |
+| `rounded-block` | 24px | Strips inside panels (the held amount strip) |
+| `rounded-card` | 22px | Offer cards, list cards, collapsed applicants |
+| `rounded-tile` | 20px | Notification items, service tiles, mid cards |
+| `rounded-row` | 18px | White rows inside navy or tinted panels (promise chips) |
+| `rounded-field` | 16px | Fields, small cards |
+| `rounded-field-sm` | 14px | Compact fields |
+| `rounded-sm` | 12px | Small boxes, thumbnails |
+| `rounded-xs` | 6px | Tiny marks |
+
+Never nest more than two radius levels; an inner radius is the outer one minus the padding.
+
+---
+
+## 8. Borders and shadows
+
+- **Borders are 2px** (`border-2`), colour `border-border`; fields `border-input`; selected states
+  `border-accent`. The design uses 2px almost everywhere (255 of 262 borders measured).
+- **The design is flat: no elevation shadows on cards.** Separation comes from tint steps and borders.
+- One shadow token, taken from the design: `shadow-overlay` = `0 20px 50px` in the `shadow` palette
+  colour, for dialogs, sheets, dropdowns and the bell menu only.
+- Focus: `ring-2 ring-ring` plus the 5px `ring-halo` glow (primary 200), never removed.
+
+---
+
+## 9. Motion
 
 | Token | Duration | Use |
 | --- | --- | --- |
@@ -123,311 +252,174 @@ Tailwind's 4px-based scale. Use `1, 2, 3, 4, 6, 8, 12, 16, 20, 24`. Nothing betw
 | `base` | ~200ms | Dropdowns, tooltips |
 | `slow` | ~300ms | Dialogs, sheets |
 
-Ease-out for entrances, ease-in for exits. **Always respect `prefers-reduced-motion`.**
+Ease-out for entrances, ease-in for exits. **Always respect `prefers-reduced-motion`.** The design is
+static; it adds no motion of its own.
 
 ---
 
-## 7. Breakpoints
+## 10. Breakpoints, frames, z-index
 
-Tailwind defaults: `sm 640` · `md 768` · `lg 1024` · `xl 1280`. Mobile-first; design at ~360px upward.
+- The design draws **390px** phones, **1280px** desktop pages and a **1440px** admin console. Build at
+  390 first; the desktop layout starts at `lg` (1024) and reaches the 1280 frame at `xl`; content width
+  is 1280 minus the 34px page padding on each side.
+- Tailwind defaults otherwise: `sm 640` · `md 768` · `lg 1024` · `xl 1280` · `2xl 1536`.
 
----
-
-## 8. Z-index
-
-Use one scale; never invent a `z-[9999]`.
-
-| Layer | Token |
+| Layer | `z-` |
 | --- | --- |
 | Base content | `0` |
-| Sticky header | `10` |
-| Dropdown / popover | `20` |
-| Overlay / backdrop | `30` |
-| Dialog / sheet | `40` |
+| Sticky header, phone bottom bar | `10` |
+| Dropdown, popover | `20` |
+| Overlay, backdrop | `30` |
+| Dialog, sheet | `40` |
 | Toast | `50` |
 
 ---
 
-## 9. When the theme arrives
+## 11. Contrast (WCAG 2.1, computed 2026-10-25)
 
-1. Replace the placeholder **values** here; keep the **names**.
-2. Update CSS variables in the global stylesheet — **not** in components.
-3. Re-verify contrast (WCAG AA) and the RTL pass.
-4. Note the change in `progress-tracker.md`.
-
-If the supplied theme lacks a token this file defines (e.g. `success`, `pending`), **ask** rather than improvising a colour.
+| Pair | Ratio | Verdict |
+| --- | --- | --- |
+| primary 900 on white · on 50 · on 100 · on 200 · on 250 · on danger 50 | 11.21 · 10.34 · 9.86 · 8.95 · 8.02 · 9.16 | AA |
+| white on primary 900 | 11.21 | AA |
+| ink 900 · 800 · 700 · 600 on white | 12.83 · 10.97 · 8.48 · 6.85 | AA |
+| ink 600 on 50 · on 200 | 6.31 · 5.47 | AA |
+| ink 500 on white · on 50 | 4.34 · 4.00 | **Large text only** |
+| primary 700 on white · on 50 | 6.28 · 5.79 | AA |
+| danger on white · on danger 50 | 5.90 · 4.82 | AA |
+| danger alert on white | 3.91 | **Non-text only** |
+| Field border: ink 500 on white (D59) | 4.34 | AA for a control boundary (3:1). The design's `#DFE7F3` was 1.25 |
+| Card border primary 150 on white | 1.19 | Decorative; cards are identified by content, fine |
 
 ---
 
-## 10. Open design questions
-
-Add here as you hit them; the human answers.
+## 12. Open design questions
 
 | # | Question | Status |
 | --- | --- | --- |
-| 1 | Brand colour palette | ⏳ awaiting |
-| 2 | Arabic-capable font family | ⏳ awaiting |
-| 3 | Logo and favicon assets | ✅ **Answered 2026-10-17 (D40, D43, D44).** Logo: `docs/design/logo.jpg`; favicons generated into `app/` (see `docs/design/README.md`). The name is written exactly **Aldebyani** in every locale, never transliterated. Original notes: Name **Aldebyani**, slogan **Aldebyani Home Care**. The round logo (blue disc, yellow buildings and swoosh, white "ALDEBYANI / HOME CARE", cleaner figure) is the **browser favicon**. The **navbar logo is the word "Aldebyani" only**, set in **Archivo Black** (D43, OFL, self hosted with `next/font/google`), the closest free match to the logo's wordmark. The logo's colours are **not** tokens until the design handoff confirms the palette (row 1) |
-| 4 | Dark mode in scope for v1? | ⏳ awaiting |
-| 5 | Colours for `success`/`warning`/`pending` in the brand palette | ⏳ awaiting |
+| 1 | Brand palette | ✅ **2026-10-25 (D48):** the design's ramps, §2 |
+| 2 | Arabic capable font family | ✅ **2026-10-25 (D48):** Alexandria (display, numbers) + Cairo (body); Turkish letters verified; `₺` only in Alexandria |
+| 3 | Logo and favicon assets | ✅ **2026-10-17 (D40, D43, D44):** `docs/design/logo.jpg`, favicons in `app/`, the navbar wordmark in Archivo Black, the name written exactly **Aldebyani** in every locale |
+| 4 | Dark mode in scope for v1? | ✅ **2026-10-25 (D50): no.** Light only, as designed |
+| 5 | Colours for `success` / `warning` / `pending` | ✅ **2026-10-25 (D49):** the design's blue ramp, §3 and §4 |
+| 6 | Field borders were 1.25:1 against white (WCAG AA wants 3:1 for an input's boundary) | ✅ **2026-10-25 (D59):** `input` = ink 500 (4.34:1) |
+| 7 | "Cancelled" appeared as «ملغى» on primary 50 and «ملغي» on primary 100 | ✅ **2026-10-25 (D59):** «ملغى» on `success-light` |
+| 8 | Approved and rejected provider chips looked identical | ✅ **2026-10-25 (D59):** «مرفوض» on `error-light`; approved stays blue |
+| 9 | The design's focus glow (5px primary 200) alone is 1.27:1 | ✅ Default (our rule §8 wins): 2px navy ring plus the glow |
 
 ---
 
-## 11. Tailwind v4 — how tokens are defined
+## 13. Applying the tokens (`app/globals.css`)
 
-This project uses **Tailwind CSS v4**. All design tokens are defined with the `@theme` directive in `app/globals.css`. **No `tailwind.config.ts` for colours or tokens.**
-
-Tailwind v4 generates utility classes automatically from every `@theme` variable:
-
-- `--color-accent` → `bg-accent`, `text-accent`, `border-accent`
-- `--color-surface` → `bg-surface`, `text-surface`, `border-surface`
-
-```tsx
-// Correct — generated utility classes
-className="bg-surface text-text-primary border-border"
-
-// Also correct — CSS variable directly
-style={{ color: 'var(--color-text-primary)' }}
-
-// Never — hardcoded hex
-className="bg-[#F6F7FB] text-[#101828]"
-
-// Never — raw Tailwind colour classes
-className="bg-purple-500 text-gray-600"
-```
-
----
-
-## 12. globals.css — token definition skeleton
-
-> **🟡 Values are placeholders until the human supplies the theme.** Token **names are stable** — build against them now. When the theme arrives, replace values here only; components must not change.
+Tailwind v4: tokens live in `app/globals.css`, never `tailwind.config.ts`. The ramps are `:root`
+variables (no utilities); the semantic tokens and scales are `@theme inline`, which generates
+`bg-surface`, `rounded-panel`, `font-display` and so on (verified: `@theme` names compile to those
+classes in Tailwind 4.3.3).
 
 ```css
 @import "tailwindcss";
 
-@theme {
-  /* Font — must support Arabic. Awaiting choice */
-  --font-sans: "TBD", sans-serif;
+:root {
+  --ramp-primary-900: #0f3a73; --ramp-primary-700: #1e5fb3; --ramp-primary-300: #c3d0e4;
+  --ramp-primary-250: #d0dbeb; --ramp-primary-200: #dbe7f6; --ramp-primary-150: #e4ecf7;
+  --ramp-primary-100: #eaf1fa; --ramp-primary-50: #f2f6fc;
+  --ramp-ink-900: #22324f; --ramp-ink-800: #2c3c5e; --ramp-ink-700: #3d4d6c; --ramp-ink-600: #4b5b78;
+  --ramp-ink-500: #6a7a97; --ramp-white: #ffffff;
+  --ramp-danger: #c0262d; --ramp-danger-alert: #e5484d; --ramp-danger-50: #fde2e2;
+  --ramp-shadow: rgb(15 58 115 / 0.18);
+}
 
-  /* Page and surface backgrounds */
-  --color-background: TBD;
-  --color-surface: TBD;
-  --color-surface-secondary: TBD;
+@theme inline {
+  --font-sans: var(--font-cairo), sans-serif;          /* next/font variables from the root layout */
+  --font-display: var(--font-alexandria), sans-serif;
+  --font-wordmark: var(--font-archivo-black), sans-serif;
 
-  /* Borders */
-  --color-border: TBD;
-  --color-border-light: TBD;
+  --color-background: var(--ramp-white);
+  --color-surface: var(--ramp-white);
+  --color-surface-secondary: var(--ramp-primary-50);
+  --color-surface-inverse: var(--ramp-primary-900);
+  --color-border: var(--ramp-primary-150);
+  --color-border-light: var(--ramp-primary-50);
+  --color-input: var(--ramp-ink-500);
+  --color-ring: var(--ramp-primary-900);
+  --color-ring-halo: var(--ramp-primary-200);
+  --color-text-primary: var(--ramp-primary-900);
+  --color-text-secondary: var(--ramp-ink-600);
+  --color-text-muted: var(--ramp-ink-500);
+  --color-text-strong: var(--ramp-ink-900);
+  --color-text-inverse: var(--ramp-white);
+  --color-link: var(--ramp-primary-700);
+  --color-accent: var(--ramp-primary-900);
+  --color-accent-foreground: var(--ramp-white);
+  --color-accent-light: var(--ramp-primary-200);
+  --color-accent-muted: var(--ramp-primary-100);
+  --color-info: var(--ramp-primary-900);
+  --color-info-light: var(--ramp-primary-100);
+  --color-info-foreground: var(--ramp-primary-900);
+  --color-pending: var(--ramp-primary-900);
+  --color-pending-light: var(--ramp-primary-200);
+  --color-pending-foreground: var(--ramp-primary-900);
+  --color-success: var(--ramp-primary-900);
+  --color-success-light: var(--ramp-primary-50);
+  --color-success-foreground: var(--ramp-primary-900);
+  --color-warning: var(--ramp-primary-900);
+  --color-warning-light: var(--ramp-primary-100);
+  --color-warning-foreground: var(--ramp-primary-900);
+  --color-error: var(--ramp-danger);
+  --color-error-light: var(--ramp-danger-50);
+  --color-error-foreground: var(--ramp-danger);
+  --color-alert: var(--ramp-danger-alert);
 
-  /* Text */
-  --color-text-primary: TBD;
-  --color-text-secondary: TBD;
-  --color-text-muted: TBD;
+  --text-display: 84px; --text-display--line-height: 1.24; --text-display--letter-spacing: -0.055em; --text-display--font-weight: 900;
+  --text-hero: 76px; --text-hero--line-height: 1.24; --text-hero--letter-spacing: -0.05em; --text-hero--font-weight: 700;
+  --text-price-xl: 72px; --text-price-xl--line-height: 1; --text-price-xl--letter-spacing: -0.05em; --text-price-xl--font-weight: 900;
+  --text-price-l: 66px; --text-price-l--line-height: 1; --text-price-l--letter-spacing: -0.05em; --text-price-l--font-weight: 900;
+  --text-display-l: 48px; --text-display-l--line-height: 1.24; --text-display-l--letter-spacing: -0.045em; --text-display-l--font-weight: 900;
+  --text-title: 44px; --text-title--line-height: 1.24; --text-title--letter-spacing: -0.04em; --text-title--font-weight: 900;
+  --text-section: 28px; --text-section--line-height: 1.24; --text-section--letter-spacing: -0.02em; --text-section--font-weight: 900;
+  --text-card: 22px; --text-card--line-height: 1.24; --text-card--letter-spacing: -0.02em; --text-card--font-weight: 800;
+  --text-group: 15px; --text-group--line-height: 1.24; --text-group--letter-spacing: -0.02em; --text-group--font-weight: 800;
+  --text-body-l: 16px; --text-body-l--line-height: 1.65; --text-body-l--font-weight: 500;
+  --text-body: 15px; --text-body--line-height: 1.7; --text-body--font-weight: 500;
+  --text-body-s: 13px; --text-body-s--line-height: 1.7; --text-body-s--font-weight: 500;
+  --text-label: 14px; --text-label--line-height: 1.3; --text-label--font-weight: 700;
+  --text-meta: 12px; --text-meta--line-height: 1.5; --text-meta--font-weight: 500;
+  --text-chip: 12px; --text-chip--line-height: 1.3; --text-chip--font-weight: 700;
+  --text-eyebrow: 12px; --text-eyebrow--line-height: 1.3; --text-eyebrow--letter-spacing: 0.06em; --text-eyebrow--font-weight: 700;
+  --text-btn-sm: 13px; --text-btn-sm--line-height: 1; --text-btn-sm--font-weight: 700;
+  --text-btn: 15px; --text-btn--line-height: 1; --text-btn--font-weight: 700;
+  --text-btn-lg: 17px; --text-btn-lg--line-height: 1; --text-btn-lg--font-weight: 700;
+  --text-nav: 15px; --text-nav--line-height: 1.3; --text-nav--font-weight: 600;
+  --text-wordmark: 22px; --text-wordmark--line-height: 1.4; --text-wordmark--letter-spacing: -0.01em;
+  --text-wordmark-sm: 18px; --text-wordmark-sm--line-height: 1.4; --text-wordmark-sm--letter-spacing: -0.01em;
 
-  /* Primary accent */
-  --color-accent: TBD;
-  --color-accent-light: TBD;
-  --color-accent-muted: TBD;
-  --color-accent-foreground: TBD;
+  --radius-panel: 26px; --radius-block: 24px; --radius-card: 22px; --radius-tile: 20px;
+  --radius-row: 18px; --radius-field: 16px; --radius-field-sm: 14px; --radius-sm: 12px; --radius-xs: 6px;
 
-  /* Success — released, completed, approved */
-  --color-success: TBD;
-  --color-success-light: TBD;
-  --color-success-lightest: TBD;
-  --color-success-foreground: TBD;
-
-  /* Warning — awaiting action, deadline near */
-  --color-warning: TBD;
-  --color-warning-light: TBD;
-  --color-warning-foreground: TBD;
-
-  /* Pending — funds held, awaiting confirmation */
-  --color-pending: TBD;
-  --color-pending-light: TBD;
-  --color-pending-foreground: TBD;
-
-  /* Info — neutral status */
-  --color-info: TBD;
-  --color-info-light: TBD;
-  --color-info-foreground: TBD;
-
-  /* Error / destructive — disputes, cancel, refund */
-  --color-error: TBD;
-  --color-error-light: TBD;
-  --color-error-foreground: TBD;
-
-  /* Border radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
+  --shadow-overlay: 0 20px 50px var(--ramp-shadow);
 }
 ```
 
----
+Write the block one declaration per line (Prettier does): the write guard checks colour values line
+by line.
 
-## 13. Colour Usage Guide
+Order of work when a position first applies them: load the fonts with `next/font/google` in the root
+layout (variables `--font-cairo`, `--font-alexandria`, `--font-archivo-black`), paste the block, check
+the built pages in `ar` and `tr`, then add shadcn (its init writes its own palette; map it to these names,
+never keep its values).
 
-### Page layout
-| Element | Token |
-| --- | --- |
-| Page background | `bg-background` |
-| Card / surface | `bg-surface` |
-| Secondary surface | `bg-surface-secondary` |
-| Default border | `border-border` |
-
-### Typography
-| Element | Token |
-| --- | --- |
-| Headings, primary text | `text-text-primary` |
-| Secondary text, labels | `text-text-secondary` |
-| Placeholder, muted, timestamps | `text-text-muted` |
-
-### Accent
-Used for: primary buttons, active nav item, focus rings, selected states.
-
-| Element | Token |
-| --- | --- |
-| Button background | `bg-accent` |
-| Button text | `text-accent-foreground` |
-| Light badge background | `bg-accent-light` |
-| Subtle background | `bg-accent-muted` |
-
-### Request status badges
-One definition, reused everywhere. Never invent a colour per screen.
-
-| Status | Background | Text |
-| --- | --- | --- |
-| `OPEN` | `bg-info-light` | `text-info-foreground` |
-| `SELECTED` | `bg-warning-light` | `text-warning-foreground` |
-| `UNLOCKED` | `bg-info-light` | `text-info-foreground` |
-| `FUNDED` | `bg-pending-light` | `text-pending-foreground` |
-| `IN_PROGRESS` | `bg-info-light` | `text-info-foreground` |
-| `AWAITING_CONFIRMATION` | `bg-warning-light` | `text-warning-foreground` |
-| `RELEASED` | `bg-success-lightest` | `text-success-foreground` |
-| `DISPUTED` | `bg-error-light` | `text-error-foreground` |
-| `REFUNDED` | `bg-surface-secondary` | `text-text-secondary` |
-| `PARTIALLY_RELEASED` | `bg-warning-light` | `text-warning-foreground` |
-| `CANCELLED` | `bg-surface-secondary` | `text-text-secondary` |
-
-### Money display
-| Element | Token |
-| --- | --- |
-| Amount (default) | `text-text-primary` |
-| Amount — earning / released | `text-success` |
-| Amount — fee / deduction | `text-text-secondary` |
-| Amount — held / pending | `text-pending` |
-| Currency suffix | `text-text-muted` |
-
-### Provider verification badges
-| Status | Background | Text |
-| --- | --- | --- |
-| Approved | `bg-success-lightest` | `text-success-foreground` |
-| Pending | `bg-warning-light` | `text-warning-foreground` |
-| Rejected / suspended | `bg-error-light` | `text-error-foreground` |
+> **The write guard** (`.claude/hooks/guard.mjs`, rule `brand-value-in-globals`, updated 2026-10-25,
+> D60) allows colour values in `globals.css` **only on `--ramp-*` lines**; every other token must
+> reference a ramp. The old `/* placeholder */` lines stay allowed only until this block replaces them;
+> never mark a real value `placeholder` to get past the rule.
 
 ---
 
-## 14. Typography scale
+## 14. Invariants
 
-| Element | Size | Weight | Line height | Colour token |
-| --- | --- | --- | --- | --- |
-| Logo text | 19px | 700 | 28px | `text-text-primary` |
-| Stat number | 30px | 600 | 36px | `text-text-primary` |
-| Page title | 24px | 600 | 32px | `text-text-primary` |
-| Section heading | 16px | 600 | 24px | `text-text-primary` |
-| Nav item (active) | 14px | 500 | 20px | `text-accent` |
-| Nav item (inactive) | 14px | 500 | 20px | `text-text-secondary` |
-| Body / primary content | 14px | 500 | 20px | `text-text-primary` |
-| Card label | 14px | 500 | 20px | `text-text-secondary` |
-| Money amount (prominent) | 20px | 600 | 28px | per money table |
-| Badge text | 12px | 500 | 16px | per badge table |
-| Timestamp / muted | 12px | 400 | 16px | `text-text-muted` |
-
-**Arabic note:** Arabic glyphs need slightly more line-height than Latin at the same size. Use the line heights above rather than Tailwind defaults, and never hand-tune per component.
-
-**Numbers:** use tabular figures for money and any column of numbers so amounts align.
-
----
-
-## 15. Spacing
-
-| Token | Value | Usage |
-| --- | --- | --- |
-| `gap-1` | 4px | Tight inline gaps |
-| `gap-2` | 8px | Badge and tag gaps |
-| `gap-3` | 12px | Form field gaps |
-| `gap-4` | 16px | Section internal gaps |
-| `gap-6` | 24px | Between sections |
-| `gap-8` | 32px | Page section gaps |
-| `p-4` | 16px | Card padding (compact) |
-| `p-6` | 24px | Card padding (default) |
-| `px-4 py-2` | 16px / 8px | Button padding |
-| `px-2 py-0.5` | 8px / 2px | Badge padding |
-
-**Always logical:** `ps-*` / `pe-*` / `ms-*` / `me-*`, never `pl-*` / `pr-*` / `ml-*` / `mr-*`.
-
----
-
-## 16. Component tokens
-
-### Cards
-```
-background: bg-surface
-border: 1px solid var(--color-border)
-border-radius: 16px (rounded-xl)
-padding: 24px (p-6)
-box-shadow: 0px 1px 3px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)
-```
-
-### Buttons
-**Primary:** `bg-accent` · `text-accent-foreground` · `rounded-md` · `px-4 py-2` · `font-medium`
-**Secondary:** `bg-surface` · `border border-border` · `text-text-primary` · `rounded-md` · `px-4 py-2`
-**Destructive:** `bg-error` · `text-error-foreground` · `rounded-md` · `px-4 py-2`
-**Ghost:** transparent · `text-text-secondary` · `hover:bg-surface-secondary` · `rounded-md`
-
-### Input fields
-```
-background: bg-surface
-border: border border-border
-border-radius: rounded-md
-padding: px-3 py-2
-text: text-text-primary
-placeholder: text-text-muted
-focus: ring-1 ring-accent border-accent
-```
-
-### Badges
-```
-border-radius: rounded-full
-padding: px-2 py-0.5
-font-size: 12px
-font-weight: 500
-```
-
-### Money display
-```
-font-variant-numeric: tabular-nums
-direction: ltr (isolated inside RTL text)
-currency: always shown, in text-text-muted
-```
-
-### Deadline countdown
-```
-default:        text-text-secondary
-< 6 hours left: text-warning
-expired:        text-error
-```
-
----
-
-## 17. Invariants
-
-- Never use hex values directly in components — always tokens
-- Never use raw Tailwind colour classes (`bg-purple-500`, `text-gray-600`)
-- Never define colours in `tailwind.config.ts` — `@theme` in `globals.css` only
-- Font is set once in the root layout — never a system-font fallback as primary
-- All borders default to `border-border` — never `border-gray-*`
-- Status badges always use the status table above — never a per-screen colour
-- Money colours always come from the money table — never inline conditionals with raw colours
-- Colour is never the only signal — always pair with text or an icon
+- Never use hex values in components; always semantic tokens
+- Never use raw Tailwind colour classes (`bg-blue-900`, `text-gray-600`) or the `--ramp-*` steps directly
+- Never define colours in `tailwind.config.ts`; `@theme` in `globals.css` only
+- Fonts are set once in the root layout; never a system font as primary
+- Every amount and currency sign is in `font-display` (Cairo has no `₺`)
+- Status chips always use §4; never a colour per screen
+- Colour is never the only signal; always the label (and an icon where the design has one)

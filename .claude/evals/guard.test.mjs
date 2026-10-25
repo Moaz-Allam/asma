@@ -129,6 +129,18 @@ const CASES = [
     content: ':root { --background: oklch(1 0 0); --primary: oklch(0.21 0.006 285.9); }',
   },
   {
+    name: 'shadcn palette as written to disk: one indented custom property per line',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: ':root {\n  --background: oklch(1 0 0);\n  --primary: oklch(0.21 0.006 285.9);\n}',
+  },
+  {
+    name: 'a semantic token holding a raw colour instead of a ramp reference',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: '@theme inline {\n  --color-surface: var(--ramp-white);\n  --color-accent: #0f3a73;\n}',
+  },
+  {
     name: 'raw Tailwind palette class',
     expect: 'raw-tailwind-palette',
     path: 'components/shared/Card.tsx',
@@ -200,10 +212,19 @@ const CASES = [
       '/* bg-gray-100 is banned */\nexport const x = 1;',
   },
   {
-    name: 'globals.css placeholder values are allowed while B4 is open',
+    name: 'globals.css placeholder values stay allowed until the tokens land',
     expect: null,
     path: 'app/globals.css',
     content: '@theme {\n  --color-surface: oklch(1 0 0); /* placeholder */\n  --radius-md: 8px;\n}',
+  },
+  {
+    name: 'the --ramp-* palette block holds the real colours; tokens reference it',
+    expect: null,
+    path: 'app/globals.css',
+    content:
+      ':root {\n  --ramp-primary-900: #0f3a73;\n  --ramp-white: #ffffff;\n  --ramp-shadow: rgb(15 58 115 / 0.18);\n}\n' +
+      '@theme inline {\n  --color-accent: var(--ramp-primary-900);\n  --color-surface: var(--ramp-white);\n' +
+      '  --shadow-overlay: 0 20px 50px var(--ramp-shadow);\n}',
   },
   {
     name: 'border-red is not border-r',

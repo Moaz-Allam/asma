@@ -157,6 +157,110 @@ suggests a section was removed without updating references to it.
 
 ---
 
+## 🎨 The design handoff vs the docs (2026-10-25)
+
+Found while importing the owner's Claude Design export into `docs/design/` (D48). The design is the
+visual source of truth; on rules, money and scope the docs and the decision log win, and the design's
+deviations are listed here so nobody copies them. Status: 🔧 = settled · ⚠️ = live.
+
+### C14 🔧 Commission timing: the screens contradict the docs and the case study
+
+`project-overview.md` says the commission is "deducted when the customer pays", and the design's own
+case study agrees («تُقتطع عند دفع العميل»). But `s7`, `p1`, `p8` and `p12` tell users it is deducted
+«عند تحرير المبلغ» (on release). Copied as is, the UI would describe a different money flow from the
+ledger. **Settled by D53:** taken at payment; UI copy says the provider receives the net at release.
+
+### C15 🔧 Partial dispute release is drawn, but it is not in the launch scope
+
+`s9` says the admin decides «تحرير المبلغ كاملًا أو جزئيًا أو استرداده» and `a5` offers a partial
+release. Position 14 is "full release or full refund (partial is P1)". **Settled by D54:** full only at
+launch; the partial option and copy stay hidden until P1.
+
+### C16 🔧 Sign-in: a four-digit SMS code, while the channel was undecided
+
+The design signs in by phone with a four-box code. Q4 was still open (email recommended for cost), and
+Supabase Auth codes are 6 to 10 digits, so four boxes cannot work. **Settled by D55:** phone SMS, six
+digits; SMS provider is owner step S20.
+
+### C17 🔧 "Repeat this request" is not in the brief
+
+`s9` has «كرّر الطلب». The scope rule says ask before building anything outside the brief.
+**Settled by D56:** in v1, position 04, recorded as a scope override.
+
+### C18 🔧 The mock region is Saudi Arabia, but v1 launches in Turkey
+
+Riyadh districts, 05x phones, «مدى» first among payment methods, «السعودية · ₺» in the admin region
+switch, a settings note "Saudi only". The designer's own note explains it chose Saudi data because "the
+region decision is still open", which stopped being true on 2026-10-17 (D22). The mix also pairs Saudi
+data with `₺`. **Settled by D57:** v1 is Turkish first; build with Turkish data and the iyzico card
+form (closes Q14).
+
+### C19 ⚠️ The design is Arabic only; v1 is Turkish first
+
+There is no Turkish (or English) screen in the handoff, yet `tr` is the primary launch language (D57).
+Turkish runs longer than Arabic and reads left to right. Mitigation in place: layouts mirror through
+logical properties, the fonts cover Turkish (verified), `tr` is the first locale checked
+(`ui-rules.md` §3, `i18n.md` §7). Live until the Turkish copy exists and the first screens pass in `tr`.
+
+### C20 🔧 Dialect: the designer's note says Modern Standard Arabic, the landing hero is Egyptian
+
+The customer file ends with «نُقلت النصوص إلى العربية الفصحى المبسّطة», but the `s1` subtitle still reads
+«شوف السعر … المزودين بيتقدموا وإنت تختار». Settled by the rule that `messages/ar.json` is written in
+simple Modern Standard Arabic.
+
+### C21 ⚠️ The criminal record is drawn as always required; the brief makes it configurable
+
+`p3` asks every provider for ID, a liveness selfie and a criminal record. `project-overview.md` lists the
+criminal record certificate as "configurable by admin". Build it configurable, on by default as drawn.
+Live because the criminal record and the selfie are special categories of personal data under KVKK:
+the legal basis, consent wording and retention go to the owner's legal track (S16).
+
+### C22 🔧 The notification centre is drawn for launch, but planned for later
+
+`s13` and `p15` draw full notification pages and a bell menu; the case study itself lists the in-app
+notification centre under future plans, and the build plan puts it at position 18 (P2). Settled: P2 as
+planned; SMS and email notifications (position 13) are the launch channel.
+
+### C23 🔧 Payment methods the PSP may not support
+
+`s7` offers «مدى», a credit card, Apple Pay and instant bank transfer. Which methods iyzico's
+marketplace hold supports is a PSP fact (B3). Settled with D57: the iyzico card form only in v1; more
+methods only after B3 confirms them.
+
+### C24 🔧 Raw keys shown as labels in the admin pricing editor
+
+`app-06` shows `has_pets`, `property_type`, `rooms` as labels. `i18n.md` §5: labels come from localised
+columns. Settled: the label in the user's locale, the key at most as small secondary text.
+
+### C25 🔧 Status chips disagree with themselves
+
+"Cancelled" appears as «ملغى» on primary 50 and «ملغي» on primary 100; approved («معتمد») and rejected
+(«مرفوض») look identical. **Settled by D59:** «ملغى» on `success-light`; «مرفوض» on `error-light`.
+
+### C26 🔧 Field borders fail our contrast rule
+
+The design's field border (`#DFE7F3`) is 1.25:1 against white; `ui-rules.md` §8 requires WCAG AA, which
+wants 3:1 for a control's boundary. **Settled by D59:** field borders use ink 500 (4.34:1).
+
+### C27 🔧 The design tool's critiques describe an earlier version
+
+`docs/design/source/critique/` (2026-10-20) mentions yellow money cards, black buttons, grey `#888`
+text, Arabic-Indic digits on `p6` and no admin search. The exported design has none of these (verified:
+no Arabic-Indic digit in any screen, a navy palette, a requests view in the console). Kept as history;
+do not act on them without checking the screen.
+
+### C28 🔧 The provider wallet is not a custody breach
+
+Q13 (2026-10-24) claimed the design's wallet and «سحب الرصيد» break rule 9. Wrong:
+`project-overview.md` §6 and §12 define the wallet as a read only mirror of PSP balances with payout
+requests via the PSP, which is exactly what `p9` draws. Withdrawn.
+
+Also settled by the rewrite itself (D48): the old placeholder `ui-rules.md` forbade tinted card
+backgrounds and a sidebar and assumed 1px borders and small radii. The design uses tinted and navy panels,
+an admin rail, 2px borders and pill buttons; the rules now follow it.
+
+---
+
 ## What was already excellent
 
 Worth naming, so it does not get "simplified" away in a future pass:

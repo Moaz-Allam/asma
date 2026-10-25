@@ -1,0 +1,426 @@
+[
+  {
+    "group": "customer",
+    "id": "s1",
+    "file": "customer/s1.jpg",
+    "label": "S1 Landing — escrow is the trust claim, not a guarantee",
+    "w": 1588,
+    "h": 4922
+  },
+  {
+    "group": "customer",
+    "id": "s2",
+    "file": "customer/s2.jpg",
+    "label": "S2 OTP sign-in — phone by default",
+    "w": 1588,
+    "h": 561
+  },
+  {
+    "group": "customer",
+    "id": "s3",
+    "file": "customer/s3.jpg",
+    "label": "S3 Signed-in home — search shows results only while typing",
+    "w": 1588,
+    "h": 1028
+  },
+  {
+    "group": "customer",
+    "id": "s4",
+    "file": "customer/s4.jpg",
+    "label": "S4 طلب جديد — server-computed fixed price, live",
+    "w": 1588,
+    "h": 1582
+  },
+  {
+    "group": "customer",
+    "id": "s5",
+    "file": "customer/s5.jpg",
+    "label": "S5 مراجعة ونشر — no payment here; request becomes OPEN",
+    "w": 1588,
+    "h": 979
+  },
+  {
+    "group": "customer",
+    "id": "s6",
+    "file": "customer/s6.jpg",
+    "label": "S6 العروض — applications on an OPEN request (click a card to open it)",
+    "w": 1588,
+    "h": 1618
+  },
+  {
+    "group": "customer",
+    "id": "s7",
+    "file": "customer/s7.jpg",
+    "label": "S7 الدفع — after selection; PSP-held, no cash on delivery",
+    "w": 1588,
+    "h": 919
+  },
+  {
+    "group": "customer",
+    "id": "s8",
+    "file": "customer/s8.jpg",
+    "label": "S8 ملف المزود — derived metrics, legacy split from platform counts",
+    "w": 1588,
+    "h": 1813
+  },
+  {
+    "group": "customer",
+    "id": "s9",
+    "file": "customer/s9.jpg",
+    "label": "S9 التأكيد والتقييم — confirm release, optional dimension rating, dispute (no replacement guarantee)",
+    "w": 1588,
+    "h": 2139
+  },
+  {
+    "group": "customer",
+    "id": "s10",
+    "file": "customer/s10.jpg",
+    "label": "S10 طلباتي — canonical request states (tabs are interactive)",
+    "w": 1588,
+    "h": 1910
+  },
+  {
+    "group": "customer",
+    "id": "s11",
+    "file": "customer/s11.jpg",
+    "label": "S11 اختيار الدور — first sign-up only; interactive",
+    "w": 1588,
+    "h": 638
+  },
+  {
+    "group": "customer",
+    "id": "s12",
+    "file": "customer/s12.jpg",
+    "label": "S12 حسابي — personal info, language, notification channels, region",
+    "w": 1588,
+    "h": 1214
+  },
+  {
+    "group": "customer",
+    "id": "s13",
+    "file": "customer/s13.jpg",
+    "label": "S13 الإشعارات — full page + bell dropdown; each item links to its request",
+    "w": 1588,
+    "h": 1526
+  },
+  {
+    "group": "customer",
+    "id": "s14",
+    "file": "customer/s14.jpg",
+    "label": "S14 إلغاء الطلب — outcome depends on the state at cancellation; pick a state",
+    "w": 1588,
+    "h": 870
+  },
+  {
+    "group": "customer",
+    "id": "s15",
+    "file": "customer/s15.jpg",
+    "label": "S15 تفاصيل الطلب بعد فتح البيانات — provider revealed, timeline, deadlines",
+    "w": 1588,
+    "h": 885
+  },
+  {
+    "group": "customer",
+    "id": "s16",
+    "file": "customer/s16.jpg",
+    "label": "S16 دعوة لتقييم عمل سابق — single-use admin link; the past customer rates, never the admin",
+    "w": 1588,
+    "h": 1392
+  },
+  {
+    "group": "customer",
+    "id": "s17",
+    "file": "customer/s17.jpg",
+    "label": "S17 حالات الخطأ والفراغ — 404, payment declined, expired code, empty notifications",
+    "w": 1588,
+    "h": 976
+  },
+  {
+    "group": "customer",
+    "id": "s18",
+    "file": "customer/s18.jpg",
+    "label": "S18 الجوال — home, new request, offers, request after unlock",
+    "w": 1588,
+    "h": 1796
+  },
+  {
+    "group": "customer",
+    "id": "s19",
+    "file": "customer/s19.jpg",
+    "label": "S19 رسائل SMS والبريد — customer side",
+    "w": 1588,
+    "h": 1562
+  },
+  {
+    "group": "provider",
+    "id": "p1",
+    "file": "provider/p1.jpg",
+    "label": "P1 التسجيل كمزود خدمة — phone OTP, then the honest expectation-setting",
+    "w": 1588,
+    "h": 1001
+  },
+  {
+    "group": "provider",
+    "id": "p2",
+    "file": "provider/p2.jpg",
+    "label": "P2 استكمال الملف — step 1 of 3, with the gate stated up front",
+    "w": 1588,
+    "h": 1146
+  },
+  {
+    "group": "provider",
+    "id": "p3",
+    "file": "provider/p3.jpg",
+    "label": "P3 التحقق — ID, liveness selfie, criminal record; three upload states",
+    "w": 1588,
+    "h": 1096
+  },
+  {
+    "group": "provider",
+    "id": "p4",
+    "file": "provider/p4.jpg",
+    "label": "P4 الخدمات والمناطق — interactive: pick services, districts, availability",
+    "w": 1588,
+    "h": 1354
+  },
+  {
+    "group": "provider",
+    "id": "p5",
+    "file": "provider/p5.jpg",
+    "label": "P5 قيد المراجعة — the gated state; requests are visible but locked",
+    "w": 1588,
+    "h": 1028
+  },
+  {
+    "group": "provider",
+    "id": "p6",
+    "file": "provider/p6.jpg",
+    "label": "P6 لوحة العمل — approved provider home; one list of what needs action, most urgent first",
+    "w": 1588,
+    "h": 1951
+  },
+  {
+    "group": "provider",
+    "id": "p7",
+    "file": "provider/p7.jpg",
+    "label": "P7 ملفي — provider's own editable profile, with the customer-facing preview",
+    "w": 1588,
+    "h": 1219
+  },
+  {
+    "group": "provider",
+    "id": "p8",
+    "file": "provider/p8.jpg",
+    "label": "P8 التقدّم على طلب — free application, no price field, live message scanning",
+    "w": 1588,
+    "h": 2439
+  },
+  {
+    "group": "provider",
+    "id": "p9",
+    "file": "provider/p9.jpg",
+    "label": "P9 المحفظة — balances, withdrawal, ledger filters (interactive)",
+    "w": 1588,
+    "h": 2185
+  },
+  {
+    "group": "provider",
+    "id": "p10",
+    "file": "provider/p10.jpg",
+    "label": "P10 الطلبات المتاحة — feed with short details only; full detail on P8",
+    "w": 1588,
+    "h": 991
+  },
+  {
+    "group": "provider",
+    "id": "p11",
+    "file": "provider/p11.jpg",
+    "label": "P11 دفع رسم فتح البيانات — charged to card, within the unlock window",
+    "w": 1588,
+    "h": 930
+  },
+  {
+    "group": "provider",
+    "id": "p12",
+    "file": "provider/p12.jpg",
+    "label": "P12 العمل المؤكَّد — full customer details after unlock; start/finish are interactive",
+    "w": 1588,
+    "h": 965
+  },
+  {
+    "group": "provider",
+    "id": "p13",
+    "file": "provider/p13.jpg",
+    "label": "P13 سحب التقدّم والإلغاء — what each step costs the provider",
+    "w": 1588,
+    "h": 1394
+  },
+  {
+    "group": "provider",
+    "id": "p14",
+    "file": "provider/p14.jpg",
+    "label": "P14 حالات الحساب — rejected, suspended, document expired; switch tabs",
+    "w": 1588,
+    "h": 632
+  },
+  {
+    "group": "provider",
+    "id": "p15",
+    "file": "provider/p15.jpg",
+    "label": "P15 الإشعارات — provider",
+    "w": 1588,
+    "h": 987
+  },
+  {
+    "group": "provider",
+    "id": "p16",
+    "file": "provider/p16.jpg",
+    "label": "P16 حسابي — provider account (profile & documents live in P7)",
+    "w": 1588,
+    "h": 1156
+  },
+  {
+    "group": "provider",
+    "id": "p17",
+    "file": "provider/p17.jpg",
+    "label": "P17 حالات الخطأ والفراغ — empty feed, unlock payment failed, request closed, 404",
+    "w": 1588,
+    "h": 914
+  },
+  {
+    "group": "provider",
+    "id": "p18",
+    "file": "provider/p18.jpg",
+    "label": "P18 الجوال — feed, won job, wallet",
+    "w": 1588,
+    "h": 905
+  },
+  {
+    "group": "provider",
+    "id": "p19",
+    "file": "provider/p19.jpg",
+    "label": "P19 رسائل SMS والبريد — provider side",
+    "w": 1588,
+    "h": 1513
+  },
+  {
+    "group": "admin",
+    "id": "a1",
+    "file": "admin/a1.jpg",
+    "label": "A1 ملف المزود — lifecycle, derived metrics (read-only), documents, admin actions",
+    "w": 1588,
+    "h": 1243
+  },
+  {
+    "group": "admin",
+    "id": "a2",
+    "file": "admin/a2.jpg",
+    "label": "A2 إجراءات المزود — suspend, rating invitation, legacy import",
+    "w": 1588,
+    "h": 671
+  },
+  {
+    "group": "admin",
+    "id": "a3",
+    "file": "admin/a3.jpg",
+    "label": "A3 إلغاء أو استرداد إداري — attribution, outcome and ledger preview are interactive",
+    "w": 1588,
+    "h": 909
+  },
+  {
+    "group": "admin",
+    "id": "a4",
+    "file": "admin/a4.jpg",
+    "label": "A4 حالات الخطأ والفراغ — 404, empty queue, PSP reconciliation error",
+    "w": 1588,
+    "h": 759
+  },
+  {
+    "group": "admin",
+    "id": "a5",
+    "file": "admin/a5.jpg",
+    "label": "A5 الجوال — dashboard and dispute decision",
+    "w": 1588,
+    "h": 905
+  },
+  {
+    "group": "admin",
+    "id": "a6",
+    "file": "admin/a6.jpg",
+    "label": "A6 رسائل SMS والبريد — admin alerts",
+    "w": 1588,
+    "h": 905
+  },
+  {
+    "group": "admin",
+    "id": "app-01",
+    "file": "admin/app-01.jpg",
+    "label": "admin app · لوحة التحكم",
+    "w": 1440,
+    "h": 1092
+  },
+  {
+    "group": "admin",
+    "id": "app-02",
+    "file": "admin/app-02.jpg",
+    "label": "admin app · الطلبات",
+    "w": 1440,
+    "h": 1091
+  },
+  {
+    "group": "admin",
+    "id": "app-03",
+    "file": "admin/app-03.jpg",
+    "label": "admin app · اعتماد المزودين 3",
+    "w": 1440,
+    "h": 1028
+  },
+  {
+    "group": "admin",
+    "id": "app-04",
+    "file": "admin/app-04.jpg",
+    "label": "admin app · النزاعات 3",
+    "w": 1440,
+    "h": 1224
+  },
+  {
+    "group": "admin",
+    "id": "app-05",
+    "file": "admin/app-05.jpg",
+    "label": "admin app · الكتالوج",
+    "w": 1440,
+    "h": 1028
+  },
+  {
+    "group": "admin",
+    "id": "app-06",
+    "file": "admin/app-06.jpg",
+    "label": "admin app · قواعد التسعير",
+    "w": 1440,
+    "h": 1041
+  },
+  {
+    "group": "admin",
+    "id": "app-07",
+    "file": "admin/app-07.jpg",
+    "label": "admin app · الإعدادات",
+    "w": 1440,
+    "h": 1028
+  },
+  {
+    "group": "admin",
+    "id": "app-08",
+    "file": "admin/app-08.jpg",
+    "label": "admin app · التقارير",
+    "w": 1440,
+    "h": 1028
+  },
+  {
+    "group": "admin",
+    "id": "app-09",
+    "file": "admin/app-09.jpg",
+    "label": "admin app · مراقبة التسرّب 3",
+    "w": 1440,
+    "h": 1028
+  }
+]

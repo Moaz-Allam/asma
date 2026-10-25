@@ -49,6 +49,15 @@ Dated bullets, newest at the bottom.
 - **2026-10-17** · PR #17 CI green on all three jobs (first gitleaks and function grant meta test runs
   passed). `master` protection on (D46). Install scripts approved (D45). Favicons generated from the
   owner's logo (D44); e2e now 9/9, including icons linked and served in every locale.
+- **2026-10-25** · **Design handoff imported** (S13, closes B4; D48–D57). `docs/design/`: the four
+  design files and their scripts in `source/`, 53 screens rendered with stand-ins in `screens/` (no
+  borrowed photo or real avatar enters the repo), capture tools in `tools/`, the screen → page →
+  position map. `ui-tokens.md`, `ui-rules.md`, `ui-registry.md` rewritten from the design; fonts verified
+  for Turkish (Cairo lacks `₺`, so money is set in Alexandria); contrast measured. Design vs docs
+  conflicts recorded in `contradictions.md` C14–C28. Owner: v1 is Turkish first (D57); copy is English
+  first, then translated to Turkish (D58); design questions settled (D59); write guard updated for the
+  palette block, plus a comment stripping bug fixed (D60, guard suite 44/44). Not yet applied to code:
+  tokens and fonts land in `app/globals.css` with the first UI position.
 
 ---
 
@@ -62,7 +71,7 @@ Dated bullets, newest at the bottom.
 | B1 | ~~Target market~~ | — | — | ✅ RESOLVED 2026-08-17: both regions, one deployment (D14). Narrowed 2026-10-17: Turkey launches first, KSA later (D22) |
 | B11 | 🔴 **Can an individual be a sub-merchant?** A business model check: if individuals cannot onboard, the provider structure changes | 02 (sub-merchant data), 08–12 | Evidence: iyzico's marketplace docs list three sub-merchant types including `PERSONAL`. Not confirmed: run it in the sandbox (S1) | ⏳ open, priority |
 | B3 | **PSP facts.** Sandbox answerable: sub-merchant types and fields, callback signature scheme and event id, partial refund while unapproved, approval API shape. Must ask: max hold duration, real per-card fee (§7) | 08–12 | Design to the worst case: `psp_max_hold_hours` in `platform_settings` plus an invariant alert | ⏳ open; sandbox path available (S1, S2) |
-| B4 | **Brand: theme, colours, fonts, logo, templates**, plus: Arabic capable font, dark mode in v1? | UI layer from 01 (structure can proceed on placeholder tokens) | Claude Design handoff expected around 2026-10-19 (S13) | ⏳ open |
+| B4 | ~~**Brand: theme, colours, fonts, logo, templates**, plus: Arabic capable font, dark mode in v1?~~ | — | — | ✅ RESOLVED 2026-10-25: the Claude Design handoff (D48); status colours D49; no dark mode in v1 D50 |
 | B5 | **Pricing formula specifics** per category: questions, types, options, base price, modifiers | 03 content, G3 | The engine is generic; build it against test fixtures, never invented data | ⏳ open |
 | B6 | **Launch categories** and each one's questions | 03 content, G3 | Same as B5; start with one worked category (home cleaning) | ⏳ open |
 | B2 | **Legal sign off on the custody model**: the platform never holds funds and needs no licence | G3 | None; owner track S16 | ⏳ open |
@@ -88,6 +97,20 @@ struck through, with the replacement named.
 
 | # | Date | Decision | By | Where |
 | --- | --- | --- | --- | --- |
+| D60 | 2026-10-25 | **Write guard `brand-value-in-globals` updated:** colour values in `app/globals.css` only on `--ramp-*` palette lines; every other token references a ramp; the pre-B4 `placeholder` lines stay allowed until the tokens replace them. Also fixed a guard bug found while testing it: the comment stripper deleted every line starting with `--` in all files (meant for SQL), which hid multi-line CSS custom properties from the rule; it now strips `--` only in `.sql`. Guard suite 44/44 (3 new cases) | Owner (asked in chat) | `.claude/hooks/guard.mjs`, `.claude/evals/guard.test.mjs` |
+| D59 | 2026-10-25 | **Design questions 6–8 settled:** field borders use ink 500 `#6A7A97` (4.34:1, WCAG AA) instead of the design's `#DFE7F3`; "cancelled" is «ملغى» on `success-light`; a rejected provider («مرفوض») is `error-light`, approved stays blue | Owner (asked in chat) | `ui-tokens.md` §3, §4, §12 |
+| D58 | 2026-10-25 | **Copy workflow:** Arabic from the design (simple Modern Standard Arabic); English drafted from the design's meaning; a translator turns English into Turkish (S21). Untranslated Turkish keys stay marked, never machine filled | Owner (asked in chat) | `ui-rules.md` §3, `i18n.md` §7 |
+| D57 | 2026-10-25 | **v1 is Turkish first**: primary language `tr`, Turkey region; KSA comes later (D22). The design is drawn in Arabic; it is the layout reference, mirrored for `tr` and `en`, and every screen is verified in `tr` first. The design's KSA mock details (Riyadh districts, «مدى», 05x phones, «السعودية · ₺», "Saudi only" settings) are dropped: Turkish data and the iyzico card form | Owner (asked in chat) | `ui-rules.md` §3, `docs/design/README.md`; closes Q14 |
+| D56 | 2026-10-25 | **Repeat request is in v1** (the design's «كرّر الطلب» on `s9`): re-post with the same answers, position 04. Not in the brief, so recorded as a scope override | Owner (asked in chat) | `build-plan.md` 04, `ui-registry.md` |
+| D55 | 2026-10-25 | **Sign-in is a phone SMS code at launch**, as designed (D16). The code is **6 digits**: Supabase Auth allows 6 to 10, so the design's 4 boxes become 6. Needs an SMS provider for Turkey (S20) | Owner (asked in chat) | `build-plan.md` 01; closes Q4 |
+| D54 | 2026-10-25 | **Disputes at launch resolve as full release or full refund only.** The design's partial release (`s9` copy, `a5`) stays hidden until P1, as position 14 already says | Owner (asked in chat) | `build-plan.md` 14, `docs/design/README.md` |
+| D53 | 2026-10-25 | **Commission is taken when the customer pays** (`project-overview.md`, unchanged). The screens that say «تُخصم … عند تحرير المبلغ» are copy errors: the UI says the provider receives the net amount at release | Owner (asked in chat) | `contradictions.md` C14 |
+| D52 | 2026-10-25 | **Digits are Western (`0-9`) in all three locales**, as the design draws them; `ar` formats with `ar-u-nu-latn`. Grouping and the currency position follow the locale (`tr`: ₺3.200) | Default (from the owner's design) | `ui-tokens.md` §5, `i18n.md` §7 |
+| D51 | 2026-10-25 | `docs/design/` holds the design source and 53 renders made with stand-ins. The design's borrowed photos and real users' avatars never enter the repo (Q12) | Owner (asked in chat) | `docs/design/README.md` |
+| D50 | 2026-10-25 | **No dark mode in v1**: light only, as designed | Owner (asked in chat) | `ui-tokens.md` §12 |
+| D49 | 2026-10-25 | **Status chips stay on the design's blue ramp** (no green or amber); dispute is the only red; meaning comes from the label | Owner (asked in chat) | `ui-tokens.md` §4 |
+| D48 | 2026-10-25 | **The Claude Design handoff is the visual source of truth** (export of 2026-10-24, confirmed final; the 2026-10-25 re-export is byte identical). Palette, fonts (Alexandria for headings and money, Cairo for body, Archivo Black for the wordmark), radius, borders and components recorded; `ui-tokens.md`, `ui-rules.md`, `ui-registry.md` rewritten | Owner (asked in chat) | `context/ui-*.md`, `docs/design/`; closes B4 |
+| D47 | 2026-10-17 | Repo settings: **Allow auto-merge** on, **Automatically delete head branches** on. PR #17 set to squash merge itself once the three required checks pass | Owner (asked in chat) | GitHub settings |
 | D46 | 2026-10-17 | `master` protected: the `checks`, `database`, `e2e` jobs are required (bound to GitHub Actions), branches must be up to date before merging, force pushes and deletion blocked. Admins are not enforced, so the owner keeps an explicit bypass (S14) | Owner (asked in chat) | GitHub settings |
 | D45 | 2026-10-17 | npm install scripts approved for `@parcel/watcher` 2.6.0, `@swc/core` 1.15.47, `unrs-resolver` 1.12.2 after review (each is a no op unless the native binary is missing). npm records them per version in `package.json` `allowScripts`, so any version bump needs a fresh review | Owner (asked in chat) | `package.json`, `AGENTS.md` |
 | D44 | 2026-10-17 | **The name is written exactly "Aldebyani" in every locale**, `ar` included (no Arabic transliteration). The slogan stays as written, "Aldebyani Home Care", in all three locales unless the owner asks for a translation. Favicons generated from `docs/design/logo.jpg` | Owner | `messages/*.json`, `docs/design/README.md` |
@@ -169,7 +192,10 @@ question moves to the decision log and is struck through here.
 | ~~Q2~~ | ~~Confirm the build order~~ → resolved by D41 | — |
 | ~~Q11~~ | ~~Brand assets~~ → resolved by D43 (wordmark font) and D44 (logo file, favicons, exact name) | — |
 | ~~Q1~~ | ~~Confirm the priority line~~ → resolved by D42 | — |
-| Q4 | **Sign in channel at launch.** Email OTP through Resend SMTP (no extra cost; recommended for the 3 weeks) or phone SMS OTP (needs a paid SMS provider; D16 assumed phone identity). Asked again in the 01 spec interview | Spec for 01 |
+| ~~Q4~~ | ~~Sign in channel at launch~~ → resolved by D55: phone SMS code, 6 digits | — |
+| ~~Q13~~ | ~~The redesign's provider wallet conflicts with rule 9~~ → withdrawn 2026-10-25: **not a conflict**. `project-overview.md` §6 and §12 define the wallet as a read only mirror of PSP balances with payout requests via the PSP, which is what `p9` draws. The flag was wrong | — |
+| Q12 | **The redesign's photos and avatars are borrowed** (found 2026-10-24). 13 photos in the Claude Design export (`img/`) are crops of Airtasker and Taskrabbit marketing images, one of them AdobeStock licensed to Taskrabbit. The 3 `land-*` photos have no known source. The 5 avatars (`img/av-*.jpg`) are real Airtasker users' profile photos. Replace them with owned, licensed or generated images before any public use or any UI built from the design | Launch material; UI positions built from the design |
+| ~~Q14~~ | ~~KSA leftovers in the TR redesign~~ → resolved by D57: v1 is Turkish first; build with Turkish data and the iyzico card form | — |
 | Q5 | **Sentry and PostHog data region:** EU (recommended: nearest to TR, GDPR grade) or US | S7, S8, 00b |
 | Q6 | **Region for the new Supabase project** (S6). Recommended: `eu-central-1` (Frankfurt), nearest to Turkey; Vercel functions then pin to `fra1` | S6, 00b |
 | Q3 | **Uptime monitor:** Better Stack free (10 monitors, 3 min checks, status page) or UptimeRobot free (50 monitors, 5 min; its May 2026 terms reportedly allow commercial use, verify) | S10, G1 |
@@ -203,13 +229,15 @@ them.
 | S10 | **Uptime monitor** (Q3): an HTTP monitor on `/api/health` of the production URL, every 5 minutes or faster, alerting your phone and email | Verifies at G1 | G1 | ☐ |
 | S11 | **Docker Desktop** (optional): install and start it so `npm run db:test` and `npm run test:e2e` run locally. CI runs both regardless | — | Local runs only | ☐ |
 | S12 | **Import the brief.** Put the original brief files (the `.docx` / `.xlsx` that used to be in `context/docs/`) into `docs/brief/`, or tell me where they are | Converts them with numbered sections | Precedence level 4 | ☐ |
-| S13 | **Design handoff (B4).** Export the Claude Design screens, logo, colours, fonts into `docs/design/` and say which screen is which page | Records tokens with a contrast table; maps screens | UI layer from 01 | ☐ (~2026-10-19) |
+| S13 | **Design handoff (B4).** Export the Claude Design screens, logo, colours, fonts into `docs/design/` and say which screen is which page | Records tokens with a contrast table; maps screens | UI layer from 01 | ✅ 2026-10-25 (D48) |
 | S14 | **Branch protection.** GitHub → Settings → Branches → rule for `master`: require the `checks`, `database`, `e2e` jobs; block force pushes | — | Protects merges | ✅ 2026-10-17, done by the agent at the owner's request (D46) |
 | S15 | **Close the stale dependabot PR** (TypeScript 5.9.3 → 7.0.2; CI rejected it) | — | — | ☐ |
-| S16 | **Legal (B2, B9, B10).** Custody confirmation; agent position; authoritative language; T&C (the service contract is customer to provider; we are intermediary and payment facilitator), privacy notice (KVKK), provider agreement with a data processing clause | Builds the legal pages | G3 | ☐ |
+| S16 | **Legal (B2, B9, B10).** Custody confirmation; agent position; authoritative language; T&C (the service contract is customer to provider; we are intermediary and payment facilitator), privacy notice (KVKK), provider agreement with a data processing clause. **Also (2026-10-25):** provider verification collects a criminal record certificate and a liveness selfie (`p3`), both special categories of personal data under KVKK; confirm the legal basis, explicit consent wording and retention | Builds the legal pages | G3 | ☐ |
 | S17 | **Catalog data (B5, B6).** Launch categories; per category: questions (key, type, options, required, validation), labels in `ar`/`tr`/`en`, base price, modifiers, zones and multipliers; TR commission %, unlock fee, windows. Start with home cleaning | Seeds through admin UI, never invented | 03 content, G3 | ☐ |
 | S19 | **Fix `.env.local`.** `npm run dev` stops at boot: its `SUPABASE_DB_POOL_URL` lacks `pgbouncer=true`. Delete that line (it is optional now, D38, and the old project is unverified), or correct it once the new project exists (S6). The agent cannot read or edit this file, by design | Re-runs the dev server preview | Local `npm run dev` | ☐ |
 | S18 | **Claims and legacy data (B7, B8).** The public quality claim and how it is computed; legacy provider job counts and the past customer list | 19, public copy | 19 | ☐ |
+| S21 | **Turkish translator (D58).** Choose who turns the English copy into Turkish (a native speaker or an agency), so each position's new strings can be translated before its screens ship; legal copy goes through S16 | Sends each position's `messages/en.json` additions for translation; marks untranslated keys | Turkish screens of every position | ☐ |
+| S20 | **SMS provider for Turkey (D55).** Open an account with an SMS provider Supabase Auth supports (Twilio, Twilio Verify, MessageBird, Vonage, or Textlocal; a local Turkish provider would need Supabase's Send SMS hook instead), register the sender ID for Turkey, and keep the credentials ready for the Supabase project's Auth settings (never in chat) | Wires phone sign-in in position 01; 6 digit codes | 01 | ☐ |
 
 ---
 
@@ -229,7 +257,7 @@ them.
 | 10 Scaffold spec | ✅ 0001, 0003 (before the playbook) · ☐ 00b |
 | 11 Position 00 build | ✅ 00 · ☐ 00b |
 | 12 Gate G0 on a clean clone | ☐ |
-| 13 UI docs and design reference mapping | ✅ docs exist · ☐ mapping (S13) |
+| 13 UI docs and design reference mapping | ✅ docs exist · ✅ mapping 2026-10-25 (`docs/design/README.md`) |
 | 14 Per position loop from 01 | ☐ |
 | 15 Independent security review planned before the first money milestone | ✅ G1 in `build-plan.md` |
 

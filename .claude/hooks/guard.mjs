@@ -183,23 +183,26 @@ const RULES = [
   {
     id: 'brand-value-in-globals',
     when: (p) => /(?:^|[\\/])globals\.css$/.test(p),
+    raw: true,
     check: (text) => {
-      // Concrete colour values are allowed ONLY on a line explicitly marked as a
-      // placeholder, so the theme can land later as a values-only change.
+      // Concrete colour values belong ONLY in the palette block: a line declaring a
+      // --ramp-* variable (ui-tokens.md §2, §13). Every other token references the ramps.
+      // Lines marked `placeholder` stay allowed only until the tokens land, because the
+      // pre-B4 file still holds them; delete this escape with the placeholders.
       const offenders = text
         .split(/\r?\n/)
         .filter((l) => /(#[0-9a-fA-F]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|oklch|lab|lch)\()/.test(l))
-        .filter((l) => !/placeholder/i.test(l));
+        .filter((l) => !/^\s*--ramp-[\w-]+\s*:/.test(l) && !/placeholder/i.test(l));
       return offenders.length
-        ? `${offenders.length} unmarked colour value(s), e.g. "${offenders[0].trim().slice(0, 60)}"`
+        ? `${offenders.length} colour value(s) outside the --ramp-* palette block, e.g. "${offenders[0].trim().slice(0, 60)}"`
         : null;
     },
     why:
-      "Rule 10 + blocker B4: the theme (palette, font, logo, dark mode) is the human's to supply, and inventing brand " +
-      'values is explicitly forbidden by ui-rules.md §11. This fires most often right after `npx shadcn init`, which ' +
-      'writes a full generated palette into globals.css as a side effect. Replace the values with the placeholder token ' +
-      'names from ui-tokens.md §12 and mark each line `/* placeholder */`. Token NAMES are stable — when the theme ' +
-      'arrives only this file changes and no component is touched.',
+      'Rule 10 + D48/D60: the palette is decided (ui-tokens.md §2). Concrete colours live only in the --ramp-* ' +
+      'variables of the palette block in globals.css; every other token references them (var(--ramp-*)). This fires ' +
+      'most often right after `npx shadcn init`, which writes its own generated palette into globals.css: map its ' +
+      'names to ours (ui-tokens.md §3) and delete its values. Never mark a real value `placeholder` to get past it; ' +
+      'that escape only covers the pre-B4 file until the tokens land.',
   },
   {
     id: 'raw-tailwind-palette',
@@ -234,13 +237,13 @@ function body(input) {
   return parts.filter((s) => typeof s === 'string').join('\n');
 }
 
-function stripComments(src) {
+function stripComments(src, path) {
   // Rules describe code, not prose about code. A doc comment quoting a forbidden
   // pattern (as AGENTS.md and the context files do constantly) must not trip.
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
-    .replace(/^\s*--.*$/gm, ''); // SQL line comments
+  const out = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  // SQL line comments, in SQL only: in CSS a leading `--` is a custom property, and stripping
+  // it hid every multi-line token declaration from the globals.css rule.
+  return /\.sql$/i.test(path) ? out.replace(/^\s*--.*$/gm, '') : out;
 }
 
 let raw = '';
@@ -265,17 +268,20 @@ process.stdin.on('end', () => {
     process.exit(0);
 
   const isWholeFile = payload.tool_name === 'Write';
-  const text = stripComments(body(input));
+  const rawText = body(input);
+  const text = stripComments(rawText, path);
   if (!text.trim()) process.exit(0);
 
   const hits = [];
   for (const r of RULES) {
     if (!r.when(path)) continue;
     if (r.whole && !isWholeFile) continue;
+    // A `raw` rule reads comments too (its exemption marker lives in one).
+    const subject = r.raw ? rawText : text;
     if (r.find) {
-      if (r.find.test(text)) hits.push({ ...r, detail: null });
+      if (r.find.test(subject)) hits.push({ ...r, detail: null });
     } else if (r.check) {
-      const detail = r.check(text, path);
+      const detail = r.check(subject, path);
       if (detail) hits.push({ ...r, detail });
     }
   }

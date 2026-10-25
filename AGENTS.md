@@ -45,7 +45,7 @@ recording it here.** Install scripts run only for packages listed per version in
 | i18n | `next-intl` 4.13.7 | |
 | Data | `@supabase/supabase-js` 2.112.3 · `@supabase/ssr` 0.12.4 · `server-only` 0.0.1 | |
 | Validation | `zod` 4.4.3 | |
-| Styling | `tailwindcss` + `@tailwindcss/postcss` 4.3.3 · shadcn/ui CLI deferred | shadcn init writes a palette; blocked on B4 |
+| Styling | `tailwindcss` + `@tailwindcss/postcss` 4.3.3 · shadcn/ui CLI deferred | B4 resolved 2026-10-25 (D48). shadcn init writes its own palette: run it only after the tokens land in `app/globals.css` (`ui-tokens.md` §13), and map its names to ours |
 | Lint | `eslint` 9.39.5 · `eslint-config-next` 16.3.1 · `typescript-eslint` 8.67.0 | ESLint 10 crashes eslint-config-next's react plugin; held at 9 (dependabot ignores ≥10) |
 | Format, pre commit | `prettier` 3.9.9 · `husky` 9.1.7 · `lint-staged` 17.6.0 | Owner pinned |
 | Unit tests | `vitest` 5.0.2 · `fast-check` 4.10.2 | Owner pinned vitest; fast-check for money property tests |

@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics="">
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Alexandria:wght@300;400;500;600;700;800;900&amp;family=Cairo:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#e8eef6; }
+  .ar { font-family:"Cairo","Alexandria",system-ui,sans-serif; color:#0f3a73; }
+  .ar h1,.ar h2,.ar h3,.ar h4 { font-family:"Alexandria",system-ui,sans-serif; letter-spacing:-.02em; line-height:1.24 !important; }
+  .mono { font-family:ui-monospace,Menlo,monospace; }
+  .ph { background:repeating-linear-gradient(135deg,#dfe7f3 0 7px,#f2f6fc 7px 14px); display:flex; align-items:flex-end; }
+  .ph span { font:400 12px ui-monospace,Menlo,monospace; color:#4b5b78; background:#fff; padding:4px 8px; margin:10px; border-radius:6px; }
+  a { color:#0f3a73; text-decoration:none; }
+  a:hover { color:#1e5fb3; }
+  .lbl { font:600 12px ui-monospace,Menlo,monospace; letter-spacing:.06em; color:#eaf1fa; background:#0f3a73; padding:5px 9px; border-radius:6px; text-decoration:none; }
+  .lbl:hover { color:#eaf1fa; background:#0f3a73; }
+  .scr { background:#fff; border-radius:22px; overflow:hidden; box-shadow:0 18px 50px rgba(15,58,115,.14); flex:none; }
+  .chrome { display:flex; align-items:center; gap:10px; padding:11px 16px; background:#f2f6fc; }
+  .dot3 { display:flex; gap:6px; }
+  .dot3 i { width:10px; height:10px; border-radius:50%; background:#d0dbeb; display:block; }
+  .url { flex:1; font:400 12px ui-monospace,Menlo,monospace; color:#4b5b78; background:#fff; padding:6px 12px; border-radius:99px; }
+  .pill { border:0; cursor:pointer; border-radius:99px; font-family:"Cairo",system-ui,sans-serif; font-weight:700; transition:transform .12s, background .12s; }
+  .pill:hover { transform:translateY(-1px); }
+  .pill:focus-visible { outline:3px solid #1e5fb3; outline-offset:3px; }
+  .navlink { font:600 15px "Cairo",system-ui,sans-serif; color:#0f3a73; }
+  .navlink:hover { color:#1e5fb3; }
+  .fld { width:100%; box-sizing:border-box; border:2px solid #dfe7f3; border-radius:16px; padding:14px 18px; font:500 15px "Cairo",system-ui,sans-serif; color:#0f3a73; background:#fff; }
+  .fld:focus { outline:none; border-color:#1e5fb3; }
+</style>
+</helmet>
+
+<div style="padding:48px 56px 90px; display:flex; flex-direction:column; gap:60px; font-family:'Alexandria',system-ui,sans-serif">
+
+  <div style="max-width:940px; display:flex; flex-direction:column; gap:16px">
+    <span style="font:600 12px ui-monospace,Menlo,monospace; letter-spacing:.12em; color:#1e5fb3">PROVIDER SURFACE · V1 · AR-RTL</span>
+    <h1 dir="rtl" style="margin:0; font:900 52px/1.28 Alexandria,system-ui,sans-serif; letter-spacing:-.035em">Aldebyani · مزوّد الخدمة</h1>
+    <div dir="ltr" style="font:900 34px/1.15 Alexandria,system-ui,sans-serif; letter-spacing:-.03em">Provider signup, onboarding &amp; dashboard</div>
+    <p style="margin:0; font:400 16px/1.65 Cairo,system-ui,sans-serif; color:#2c3c5e; max-width:74ch; text-wrap:pretty">Same theme as the customer app. Follows the overview: a provider cannot apply to anything before admin approval; applying is free; the unlock fee is paid only on the request they were actually selected for, within 24 hours; customer PII appears only after that unlock; providers never quote a price.</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px">
+      <a class="lbl" href="#p1">P1 التسجيل</a><a class="lbl" href="#p2">P2 استكمال الملف</a><a class="lbl" href="#p3">P3 التحقق</a><a class="lbl" href="#p4">P4 الخدمات والمناطق</a><a class="lbl" href="#p5">P5 قيد المراجعة</a><a class="lbl" href="#p6">P6 لوحة العمل</a><a class="lbl" href="#p7">P7 ملفي</a><a class="lbl" href="#p8">P8 التقدّم على طلب</a><a class="lbl" href="#p9">P9 المحفظة</a><a class="lbl" href="#p10">P10 الطلبات المتاحة</a><a class="lbl" href="#p11">P11 فتح البيانات</a><a class="lbl" href="#p12">P12 العمل المؤكَّد</a><a class="lbl" href="#p13">P13 الإلغاء</a><a class="lbl" href="#p14">P14 حالات الحساب</a><a class="lbl" href="#p15">P15 الإشعارات</a><a class="lbl" href="#p16">P16 حسابي</a><a class="lbl" href="#p17">P17 الأخطاء</a><a class="lbl" href="#p18">P18 الجوال</a><a class="lbl" href="#p19">P19 SMS والبريد</a>
+    </div>
+  </div>
+
+  <!-- ============ P1 SIGNUP ============ -->
+  <div id="p1" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p1">P1</a><span style="font:600 13px Alexandria,system-ui,sans-serif">التسجيل كمزود خدمة — phone OTP, then the honest expectation-setting</span></div>
+    <div class="scr" style="width:1280px">
+      <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/signup</div></div>
+      <div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px">
+        <div style="display:flex; align-items:center; gap:30px; padding-bottom:24px">
+          <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span>
+          <span style="background:#dbe7f6; border-radius:99px; padding:8px 16px; font:700 12px Cairo,system-ui,sans-serif">مزوّد خدمة</span>
+          <div style="flex:1"></div>
+          <a class="navlink" href="#p1">كيف تعمل المنصة</a>
+          <a class="pill" href="#p2" style="background:#f2f6fc; color:#0f3a73; padding:12px 24px; font-size:15px">لديّ حساب</a>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.1fr 1fr; gap:14px; align-items:stretch">
+          <div style="background:#0f3a73; border-radius:26px; padding:44px 42px; display:flex; flex-direction:column; color:#fff">
+            <h1 style="margin:0; font:900 64px/1.06 Alexandria,system-ui,sans-serif; letter-spacing:-.05em">طلبات مسبقة الدفع!</h1>
+            <p style="margin: 24px 0 0; font: 500 16px/1.75 Cairo,system-ui,sans-serif; width: 537px; height: 92px; color:#fff">التقدّم على الطلبات مجاني. لا تدفع أي رسم إلا على الطلب الذي يختارك العميل فيه فعلًا — وقيمة الطلب تكون محفوظة لدى مزود خدمة الدفع قبل أن تبدأ العمل.</p><div style="display:flex; flex-direction:column; gap:10px">
+              <div style="background:#fff; color:#0f3a73; border-radius:18px; padding:16px 20px; font:600 14px/1.6 Cairo,system-ui,sans-serif">المنصة تحدد السعر — لا مزادات ولا تخفيض أسعار بينك وبين غيرك</div>
+              <div style="background:#fff; color:#0f3a73; border-radius:18px; padding:16px 20px; font:600 14px/1.6 Cairo,system-ui,sans-serif">العميل يدفع قبل أن تصل — والمبلغ يُحرَّر لك بعد إتمام العمل</div>
+              <div style="background:#fff; color:#0f3a73; border-radius:18px; padding:16px 20px; font:600 14px/1.6 Cairo,system-ui,sans-serif">لن تتمكن من التقدّم قبل اعتماد الإدارة لملفك</div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:14px">
+            <div style="border:2px solid #e4ecf7; border-radius:26px; padding:34px 32px">
+              <h2 style="margin:0 0 8px; font:900 32px Alexandria,system-ui,sans-serif">أنشئ حسابك</h2>
+              <p style="margin:0 0 22px; font:500 14px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">التسجيل برقم الجوال. الخطوة التالية هي استكمال ملفك ومستنداتك.</p>
+              <div style="display:flex; flex-direction:column; gap:12px">
+                <div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">الاسم الكامل كما في الهوية</label><input class="fld" value="أحمد سعيد عبد الحميد"></div>
+                <div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">رقم الجوال</label><input class="fld" value="050 123 4567"></div>
+                <div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">المدينة</label><input class="fld" value="الرياض"></div>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:12px; margin:18px 0">
+                <span style="width:20px; height:20px; border-radius:6px; background:#0f3a73; flex:none; margin-top:2px"></span>
+                <span style="font:400 12px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">أوافق على شروط مزودي الخدمة وسياسة الخصوصية، وعلى التحقق من هويتي وسجلي الجنائي.</span>
+              </div>
+              <a class="pill" href="#p2" style="background:#0f3a73; color:#fff; padding:19px; font-size:16px; display:block; text-align:center">أرسل رمز التحقق</a>
+            </div>
+            <div style="border-radius: 26px; padding: 26px 30px; color: #fff; background-color: #0f3a73">
+              <h3 style="margin:0 0 12px; font:800 19px Alexandria,system-ui,sans-serif; color:#eaf1fa">ما ستدفعه</h3>
+              <div style="display:flex; flex-direction:column; gap:9px; font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#dbe7f6">
+                <div>التسجيل والتقدّم على الطلبات: مجانًا.</div>
+                <div>رسم فتح بيانات العميل: يُدفع مرة واحدة على الطلب الذي تُختار فيه، خلال 24 ساعة من اختيارك.</div>
+                <div>عمولة المنصة: تُخصم من قيمة الطلب عند تحرير المبلغ، ولا تُطلب منك نقدًا.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P2 PROFILE COMPLETION ============ -->
+  <div id="p2" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p2">P2</a><span style="font:600 13px Alexandria,system-ui,sans-serif">استكمال الملف — step 1 of 3, with the gate stated up front</span></div>
+    <div class="scr" style="width:1280px">
+      <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/onboarding/profile</div></div>
+      <div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px">
+        <div style="display:flex; align-items:center; gap:24px; padding-bottom:22px">
+          <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span>
+          <div style="flex:1; display:flex; gap:8px; align-items:center; font:600 13px Cairo,system-ui,sans-serif">
+            <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3">
+              <span style="{{ st.style }}">{{ st.label }}</span>
+            </sc-for>
+          </div>
+          <span style="font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">{{ progressLabel }}</span>
+        </div>
+
+        <div style="background:#eaf1fa; border-radius:22px; padding:20px 26px; display:flex; align-items:center; gap:18px; margin-bottom:18px">
+          <div style="flex:1; font:600 15px/1.7 Cairo,system-ui,sans-serif">لا يمكنك رؤية الطلبات أو التقدّم عليها قبل استكمال هذه الخطوات الثلاث واعتماد الإدارة لملفك.</div>
+          <span style="background:#0f3a73; color:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif; flex:none">شرط إلزامي</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start">
+          <div>
+            <h1 style="margin:0 0 16px; font:900 44px Alexandria,system-ui,sans-serif; letter-spacing:-.04em">ملفك المهني</h1>
+            <p style="margin:0 0 26px; font:500 15px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78; max-width:56ch">هذه المعلومات هي ما يراه العميل عند مقارنة العروض. لا تكتب رقم جوال أو بريدًا أو حسابات تواصل — يرفضها النظام تلقائيًا.</p>
+
+            <div style="display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:center; margin-bottom:24px">
+              <div class="ph" style="width:104px; height:104px; border-radius:50%; flex:none"><span style="font-size:9px; margin:6px">صورة</span></div>
+              <div>
+                <div style="font:700 15px Cairo,system-ui,sans-serif; margin-bottom:6px">صورة الملف</div>
+                <div style="font:400 12px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:12px">صورة واضحة للوجه بخلفية بسيطة. لا تُستخدم للتحقق.</div>
+                <button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:12px 22px; font-size:13px">ارفع صورة</button>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px">
+              <div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">سنوات الخبرة</label><input class="fld" value="6 سنوات"></div>
+              <div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">نوع العمل</label><input class="fld" value="أعمل لحسابي — بدون فريق"></div>
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">نبذة تظهر للعميل</label>
+              <div style="border:2px solid #dfe7f3; border-radius:16px; padding:16px 18px; font:500 14px/1.85 Cairo,system-ui,sans-serif; min-height:96px">خبرة ست سنوات في تنظيف المنازل والفلل. أعمل بأدواتي ومنظفاتي، ولديّ خبرة في الرخام والباركيه، وأستخدم منظفات آمنة على الأطفال والحيوانات.</div>
+              <div style="display:flex; align-items:center; gap:10px; margin-top:8px">
+                <span style="background:#dbe7f6; border-radius:99px; padding:6px 13px; font:700 12px Cairo,system-ui,sans-serif">تم الفحص — لا بيانات تواصل</span>
+                <span style="font:400 12px Cairo,system-ui,sans-serif; color:#4b5b78">194 / 600 حرفًا</span>
+              </div>
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">اللغات</label>
+              <div style="display:flex; gap:8px; flex-wrap:wrap">
+                <sc-for list="{{ langs }}" as="lg" hint-placeholder-count="4">
+                  <button class="pill" onClick="{{ lg.toggle }}" style="{{ lg.style }}">{{ lg.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">أعمال سابقة (اختياري)</label>
+              <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px">
+                <div class="ph" style="height:104px; border-radius:16px"><span style="font-size:9px; margin:6px">صورة عمل</span></div>
+                <div class="ph" style="height:104px; border-radius:16px"><span style="font-size:9px; margin:6px">صورة عمل</span></div>
+                <div style="border:2px dashed #dfe7f3; border-radius:16px; height:104px; display:flex; align-items:center; justify-content:center; font:600 13px Cairo,system-ui,sans-serif; color:#4b5b78">+ أضف</div>
+                <div style="border:2px dashed #dfe7f3; border-radius:16px; height:104px; display:flex; align-items:center; justify-content:center; font:600 13px Cairo,system-ui,sans-serif; color:#4b5b78">+ أضف</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:14px; position:sticky; top:16px">
+            <div style="background:#f2f6fc; border-radius:26px; padding:28px 30px">
+              <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:16px">
+                <span style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; letter-spacing:.06em; flex:1">اكتمال الملف</span>
+                <span style="font:900 26px Alexandria,system-ui,sans-serif">{{ pct }}%</span>
+              </div>
+              <div style="height:12px; border-radius:99px; background:#dbe4f1; overflow:hidden; margin-bottom:20px"><div style="height:12px; border-radius:99px; background:#0f3a73; width:{{ pctWidth }}"></div></div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <sc-for list="{{ checklist }}" as="ck" hint-placeholder-count="5">
+                  <div style="display:flex; align-items:center; gap:12px">
+                    <span style="{{ ck.dot }}"></span>
+                    <span style="flex:1; font:600 13px Cairo,system-ui,sans-serif; color:{{ ck.color }}">{{ ck.label }}</span>
+                    <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ ck.state }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <a class="pill" href="#p3" style="background:#0f3a73; color:#fff; padding:20px; font-size:16px; display:block; text-align:center">التالي — التحقق من الهوية</a>
+            <div style="border:2px solid #e4ecf7; border-radius:22px; padding:20px 24px; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">لا تُعرض مستنداتك للعملاء في أي وقت. تظهر لهم شهادة التحقق فقط، ولا يظهر اسمك الكامل ولا رقمك قبل اختيارك ودفع رسم فتح البيانات.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P3 VERIFICATION ============ -->
+  <div id="p3" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p3">P3</a><span style="font:600 13px Alexandria,system-ui,sans-serif">التحقق — ID, liveness selfie, criminal record; three upload states</span></div>
+    <div class="scr" style="width:1280px">
+      <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/onboarding/verification</div></div>
+      <div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px">
+        <div style="display:flex; align-items:center; gap:24px; padding-bottom:22px">
+          <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span>
+          <div style="flex:1; display:flex; gap:8px; align-items:center; font:600 13px Cairo,system-ui,sans-serif">
+            <span style="background:#f2f6fc; color:#0f3a73; border-radius:99px; padding:8px 16px">1 الملف المهني ✓</span>
+            <span style="color:#4b5b78">›</span>
+            <span style="background:#0f3a73; color:#fff; border-radius:99px; padding:8px 16px">2 التحقق</span>
+            <span style="color:#4b5b78">›</span>
+            <span style="color:#4b5b78">3 الخدمات والمناطق</span>
+          </div>
+          <a class="navlink" href="#p2">رجوع</a>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start">
+          <div>
+            <h1 style="margin:0 0 16px; font:900 44px Alexandria,system-ui,sans-serif; letter-spacing:-.04em">التحقق من هويتك</h1>
+            <p style="margin:0 0 26px; font:500 15px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78; max-width:58ch">ثلاثة مستندات إلزامية. تُراجع الإدارة كل مستند يدويًا، ولا تُشارك أي منها مع العملاء.</p>
+
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div style="border:2px solid #eaf1fa; background:#f2f7fd; border-radius:22px; padding:24px 26px">
+                <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px">
+                  <span style="width:26px; height:26px; border-radius:50%; background:#0f3a73; color:#eaf1fa; display:flex; align-items:center; justify-content:center; font:700 13px Cairo,system-ui,sans-serif; flex:none">✓</span>
+                  <span style="flex:1; font:800 20px Alexandria,system-ui,sans-serif">الهوية الوطنية أو الإقامة</span>
+                  <span style="background:#0f3a73; color:#eaf1fa; border-radius:99px; padding:7px 15px; font:700 12px Cairo,system-ui,sans-serif">تم الرفع</span>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px">
+                  <div class="ph" style="height:104px; border-radius:14px"><span style="font-size:9px; margin:6px">الوجه الأمامي</span></div>
+                  <div class="ph" style="height:104px; border-radius:14px"><span style="font-size:9px; margin:6px">الوجه الخلفي</span></div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px">
+                  <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; flex:1">الرقم ينتهي بـ 4821 · صلاحية 2029</span>
+                  <button class="pill" style="background:#fff; color:#0f3a73; padding:10px 18px; font-size:12px">استبدال</button>
+                </div>
+              </div>
+
+              <div style="border:2px solid #1e5fb3; border-radius:22px; padding:24px 26px">
+                <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px">
+                  <span style="width:26px; height:26px; border-radius:50%; background:#0f3a73; color:#fff; display:flex; align-items:center; justify-content:center; font:700 12px Cairo,system-ui,sans-serif; flex:none">2</span>
+                  <span style="flex:1; font:800 20px Alexandria,system-ui,sans-serif">صورة حيّة مع الهوية</span>
+                  <span style="background:#dbe7f6; border-radius:99px; padding:7px 15px; font:700 12px Cairo,system-ui,sans-serif">جارٍ الآن</span>
+                </div>
+                <div style="display:flex; gap:14px; align-items:center">
+                  <div class="ph" style="width:150px; height:112px; border-radius:14px; flex:none"><span style="font-size:9px; margin:6px">كاميرا</span></div>
+                  <div style="flex:1">
+                    <div style="font:500 13px/1.8 Cairo,system-ui,sans-serif; color:#2c3c5e; margin-bottom:12px">أمسك هويتك بجانب وجهك في إضاءة جيدة. تُقارن الصورة بصورة الهوية للتأكد من أنك أنت من يستخدم الحساب.</div>
+                    <button class="pill" style="background:#0f3a73; color:#fff; padding:13px 24px; font-size:13px">التقط الصورة</button>
+                  </div>
+                </div>
+              </div>
+
+              <div style="border:2px solid #e4ecf7; border-radius:22px; padding:24px 26px">
+                <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px">
+                  <span style="width:26px; height:26px; border-radius:50%; background:#f2f6fc; color:#4b5b78; display:flex; align-items:center; justify-content:center; font:700 12px Cairo,system-ui,sans-serif; flex:none">3</span>
+                  <span style="flex:1; font:800 20px Alexandria,system-ui,sans-serif">السجل الجنائي</span>
+                  <span style="background:#f2f6fc; border-radius:99px; padding:7px 15px; font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78">لم يبدأ</span>
+                </div>
+                <div style="font:500 13px/1.8 Cairo,system-ui,sans-serif; color:#2c3c5e; margin-bottom:14px">شهادة سارية لا يزيد تاريخها على ستة أشهر. تُقبل بصيغة PDF أو صورة واضحة.</div>
+                <div style="border:2px dashed #dfe7f3; border-radius:16px; padding:26px; text-align:center">
+                  <div style="font:700 14px Cairo,system-ui,sans-serif; margin-bottom:6px">اسحب الملف هنا أو اخترْه من جهازك</div>
+                  <div style="font:400 12px Cairo,system-ui,sans-serif; color:#4b5b78">PDF أو JPG · حتى 10 ميجابايت</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:14px; position:sticky; top:16px">
+            <div style="background:#dbe7f6; border-radius:26px; padding:30px 30px">
+              <div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em">حالة التحقق</div>
+              <div style="font:900 34px/1.2 Alexandria,system-ui,sans-serif; margin:10px 0 14px">1 من 3 مكتمل</div>
+              <p style="margin:0; font:500 13px/1.75 Cairo,system-ui,sans-serif">تبدأ مراجعة الإدارة بعد رفع المستندات الثلاثة. المراجعة عادة خلال يومين عمل.</p>
+            </div>
+            <a class="pill" href="#p4" style="background:#0f3a73; color:#fff; padding:20px; font-size:16px; display:block; text-align:center">التالي — الخدمات والمناطق</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P4 SERVICES & AREAS ============ -->
+  <div id="p4" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p4">P4</a><span style="font:600 13px Alexandria,system-ui,sans-serif">الخدمات والمناطق — interactive: pick services, districts, availability</span></div>
+    <div class="scr" style="width:1280px">
+      <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/onboarding/services</div></div>
+      <div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px">
+        <div style="display:flex; align-items:center; gap:24px; padding-bottom:22px">
+          <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span>
+          <div style="flex:1; display:flex; gap:8px; align-items:center; font:600 13px Cairo,system-ui,sans-serif">
+            <span style="background:#f2f6fc; border-radius:99px; padding:8px 16px">1 الملف المهني ✓</span>
+            <span style="color:#4b5b78">›</span>
+            <span style="background:#f2f6fc; border-radius:99px; padding:8px 16px">2 التحقق ✓</span>
+            <span style="color:#4b5b78">›</span>
+            <span style="background:#0f3a73; color:#fff; border-radius:99px; padding:8px 16px">3 الخدمات والمناطق</span>
+          </div>
+          <a class="navlink" href="#p3">رجوع</a>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start">
+          <div>
+            <h1 style="margin:0 0 16px; font:900 44px Alexandria,system-ui,sans-serif; letter-spacing:-.04em">ما تقدّمه وأين</h1>
+            <p style="margin:0 0 26px; font:500 15px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78; max-width:58ch">تظهر لك الطلبات المطابقة لهذه الخدمات وهذه الأحياء فقط. الأسعار المعروضة هي تسعيرة المنصة — لا يمكنك تعديلها ولا تقديم سعر مختلف.</p>
+
+            <h3 style="margin:0 0 12px; font:800 15px Alexandria,system-ui,sans-serif">الخدمات</h3>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:28px">
+              <sc-for list="{{ services }}" as="sv" hint-placeholder-count="6">
+                <button class="pill" onClick="{{ sv.toggle }}" style="{{ sv.style }}">
+                  <span style="display:flex; align-items:center; gap:14px; width:100%">
+                    <span style="width:22px; height:22px; border-radius:50%; flex:none; background:{{ sv.dot }}"></span>
+                    <span style="flex:1; text-align:start">
+                      <span style="display:block; font:700 16px Cairo,system-ui,sans-serif">{{ sv.label }}</span>
+                      <span style="display:block; font:400 12px/1.6 Cairo,system-ui,sans-serif; opacity:.7; margin-top:2px">{{ sv.note }}</span>
+                    </span>
+                    <span style="font:700 14px Cairo,system-ui,sans-serif; flex:none">{{ sv.price }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+
+            <h3 style="margin:0 0 12px; font:800 15px Alexandria,system-ui,sans-serif">الأحياء التي تخدمها</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px">
+              <sc-for list="{{ districts }}" as="d" hint-placeholder-count="8">
+                <button class="pill" onClick="{{ d.toggle }}" style="{{ d.style }}">{{ d.label }}</button>
+              </sc-for>
+            </div>
+            <p style="margin:0 0 28px; font:400 12px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">{{ districtNote }}</p>
+
+            <h3 style="margin:0 0 12px; font:800 15px Alexandria,system-ui,sans-serif">أيام العمل</h3>
+            <div style="display:flex; gap:8px; margin-bottom:22px">
+              <sc-for list="{{ days }}" as="dy" hint-placeholder-count="7">
+                <button class="pill" onClick="{{ dy.toggle }}" style="{{ dy.style }}">{{ dy.label }}</button>
+              </sc-for>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+              <div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">أبدأ من</label><input class="fld" value="8:00 ص"></div>
+              <div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">حتى</label><input class="fld" value="6:00 م"></div>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:12px; margin-top:18px">
+              <span style="width:20px; height:20px; border-radius:6px; background:#0f3a73; flex:none; margin-top:2px"></span>
+              <span style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#2c3c5e">أحضر أدواتي ومنظفاتي الخاصة</span>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:14px; position:sticky; top:16px">
+            <div style="background:#eaf1fa; border-radius:26px; padding:30px 30px">
+              <div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em">ملخص اختياراتك</div>
+              <div style="font:900 52px/1.05 Alexandria,system-ui,sans-serif; margin:10px 0 4px">{{ pickedServices }}</div>
+              <div style="font:600 14px Cairo,system-ui,sans-serif; margin-bottom:16px">خدمة مختارة</div>
+              <div style="background:#fff; border-radius:18px; padding:18px 20px; display:flex; flex-direction:column; gap:10px">
+                <div style="display:flex; justify-content:space-between; font:500 13px Cairo,system-ui,sans-serif"><span>الأحياء</span><span style="font-weight:700">{{ pickedDistricts }}</span></div>
+                <div style="display:flex; justify-content:space-between; font:500 13px Cairo,system-ui,sans-serif"><span>أيام العمل</span><span style="font-weight:700">{{ pickedDays }}</span></div>
+                <div style="display:flex; justify-content:space-between; font:500 13px Cairo,system-ui,sans-serif"><span>طلبات مطابقة أسبوعيًا</span><span style="font-weight:700">{{ matchEstimate }}</span></div>
+              </div>
+            </div>
+            <a class="pill" href="#p5" style="background:#0f3a73; color:#fff; padding:20px; font-size:16px; display:block; text-align:center">أرسل الملف للمراجعة</a>
+            <div style="border:2px solid #e4ecf7; border-radius:22px; padding:20px 24px; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">يمكنك تعديل الخدمات والأحياء لاحقًا من ملفك. تعديل الخدمات لا يحتاج مراجعة جديدة، أما تغيير المستندات فيعيد الملف للمراجعة.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P5 PENDING ============ -->
+  <div id="p5" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p5">P5</a><span style="font:600 13px Alexandria,system-ui,sans-serif">قيد المراجعة — the gated state; requests are visible but locked</span></div>
+    <div class="scr" style="width:1280px">
+      <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/pending</div></div>
+      <div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px">
+        <div style="display:flex; align-items:center; gap:24px; padding-bottom:24px">
+          <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span>
+          <span style="background:#dbe7f6; border-radius:99px; padding:8px 16px; font:700 12px Cairo,system-ui,sans-serif">مزوّد خدمة</span>
+          <div style="flex:1"></div>
+          <span style="background:#f2f6fc; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">الحساب قيد المراجعة</span>
+          <span style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif">أ</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start">
+          <div>
+            <div style="background:#dbe7f6; border-radius:26px; padding:40px 38px; margin-bottom:14px">
+              <span style="background:#fff; border-radius:99px; padding:7px 15px; font:700 12px Cairo,system-ui,sans-serif; display:inline-block; margin-bottom:16px">اكتمل الملف · بانتظار الإدارة</span>
+              <h1 style="margin:0 0 14px; font:900 46px/1.1 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">ملفك قيد المراجعة</h1>
+              <p style="margin:0; font:500 16px/1.8 Cairo,system-ui,sans-serif; max-width:48ch">راجعنا استلام مستنداتك الثلاثة. تراجع الإدارة الهوية والصورة الحيّة والسجل الجنائي يدويًا، وتصلك رسالة على جوالك عند القرار — عادة خلال يومي عمل.</p>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px">
+              <div style="display:flex; align-items:center; gap:14px; padding:18px 22px; border-radius:20px; background:#f2f6fc">
+                <span style="width:22px; height:22px; border-radius:50%; background:#0f3a73; color:#eaf1fa; display:flex; align-items:center; justify-content:center; font:700 12px Cairo,system-ui,sans-serif; flex:none">✓</span>
+                <span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">الهوية الوطنية — تم التحقق</span>
+                <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">أمس 4:12 م</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:14px; padding:18px 22px; border-radius:20px; background:#f2f6fc">
+                <span style="width:22px; height:22px; border-radius:50%; background:#0f3a73; color:#eaf1fa; display:flex; align-items:center; justify-content:center; font:700 12px Cairo,system-ui,sans-serif; flex:none">✓</span>
+                <span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">الصورة الحيّة — مطابقة</span>
+                <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">أمس 4:14 م</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:14px; padding:18px 22px; border-radius:20px; border:2px solid #dbe7f6">
+                <span style="width:22px; height:22px; border-radius:50%; background:#0f3a73; flex:none"></span>
+                <span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">السجل الجنائي — قيد المراجعة اليدوية</span>
+                <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">الآن</span>
+              </div>
+            </div>
+
+            <h3 style="margin:22px 0 12px; font:800 22px Alexandria,system-ui,sans-serif">طلبات في أحيائك الآن</h3>
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div style="border:2px solid #e4ecf7; border-radius:22px; padding:22px 24px; position:relative; overflow:hidden">
+                <div style="filter:blur(3px); opacity:.55">
+                  <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px">
+                    <span style="background:#f2f6fc; border-radius:99px; padding:6px 14px; font:700 12px Cairo,system-ui,sans-serif">تنظيف عادي</span>
+                    <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">حي الملقا · الخميس 10:00 ص</span>
+                    <span style="flex:1"></span>
+                    <span style="font:900 20px Alexandria,system-ui,sans-serif">₺3,200</span>
+                  </div>
+                  <div style="font:500 14px/1.7 Cairo,system-ui,sans-serif; color:#2c3c5e">3 غرف + صالة · دورتا مياه · نوافذ وشرفات · 5 ساعات تقديرية</div>
+                </div>
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.5)">
+                  <span style="background:#0f3a73; color:#fff; border-radius:99px; padding:11px 22px; font:700 13px Cairo,system-ui,sans-serif">يُفتح بعد اعتماد ملفك</span>
+                </div>
+              </div>
+              <div style="border:2px solid #e4ecf7; border-radius:22px; padding:22px 24px; position:relative; overflow:hidden">
+                <div style="filter:blur(3px); opacity:.55">
+                  <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px">
+                    <span style="background:#f2f6fc; border-radius:99px; padding:6px 14px; font:700 12px Cairo,system-ui,sans-serif">تنظيف عميق</span>
+                    <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">حي النرجس · السبت 1:00 م</span>
+                    <span style="flex:1"></span>
+                    <span style="font:900 20px Alexandria,system-ui,sans-serif">₺3,500</span>
+                  </div>
+                  <div style="font:500 14px/1.7 Cairo,system-ui,sans-serif; color:#2c3c5e">فيلا · 4 غرف · بعد التشطيب · 7 ساعات تقديرية</div>
+                </div>
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.5)">
+                  <span style="background:#0f3a73; color:#fff; border-radius:99px; padding:11px 22px; font:700 13px Cairo,system-ui,sans-serif">يُفتح بعد اعتماد ملفك</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:14px">
+            <div style="background:#f2f6fc; border-radius:26px; padding:28px 30px">
+              <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; letter-spacing:.06em; margin-bottom:14px">بينما تنتظر</div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <a href="#p2" style="background:#fff; border-radius:16px; padding:15px 18px; display:block; font:600 14px Cairo,system-ui,sans-serif; color:#0f3a73">أضف صور أعمال سابقة — 2 من 6</a>
+                <a href="#p4" style="background:#fff; border-radius:16px; padding:15px 18px; display:block; font:600 14px Cairo,system-ui,sans-serif; color:#0f3a73">وسّع الأحياء التي تخدمها</a>
+                <a href="#p5" style="background:#fff; border-radius:16px; padding:15px 18px; display:block; font:600 14px Cairo,system-ui,sans-serif; color:#0f3a73">اقرأ معايير جودة العمل</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P6 DASHBOARD ============ -->
+  <div id="p6" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p6">P6</a><span style="font:600 13px Alexandria,system-ui,sans-serif">لوحة العمل — approved provider home; one list of what needs action, most urgent first</span></div>
+    <div class="scr" style="width:1280px">
+      <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/home</div></div>
+      <div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px">
+        <div style="display:flex; align-items:center; gap:26px; padding-bottom:24px">
+          <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span>
+          <div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div>
+          <span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span>
+          <a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a>
+        </div>
+
+        <div style="background:#0f3a73; border-radius:24px; padding:26px 30px; display:flex; align-items:center; gap:24px; margin-bottom:18px; color:#fff">
+          <div style="flex:1">
+            <div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#dbe7f6">اختارك عميل — يلزم فتح البيانات</div>
+            <div style="font:900 30px/1.2 Alexandria,system-ui,sans-serif; margin:8px 0 6px">تنظيف عادي — حي الملقا · ₺3,200</div>
+            <div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#dbe7f6">المبلغ محفوظ لدى مزود خدمة الدفع. تبقّى 19 ساعة و24 دقيقة لفتح البيانات، وبعدها يعود الطلب مفتوحًا لغيرك.</div>
+          </div>
+          <button class="pill" style="background:#fff; color:#1e5fb3; padding:19px 30px; font-size:16px; flex:none">افتح بيانات العميل</button>
+        </div>
+
+        <h3 style="margin:0 0 14px; font:800 22px/1.3 Alexandria,system-ui,sans-serif">يحتاج إجراءً منك</h3>
+
+        <div style="display:grid; grid-template-columns:1.55fr 1fr; gap:14px; align-items:start">
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <sc-for list="{{ jobs }}" as="j" hint-placeholder-count="3">
+              <div style="{{ j.cardStyle }}">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px">
+                  <span style="{{ j.statusStyle }}">{{ j.status }}</span>
+                  <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ j.ref }}</span>
+                  <span style="flex:1"></span>
+                  <span style="font:900 22px/1.15 Alexandria,system-ui,sans-serif">{{ j.price }} <span style="font-size:13px">₺</span></span>
+                </div>
+                <div style="font:800 21px/1.4 Alexandria,system-ui,sans-serif">{{ j.service }}</div>
+                <div style="font:500 13px/1.75 Cairo,system-ui,sans-serif; color:#2c3c5e; margin-top:5px">{{ j.detail }}</div>
+                <div style="font:500 13px/1.75 Cairo,system-ui,sans-serif; color:#4b5b78">{{ j.where }}</div>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:16px; flex-wrap:wrap">
+                  <a class="pill" href="{{ j.href }}" style="{{ j.primaryStyle }}">{{ j.primary }}</a>
+                  <sc-if value="{{ j.hasSecondary }}" hint-placeholder-val="{{ true }}"><button class="pill" style="background:#fff; border:2px solid #e4ecf7; color:#0f3a73; padding:12px 20px; font-size:13px">{{ j.secondary }}</button></sc-if>
+                  <span style="flex:1"></span>
+                  <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ j.note }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:14px">
+            <div style="border-radius: 26px; padding: 30px 30px; background-color: #dbe7f6">
+              <div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em">محفظتي</div>
+              <div style="display:flex; align-items:baseline; gap:8px; margin:10px 0 16px"><span style="font:900 60px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.05em">4,600</span><span style="font:800 18px Alexandria,system-ui,sans-serif">₺</span></div>
+              <div style="background:#fff; border-radius:18px; padding:18px 20px; display:flex; flex-direction:column; gap:10px; margin-bottom:14px; font-family:Cairo,system-ui,sans-serif">
+                <div style="display:flex; justify-content:space-between; font:500 13px"><span>قابلة للسحب</span><span style="font-weight:700">₺4,600</span></div>
+                <div style="display:flex; justify-content:space-between; font:500 13px"><span>محفوظة على أعمال جارية</span><span style="font-weight:700">₺5,800</span></div>
+                <div style="display:flex; justify-content:space-between; font:500 13px; color:#4b5b78"><span>عمولة المنصة هذا الشهر</span><span style="font-weight:700">₺2,760</span></div>
+              </div>
+              <button class="pill" style="background:#0f3a73; color:#fff; padding:16px; font-size:15px; width:100%; text-align:center">اسحب إلى حسابي البنكي</button>
+            </div>
+            <div style="background:#f2f6fc; border-radius:26px; padding:26px 28px">
+              <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; letter-spacing:.06em; margin-bottom:14px">حدود التقدّم</div>
+              <div style="display:flex; flex-direction:column; gap:9px; font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#2c3c5e">
+                <div>التقدّم مجاني ولا حد لعدد تقدّماتك.</div>
+                <div>يُقفل الطلب عند وصوله إلى 10 عروض.</div>
+                <div>لا تكتب أرقامًا أو روابط في رسالتك — يرفضها النظام تلقائيًا.</div>
+              </div>
+            </div>
+            <div style="border:2px solid #e4ecf7; border-radius:26px; padding:22px 24px; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">تظهر لك قبل الاختيار: الحي وتاريخ العمل والسعر ووصف الطلب. لا يظهر اسم العميل ولا رقمه ولا عنوانه الكامل قبل دفعك رسم فتح البيانات.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P7 MY PROFILE ============ -->
+  <div id="p7" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p7">P7</a><span style="font:600 13px Alexandria,system-ui,sans-serif">ملفي — provider's own editable profile, with the customer-facing preview</span></div>
+    <div class="scr" style="width:1280px">
+      <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/profile</div></div>
+      <div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px">
+        <div style="display:flex; align-items:center; gap:26px; padding-bottom:24px">
+          <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span>
+          <div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div>
+          <span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span>
+          <a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.55fr 1fr; gap:14px; align-items:start">
+          <div>
+            <div style="background:#dbe7f6; border-radius:26px; padding:32px 34px; display:flex; gap:24px; align-items:flex-start">
+              <div class="ph" style="width:104px; height:104px; border-radius:50%; flex:none"><span style="font-size:9px; margin:6px">صورة</span></div>
+              <div style="flex:1">
+                <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:8px">
+                  <span style="background:#fff; border-radius:99px; padding:6px 13px; font:700 12px Cairo,system-ui,sans-serif">موثّق بالهوية</span>
+                  <span style="background:#fff; border-radius:99px; padding:6px 13px; font:700 12px Cairo,system-ui,sans-serif">مُدقَّق أمنيًا</span>
+                  <span style="background:#eaf1fa; border-radius:99px; padding:6px 13px; font:700 12px Cairo,system-ui,sans-serif">عضو منذ 2024</span>
+                </div>
+                <h1 style="margin:0; font:900 42px/1.12 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">أحمد سعيد</h1>
+                <p style="margin:10px 0 0; font:500 15px/1.75 Cairo,system-ui,sans-serif; max-width:46ch">6 سنوات خبرة · الملقا والنرجس وحطين · يحضر أدواته ومنظفاته · العربية والأردية</p>
+              </div>
+              <button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:14px 24px; font-size:14px; flex:none">تعديل</button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px">
+              <div style="border:2px solid #e4ecf7; border-radius:20px; padding:20px"><div style="font:900 26px/1.05 Alexandria,system-ui,sans-serif">98%</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">نسبة الإتمام</div></div>
+              <div style="border:2px solid #e4ecf7; border-radius:20px; padding:20px"><div style="font:900 26px/1.05 Alexandria,system-ui,sans-serif">96%</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">الالتزام بالموعد</div></div>
+              <div style="border:2px solid #e4ecf7; border-radius:20px; padding:20px"><div style="font:900 26px/1.05 Alexandria,system-ui,sans-serif">1%</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">نسبة الإلغاء</div></div>
+              <div style="border:2px solid #e4ecf7; border-radius:20px; padding:20px"><div style="font:900 26px/1.05 Alexandria,system-ui,sans-serif">31%</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">تكرار العملاء</div></div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:14px; margin:28px 0 12px">
+              <h3 style="margin:0; flex:1; font:800 22px Alexandria,system-ui,sans-serif">خدماتي</h3>
+              <a href="#p4" style="font:700 13px Cairo,system-ui,sans-serif">تعديل الخدمات</a>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <span style="background:#dbe7f6; border-radius:99px; padding:9px 16px; font:600 13px Cairo,system-ui,sans-serif">تنظيف عادي</span>
+              <span style="background:#dbe7f6; border-radius:99px; padding:9px 16px; font:600 13px Cairo,system-ui,sans-serif">تنظيف عميق</span>
+              <span style="background:#eaf1fa; border-radius:99px; padding:9px 16px; font:600 13px Cairo,system-ui,sans-serif">نوافذ وشرفات</span>
+              <span style="background:#eaf1fa; border-radius:99px; padding:9px 16px; font:600 13px Cairo,system-ui,sans-serif">فرن وثلاجة</span>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:14px; margin:28px 0 12px">
+              <h3 style="margin:0; flex:1; font:800 22px Alexandria,system-ui,sans-serif">أعمالي السابقة</h3>
+              <a href="#p7" style="font:700 13px Cairo,system-ui,sans-serif">إدارة الصور</a>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px">
+              <div class="ph" style="height:120px; border-radius:18px"><span style="font-size:9px; margin:6px">قبل / بعد</span></div>
+              <div class="ph" style="height:120px; border-radius:18px"><span style="font-size:9px; margin:6px">مطبخ</span></div>
+              <div class="ph" style="height:120px; border-radius:18px"><span style="font-size:9px; margin:6px">نوافذ</span></div>
+              <div style="border:2px dashed #dfe7f3; border-radius:18px; height:120px; display:flex; align-items:center; justify-content:center; font:600 13px Cairo,system-ui,sans-serif; color:#4b5b78">+ أضف</div>
+            </div>
+
+            <div style="display:flex; align-items:baseline; gap:14px; margin:30px 0 14px">
+              <h3 style="margin:0; font:800 22px Alexandria,system-ui,sans-serif">تقييمات العملاء</h3>
+              <span style="font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">26 تقييمًا من أعمال منجزة · متوسط 4.8</span>
+            </div>
+            <div style="display:grid; grid-template-columns:auto 1fr auto; gap:10px 14px; align-items:center; background:#f2f6fc; border-radius:20px; padding:22px 24px; margin-bottom:12px">
+              <span style="font:700 12px Cairo,system-ui,sans-serif">الالتزام بالموعد</span><span style="height:10px; border-radius:99px; background:#dbe4f1; display:block"><span style="display:block; height:10px; width:96%; border-radius:99px; background:#0f3a73"></span></span><span style="font:700 12px Cairo,system-ui,sans-serif">4.9</span>
+              <span style="font:700 12px Cairo,system-ui,sans-serif">جودة العمل</span><span style="height:10px; border-radius:99px; background:#dbe4f1; display:block"><span style="display:block; height:10px; width:94%; border-radius:99px; background:#0f3a73"></span></span><span style="font:700 12px Cairo,system-ui,sans-serif">4.8</span>
+              <span style="font:700 12px Cairo,system-ui,sans-serif">الاحترافية</span><span style="height:10px; border-radius:99px; background:#dbe4f1; display:block"><span style="display:block; height:10px; width:98%; border-radius:99px; background:#0f3a73"></span></span><span style="font:700 12px Cairo,system-ui,sans-serif">4.9</span>
+              <span style="font:700 12px Cairo,system-ui,sans-serif">القيمة مقابل السعر</span><span style="height:10px; border-radius:99px; background:#dbe4f1; display:block"><span style="display:block; height:10px; width:90%; border-radius:99px; background:#0f3a73"></span></span><span style="font:700 12px Cairo,system-ui,sans-serif">4.6</span>
+            </div>
+            <div style="border:2px solid #e4ecf7; border-radius:18px; padding:18px 20px">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px">
+                <span style="font:700 14px Cairo,system-ui,sans-serif">هدى م.</span>
+                <span style="font:700 12px Cairo,system-ui,sans-serif; color:#1e5fb3">★★★★★</span>
+                <span style="flex:1"></span><span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">قبل 10 أيام</span>
+              </div>
+              <div style="font:400 14px/1.8 Cairo,system-ui,sans-serif; color:#2c3c5e">وصل في الموعد تمامًا وترك المنزل نظيفًا جدًا، والنوافذ أصبحت لامعة.</div>
+              <div style="font:400 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:8px">لا يمكن الرد على التقييمات ولا تعديلها بعد إرسالها.</div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:14px; position:sticky; top:16px">
+            <div style="background:#f2f6fc; border-radius:26px; padding:26px 28px">
+              <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; letter-spacing:.06em; margin-bottom:14px">حالة الحساب</div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <div style="display:flex; align-items:center; gap:12px"><span style="width:9px; height:9px; border-radius:50%; background:#0f3a73; flex:none"></span><span style="flex:1; font:600 13px Cairo,system-ui,sans-serif">معتمد — يمكنك التقدّم</span></div>
+                <div style="display:flex; align-items:center; gap:12px"><span style="width:9px; height:9px; border-radius:50%; background:#0f3a73; flex:none"></span><span style="flex:1; font:600 13px Cairo,system-ui,sans-serif">الهوية سارية حتى 2029</span></div>
+                <div style="display:flex; align-items:center; gap:12px"><span style="width:9px; height:9px; border-radius:50%; background:#0f3a73; flex:none"></span><span style="flex:1; font:600 13px Cairo,system-ui,sans-serif">السجل الجنائي — يلزم تحديثه بعد 4 أشهر</span></div>
+              </div>
+              <div style="font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:14px">تغيير أي مستند يعيد الملف إلى المراجعة، ويتوقف التقدّم على طلبات جديدة حتى الاعتماد.</div>
+            </div>
+            <div style="border:2px solid #e4ecf7; border-radius:26px; padding:22px 24px">
+              <div style="font:700 14px Cairo,system-ui,sans-serif; margin-bottom:10px">الحساب البنكي</div>
+              <div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">IBAN ينتهي بـ 3309 · تُحوَّل المبالغ المُحرَّرة إليه</div>
+              <a href="#p7" style="font:700 13px Cairo,system-ui,sans-serif; display:inline-block; margin-top:12px">تعديل</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P8 APPLY TO A REQUEST ============ -->
+  <div id="p8" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p8">P8</a><span style="font:600 13px Alexandria,system-ui,sans-serif">التقدّم على طلب — free application, no price field, live message scanning</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap">
+      <div class="scr" style="width:1280px">
+        <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/requests/8430/apply</div></div>
+        <div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px">
+          <div style="display:flex; align-items:center; gap:26px; padding-bottom:22px">
+            <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span>
+            <div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div>
+            <span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span>
+            <a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a>
+          </div>
+
+          <a href="#p6" style="font:600 13px Cairo,system-ui,sans-serif; color:#4b5b78; display:inline-block; margin-bottom:16px">→ رجوع إلى الطلبات المتاحة</a>
+
+          <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start">
+            <div>
+              <span style="background:#eaf1fa; border-radius:99px; padding:8px 16px; font:700 12px Cairo,system-ui,sans-serif; display:inline-block; margin-bottom:14px">طلب #8430 · مفتوح · {{ slotsLeft }}</span>
+              <h1 style="margin:0 0 16px; font:900 44px Alexandria,system-ui,sans-serif; letter-spacing:-.04em">تنظيف عميق — فيلا</h1>
+              <p style="margin:0 0 24px; font:500 15px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78; max-width:58ch">السعر ثابت من المنصة ولا يمكنك تقديم سعر مختلف. ما يفرّقك عن غيرك هو رسالتك وإجاباتك وتقييماتك.</p>
+
+              <div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden; margin-bottom:14px">
+                <div style="display:flex; padding:15px 22px; border-bottom:2px solid #f2f6fc"><span style="width:150px; font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">الخدمة</span><span style="font:600 13px Cairo,system-ui,sans-serif">تنظيف عميق — بعد التشطيب</span></div>
+                <div style="display:flex; padding:15px 22px; border-bottom:2px solid #f2f6fc"><span style="width:150px; font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">نوع العقار</span><span style="font:600 13px Cairo,system-ui,sans-serif">فيلا · يوجد مصعد داخلي</span></div>
+                <div style="display:flex; padding:15px 22px; border-bottom:2px solid #f2f6fc"><span style="width:150px; font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">الغرف ودورات المياه</span><span style="font:600 13px Cairo,system-ui,sans-serif">4 غرف + صالة · 3 دورات مياه</span></div>
+                <div style="display:flex; padding:15px 22px; border-bottom:2px solid #f2f6fc"><span style="width:150px; font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">تراكم الدهون</span><span style="font:600 13px Cairo,system-ui,sans-serif">شديد — مطبخ بعد تشطيب</span></div>
+                <div style="display:flex; padding:15px 22px; border-bottom:2px solid #f2f6fc"><span style="width:150px; font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">إضافات</span><span style="font:600 13px Cairo,system-ui,sans-serif">فرن وثلاجة من الداخل</span></div>
+                <div style="display:flex; padding:15px 22px; border-bottom:2px solid #f2f6fc"><span style="width:150px; font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">موعد البدء</span><span style="font:600 13px Cairo,system-ui,sans-serif">السبت 15 أغسطس · 1:00 م · 7 ساعات تقديرية</span></div>
+                <div style="display:flex; padding:15px 22px; border-bottom:2px solid #f2f6fc"><span style="width:150px; font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">الموقع</span><span style="font:600 13px Cairo,system-ui,sans-serif">حي النرجس، الرياض <span style="color:#4b5b78">— العنوان الكامل بعد فتح البيانات</span></span></div>
+                <div style="display:flex; padding:15px 22px"><span style="width:150px; font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">ملاحظات العميل</span><span style="font:600 13px Cairo,system-ui,sans-serif">يوجد قط في المنزل</span></div>
+              </div>
+
+              <div style="background:#f2f6fc; border-radius:20px; padding:18px 22px; display:flex; align-items:center; gap:14px; margin-bottom:26px">
+                <span style="width:22px; height:22px; border-radius:50%; background:#0f3a73; flex:none"></span>
+                <span style="flex:1; font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#2c3c5e">لا يظهر اسم العميل ولا رقمه ولا عنوانه الكامل قبل اختيارك ودفعك رسم فتح البيانات.</span>
+              </div>
+
+              <h3 style="margin:0 0 12px; font:800 22px Alexandria,system-ui,sans-serif">رسالتك للعميل</h3>
+              <div style="border:2px solid {{ msgBorder }}; border-radius:18px; padding:16px 18px; font:500 14px/1.85 Cairo,system-ui,sans-serif; min-height:110px">{{ message }}</div>
+              <div style="display:flex; align-items:center; gap:10px; margin:10px 0 26px; flex-wrap:wrap">
+                <span style="{{ scanStyle }}">{{ scanLabel }}</span>
+                <span style="font:400 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ charLabel }}</span>
+                <span style="flex:1"></span>
+                <sc-for list="{{ msgSamples }}" as="ms" hint-placeholder-count="2">
+                  <button class="pill" onClick="{{ ms.pick }}" style="{{ ms.style }}">{{ ms.label }}</button>
+                </sc-for>
+              </div>
+
+              <h3 style="margin:0 0 6px; font:800 22px Alexandria,system-ui,sans-serif">أسئلة الطلب</h3>
+              <p style="margin:0 0 16px; font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">إجابات إلزامية — تظهر للعميل مع رسالتك في كارت عرضك.</p>
+              <div style="display:flex; flex-direction:column; gap:18px; margin-bottom:26px">
+                <sc-for list="{{ applyQs }}" as="g" hint-placeholder-count="3">
+                  <div>
+                    <div style="font:600 13px Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:9px">{{ g.label }}</div>
+                    <div style="display:flex; gap:9px; flex-wrap:wrap">
+                      <sc-for list="{{ g.opts }}" as="o" hint-placeholder-count="3">
+                        <button class="pill" onClick="{{ o.pick }}" style="{{ o.style }}">{{ o.label }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <h3 style="margin:0 0 12px; font:800 22px Alexandria,system-ui,sans-serif">موعد البدء الذي تستطيعه</h3>
+              <div style="display:flex; gap:9px; flex-wrap:wrap; margin-bottom:10px">
+                <sc-for list="{{ startOpts }}" as="so" hint-placeholder-count="3">
+                  <button class="pill" onClick="{{ so.pick }}" style="{{ so.style }}">{{ so.label }}</button>
+                </sc-for>
+              </div>
+              <p style="margin:0; font:400 12px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">اقتراح موعد مختلف لا يغيّر السعر، والعميل حر في قبوله أو اختيار مزود آخر.</p>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:14px; position:sticky; top:16px">
+              <div style="background:#dbe7f6; border-radius:26px; padding:30px 30px">
+                <div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em">قيمة الطلب</div>
+                <div style="display:flex; align-items:baseline; gap:8px; margin:10px 0 16px"><span style="font:900 66px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.05em">4,500</span><span style="font:800 18px Alexandria,system-ui,sans-serif">₺</span></div>
+                <div style="background:#fff; border-radius:18px; padding:18px 20px; display:flex; flex-direction:column; gap:10px; margin-bottom:16px; font-family:Cairo,system-ui,sans-serif">
+                  <div style="display:flex; justify-content:space-between; font:500 13px"><span>قيمة الطلب</span><span style="font-weight:700">₺4,500</span></div>
+                  <div style="display:flex; justify-content:space-between; font:500 13px; color:#4b5b78"><span>عمولة المنصة 15%</span><span style="font-weight:700">−₺680</span></div>
+                  <div style="height:2px; background:#eef3fa"></div>
+                  <div style="display:flex; justify-content:space-between; font:700 15px"><span>صافي نصيبك</span><span>₺3,820</span></div>
+                  <div style="font:400 12px/1.7">تُخصم العمولة عند تحرير المبلغ. لا تدفع شيئًا الآن.</div>
+                </div>
+                <button class="pill" onClick="{{ openConfirm }}" style="{{ submitStyle }}">{{ submitLabel }}</button>
+                <p style="margin:10px 0 0; font:400 12px/1.7 Cairo,system-ui,sans-serif">التقدّم مجاني. رسم فتح البيانات يُدفع فقط إن اختارك العميل.</p>
+              </div>
+
+              <div style="background:#f2f6fc; border-radius:26px; padding:26px 28px">
+                <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; letter-spacing:.06em; margin-bottom:14px">كيف يظهر عرضك للعميل</div>
+                <div style="background:#fff; border-radius:20px; padding:18px 20px">
+                  <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px">
+                    <div class="ph" style="width:44px; height:44px; border-radius:50%; flex:none"></div>
+                    <div style="flex:1"><div style="font:700 14px Cairo,system-ui,sans-serif">أحمد س.</div><div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">4.8 ★ · 34 عملًا · موثّق</div></div>
+                  </div>
+                  <div style="font:400 12px/1.75 Cairo,system-ui,sans-serif; color:#2c3c5e">{{ previewMessage }}</div>
+                </div>
+                <div style="font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:12px">يظهر اسمك الأول وحرف العائلة فقط قبل الاختيار.</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scr" style="width:629px">
+        <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/requests/8430/apply — تأكيد</div></div>
+        <div class="ar" dir="rtl" style="background:#eef2f8; padding:36px; min-height:470px; display:flex; align-items:center; justify-content:center">
+          <div style="background:#fff; border-radius:26px; padding:34px 32px; width:100%; box-shadow:0 20px 50px rgba(15,58,115,.18)">
+            <h3 style="margin:0 0 14px; font:900 30px Alexandria,system-ui,sans-serif">تأكيد التقدّم</h3>
+            <p style="margin:0 0 20px; font:500 14px/1.75 Cairo,system-ui,sans-serif; color:#4b5b78">سيصل عرضك إلى العميل فورًا. لن تُخصم أي مبالغ الآن.</p>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px">
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:18px; background:#f2f6fc"><span style="width:20px; height:20px; border-radius:50%; background:#0f3a73; flex:none"></span><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">التقدّم مجاني</span><span style="font:700 14px Cairo,system-ui,sans-serif">₺0</span></div>
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:18px; background:#eaf1fa"><span style="width:20px; height:20px; border-radius:50%; background:#0f3a73; flex:none"></span><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">رسم فتح البيانات إن اختارك العميل</span><span style="font:700 14px Cairo,system-ui,sans-serif">يُطلب لاحقًا</span></div>
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:18px; border:2px solid #e4ecf7"><span style="width:20px; height:20px; border-radius:50%; border:2px solid #d5dfee; box-sizing:border-box; flex:none"></span><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">صافي نصيبك بعد العمولة</span><span style="font:700 14px Cairo,system-ui,sans-serif">₺3,820</span></div>
+            </div>
+            <div style="background:#f2f6fc; border-radius:16px; padding:14px 18px; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:18px">بتأكيدك أنت تلتزم بتنفيذ العمل في الموعد الذي اقترحته إن اختارك العميل. الإلغاء المتكرر بعد الاختيار يؤثر على ظهورك ويعرّض حسابك للإيقاف.</div>
+            <div style="display:flex; gap:10px">
+              <button class="pill" style="background:#0f3a73; color:#fff; padding:18px; font-size:16px; flex:1">أرسل العرض</button>
+              <button class="pill" onClick="{{ closeConfirm }}" style="background:#f2f6fc; color:#0f3a73; padding:18px 26px; font-size:16px">رجوع</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P9 WALLET ============ -->
+  <div id="p9" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p9">P9</a><span style="font:600 13px Alexandria,system-ui,sans-serif">المحفظة — balances, withdrawal, ledger filters (interactive)</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap">
+      <div class="scr" style="width:1280px">
+        <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/wallet</div></div>
+        <div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px">
+          <div style="display:flex; align-items:center; gap:26px; padding-bottom:24px">
+            <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span>
+            <div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div>
+            <span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span>
+            <a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a>
+          </div>
+
+          <div style="display:flex; align-items:flex-end; gap:20px; margin-bottom:22px">
+            <h1 style="margin:0; flex:1; font:900 44px Alexandria,system-ui,sans-serif; letter-spacing:-.04em">المحفظة</h1>
+            <span style="font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">آخر تحديث الآن</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1.35fr 1fr 1fr; gap:14px; margin-bottom:14px">
+            <div style="background:#dbe7f6; border-radius:26px; padding:32px 32px">
+              <div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em">قابل للسحب الآن</div>
+              <div style="display:flex; align-items:baseline; gap:8px; margin:12px 0 18px"><span style="font:900 72px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.05em">4,600</span><span style="font:800 20px Alexandria,system-ui,sans-serif">₺</span></div>
+              <div style="display:flex; gap:9px; flex-wrap:wrap">
+                <button class="pill" onClick="{{ openWithdraw }}" style="background:#0f3a73; color:#fff; padding:17px 28px; font-size:15px">اسحب إلى حسابي</button>
+                <button class="pill" style="background:#fff; color:#0f3a73; padding:17px 26px; font-size:15px">كشف حساب PDF</button>
+              </div>
+            </div>
+            <div style="background:#dbe7f6; border-radius:26px; padding:30px 30px; display:flex; flex-direction:column">
+              <div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em">محفوظ على أعمال جارية</div>
+              <div style="font:900 46px/1.05 Alexandria,system-ui,sans-serif; margin:12px 0 6px">5,800</div>
+              <div style="font:500 12px/1.6 Cairo,system-ui,sans-serif">₺ لدى مزود خدمة الدفع · يُحرَّر بعد تأكيد العملاء</div>
+              <div style="flex:1; min-height:14px"></div>
+              <a href="#p6" style="font:700 13px Cairo,system-ui,sans-serif">اعرض الأعمال الثلاثة ←</a>
+            </div>
+            <div style="background:#f2f6fc; border-radius:26px; padding:30px 30px; display:flex; flex-direction:column">
+              <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; letter-spacing:.06em">العمولة هذا الشهر</div>
+              <div style="font:900 46px/1.05 Alexandria,system-ui,sans-serif; margin:12px 0 6px">2,760</div>
+              <div style="font:500 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">₺ · 15% من قيمة الأعمال المُحرَّرة</div>
+              <div style="flex:1; min-height:14px"></div>
+              <div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">رسوم فتح بيانات: 4 × ₺250 = ₺1,000</div>
+            </div>
+          </div>
+
+          <div style="background:#eaf1fa; border-radius:22px; padding:20px 26px; display:flex; align-items:center; gap:18px; margin-bottom:26px">
+            <div style="flex:1; font:600 15px/1.7 Cairo,system-ui,sans-serif">سحب قيد التنفيذ — ₺3,200 إلى IBAN المنتهي بـ 3309. يصل عادة في يومي عمل.</div>
+            <span style="background:#0f3a73; color:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif; flex:none">قيد التنفيذ</span>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px">
+            <h2 style="margin:0; flex:1; font:800 24px Alexandria,system-ui,sans-serif">الحركات</h2>
+            <div style="display:flex; gap:8px">
+              <sc-for list="{{ ledgerTabs }}" as="lt" hint-placeholder-count="4">
+                <button class="pill" onClick="{{ lt.pick }}" style="{{ lt.style }}">{{ lt.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden">
+            <div style="display:flex; padding:14px 22px; background:#f2f6fc; font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78">
+              <span style="width:130px">التاريخ</span><span style="flex:1">الحركة</span><span style="width:120px">الطلب</span><span style="width:130px; text-align:end">المبلغ</span><span style="width:120px; text-align:end">الحالة</span>
+            </div>
+            <sc-for list="{{ ledger }}" as="ln" hint-placeholder-count="6">
+              <div style="display:flex; align-items:center; padding:18px 22px; border-top:2px solid #f2f6fc">
+                <span style="width:130px; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ ln.date }}</span>
+                <span style="flex:1; min-width:0">
+                  <span style="display:block; font:700 14px Cairo,system-ui,sans-serif">{{ ln.label }}</span>
+                  <span style="display:block; font:400 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:2px">{{ ln.note }}</span>
+                </span>
+                <span style="width:120px; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ ln.ref }}</span>
+                <span style="width:130px; text-align:end; font:800 17px Alexandria,system-ui,sans-serif; color:{{ ln.color }}">{{ ln.amount }}</span>
+                <span style="width:120px; display:flex; justify-content:flex-end"><span style="{{ ln.chip }}">{{ ln.state }}</span></span>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin:16px 0 0; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">المنصة لا تحتفظ بأموالك: المبالغ المحفوظة تبقى لدى مزود خدمة الدفع حتى التحرير، والسحب يُحوَّل مباشرة إلى حسابك البنكي المسجّل.</p>
+        </div>
+      </div>
+
+      <div class="scr" style="width:629px">
+        <div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/providers/wallet — سحب</div></div>
+        <div class="ar" dir="rtl" style="background:#eef2f8; padding:36px; min-height:470px; display:flex; align-items:center; justify-content:center">
+          <div style="background:#fff; border-radius:26px; padding:34px 32px; width:100%; box-shadow:0 20px 50px rgba(15,58,115,.18)">
+            <h3 style="margin:0 0 14px; font:900 30px Alexandria,system-ui,sans-serif">سحب الرصيد</h3>
+            <p style="margin:0 0 20px; font:500 14px/1.75 Cairo,system-ui,sans-serif; color:#4b5b78">الرصيد القابل للسحب ₺4,600. الحد الأدنى للسحب ₺1,000.</p>
+            <label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">المبلغ</label>
+            <input class="fld" value="460" style="margin-bottom:10px">
+            <div style="display:flex; gap:8px; margin-bottom:20px">
+              <button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:11px 18px; font-size:13px">100</button>
+              <button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:11px 18px; font-size:13px">250</button>
+              <button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:11px 18px; font-size:13px">الرصيد كله</button>
+            </div>
+            <label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">الحساب البنكي</label>
+            <div style="display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:18px; background:#dbe7f6; margin-bottom:10px">
+              <span style="width:20px; height:20px; border-radius:50%; background:#0f3a73; flex:none"></span>
+              <span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">IBAN ينتهي بـ 3309 — أحمد سعيد عبد الحميد</span>
+            </div>
+            <a href="#p7" style="font:700 12px Cairo,system-ui,sans-serif; display:inline-block; margin-bottom:20px">إضافة حساب آخر</a>
+            <div style="background:#f2f6fc; border-radius:16px; padding:14px 18px; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:18px">يجب أن يكون الحساب باسمك كما في الهوية. التحويل خلال يومي عمل، ولا توجد رسوم سحب من المنصة.</div>
+            <div style="display:flex; gap:10px">
+              <button class="pill" style="background:#0f3a73; color:#fff; padding:18px; font-size:16px; flex:1">أكّد السحب</button>
+              <button class="pill" onClick="{{ closeWithdraw }}" style="background:#f2f6fc; color:#0f3a73; padding:18px 26px; font-size:16px">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ============ P10 ============ -->
+  <div id="p10" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p10">P10</a><span style="font:600 13px Alexandria,system-ui,sans-serif">الطلبات المتاحة — feed with short details only; full detail on P8</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:1280px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/feed</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="display:flex; align-items:center; gap:26px; padding-bottom:22px"><span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div><span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a></div><div style="display:grid; grid-template-columns:280px minmax(0,1fr); gap:18px; align-items:start">
+  <div style="display:flex; flex-direction:column; gap:14px"><div style="background:#f2f6fc; border-radius:26px; padding:28px 30px; padding:24px 24px"><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">الخدمات</div><div style="display:flex; gap:7px; flex-wrap:wrap"><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">تنظيف عادي</span><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">تنظيف عميق</span><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">نوافذ وشرفات</span><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">فرن وثلاجة</span></div><div style="height:18px"></div><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">الأحياء</div><div style="display:flex; gap:7px; flex-wrap:wrap"><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">الملقا</span><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">النرجس</span><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">حطين</span><span style="background:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">الياسمين</span></div><div style="height:18px"></div><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">الموعد</div><div style="display:flex; gap:7px; flex-wrap:wrap"><span style="background:#fff; color:#0f3a73; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">هذا الأسبوع</span><span style="background:#fff; color:#0f3a73; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">الأسبوع القادم</span><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">الكل</span></div></div><p style="margin:0px 0 0; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">تُعرض الطلبات المطابقة لخدماتك وأحيائك فقط. تعدّلها من ملفي.</p></div>
+  <div><div style="display:flex; align-items:flex-end; gap:14px; margin-bottom:18px"><h1 style="margin:0 0 0px; font:900 38px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">الطلبات المتاحة</h1><span style="flex:1"></span><span style="font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78">5 طلبات · الأحدث أولًا</span></div>
+  <div style="display:flex; flex-direction:column; gap:10px"><div style="border:2px solid #e4ecf7; border-radius:22px; padding:20px 24px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 18px; align-items:center; "><div><div style="display:flex; gap:10px; align-items:center; margin-bottom:6px"><span style="background:#eaf1fa; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">مفتوح</span><span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">6 من 10 عروض</span></div><div style="font:800 19px/1.4 Alexandria,system-ui,sans-serif">تنظيف عميق — فيلا</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c">حي النرجس · السبت 15 أغسطس · 1:00 م</div></div><div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px"><span style="font:900 24px/1 Alexandria,system-ui,sans-serif">4,500 <span style="font-size:13px">₺</span></span><a class="pill" href="#p8" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center; padding:12px 20px; font-size:13px">التفاصيل والتقدّم</a></div></div><div style="border:2px solid #e4ecf7; border-radius:22px; padding:20px 24px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 18px; align-items:center; "><div><div style="display:flex; gap:10px; align-items:center; margin-bottom:6px"><span style="background:#eaf1fa; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">مفتوح</span><span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">2 من 10 عروض</span></div><div style="font:800 19px/1.4 Alexandria,system-ui,sans-serif">نوافذ وشرفات — شقة</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c">حي الملقا · الأحد 16 أغسطس · 9:00 ص</div></div><div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px"><span style="font:900 24px/1 Alexandria,system-ui,sans-serif">2,200 <span style="font-size:13px">₺</span></span><a class="pill" href="#p8" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center; padding:12px 20px; font-size:13px">التفاصيل والتقدّم</a></div></div><div style="border:2px solid #e4ecf7; border-radius:22px; padding:20px 24px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 18px; align-items:center; "><div><div style="display:flex; gap:10px; align-items:center; margin-bottom:6px"><span style="background:#eaf1fa; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">مفتوح</span><span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">0 من 10 عروض</span></div><div style="font:800 19px/1.4 Alexandria,system-ui,sans-serif">تنظيف عادي — شقة</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c">حي حطين · الاثنين 17 أغسطس · 11:00 ص</div></div><div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px"><span style="font:900 24px/1 Alexandria,system-ui,sans-serif">2,800 <span style="font-size:13px">₺</span></span><a class="pill" href="#p8" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center; padding:12px 20px; font-size:13px">التفاصيل والتقدّم</a></div></div><div style="border:2px solid #e4ecf7; border-radius:22px; padding:20px 24px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 18px; align-items:center; "><div><div style="display:flex; gap:10px; align-items:center; margin-bottom:6px"><span style="background:#eaf1fa; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">مفتوح</span><span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">9 من 10 عروض</span></div><div style="font:800 19px/1.4 Alexandria,system-ui,sans-serif">فرن وثلاجة</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c">حي الملقا · الثلاثاء 18 أغسطس · 4:00 م</div></div><div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px"><span style="font:900 24px/1 Alexandria,system-ui,sans-serif">1,200 <span style="font-size:13px">₺</span></span><a class="pill" href="#p8" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center; padding:12px 20px; font-size:13px">التفاصيل والتقدّم</a></div></div><div style="border:2px solid #e4ecf7; border-radius:22px; padding:20px 24px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 18px; align-items:center; opacity:.55"><div><div style="display:flex; gap:10px; align-items:center; margin-bottom:6px"><span style="background:#f2f6fc; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">مقفل</span><span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">10 من 10 عروض</span></div><div style="font:800 19px/1.4 Alexandria,system-ui,sans-serif">تنظيف عادي — شقة</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c">حي حطين · الخميس 13 أغسطس · 11:00 ص</div></div><div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px"><span style="font:900 24px/1 Alexandria,system-ui,sans-serif">2,800 <span style="font-size:13px">₺</span></span><span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">وصل الحد الأقصى</span></div></div></div></div></div></div></div></div>
+  </div>
+
+  <!-- ============ P11 ============ -->
+  <div id="p11" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p11">P11</a><span style="font:600 13px Alexandria,system-ui,sans-serif">دفع رسم فتح البيانات — charged to card, within the unlock window</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:1280px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/jobs/8412/unlock</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="display:flex; align-items:center; gap:26px; padding-bottom:22px"><span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div><span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a></div><div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start"><div style="min-width:0"><span style="background:#dbe7f6; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">اختارك العميل · المبلغ محفوظ</span><div style="height:14px"></div><h1 style="margin:0 0 16px; font:900 44px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">افتح بيانات العميل</h1><p style="margin:0 0 24px; font:500 15px/1.75 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:60ch">ادفع رسم فتح البيانات لتظهر لك بيانات العميل وتؤكد العمل. إذا لم تدفع خلال المهلة يعود الطلب مفتوحًا لغيرك.</p>
+   <div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden"><div style="display:flex; gap:14px; padding:15px 22px;"><span style="width:150px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">الطلب</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">تنظيف عادي — 3 غرف + صالة · #8412</span></div><div style="display:flex; gap:14px; padding:15px 22px; border-top:2px solid #f2f6fc;"><span style="width:150px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">الموعد</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">الخميس 13 أغسطس · 10:00 ص</span></div><div style="display:flex; gap:14px; padding:15px 22px; border-top:2px solid #f2f6fc;"><span style="width:150px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">الحي</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">الملقا</span></div><div style="display:flex; gap:14px; padding:15px 22px; border-top:2px solid #f2f6fc;"><span style="width:150px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">قيمة الطلب</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">₺3,200 — محفوظة لدى مزود خدمة الدفع</span></div></div><div style="height:24px"></div>
+   <h3 style="margin:0 0 12px; font:800 20px/1.4 Alexandria,system-ui,sans-serif">الدفع بالبطاقة</h3>
+   <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px"><div style="display:flex; align-items:center; gap:14px; padding:15px 20px; border-radius:18px; background:#dbe7f6"><span style="width:20px; height:20px; border-radius:50%; flex:none; box-sizing:border-box; background:#0f3a73; border:5px solid #dbe7f6; outline:2px solid #0f3a73"></span><span style="flex:1; font:600 14px/1.6 Cairo,system-ui,sans-serif">مدى ••• 4421</span></div><div style="display:flex; align-items:center; gap:14px; padding:15px 20px; border-radius:18px; border:2px solid #e4ecf7"><span style="width:20px; height:20px; border-radius:50%; flex:none; box-sizing:border-box; border:2px solid #c3d0e4"></span><span style="flex:1; font:600 14px/1.6 Cairo,system-ui,sans-serif">بطاقة جديدة</span></div></div>
+   <div class="ph" style="height:118px; border-radius:18px"><span>نموذج البطاقة الآمن من مزود خدمة الدفع</span></div></div><div style="display:flex; flex-direction:column; gap:14px; min-width:0"><div style="background:#dbe7f6; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#0f3a73; margin-bottom:12px">الوقت المتبقي</div><div style="font:900 56px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.04em" dir="ltr">19:24:08</div><p style="margin:10px 0 0; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#22324f">تنتهي المهلة اليوم 11:00 م</p></div>
+   <div style="background:#f2f6fc; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">ما ستدفعه الآن</div><div style="background:#fff; border-radius:18px; padding:18px 20px; display:flex; flex-direction:column; gap:10px"><div style="display:flex; justify-content:space-between; gap:12px; font:500 13px Cairo,system-ui,sans-serif"><span>رسم فتح البيانات</span><span style="font-weight:700">₺250</span></div><div style="display:flex; justify-content:space-between; gap:12px; font:700 15px Cairo,system-ui,sans-serif"><span>الإجمالي</span><span style="font-weight:700">₺250</span></div></div><div style="height:14px"></div><button class="pill" style="background:#0f3a73; color:#fff; padding:18px; font-size:16px; width:100%">ادفع ₺250 وافتح البيانات</button></div></div></div></div></div></div>
+  </div>
+
+  <!-- ============ P12 ============ -->
+  <div id="p12" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p12">P12</a><span style="font:600 13px Alexandria,system-ui,sans-serif">العمل المؤكَّد — full customer details after unlock; start/finish are interactive</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:1280px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/jobs/8412</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="display:flex; align-items:center; gap:26px; padding-bottom:22px"><span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div><span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a></div><div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start"><div style="min-width:0"><div style="display:flex; align-items:center; gap:10px; margin-bottom:14px"><span style="{{ jobChipStyle }}">{{ jobChip }}</span><span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">#8412</span></div>
+   <h1 style="margin:0 0 16px; font:900 44px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">تنظيف عادي — 3 غرف + صالة</h1>
+   <div style="display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center; background:#dbe7f6; border-radius:26px; padding:22px 26px; margin-bottom:14px">
+    <span style="width:60px; height:60px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font:800 20px Alexandria,system-ui,sans-serif">ه</span>
+    <div><div style="font:900 22px/1.3 Alexandria,system-ui,sans-serif">هدى محمد</div><div dir="ltr" style="font:700 15px Cairo,system-ui,sans-serif; text-align:right">055 876 5432</div></div>
+    <button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:14px 26px; font-size:14px">اتصال</button>
+   </div>
+   <div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden"><div style="display:flex; gap:14px; padding:15px 22px;"><span style="width:150px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">العنوان</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">حي الملقا، شارع الأمير محمد بن سلمان، مبنى 14، شقة 6</span></div><div style="display:flex; gap:14px; padding:15px 22px; border-top:2px solid #f2f6fc;"><span style="width:150px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">الموعد</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">الخميس 13 أغسطس · 10:00 ص · 5 ساعات تقديرية</span></div><div style="display:flex; gap:14px; padding:15px 22px; border-top:2px solid #f2f6fc;"><span style="width:150px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">التفاصيل</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">شقة · يوجد مصعد · دورتا مياه · نوافذ وشرفات</span></div><div style="display:flex; gap:14px; padding:15px 22px; border-top:2px solid #f2f6fc;"><span style="width:150px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">ملاحظات العميل</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">يوجد قط في المنزل</span></div></div>
+   <div class="ph" style="height:180px; border-radius:22px; margin-top:14px"><span>خريطة الموقع</span></div></div><div style="display:flex; flex-direction:column; gap:14px; min-width:0"><div style="background:#f2f6fc; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">مسار العمل</div><sc-for list="{{ jobTimeline }}" as="jt" hint-placeholder-count="5"><div style="display:flex; gap:14px; align-items:center; padding:7px 0"><span style="{{ jt.dot }}"></span><span style="{{ jt.text }}">{{ jt.label }}</span></div></sc-for><div style="height:16px"></div><button class="pill" onClick="{{ jobAdvance }}" style="{{ jobBtnStyle }}">{{ jobBtn }}</button><p style="margin:12px 0 0; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">{{ jobHint }}</p><button class="pill" onClick="{{ jobReset }}" style="background:transparent; color:#1e5fb3; padding:8px 0 0; font-size:12px">إعادة العرض</button></div>
+   <div style="background:#dbe7f6; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#0f3a73; margin-bottom:12px">نصيبك من هذا العمل</div><div style="background:#fff; border-radius:18px; padding:18px 20px; display:flex; flex-direction:column; gap:10px"><div style="display:flex; justify-content:space-between; gap:12px; font:500 13px Cairo,system-ui,sans-serif"><span>قيمة الطلب</span><span style="font-weight:700">₺3,200</span></div><div style="display:flex; justify-content:space-between; gap:12px; font:500 13px Cairo,system-ui,sans-serif"><span>عمولة المنصة 15%</span><span style="font-weight:700">−₺480</span></div><div style="display:flex; justify-content:space-between; gap:12px; font:700 15px Cairo,system-ui,sans-serif"><span>صافي نصيبك</span><span style="font-weight:700">₺2,720</span></div></div></div>
+   <a class="pill" href="#p13" style="background:#fff; border:2px solid #e4ecf7; color:#0f3a73; padding:14px; font-size:14px; text-align:center; display:block">لا أستطيع تنفيذ العمل</a></div></div></div></div></div>
+  </div>
+
+  <!-- ============ P13 ============ -->
+  <div id="p13" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p13">P13</a><span style="font:600 13px Alexandria,system-ui,sans-serif">سحب التقدّم والإلغاء — what each step costs the provider</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:1280px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/applications</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="display:flex; align-items:center; gap:26px; padding-bottom:22px"><span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div><span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a></div><h1 style="margin:0 0 16px; font:900 44px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">سحب التقدّم أو الإلغاء</h1><p style="margin:0 0 24px; font:500 15px/1.75 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:60ch">يختلف الأثر حسب مرحلة الطلب. الإلغاء بعد الاختيار يُحتسب عليك.</p>
+  <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px">
+   <div style="background:#f2f6fc; border-radius:26px; padding:28px 30px; "><span style="background:#fff; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">قبل الاختيار</span><div style="height:14px"></div><div style="font:900 24px/1.3 Alexandria,system-ui,sans-serif; margin-bottom:10px">سحب التقدّم</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#22324f">يُحذف عرضك من الطلب ولا يُحتسب عليك شيء.</div><div style="height:18px"></div><a class="pill" href="#p13" style="background:#fff; border:2px solid #c0262d; color:#c0262d; display:inline-block; text-align:center; padding:11px 20px; font-size:14px">اسحب تقدّمي</a></div>
+   <div style="background:#eaf1fa; border-radius:26px; padding:28px 30px; "><span style="background:#fff; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">بعد اختيارك وقبل فتح البيانات</span><div style="height:14px"></div><div style="font:900 24px/1.3 Alexandria,system-ui,sans-serif; margin-bottom:10px">الانسحاب</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#22324f">لم تدفع رسمًا بعد. يُحتسب الانسحاب ضمن نسبة إلغاءاتك.</div><div style="height:18px"></div><a class="pill" href="#p13" style="background:#fff; border:2px solid #c0262d; color:#c0262d; display:inline-block; text-align:center; padding:11px 20px; font-size:14px">انسحب من الطلب</a></div>
+   <div style="background:#dbe7f6; border-radius:26px; padding:28px 30px; "><span style="background:#fff; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">بعد فتح البيانات</span><div style="height:14px"></div><div style="font:900 24px/1.3 Alexandria,system-ui,sans-serif; margin-bottom:10px">إلغاء العمل</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#22324f">يُعاد المبلغ كاملًا للعميل، ولا يُعاد إليك رسم فتح البيانات، ويُحتسب ضمن نسبة إلغاءاتك.</div><div style="height:18px"></div><a class="pill" href="#p13" style="background:#fff; border:2px solid #c0262d; color:#c0262d; display:inline-block; text-align:center; padding:11px 20px; font-size:14px">ألغِ العمل</a></div>
+  </div>
+  <div style="margin-top:14px; background:#eef4fd; border:2px solid #dbe7f6; border-radius:22px; padding:20px 26px; color:#2c3c5e; font:500 13px/1.8 Cairo,system-ui,sans-serif">عدم الحضور في الموعد يُعامَل كإلغاء من جهتك، ويُحتسب ضمن نسبة الإلغاء ونسبة عدم الحضور. لا يمكن الإلغاء بعد الإبلاغ بانتهاء العمل.</div></div></div><div class="scr" style="width:629px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/jobs/8412 — إلغاء</div></div><div class="ar" dir="rtl" style="background:#eef1f6; padding:26px 34px 34px"><div style="background:#fff; border-radius:26px; padding:30px 28px; box-shadow:0 20px 50px rgba(15,58,115,.18)"><h3 style="margin:0 0 12px; font:900 28px Alexandria,system-ui,sans-serif">إلغاء العمل #8412</h3><p style="margin:0 0 18px; font:500 15px/1.75 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:60ch">تأكد قبل المتابعة. لا يمكن التراجع بعد الإلغاء.</p>
+  <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px"><div style="display:flex; align-items:center; gap:14px; padding:15px 20px; border-radius:18px; border:2px solid #e4ecf7"><span style="width:20px; height:20px; border-radius:50%; flex:none; box-sizing:border-box; border:2px solid #c3d0e4"></span><span style="flex:1; font:600 14px/1.6 Cairo,system-ui,sans-serif">يُعاد للعميل</span><span style="font:700 14px Cairo,system-ui,sans-serif">₺3,200</span></div><div style="display:flex; align-items:center; gap:14px; padding:15px 20px; border-radius:18px; border:2px solid #e4ecf7"><span style="width:20px; height:20px; border-radius:50%; flex:none; box-sizing:border-box; border:2px solid #c3d0e4"></span><span style="flex:1; font:600 14px/1.6 Cairo,system-ui,sans-serif">رسم فتح البيانات</span><span style="font:700 14px Cairo,system-ui,sans-serif">لا يُعاد</span></div><div style="display:flex; align-items:center; gap:14px; padding:15px 20px; border-radius:18px; background:#dbe7f6"><span style="width:20px; height:20px; border-radius:50%; flex:none; box-sizing:border-box; background:#0f3a73; border:5px solid #dbe7f6; outline:2px solid #0f3a73"></span><span style="flex:1; font:600 14px/1.6 Cairo,system-ui,sans-serif">نسبة إلغاءاتك</span><span style="font:700 14px Cairo,system-ui,sans-serif">1% ← 4%</span></div></div>
+  <div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">سبب الإلغاء (يُرسل للإدارة)</label><div style="border:2px solid #dfe7f3; border-radius:16px; padding:14px 18px; font:500 14px/1.8 Cairo,system-ui,sans-serif; min-height:84px">ظرف صحي طارئ.</div></div><div style="display:flex; gap:10px; margin-top:18px"><button class="pill" style="background:#c0262d; color:#fff; padding:17px; font-size:15px; flex:1">أكّد الإلغاء</button><a class="pill" href="#p12" style="background:#f2f6fc; color:#0f3a73; padding:17px 24px; font-size:15px">تراجع</a></div></div></div></div></div>
+  </div>
+
+  <!-- ============ P14 ============ -->
+  <div id="p14" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p14">P14</a><span style="font:600 13px Alexandria,system-ui,sans-serif">حالات الحساب — rejected, suspended, document expired; switch tabs</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:1280px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="display:flex; align-items:center; gap:26px; padding-bottom:22px"><span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><div style="flex:1"></div><span style="{{ acctNavChip }}">{{ acctChip }}</span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">1</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a></div>
+  <div style="display:flex; gap:8px; margin-bottom:20px"><sc-for list="{{ acctTabs }}" as="at" hint-placeholder-count="3"><button class="pill" onClick="{{ at.pick }}" style="{{ at.style }}">{{ at.label }}</button></sc-for></div><div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start"><div style="min-width:0"><div style="background:#eaf1fa; border-radius:26px; padding:36px 36px; margin-bottom:14px"><h1 style="margin:0 0 12px; font:900 40px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">{{ acct.title }}</h1><p style="margin:0; font:500 15px/1.8 Cairo,system-ui,sans-serif; max-width:52ch">{{ acct.body }}</p></div>
+   <div style="border:2px solid #e4ecf7; border-radius:24px; padding:22px 26px; margin-bottom:14px"><div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:8px">{{ acct.reasonLabel }}</div><div style="font:700 16px/1.7 Cairo,system-ui,sans-serif">{{ acct.reason }}</div></div>
+   <div style="background:#f2f6fc; border-radius:20px; padding:18px 22px; display:flex; align-items:center; gap:14px"><span style="width:12px; height:12px; border-radius:50%; background:#0f3a73; flex:none"></span><span style="flex:1; font:600 14px/1.7 Cairo,system-ui,sans-serif">{{ acct.effect }}</span></div></div><div style="display:flex; flex-direction:column; gap:14px; min-width:0"><div style="background:#dbe7f6; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#0f3a73; margin-bottom:12px">الخطوة التالية</div><div style="font:500 14px/1.8 Cairo,system-ui,sans-serif; margin-bottom:16px">{{ acct.next }}</div><a class="pill" href="{{ acct.href }}" style="background:#0f3a73; color:#fff; padding:16px; font-size:15px; display:block; text-align:center">{{ acct.action }}</a></div>
+   <div style="background:#f2f6fc; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">الأعمال المؤكدة لديك</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c">تبقى أعمالك التي فتحت بياناتها قبل هذا القرار في صفحة أعمالي.</div></div></div></div></div></div></div>
+  </div>
+
+  <!-- ============ P15 ============ -->
+  <div id="p15" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p15">P15</a><span style="font:600 13px Alexandria,system-ui,sans-serif">الإشعارات — provider</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:1280px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/notifications</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="display:flex; align-items:center; gap:26px; padding-bottom:22px"><span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div><span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a></div><div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start"><div style="min-width:0"><div style="display:flex; align-items:flex-end; gap:16px; margin-bottom:20px"><h1 style="margin:0 0 0px; font:900 44px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">الإشعارات</h1><span style="flex:1"></span><button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:12px 22px; font-size:13px">تعليم الكل كمقروء</button></div>
+   <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:10px">اليوم</div><div style="display:flex; flex-direction:column; gap:8px"><a href="#p11" style="display:flex; gap:14px; align-items:flex-start; padding:16px 20px; border-radius:20px; background:#f2f7fd; border:2px solid #dbe7f6; color:#0f3a73"><span style="width:10px; height:10px; border-radius:50%; margin-top:8px; flex:none; background:#0f3a73"></span><span style="flex:1; min-width:0"><span style="display:block; font:700 14px/1.6 Cairo,system-ui,sans-serif">اختارك عميل</span><span style="display:block; font:400 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c; margin-top:2px">تنظيف عادي — حي الملقا. افتح البيانات خلال 24 ساعة.</span></span><span style="flex:none; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; white-space:nowrap">قبل 5 دقائق</span></a><a href="#p11" style="display:flex; gap:14px; align-items:flex-start; padding:16px 20px; border-radius:20px; background:#f2f7fd; border:2px solid #dbe7f6; color:#0f3a73"><span style="width:10px; height:10px; border-radius:50%; margin-top:8px; flex:none; background:#0f3a73"></span><span style="flex:1; min-width:0"><span style="display:block; font:700 14px/1.6 Cairo,system-ui,sans-serif">تبقّت 4 ساعات على مهلة فتح البيانات</span><span style="display:block; font:400 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c; margin-top:2px">بعدها يعود الطلب #8420 مفتوحًا لغيرك.</span></span><span style="flex:none; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; white-space:nowrap">قبل ساعة</span></a></div>
+   <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin:22px 0 10px">سابقًا</div><div style="display:flex; flex-direction:column; gap:8px"><a href="#p9" style="display:flex; gap:14px; align-items:flex-start; padding:16px 20px; border-radius:20px; background:#fff; border:2px solid #f2f6fc; color:#0f3a73"><span style="width:10px; height:10px; border-radius:50%; margin-top:8px; flex:none; background:#dfe7f3"></span><span style="flex:1; min-width:0"><span style="display:block; font:700 14px/1.6 Cairo,system-ui,sans-serif">أكّد العميل الإتمام</span><span style="display:block; font:400 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c; margin-top:2px">حُرّر ₺2,720 إلى رصيدك القابل للسحب.</span></span><span style="flex:none; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; white-space:nowrap">أمس</span></a><a href="#p9" style="display:flex; gap:14px; align-items:flex-start; padding:16px 20px; border-radius:20px; background:#fff; border:2px solid #f2f6fc; color:#0f3a73"><span style="width:10px; height:10px; border-radius:50%; margin-top:8px; flex:none; background:#dfe7f3"></span><span style="flex:1; min-width:0"><span style="display:block; font:700 14px/1.6 Cairo,system-ui,sans-serif">أُرسل السحب</span><span style="display:block; font:400 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c; margin-top:2px">₺3,200 إلى IBAN المنتهي بـ 3309.</span></span><span style="flex:none; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; white-space:nowrap">قبل يومين</span></a><a href="#p6" style="display:flex; gap:14px; align-items:flex-start; padding:16px 20px; border-radius:20px; background:#fff; border:2px solid #f2f6fc; color:#0f3a73"><span style="width:10px; height:10px; border-radius:50%; margin-top:8px; flex:none; background:#dfe7f3"></span><span style="flex:1; min-width:0"><span style="display:block; font:700 14px/1.6 Cairo,system-ui,sans-serif">فتح العميل نزاعًا</span><span style="display:block; font:400 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c; margin-top:2px">طلب #8240 — أُوقف التحرير حتى قرار الإدارة.</span></span><span style="flex:none; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; white-space:nowrap">قبل 5 أيام</span></a><a href="#p6" style="display:flex; gap:14px; align-items:flex-start; padding:16px 20px; border-radius:20px; background:#fff; border:2px solid #f2f6fc; color:#0f3a73"><span style="width:10px; height:10px; border-radius:50%; margin-top:8px; flex:none; background:#dfe7f3"></span><span style="flex:1; min-width:0"><span style="display:block; font:700 14px/1.6 Cairo,system-ui,sans-serif">لم يُختَر عرضك</span><span style="display:block; font:400 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c; margin-top:2px">اختار العميل مزودًا آخر في طلب #8398.</span></span><span style="flex:none; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; white-space:nowrap">قبل أسبوع</span></a><a href="#p10" style="display:flex; gap:14px; align-items:flex-start; padding:16px 20px; border-radius:20px; background:#fff; border:2px solid #f2f6fc; color:#0f3a73"><span style="width:10px; height:10px; border-radius:50%; margin-top:8px; flex:none; background:#dfe7f3"></span><span style="flex:1; min-width:0"><span style="display:block; font:700 14px/1.6 Cairo,system-ui,sans-serif">اعتُمد ملفك</span><span style="display:block; font:400 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c; margin-top:2px">يمكنك الآن التقدّم على الطلبات المطابقة.</span></span><span style="flex:none; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; white-space:nowrap">2 يوليو</span></a></div></div><div style="display:flex; flex-direction:column; gap:14px; min-width:0"><div style="background:#dbe7f6; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#0f3a73; margin-bottom:12px">يحتاج إجراءً</div><div style="font:800 20px/1.4 Alexandria,system-ui,sans-serif; margin-bottom:12px">فتح بيانات طلب #8412</div><a class="pill" href="#p11" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center; display:block; padding:18px">افتح البيانات</a></div>
+   <div style="background:#f2f6fc; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">القنوات</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c">إشعارات الاختيار والمهل تصل برسالة نصية دائمًا لأنها مرتبطة بوقت.</div><a href="#p16" style="font:700 13px Cairo,system-ui,sans-serif; display:inline-block; margin-top:12px">تعديل من حسابي</a></div></div></div></div></div></div>
+  </div>
+
+  <!-- ============ P16 ============ -->
+  <div id="p16" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p16">P16</a><span style="font:600 13px Alexandria,system-ui,sans-serif">حسابي — provider account (profile &amp; documents live in P7)</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:1280px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/account</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="display:flex; align-items:center; gap:26px; padding-bottom:22px"><span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><div style="flex:1; display:flex; gap:22px"><a class="navlink" href="#p10">الطلبات المتاحة</a><a class="navlink" href="#p6">تقدّماتي</a><a class="navlink" href="#p12">أعمالي</a><a class="navlink" href="#p9">المحفظة</a><a class="navlink" href="#p7">ملفي</a></div><span style="background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif">معتمد</span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a><a href="#p16" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">أ</a></div><div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start"><div style="min-width:0"><h1 style="margin:0 0 16px; font:900 44px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">حسابي</h1><p style="margin:0 0 24px; font:500 15px/1.75 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:60ch">بيانات الدخول والإشعارات. الملف المهني والمستندات في صفحة ملفي.</p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px"><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">الاسم كما في الهوية</label><input class="fld" value="أحمد سعيد عبد الحميد" style="width:100%"><div style="font:400 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">يتغير فقط بتحديث الهوية</div></div><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">رقم الجوال</label><input class="fld" value="050 123 4567" style="width:100%"><div style="font:400 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">مُتحقَّق منه</div></div><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">البريد الإلكتروني (اختياري)</label><input class="fld" value="ahmed@example.com" style="width:100%"></div><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">لغة الواجهة</label><div style="display:flex; gap:6px; background:#f2f6fc; border-radius:99px; padding:5px; width:max-content"><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:10px 20px; font:700 13px Cairo,system-ui,sans-serif">العربية</span><span style="border-radius:99px; padding:10px 20px; font:700 13px Cairo,system-ui,sans-serif">Türkçe</span><span style="border-radius:99px; padding:10px 20px; font:700 13px Cairo,system-ui,sans-serif">English</span></div></div></div>
+  <h3 style="margin:0 0 12px; font:800 20px/1.4 Alexandria,system-ui,sans-serif">الإشعارات</h3><div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden"><div style="display:flex; align-items:center; padding:13px 22px; background:#f2f6fc; font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78"><span style="flex:1">الإشعار</span><span style="width:84px; text-align:center">داخل الموقع</span><span style="width:70px; text-align:center">SMS</span><span style="width:70px; text-align:center">البريد</span></div><div style="display:flex; align-items:center; padding:14px 22px; border-top:2px solid #f2f6fc"><span style="flex:1; font:600 13px/1.6 Cairo,system-ui,sans-serif">طلب جديد مطابق في أحيائك</span><span style="width:84px; display:flex; justify-content:center"><span style="background:#f2f6fc; color:#4b5b78; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">دائمًا</span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#d0dbeb; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; right:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#d0dbeb; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; right:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span></div><div style="display:flex; align-items:center; padding:14px 22px; border-top:2px solid #f2f6fc"><span style="flex:1; font:600 13px/1.6 Cairo,system-ui,sans-serif">اختارك عميل</span><span style="width:84px; display:flex; justify-content:center"><span style="background:#f2f6fc; color:#4b5b78; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">دائمًا</span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#0f3a73; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#0f3a73; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span></div><div style="display:flex; align-items:center; padding:14px 22px; border-top:2px solid #f2f6fc"><span style="flex:1; font:600 13px/1.6 Cairo,system-ui,sans-serif">اقتراب انتهاء مهلة فتح البيانات</span><span style="width:84px; display:flex; justify-content:center"><span style="background:#f2f6fc; color:#4b5b78; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">دائمًا</span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#0f3a73; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#d0dbeb; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; right:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span></div><div style="display:flex; align-items:center; padding:14px 22px; border-top:2px solid #f2f6fc"><span style="flex:1; font:600 13px/1.6 Cairo,system-ui,sans-serif">تأكيد العميل وتحرير المبلغ</span><span style="width:84px; display:flex; justify-content:center"><span style="background:#f2f6fc; color:#4b5b78; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">دائمًا</span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#0f3a73; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#0f3a73; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span></div><div style="display:flex; align-items:center; padding:14px 22px; border-top:2px solid #f2f6fc"><span style="flex:1; font:600 13px/1.6 Cairo,system-ui,sans-serif">إرسال السحب</span><span style="width:84px; display:flex; justify-content:center"><span style="background:#f2f6fc; color:#4b5b78; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">دائمًا</span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#0f3a73; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#0f3a73; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span></div><div style="display:flex; align-items:center; padding:14px 22px; border-top:2px solid #f2f6fc"><span style="flex:1; font:600 13px/1.6 Cairo,system-ui,sans-serif">نزاع على أحد أعمالك</span><span style="width:84px; display:flex; justify-content:center"><span style="background:#f2f6fc; color:#4b5b78; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">دائمًا</span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#0f3a73; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span><span style="width:70px; display:flex; justify-content:center"><span style="width:40px; height:22px; border-radius:99px; background:#0f3a73; position:relative; display:block; flex:none"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; display:block"></span></span></span></div></div>
+  <div style="margin-top:24px"><button class="pill" style="background:#0f3a73; color:#fff; padding:16px 28px; font-size:15px">احفظ التغييرات</button></div></div><div style="display:flex; flex-direction:column; gap:14px; min-width:0">
+   <div style="background:#f2f6fc; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">روابط</div><div style="display:flex; flex-direction:column; gap:8px"><a href="#p7" style="background:#fff; border-radius:14px; padding:13px 16px; font:600 14px Cairo,system-ui,sans-serif; color:#0f3a73">الملف المهني والمستندات</a><a href="#p4" style="background:#fff; border-radius:14px; padding:13px 16px; font:600 14px Cairo,system-ui,sans-serif; color:#0f3a73">الخدمات والأحياء</a><a href="#p9" style="background:#fff; border-radius:14px; padding:13px 16px; font:600 14px Cairo,system-ui,sans-serif; color:#0f3a73">الحساب البنكي</a></div></div>
+   <div style="border:2px solid #e4ecf7; border-radius:22px; padding:20px 24px; display:flex; align-items:center; gap:12px"><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">تسجيل الخروج</span><button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:12px 22px; font-size:13px">خروج</button></div></div></div></div></div></div>
+  </div>
+
+  <!-- ============ P17 ============ -->
+  <div id="p17" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p17">P17</a><span style="font:600 13px Alexandria,system-ui,sans-serif">حالات الخطأ والفراغ — empty feed, unlock payment failed, request closed, 404</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:629px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/feed</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="padding:30px 6px 10px; background:#fff"><div style="font:900 84px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.05em; margin-bottom:18px">0</div><h2 style="margin:0 0 10px; font:900 28px/1.3 Alexandria,system-ui,sans-serif">لا توجد طلبات مطابقة الآن</h2><p style="margin:0 0 22px; font:500 14px/1.8 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:44ch">تظهر هنا الطلبات في أحيائك وخدماتك فقط. توسيع الأحياء يزيد عدد الطلبات.</p><div style="display:flex; gap:10px; flex-wrap:wrap"><a class="pill" href="#p4" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">عدّل الأحياء</a><a class="pill" href="#p16" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">الإشعارات</a></div></div></div></div><div class="scr" style="width:629px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/jobs/8412/unlock</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="padding:30px 6px 10px; background:#fff"><div style="font:900 84px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.05em; margin-bottom:18px">!</div><h2 style="margin:0 0 10px; font:900 28px/1.3 Alexandria,system-ui,sans-serif">لم يُدفع رسم فتح البيانات</h2><p style="margin:0 0 22px; font:500 14px/1.8 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:44ch">رفض البنك العملية ولم يُخصم أي مبلغ. ما زال لديك 19 ساعة لإكمال الدفع.</p><div style="display:flex; gap:10px; flex-wrap:wrap"><a class="pill" href="#p11" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">حاول مرة أخرى</a><a class="pill" href="#p11" style="background:#f2f6fc; color:#0f3a73; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">بطاقة أخرى</a></div></div></div></div><div class="scr" style="width:629px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/feed/8430</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="padding:30px 6px 10px; background:#fff"><div style="font:900 84px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.05em; margin-bottom:18px">10/10</div><h2 style="margin:0 0 10px; font:900 28px/1.3 Alexandria,system-ui,sans-serif">أُقفل الطلب</h2><p style="margin:0 0 22px; font:500 14px/1.8 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:44ch">وصل الطلب إلى الحد الأقصى من العروض قبل إرسال عرضك. لم يُحفظ عرضك.</p><div style="display:flex; gap:10px; flex-wrap:wrap"><a class="pill" href="#p10" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">طلبات مشابهة</a></div></div></div></div><div class="scr" style="width:629px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/provider/jobs/9999</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="padding:30px 6px 10px; background:#fff"><div style="font:900 84px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.05em; margin-bottom:18px">404</div><h2 style="margin:0 0 10px; font:900 28px/1.3 Alexandria,system-ui,sans-serif">الصفحة غير موجودة</h2><p style="margin:0 0 22px; font:500 14px/1.8 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:44ch">قد يكون الرابط خاطئًا، أو أن هذا العمل لا يخصك.</p><div style="display:flex; gap:10px; flex-wrap:wrap"><a class="pill" href="#p6" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">أعمالي</a><a class="pill" href="#p10" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">الطلبات المتاحة</a></div></div></div></div></div>
+  </div>
+
+  <!-- ============ P18 ============ -->
+  <div id="p18" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p18">P18</a><span style="font:600 13px Alexandria,system-ui,sans-serif">الجوال — feed, won job, wallet</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div style="display:flex; flex-direction:column; gap:10px"><div style="width:390px; height:844px; border-radius:48px; background:#0f3a73; padding:10px; box-sizing:border-box; flex:none; box-shadow:0 18px 50px rgba(15,58,115,.18)"><div class="ar" dir="rtl" style="width:100%; height:100%; border-radius:38px; background:#fff; overflow:hidden; display:flex; flex-direction:column"><div dir="ltr" style="display:flex; justify-content:space-between; align-items:center; padding:14px 30px 6px; font:600 14px Cairo,system-ui,sans-serif; flex:none"><span>9:41</span><span style="width:104px; height:28px; border-radius:99px; background:#0f3a73; display:block"></span><span>100%</span></div><div style="display:flex; align-items:center; gap:10px; padding:10px 20px 12px; flex:none"><span dir="ltr" style="font:400 18px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><span style="flex:1"></span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a></div><div style="flex:1; min-height:0; overflow:hidden; padding:4px 20px 16px; display:flex; flex-direction:column; gap:12px"><div style="font:900 24px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.03em">الطلبات المتاحة</div><div style="display:flex; gap:8px"><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">الكل</span><span style="background:#f2f6fc; color:#0f3a73; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">هذا الأسبوع</span><span style="background:#f2f6fc; color:#0f3a73; border-radius:99px; padding:9px 14px; font:700 12px Cairo,system-ui,sans-serif">الملقا</span></div><div style="border:2px solid #e4ecf7; border-radius:20px; padding:14px 16px"><div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:4px"><span style="font:800 15px/1.4 Alexandria,system-ui,sans-serif">تنظيف عميق — فيلا</span><span style="font:900 16px Alexandria,system-ui,sans-serif; white-space:nowrap">₺4,500</span></div><div style="font:500 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">حي النرجس · السبت 15 أغسطس · 1:00 م</div><div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:4px">6 من 10 عروض</div></div><div style="border:2px solid #e4ecf7; border-radius:20px; padding:14px 16px"><div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:4px"><span style="font:800 15px/1.4 Alexandria,system-ui,sans-serif">نوافذ وشرفات — شقة</span><span style="font:900 16px Alexandria,system-ui,sans-serif; white-space:nowrap">₺2,200</span></div><div style="font:500 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">حي الملقا · الأحد 16 أغسطس · 9:00 ص</div><div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:4px">2 من 10 عروض</div></div><div style="border:2px solid #e4ecf7; border-radius:20px; padding:14px 16px"><div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:4px"><span style="font:800 15px/1.4 Alexandria,system-ui,sans-serif">تنظيف عادي — شقة</span><span style="font:900 16px Alexandria,system-ui,sans-serif; white-space:nowrap">₺2,800</span></div><div style="font:500 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">حي حطين · الاثنين 17 أغسطس · 11:00 ص</div><div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:4px">0 من 10 عروض</div></div><div style="border:2px solid #e4ecf7; border-radius:20px; padding:14px 16px"><div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:4px"><span style="font:800 15px/1.4 Alexandria,system-ui,sans-serif">فرن وثلاجة</span><span style="font:900 16px Alexandria,system-ui,sans-serif; white-space:nowrap">₺1,200</span></div><div style="font:500 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">حي الملقا · الثلاثاء 18 أغسطس · 4:00 م</div><div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:4px">9 من 10 عروض</div></div></div><div style="padding:14px 20px 26px; border-top:2px solid #f2f6fc; flex:none"><div style="display:flex; justify-content:space-around; font:700 12px Cairo,system-ui,sans-serif"><span>الفرص</span><span>طلباتي</span><span>أرباحي</span><span>حسابي</span></div></div></div></div><span style="font:600 12px Alexandria,system-ui,sans-serif; color:#3d4d6c">الطلبات المتاحة</span></div><div style="display:flex; flex-direction:column; gap:10px"><div style="width:390px; height:844px; border-radius:48px; background:#0f3a73; padding:10px; box-sizing:border-box; flex:none; box-shadow:0 18px 50px rgba(15,58,115,.18)"><div class="ar" dir="rtl" style="width:100%; height:100%; border-radius:38px; background:#fff; overflow:hidden; display:flex; flex-direction:column"><div dir="ltr" style="display:flex; justify-content:space-between; align-items:center; padding:14px 30px 6px; font:600 14px Cairo,system-ui,sans-serif; flex:none"><span>9:41</span><span style="width:104px; height:28px; border-radius:99px; background:#0f3a73; display:block"></span><span>100%</span></div><div style="display:flex; align-items:center; gap:10px; padding:10px 20px 12px; flex:none"><span dir="ltr" style="font:400 18px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><span style="flex:1"></span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a></div><div style="flex:1; min-height:0; overflow:hidden; padding:4px 20px 16px; display:flex; flex-direction:column; gap:12px"><div><span style="background:#dbe7f6; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">فُتحت البيانات</span></div><div style="font:900 24px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.03em">تنظيف عادي</div><div style="background:#dbe7f6; border-radius:22px; padding:18px 20px"><div style="font:800 17px Alexandria,system-ui,sans-serif">هدى محمد</div><div dir="ltr" style="font:700 15px Cairo,system-ui,sans-serif; text-align:right">055 876 5432</div><div style="font:500 12px/1.7 Cairo,system-ui,sans-serif; margin-top:6px">حي الملقا، مبنى 14، شقة 6</div></div><div class="ph" style="height:150px; border-radius:20px"><span>خريطة</span></div><div style="background:#f2f6fc; border-radius:22px; padding:18px 20px"><div style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">الموعد</div><div style="font:800 15px Alexandria,system-ui,sans-serif">الخميس · 10:00 ص</div></div></div><div style="padding:14px 20px 26px; border-top:2px solid #f2f6fc; flex:none"><span style="display:block; text-align:center; background:#0f3a73; color:#fff; border-radius:99px; padding:16px; font:700 15px Cairo,system-ui,sans-serif">وصلت وبدأت العمل</span></div></div></div><span style="font:600 12px Alexandria,system-ui,sans-serif; color:#3d4d6c">العمل المؤكَّد</span></div><div style="display:flex; flex-direction:column; gap:10px"><div style="width:390px; height:844px; border-radius:48px; background:#0f3a73; padding:10px; box-sizing:border-box; flex:none; box-shadow:0 18px 50px rgba(15,58,115,.18)"><div class="ar" dir="rtl" style="width:100%; height:100%; border-radius:38px; background:#fff; overflow:hidden; display:flex; flex-direction:column"><div dir="ltr" style="display:flex; justify-content:space-between; align-items:center; padding:14px 30px 6px; font:600 14px Cairo,system-ui,sans-serif; flex:none"><span>9:41</span><span style="width:104px; height:28px; border-radius:99px; background:#0f3a73; display:block"></span><span>100%</span></div><div style="display:flex; align-items:center; gap:10px; padding:10px 20px 12px; flex:none"><span dir="ltr" style="font:400 18px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><span style="flex:1"></span><a href="#p15" style="position:relative; width:40px; height:40px; border-radius:50%; background:#f2f6fc; display:flex; align-items:center; justify-content:center; color:#0f3a73; flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position:absolute; top:-3px; left:-3px; min-width:18px; height:18px; border-radius:99px; background:#dbe7f6; font:700 12px/18px Cairo,system-ui,sans-serif; text-align:center; padding:0 4px; box-sizing:border-box">2</span></a></div><div style="flex:1; min-height:0; overflow:hidden; padding:4px 20px 16px; display:flex; flex-direction:column; gap:12px"><div style="font:900 24px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.03em">المحفظة</div><div style="background:#dbe7f6; border-radius:22px; padding:18px 20px"><div style="font:700 12px Cairo,system-ui,sans-serif">قابل للسحب</div><div style="font:900 44px/1.1 Alexandria,system-ui,sans-serif">4,600 <span style="font-size:16px">₺</span></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px"><div style="background:#dbe7f6; border-radius:22px; padding:18px 20px"><div style="font:600 12px Cairo,system-ui,sans-serif">محفوظ</div><div style="font:900 22px Alexandria,system-ui,sans-serif">₺5,800</div></div><div style="background:#f2f6fc; border-radius:22px; padding:18px 20px"><div style="font:600 12px Cairo,system-ui,sans-serif">عمولة الشهر</div><div style="font:900 22px Alexandria,system-ui,sans-serif">₺2,760</div></div></div><div style="display:flex; justify-content:space-between; padding:12px 4px; border-bottom:2px solid #f2f6fc; font:600 13px Cairo,system-ui,sans-serif"><span>تحرير مبلغ عمل</span><span style="font-weight:800">+₺2,720</span></div><div style="display:flex; justify-content:space-between; padding:12px 4px; border-bottom:2px solid #f2f6fc; font:600 13px Cairo,system-ui,sans-serif"><span>رسم فتح بيانات</span><span style="font-weight:800">−₺250</span></div><div style="display:flex; justify-content:space-between; padding:12px 4px; border-bottom:2px solid #f2f6fc; font:600 13px Cairo,system-ui,sans-serif"><span>سحب إلى الحساب</span><span style="font-weight:800">−₺3,200</span></div></div><div style="padding:14px 20px 26px; border-top:2px solid #f2f6fc; flex:none"><span style="display:block; text-align:center; background:#0f3a73; color:#fff; border-radius:99px; padding:16px; font:700 15px Cairo,system-ui,sans-serif">اسحب إلى حسابي</span></div></div></div><span style="font:600 12px Alexandria,system-ui,sans-serif; color:#3d4d6c">المحفظة</span></div></div>
+  </div>
+
+  <!-- ============ P19 ============ -->
+  <div id="p19" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#p19">P19</a><span style="font:600 13px Alexandria,system-ui,sans-serif">رسائل SMS والبريد — provider side</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div style="display:flex; flex-direction:column; gap:10px"><div style="width:390px; height:844px; border-radius:48px; background:#0f3a73; padding:10px; box-sizing:border-box; flex:none; box-shadow:0 18px 50px rgba(15,58,115,.18)"><div class="ar" dir="rtl" style="width:100%; height:100%; border-radius:38px; background:#fff; overflow:hidden; display:flex; flex-direction:column"><div dir="ltr" style="display:flex; justify-content:space-between; align-items:center; padding:14px 30px 6px; font:600 14px Cairo,system-ui,sans-serif; flex:none"><span>9:41</span><span style="width:104px; height:28px; border-radius:99px; background:#0f3a73; display:block"></span><span>100%</span></div><div style="padding:8px 20px 14px; border-bottom:2px solid #f2f6fc; display:flex; flex-direction:column; align-items:center; gap:6px; flex:none"><span style="width:52px; height:52px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:400 20px 'Archivo Black',system-ui,sans-serif">A</span><span dir="ltr" style="font:600 13px Cairo,system-ui,sans-serif">Aldebyani</span></div><div style="flex:1; padding:18px 16px; display:flex; flex-direction:column; gap:14px; overflow:hidden"><div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; text-align:center">2 يوليو</div><div style="background:#e7edf6; border-radius:20px; padding:12px 16px; font:400 14px/1.75 Cairo,system-ui,sans-serif; max-width:290px">اعتُمد ملفك في Aldebyani. يمكنك الآن التقدّم على الطلبات: aldebyani.com/provider/feed</div><div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; text-align:center">اليوم 9:00 ص</div><div style="background:#e7edf6; border-radius:20px; padding:12px 16px; font:400 14px/1.75 Cairo,system-ui,sans-serif; max-width:290px">اختارك عميل لطلب تنظيف عادي في الملقا. افتح البيانات خلال 24 ساعة: aldebyani.com/p/8412</div><div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; text-align:center">أمس 2:15 م</div><div style="background:#e7edf6; border-radius:20px; padding:12px 16px; font:400 14px/1.75 Cairo,system-ui,sans-serif; max-width:290px">أُرسل ₺3,200 إلى حسابك البنكي المنتهي بـ 3309.</div></div></div></div><span style="font:600 12px Alexandria,system-ui,sans-serif; color:#3d4d6c">SMS — المزود</span></div><div class="scr" style="width:640px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">البريد الوارد — ahmed@example.com</div></div><div class="ar" dir="rtl" style="background:#f2f6fc; padding:22px"><div style="font:700 15px/1.6 Cairo,system-ui,sans-serif; margin:0 6px 4px">اختارك عميل — افتح البيانات خلال 24 ساعة</div><div style="font:400 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin:0 6px 16px" dir="ltr">Aldebyani &lt;no-reply@aldebyani.com&gt;</div><div style="background:#fff; border-radius:22px; overflow:hidden"><div style="background:#dbe7f6; padding:22px 28px"><span dir="ltr" style="font:400 20px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span></div><div style="padding:28px 28px 30px"><h2 style="margin:0 0 12px; font:900 26px/1.35 Alexandria,system-ui,sans-serif">اختارك عميل</h2><p style="margin:0 0 14px; font:500 14px/1.85 Cairo,system-ui,sans-serif; color:#22324f">اختار العميل عرضك على طلب تنظيف عادي في حي الملقا (#8412). قيمة الطلب ₺3,200 محفوظة لدى مزود خدمة الدفع.</p><p style="margin:0 0 14px; font:500 14px/1.85 Cairo,system-ui,sans-serif; color:#22324f">ادفع رسم فتح البيانات خلال 24 ساعة لتظهر لك بيانات العميل. بعد انتهاء المهلة يعود الطلب مفتوحًا لغيرك.</p><div style="background:#f2f6fc; border-radius:16px; padding:14px 18px; margin:6px 0 16px; font:600 13px/1.8 Cairo,system-ui,sans-serif">رسم فتح البيانات: ₺250<br>تنتهي المهلة: اليوم 11:00 م</div><span style="display:inline-block; background:#0f3a73; color:#fff; border-radius:99px; padding:15px 26px; font:700 14px Cairo,system-ui,sans-serif; margin-top:6px">افتح البيانات</span></div><div style="padding:18px 28px; border-top:2px solid #f2f6fc; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">وصلتك هذه الرسالة لأن لديك حسابًا في Aldebyani. يمكنك تعديل إشعارات البريد من صفحة حسابي. المنصة لا تحتفظ بأموالك — المبالغ محفوظة لدى مزود خدمة الدفع.</div></div></div></div><div class="scr" style="width:640px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">البريد الوارد — ahmed@example.com</div></div><div class="ar" dir="rtl" style="background:#f2f6fc; padding:22px"><div style="font:700 15px/1.6 Cairo,system-ui,sans-serif; margin:0 6px 4px">نتيجة مراجعة ملفك</div><div style="font:400 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin:0 6px 16px" dir="ltr">Aldebyani &lt;no-reply@aldebyani.com&gt;</div><div style="background:#fff; border-radius:22px; overflow:hidden"><div style="background:#dbe7f6; padding:22px 28px"><span dir="ltr" style="font:400 20px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span></div><div style="padding:28px 28px 30px"><h2 style="margin:0 0 12px; font:900 26px/1.35 Alexandria,system-ui,sans-serif">لم يُعتمد ملفك بعد</h2><p style="margin:0 0 14px; font:500 14px/1.85 Cairo,system-ui,sans-serif; color:#22324f">راجعت الإدارة مستنداتك ولم تعتمد الملف للسبب التالي:</p><div style="background:#eaf1fa; border-radius:16px; padding:14px 18px; margin:6px 0 16px; font:600 13px/1.8 Cairo,system-ui,sans-serif">صورة السجل الجنائي غير مقروءة، وتاريخ الإصدار غير ظاهر.</div><span style="display:inline-block; background:#0f3a73; color:#fff; border-radius:99px; padding:15px 26px; font:700 14px Cairo,system-ui,sans-serif; margin-top:6px">اعرض المستندات</span></div><div style="padding:18px 28px; border-top:2px solid #f2f6fc; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">وصلتك هذه الرسالة لأن لديك حسابًا في Aldebyani. يمكنك تعديل إشعارات البريد من صفحة حسابي. المنصة لا تحتفظ بأموالك — المبالغ محفوظة لدى مزود خدمة الدفع.</div></div></div></div></div>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1400}}">
+const LAT = n => Math.round(n * 10).toLocaleString("en-US");
+const AR = n => String(n).replace(/[0-9]/g, d => "0123456789"[d]);
+const INK = "#0f3a73", ACID = "#eaf1fa";
+
+class Component extends DCLogic {
+  state = {
+    langs: { ar: true, ur: true, en: false, hi: false },
+    services: { std: true, deep: true, win: true, oven: true, sofa: false, ac: false },
+    districts: { malqa: true, narjis: true, hittin: true, yasmin: false, sahafa: false, nakhil: false, muruj: false, aqiq: false },
+    days: { sun: true, mon: true, tue: true, wed: true, thu: true, fri: false, sat: true },
+    tab: "available",
+    applyAns: { how: 1, tools: 0, grease: 0 },
+    start: 0, msg: 0, confirmOpen: false, jobStep: 0, acct: 0,
+    ledgerTab: "all", withdrawOpen: false,
+  };
+
+  ledgerTabDefs = [
+    { key: "all", label: "الكل" },
+    { key: "in", label: "تحرير" },
+    { key: "out", label: "خصم" },
+    { key: "wd", label: "سحب" },
+  ];
+
+  ledgerDefs = [
+    { kind: "in", date: "13 أغسطس", label: "تحرير مبلغ عمل مكتمل", note: "تنظيف عادي — حي الملقا · بعد خصم عمولة ₺480", ref: "#8367", amount: 272, state: "مُحرَّر" },
+    { kind: "out", date: "12 أغسطس", label: "رسم فتح بيانات العميل", note: "دُفع من الرصيد القابل للسحب", ref: "#8412", amount: -25, state: "مخصوم" },
+    { kind: "wd", date: "11 أغسطس", label: "سحب إلى الحساب البنكي", note: "IBAN ينتهي بـ 3309", ref: "—", amount: -320, state: "قيد التنفيذ" },
+    { kind: "in", date: "10 أغسطس", label: "تحرير مبلغ عمل مكتمل", note: "نوافذ وشرفات — حي حطين · بعد خصم عمولة ₺450", ref: "#8391", amount: 255, state: "مُحرَّر" },
+    { kind: "out", date: "9 أغسطس", label: "رسم فتح بيانات العميل", note: "دُفع بمدى", ref: "#8391", amount: -25, state: "مخصوم" },
+    { kind: "in", date: "6 أغسطس", label: "تحرير تلقائي بعد 72 ساعة", note: "تنظيف عميق — حي النرجس · لم يؤكد العميل", ref: "#8291", amount: 221, state: "مُحرَّر" },
+    { kind: "out", date: "4 أغسطس", label: "استرداد جزئي بعد نزاع", note: "قرار الإدارة: تحرير 60% من قيمة الطلب", ref: "#8240", amount: -104, state: "بقرار إداري" },
+  ];
+
+  stepDefs = ["1 الملف المهني", "2 التحقق", "3 الخدمات والمناطق"];
+
+  langDefs = [
+    { key: "ar", label: "العربية" }, { key: "ur", label: "الأردية" },
+    { key: "en", label: "الإنجليزية" }, { key: "hi", label: "الهندية" },
+  ];
+
+  serviceDefs = [
+    { key: "std", label: "تنظيف عادي", note: "مسح وكنس ودورات مياه ومطبخ", price: "من ₺1,800" },
+    { key: "deep", label: "تنظيف عميق", note: "بعد التشطيب أو قبل المناسبات", price: "من ₺2,600" },
+    { key: "win", label: "نوافذ وشرفات", note: "من الداخل والخارج", price: "من ₺400" },
+    { key: "oven", label: "فرن وثلاجة", note: "إزالة الدهون والترسبات", price: "من ₺600" },
+    { key: "sofa", label: "غسيل سجاد وأثاث", note: "غسيل بالبخار — يلزم جهاز خاص", price: "من ₺1,400" },
+    { key: "ac", label: "تنظيف مكيفات", note: "فلاتر ووحدات داخلية", price: "من ₺1,000" },
+  ];
+
+  districtDefs = [
+    { key: "malqa", label: "الملقا" }, { key: "narjis", label: "النرجس" },
+    { key: "hittin", label: "حطين" }, { key: "yasmin", label: "الياسمين" },
+    { key: "sahafa", label: "الصحافة" }, { key: "nakhil", label: "النخيل" },
+    { key: "muruj", label: "المروج" }, { key: "aqiq", label: "العقيق" },
+  ];
+
+  dayDefs = [
+    { key: "sun", label: "الأحد" }, { key: "mon", label: "الاثنين" }, { key: "tue", label: "الثلاثاء" },
+    { key: "wed", label: "الأربعاء" }, { key: "thu", label: "الخميس" }, { key: "fri", label: "الجمعة" },
+    { key: "sat", label: "السبت" },
+  ];
+
+  checklistDefs = [
+    { label: "رقم الجوال", state: "تم", done: true },
+    { label: "الملف المهني", state: "جارٍ", done: false },
+    { label: "الهوية", state: "تم", done: true },
+    { label: "الصورة الحيّة", state: "مطلوب", done: false },
+    { label: "السجل الجنائي", state: "مطلوب", done: false },
+    { label: "الخدمات والمناطق", state: "مطلوب", done: false },
+  ];
+
+  jobDefs = [
+    {
+      tab: "available", status: "متاح للتقدّم", tone: "#eaf1fa", ref: "#8430", price: 350,
+      service: "تنظيف عميق — فيلا", detail: "4 غرف · بعد التشطيب · 7 ساعات تقديرية",
+      where: "حي النرجس · السبت 15 أغسطس · 1:00 م",
+      primary: "تقدّم على الطلب", secondary: "اقرأ تفاصيل الطلب", note: "6 عروض من 10 · التقدّم مجاني",
+    },
+    {
+      tab: "available", status: "متاح للتقدّم", tone: "#eaf1fa", ref: "#8434", price: 220,
+      service: "نوافذ وشرفات — شقة", detail: "14 نافذة · شرفتان · 3 ساعات تقديرية",
+      where: "حي الملقا · الأحد 16 أغسطس · 9:00 ص",
+      primary: "تقدّم على الطلب", secondary: "اقرأ تفاصيل الطلب", note: "عرضان من 10",
+    },
+    {
+      tab: "available", status: "مقفل", tone: "#f2f6fc", ref: "#8428", price: 280,
+      service: "تنظيف عادي — شقة", detail: "3 غرف + صالة · 5 ساعات تقديرية",
+      where: "حي حطين · الخميس 13 أغسطس · 11:00 ص",
+      primary: "وصل الحد الأقصى", secondary: "طلبات مشابهة", note: "10 عروض — أُقفل التقدّم",
+    },
+    {
+      tab: "applied", status: "بانتظار اختيار العميل", tone: "#dbe7f6", ref: "#8419", price: 320,
+      service: "تنظيف عادي — شقة", detail: "3 غرف + صالة · دورتا مياه · 5 ساعات",
+      where: "حي الملقا · الخميس 13 أغسطس · 10:00 ص",
+      primary: "اعرض رسالتي", secondary: "اسحب تقدّمي", note: "تقدّمت أمس · مجانًا",
+    },
+    {
+      tab: "applied", status: "اختارك العميل", tone: "#dbe7f6", ref: "#8412", price: 320,
+      service: "تنظيف عادي — شقة", detail: "3 غرف + صالة · نوافذ وشرفات · 5 ساعات",
+      where: "حي الملقا · الخميس 13 أغسطس · 10:00 ص",
+      primary: "افتح بيانات العميل", secondary: "سياسة فتح البيانات", note: "تبقّى 19:24 · المبلغ محفوظ",
+    },
+    {
+      tab: "applied", status: "لم يُختَر", tone: "#f2f6fc", ref: "#8398", price: 260,
+      service: "تنظيف عميق — شقة", detail: "غرفتان + صالة · 4 ساعات",
+      where: "حي النرجس · الاثنين 10 أغسطس · 9:00 ص",
+      primary: "طلبات مشابهة", secondary: "اعرض رسالتي", note: "اختار العميل مزودًا آخر",
+    },
+    {
+      tab: "work", status: "قيد التنفيذ", tone: "#dbe7f6", ref: "#8405", price: 280,
+      service: "تنظيف عادي — شقة", detail: "3 غرف + صالة · بدأت 10:05 ص",
+      where: "حي الملقا · اليوم",
+      primary: "أبلغ بانتهاء العمل", secondary: "بيانات العميل", note: "₺2,800 محفوظة",
+    },
+    {
+      tab: "work", status: "بانتظار تأكيد العميل", tone: "#eaf1fa", ref: "#8391", price: 300,
+      service: "نوافذ وشرفات — فيلا", detail: "انتهى أمس 3:40 م",
+      where: "حي حطين · أمس",
+      primary: "تفاصيل العمل", secondary: "الدعم", note: "تحرير تلقائي بعد 48 ساعة",
+    },
+    {
+      tab: "work", status: "مُحرَّر", tone: "#f2f6fc", ref: "#8367", price: 320,
+      service: "تنظيف عادي — شقة", detail: "قيّمك العميل 5 ★",
+      where: "حي الملقا · قبل أسبوع",
+      primary: "تفاصيل التحرير", secondary: "اعرض التقييم", note: "₺2,720 بعد العمولة",
+    },
+  ];
+
+  tabDefs = [
+    { key: "available", label: "الطلبات المتاحة" },
+    { key: "applied", label: "تقدّماتي" },
+    { key: "work", label: "أعمالي" },
+  ];
+
+  applyQDefs = [
+    { id: "how", label: "كيف ستنفّذ العمل؟", opts: ["بمفردي", "فريق من شخصين", "فريق من 3 أو أكثر"] },
+    { id: "tools", label: "الأدوات والمنظفات", opts: ["أحضرها كلها", "أحضر الأدوات فقط", "يوفّرها العميل"] },
+    { id: "grease", label: "خبرتك في الدهون بعد التشطيب", opts: ["نفّذت أعمالًا مشابهة", "خبرة محدودة"] },
+  ];
+
+  startDefs = ["الموعد المطلوب 1:00 م", "أستطيع البدء 11:00 ص", "أفضّل 3:00 م"];
+
+  msgSampleDefs = [
+    {
+      label: "نموذج سليم",
+      text: "أستطيع البدء السبت في الموعد المطلوب. نفّذت أعمال تنظيف بعد تشطيب في فلل مشابهة، وأتعامل مع دهون المطبخ بمزيل مخصص. أعمل بفريق من شخصين لتقليل المدة، وأحضر أدواتي ومنظفاتي، وأستخدم منظفات آمنة على الحيوانات.",
+      flagged: false,
+    },
+    {
+      label: "نموذج مرفوض",
+      text: "تواصل معي على 0501234567 أو واتساب لنتفق على التفاصيل قبل الحجز.",
+      flagged: true,
+    },
+  ];
+
+  chip(on, pad) {
+    return `background:${on ? INK : "#f2f6fc"}; color:${on ? "#fff" : INK}; padding:${pad}`;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const nServices = Object.values(s.services).filter(Boolean).length;
+    const nDistricts = Object.values(s.districts).filter(Boolean).length;
+    const nDays = Object.values(s.days).filter(Boolean).length;
+    const done = 3;
+
+    return {
+      steps: this.stepDefs.map((l, i) => ({
+        label: l,
+        style: `border-radius:99px; padding:8px 16px; background:${i === 0 ? INK : "#f2f6fc"}; color:${i === 0 ? "#fff" : "#6a7a97"}`,
+      })),
+      progressLabel: "الخطوة 1 من 3",
+
+      langs: this.langDefs.map(l => ({
+        label: l.label,
+        style: this.chip(!!s.langs[l.key], "11px 20px") + "; font-size:13px",
+        toggle: () => this.setState(st => ({ langs: { ...st.langs, [l.key]: !st.langs[l.key] } })),
+      })),
+
+      pct: AR(50),
+      pctWidth: "50%",
+      checklist: this.checklistDefs.map(c => ({
+        label: c.label, state: c.state,
+        color: c.done ? "#0f3a73" : "#6a7a97",
+        dot: `width:10px; height:10px; border-radius:50%; flex:none; background:${c.done ? INK : "#dbe7f6"}`,
+      })),
+
+      services: this.serviceDefs.map(sv => {
+        const on = !!s.services[sv.key];
+        return {
+          label: sv.label, note: sv.note, price: sv.price,
+          dot: on ? ACID : "#dfe7f3",
+          style: this.chip(on, "18px 22px") + "; border-radius:20px; text-align:start",
+          toggle: () => this.setState(st => ({ services: { ...st.services, [sv.key]: !st.services[sv.key] } })),
+        };
+      }),
+
+      districts: this.districtDefs.map(d => ({
+        label: d.label,
+        style: this.chip(!!s.districts[d.key], "11px 20px") + "; font-size:13px",
+        toggle: () => this.setState(st => ({ districts: { ...st.districts, [d.key]: !st.districts[d.key] } })),
+      })),
+      districtNote: nDistricts
+        ? "تظهر لك الطلبات في " + AR(nDistricts) + " أحياء. اختيار أحياء أكثر يزيد عدد الطلبات المطابقة."
+        : "اختر حيًا واحدًا على الأقل — لن تظهر لك أي طلبات بدون ذلك.",
+
+      days: this.dayDefs.map(d => ({
+        label: d.label,
+        style: this.chip(!!s.days[d.key], "11px 16px") + "; font-size:13px",
+        toggle: () => this.setState(st => ({ days: { ...st.days, [d.key]: !st.days[d.key] } })),
+      })),
+
+      pickedServices: AR(nServices),
+      pickedDistricts: AR(nDistricts) + " أحياء",
+      pickedDays: AR(nDays) + " أيام",
+      matchEstimate: nServices && nDistricts ? "≈ " + AR(Math.min(40, nServices * nDistricts * 2)) + " طلبًا" : "لا طلبات",
+      doneSteps: done,
+
+      tabs: this.tabDefs.map(t => ({
+        label: t.label,
+        style: `background:${t.key === s.tab ? INK : "#f2f6fc"}; color:${t.key === s.tab ? "#fff" : INK}; padding:12px 24px; font-size:14px`,
+        pick: () => this.setState({ tab: t.key }),
+      })),
+      slotsLeft: "6 عروض من 10",
+      ...(() => {
+        const st = s.jobStep;
+        const TL = ["فتحت البيانات — اليوم 9:12 ص", "بدأت العمل", "أبلغت بانتهاء العمل", "تأكيد العميل أو التحرير التلقائي", "تحرير المبلغ إلى رصيدك"];
+        const curIdx = [1, 2, 3][st];
+        const JOB = [
+          { chip: "فُتحت البيانات", btn: "وصلت وبدأت العمل", hint: "اضغط عند وصولك. يُقارن وقت الضغط بموعد البدء (10:00 ص) لحساب نسبة الالتزام بالموعد." },
+          { chip: "قيد التنفيذ", btn: "أنهيت العمل", hint: "بدأت 9:54 ص — في الموعد. عند الانتهاء يُبلَّغ العميل ليؤكد." },
+          { chip: "بانتظار تأكيد العميل", btn: "تم الإبلاغ بانتهاء العمل", hint: "يُحرَّر المبلغ عند تأكيد العميل، أو تلقائيًا بعد 72 ساعة إن لم يفتح نزاعًا." },
+        ][st];
+        const ACCT = [
+          { tab: "رُفض الملف", chip: "مرفوض", title: "لم يُعتمد ملفك", body: "راجعت الإدارة مستنداتك ولم تعتمد الملف.", reasonLabel: "سبب الرفض كما كتبته الإدارة", reason: "صورة السجل الجنائي غير مقروءة، وتاريخ الإصدار غير ظاهر.", effect: "لا يمكنك رؤية الطلبات أو التقدّم عليها.", next: "راجع المستند المرفوض وارفع نسخة جديدة.", action: "اعرض المستندات", href: "#p3" },
+          { tab: "الحساب موقوف", chip: "موقوف", title: "أُوقف حسابك", body: "أوقفت الإدارة حسابك وسجّلت السبب.", reasonLabel: "سبب الإيقاف", reason: "انخفض متوسط تقييمك عن الحد الأدنى بعد إنذار سابق.", effect: "لا يمكنك التقدّم على طلبات جديدة.", next: "راجع تقييماتك ومؤشراتك في ملفك.", action: "اعرض تقييماتك", href: "#p7" },
+          { tab: "انتهت صلاحية مستند", chip: "يلزم تحديث", title: "انتهت صلاحية السجل الجنائي", body: "المستندات لها تاريخ صلاحية، ويلزم إعادة التحقق عند انتهائها.", reasonLabel: "المستند", reason: "السجل الجنائي — انتهى في 12 أكتوبر 2026.", effect: "يتوقف التقدّم على طلبات جديدة حتى ترفع شهادة جديدة وتعتمدها الإدارة.", next: "ارفع شهادة سارية لا يزيد تاريخها على ستة أشهر.", action: "ارفع شهادة جديدة", href: "#p3" },
+        ];
+        const ac = ACCT[s.acct];
+        return {
+          jobChip: JOB.chip,
+          jobChipStyle: `background:${st === 2 ? "#eaf1fa" : "#dbe7f6"}; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif`,
+          jobTimeline: TL.map((t, i) => ({ label: t,
+            dot: `width:18px; height:18px; border-radius:50%; flex:none; box-sizing:border-box; ${i < curIdx ? "background:#0f3a73" : i === curIdx ? "background:#dbe7f6; border:2px solid #0f3a73" : "border:2px solid #d5dfee"}`,
+            text: `font:${i === curIdx ? 800 : 600} 13px Cairo,system-ui,sans-serif; color:${i <= curIdx ? INK : "#6a7a97"}` })),
+          jobBtn: JOB.btn, jobHint: JOB.hint,
+          jobBtnStyle: `background:${st === 2 ? "#dfe7f3" : INK}; color:${st === 2 ? "#5d6d8b" : "#fff"}; padding:17px; font-size:15px; width:100%`,
+          jobAdvance: () => this.setState(x => ({ jobStep: Math.min(2, x.jobStep + 1) })),
+          jobReset: () => this.setState({ jobStep: 0 }),
+          acctTabs: ACCT.map((a, i) => ({ label: a.tab, pick: () => this.setState({ acct: i }),
+            style: `background:${i === s.acct ? INK : "#f2f6fc"}; color:${i === s.acct ? "#fff" : INK}; padding:12px 22px; font-size:14px` })),
+          acct: ac, acctChip: ac.chip,
+          acctNavChip: "background:#eaf1fa; border-radius:99px; padding:9px 18px; font:700 12px Cairo,system-ui,sans-serif",
+        };
+      })(),
+      applyQs: this.applyQDefs.map(g => ({
+        label: g.label,
+        opts: g.opts.map((o, i) => ({
+          label: o,
+          style: this.chip((s.applyAns[g.id] ?? 0) === i, "12px 20px") + "; font-size:14px",
+          pick: () => this.setState(st => ({ applyAns: { ...st.applyAns, [g.id]: i } })),
+        })),
+      })),
+      startOpts: this.startDefs.map((l, i) => ({
+        label: l,
+        style: this.chip(i === s.start, "12px 20px") + "; font-size:14px",
+        pick: () => this.setState({ start: i }),
+      })),
+      message: this.msgSampleDefs[s.msg].text,
+      previewMessage: this.msgSampleDefs[s.msg].flagged
+        ? "— لن يظهر هذا العرض للعميل، لاحتوائه على بيانات تواصل."
+        : this.msgSampleDefs[s.msg].text,
+      msgBorder: this.msgSampleDefs[s.msg].flagged ? "#1e5fb3" : "#dfe7f3",
+      charLabel: AR(this.msgSampleDefs[s.msg].text.length) + " / 600 حرفًا",
+      scanLabel: this.msgSampleDefs[s.msg].flagged
+        ? "رُفض — يحتوي على رقم جوال"
+        : "تم الفحص — لا بيانات تواصل",
+      scanStyle: this.msgSampleDefs[s.msg].flagged
+        ? "background:#0f3a73; color:#fff; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif"
+        : "background:#dbe7f6; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif",
+      msgSamples: this.msgSampleDefs.map((m, i) => ({
+        label: m.label,
+        style: this.chip(i === s.msg, "9px 16px") + "; font-size:12px",
+        pick: () => this.setState({ msg: i }),
+      })),
+      submitLabel: this.msgSampleDefs[s.msg].flagged ? "عدّل رسالتك للمتابعة" : "تقدّم على الطلب — مجانًا",
+      submitStyle: this.msgSampleDefs[s.msg].flagged
+        ? "background:#fff; color:#4b5b78; padding:20px; font-size:16px; width:100%; text-align:center; cursor:not-allowed"
+        : "background:#0f3a73; color:#fff; padding:20px; font-size:16px; width:100%; text-align:center",
+      openConfirm: () => this.setState({ confirmOpen: true }),
+      closeConfirm: () => this.setState({ confirmOpen: false }),
+
+      ledgerTabs: this.ledgerTabDefs.map(t => ({
+        label: t.label,
+        style: `background:${t.key === s.ledgerTab ? INK : "#f2f6fc"}; color:${t.key === s.ledgerTab ? "#fff" : INK}; padding:10px 18px; font-size:13px`,
+        pick: () => this.setState({ ledgerTab: t.key }),
+      })),
+      ledger: this.ledgerDefs
+        .filter(l => s.ledgerTab === "all" || l.kind === s.ledgerTab)
+        .map(l => ({
+          date: l.date, label: l.label, note: l.note, ref: l.ref, state: l.state,
+          amount: (l.amount > 0 ? "+" : "−") + "₺" + LAT(Math.abs(l.amount)),
+          color: l.amount > 0 ? "#0f3a73" : "#1e5fb3",
+          chip: `background:${l.state === "مُحرَّر" ? "#eaf1fa" : l.state === "قيد التنفيذ" ? "#dbe7f6" : "#f2f6fc"}; border-radius:99px; padding:6px 13px; font:700 12px Cairo,system-ui,sans-serif; color:#0f3a73`,
+        })),
+      openWithdraw: () => this.setState({ withdrawOpen: true }),
+      closeWithdraw: () => this.setState({ withdrawOpen: false }),
+
+      jobs: this.jobDefs.filter(j => ["اختارك العميل", "قيد التنفيذ", "بانتظار تأكيد العميل", "بانتظار اختيار العميل", "متاح للتقدّم"].includes(j.status)).sort((a, b) => ["اختارك العميل", "قيد التنفيذ", "بانتظار تأكيد العميل"].concat(["بانتظار اختيار العميل", "متاح للتقدّم"]).indexOf(a.status) - ["اختارك العميل", "قيد التنفيذ", "بانتظار تأكيد العميل", "بانتظار اختيار العميل", "متاح للتقدّم"].indexOf(b.status)).map(j => ({
+        status: j.status, ref: j.ref, price: LAT(j.price), service: j.service,
+        detail: j.detail, where: j.where, note: j.note,
+        primary: j.tab === "available" ? "التفاصيل والتقدّم" : j.primary,
+        href: j.tab === "available" ? "#p8" : j.status === "اختارك العميل" ? "#p11" : j.tab === "work" ? "#p12" : "#p13",
+        secondary: j.secondary, hasSecondary: j.tab !== "available",
+        cardStyle: "border:2px solid #e4ecf7; border-radius:24px; padding:24px 26px",
+        statusStyle: `background:${j.tone}; border-radius:99px; padding:6px 14px; font:700 12px Cairo,system-ui,sans-serif; color:#0f3a73`,
+        primaryStyle: "background:#0f3a73; color:#fff; padding:12px 22px; font-size:13px; display:inline-block",
+      })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
