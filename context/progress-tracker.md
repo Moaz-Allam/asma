@@ -4,10 +4,10 @@ v3, 2026-10-17, restructured to the playbook's five parts (`docs/engineering-app
 at the start of every session, update at the end. If it is not written here, the next session does
 not know it.
 
-**Last updated:** 2026-10-17
-**Phase:** Bootstrap done (playbook adopted) · position 00 ✅ · next 00b
-**Status:** 🟡 Build plan v3 confirmed (D41); bootstrap PR open, waiting for CI and merge
-**Next:** Merge the bootstrap PR on green CI → `/architect` position 00b (scaffold completion)
+**Last updated:** 2026-10-25
+**Phase:** Bootstrap done (playbook adopted) · design imported · position 00 ✅ · next 00b
+**Status:** 🟡 Bootstrap merged (PR #17, 2026-10-17); design handoff imported, B4 closed (PR #18, 2026-10-25)
+**Next:** `/architect` position 00b (scaffold completion)
 
 ---
 
@@ -56,8 +56,9 @@ Dated bullets, newest at the bottom.
   for Turkish (Cairo lacks `₺`, so money is set in Alexandria); contrast measured. Design vs docs
   conflicts recorded in `contradictions.md` C14–C28. Owner: v1 is Turkish first (D57); copy is English
   first, then translated to Turkish (D58); design questions settled (D59); write guard updated for the
-  palette block, plus a comment stripping bug fixed (D60, guard suite 44/44). Not yet applied to code:
-  tokens and fonts land in `app/globals.css` with the first UI position.
+  palette block and hardened after a security review (D60, guard suite 63/63); Tailwind's own palette is
+  switched off when the tokens land (D61). Not yet applied to code: tokens and fonts land in
+  `app/globals.css` with the first UI position.
 
 ---
 
@@ -97,7 +98,8 @@ struck through, with the replacement named.
 
 | # | Date | Decision | By | Where |
 | --- | --- | --- | --- | --- |
-| D60 | 2026-10-25 | **Write guard `brand-value-in-globals` updated:** colour values in `app/globals.css` only on `--ramp-*` palette lines; every other token references a ramp; the pre-B4 `placeholder` lines stay allowed until the tokens replace them. Also fixed a guard bug found while testing it: the comment stripper deleted every line starting with `--` in all files (meant for SQL), which hid multi-line CSS custom properties from the rule; it now strips `--` only in `.sql`. Guard suite 44/44 (3 new cases) | Owner (asked in chat) | `.claude/hooks/guard.mjs`, `.claude/evals/guard.test.mjs` |
+| D61 | 2026-10-25 | **Tailwind's own palette is switched off** when the tokens land: `--color-*: initial` as the **first** line of `@theme inline`. Raw palette classes (`bg-red-500`, `text-white`) and `var(--color-blue-900)` then compile to nothing, so semantic tokens and D49 hold at build time, not only through the guard and review. Verified against Tailwind 4.3.3: placed after our tokens, the reset deletes them too | Owner (asked in chat) | `ui-tokens.md` §13, §14 |
+| D60 | 2026-10-25 | **Write guard `brand-value-in-globals` updated:** colour values in `app/globals.css` only in `--ramp-*` declarations, checked line by line and declaration by declaration; every other token references a ramp; colours inside comments are prose. The pre-B4 escape is narrowed to one custom property holding a neutral `oklch(L 0 0)`, alone on its line, ending in `/* placeholder */`; it is deleted when the tokens land. Comment stripping fixed per language: `--` lines only in `.sql` (stripping them everywhere hid CSS custom properties and TS code), `//` only in JS/TS (in SQL it hid the code after it, such as an `UPDATE ledger_entries`). The guard no longer exits when stripping leaves the text empty (a `//;…` line skipped every rule). Security review 2026-10-25: safe to merge; the owner chose to fix its findings before merging. Guard suite 63/63, with Edit and MultiEdit cases; on all 279 tracked files the decisions match `master` | Owner (asked in chat) | `.claude/hooks/guard.mjs`, `.claude/evals/guard.test.mjs` |
 | D59 | 2026-10-25 | **Design questions 6–8 settled:** field borders use ink 500 `#6A7A97` (4.34:1, WCAG AA) instead of the design's `#DFE7F3`; "cancelled" is «ملغى» on `success-light`; a rejected provider («مرفوض») is `error-light`, approved stays blue | Owner (asked in chat) | `ui-tokens.md` §3, §4, §12 |
 | D58 | 2026-10-25 | **Copy workflow:** Arabic from the design (simple Modern Standard Arabic); English drafted from the design's meaning; a translator turns English into Turkish (S21). Untranslated Turkish keys stay marked, never machine filled | Owner (asked in chat) | `ui-rules.md` §3, `i18n.md` §7 |
 | D57 | 2026-10-25 | **v1 is Turkish first**: primary language `tr`, Turkey region; KSA comes later (D22). The design is drawn in Arabic; it is the layout reference, mirrored for `tr` and `en`, and every screen is verified in `tr` first. The design's KSA mock details (Riyadh districts, «مدى», 05x phones, «السعودية · ₺», "Saudi only" settings) are dropped: Turkish data and the iyzico card form | Owner (asked in chat) | `ui-rules.md` §3, `docs/design/README.md`; closes Q14 |
@@ -287,9 +289,9 @@ KSA facts are deferred with the KSA launch (D22).
 
 | Suite | Status | Last run | Notes |
 | --- | --- | --- | --- |
-| Guard suite (`npm run guardrails`) | 🟢 | 2026-10-17 | 41/41, including false positive cases |
-| Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-17 | Lint includes the single door rules |
-| Unit (Vitest 5) | 🟢 | 2026-10-17 | 127 tests in 10 files, about 4s |
+| Guard suite (`npm run guardrails`) | 🟢 | 2026-10-25 | 63/63, including false positive, Edit and MultiEdit cases |
+| Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-25 | Lint includes the single door rules |
+| Unit (Vitest 5) | 🟢 | 2026-10-25 | 127 tests in 10 files, about 6s |
 | Build (`next build`) | 🟢 | 2026-10-17 | ar, tr, en prerendered |
 | pgTAP (`supabase test db`) | 🟢 in CI (2026-08-18) · ⏳ new meta tests | — | Needs Docker locally (S11); `02_function_grants` first runs in CI |
 | End to end (Playwright, 390px, ar/tr/en) | 🟢 local | 2026-10-17 | 6/6 with axe, no database (`E2E_NO_DB=1`); first CI run after the push |

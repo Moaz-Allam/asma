@@ -18,6 +18,9 @@
  *   check   — a function returning a detail string when the rule is violated,
  *             for absence checks (something that must be present but isn't).
  *             `whole: true` limits it to Write, where the full file is visible.
+ *
+ * Rules see the text with comments stripped (stripComments). `raw: true` hands a rule the text
+ * with comments kept, for a rule that reads a marker comment; it then owns its comment handling.
  */
 
 const SOURCE = /\.(ts|tsx|js|jsx|mjs|cjs)$/;
@@ -147,7 +150,7 @@ const RULES = [
     id: 'colours-in-tailwind-config',
     when: (p) => /tailwind\.config\.(ts|js|mjs|cjs)$/.test(p),
     find: /colors?\s*:/,
-    why: 'Tailwind v4 defines tokens with @theme in app/globals.css. Colours never go in tailwind.config. See ui-tokens.md §11.',
+    why: 'Tailwind v4 defines tokens with @theme in app/globals.css. Colours never go in tailwind.config. See ui-tokens.md §13.',
   },
 
   // -------------------------------------------------------------- i18n (rule 10)
@@ -185,24 +188,34 @@ const RULES = [
     when: (p) => /(?:^|[\\/])globals\.css$/.test(p),
     raw: true,
     check: (text) => {
-      // Concrete colour values belong ONLY in the palette block: a line declaring a
-      // --ramp-* variable (ui-tokens.md §2, §13). Every other token references the ramps.
-      // Lines marked `placeholder` stay allowed only until the tokens land, because the
-      // pre-B4 file still holds them; delete this escape with the placeholders.
+      // Concrete colours belong ONLY in --ramp-* declarations, the palette block (ui-tokens.md §2,
+      // §13). Every other token references the ramps. Checked line by line AND declaration by
+      // declaration, so a ramp cannot carry a second declaration past the rule, on its line or across
+      // the joined fragments of a MultiEdit. Comments are prose and are blanked (newlines kept),
+      // except an exact placeholder marker.
+      // Pre-B4 escape, to delete with the placeholders when the tokens land: one custom property
+      // holding a neutral oklch(L 0 0), alone on its line, ending in the comment `/* placeholder */`.
+      const MARKER = /^\/\*\s*placeholder\b[^*\n]*\*\/$/i;
+      const PLACEHOLDER =
+        /^\s*--[\w-]+\s*:\s*oklch\(\s*[\d.]+%?\s+0\s+0\s*\)\s*;\s*\/\*\s*placeholder\b[^*\n]*\*\/\s*$/i;
       const offenders = text
+        .replace(/\/\*[\s\S]*?\*\//g, (c) => (MARKER.test(c) ? c : c.replace(/[^\n]/g, ' ')))
         .split(/\r?\n/)
-        .filter((l) => /(#[0-9a-fA-F]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|oklch|lab|lch)\()/.test(l))
-        .filter((l) => !/^\s*--ramp-[\w-]+\s*:/.test(l) && !/placeholder/i.test(l));
+        .filter((line) => !PLACEHOLDER.test(line))
+        .flatMap((line) => line.split(/[;{}]/))
+        .filter((d) => /#[0-9a-fA-F]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|oklch|lab|lch)\(/.test(d))
+        .filter((d) => !/^\s*--ramp-[\w-]+\s*:/.test(d));
       return offenders.length
-        ? `${offenders.length} colour value(s) outside the --ramp-* palette block, e.g. "${offenders[0].trim().slice(0, 60)}"`
+        ? `${offenders.length} colour value(s) outside a --ramp-* declaration, e.g. "${offenders[0].trim().slice(0, 60)}"`
         : null;
     },
     why:
-      'Rule 10 + D48/D60: the palette is decided (ui-tokens.md §2). Concrete colours live only in the --ramp-* ' +
-      'variables of the palette block in globals.css; every other token references them (var(--ramp-*)). This fires ' +
+      'Rule 10 + D48/D60: the palette is decided (ui-tokens.md §2). Concrete colours live only in --ramp-* ' +
+      'declarations in the palette block of globals.css; every other token references them (var(--ramp-*)). An ' +
+      'Edit must carry the whole declaration (--ramp-name: value;): a bare value has no name to check. This fires ' +
       'most often right after `npx shadcn init`, which writes its own generated palette into globals.css: map its ' +
       'names to ours (ui-tokens.md §3) and delete its values. Never mark a real value `placeholder` to get past it; ' +
-      'that escape only covers the pre-B4 file until the tokens land.',
+      'that escape only covers the neutral pre-B4 greys until the tokens land.',
   },
   {
     id: 'raw-tailwind-palette',
@@ -210,7 +223,8 @@ const RULES = [
     find: /\b(?:bg|text|border|ring|from|to|via|divide|outline|fill|stroke|shadow|accent|caret)-(?:slate|gray|grey|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:\d{2,3})\b/,
     why:
       'Rule 10: raw Tailwind palette classes are forbidden — semantic tokens only (bg-surface, text-text-primary, bg-error). ' +
-      'When the theme lands, semantics survive and literals break. See ui-tokens.md §17.',
+      "Once the tokens land, Tailwind's own palette is switched off (D61) and a literal compiles to nothing. " +
+      'See ui-tokens.md §13, §14.',
   },
   {
     id: 'arbitrary-value',
@@ -240,10 +254,13 @@ function body(input) {
 function stripComments(src, path) {
   // Rules describe code, not prose about code. A doc comment quoting a forbidden
   // pattern (as AGENTS.md and the context files do constantly) must not trip.
-  const out = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
-  // SQL line comments, in SQL only: in CSS a leading `--` is a custom property, and stripping
-  // it hid every multi-line token declaration from the globals.css rule.
-  return /\.sql$/i.test(path) ? out.replace(/^\s*--.*$/gm, '') : out;
+  // Each language loses only its own comments: `//` in JS/TS (in SQL or CSS it is text, and
+  // stripping it hid the code after it on the line), `--` lines in SQL (in CSS a leading `--` is a
+  // custom property). Lexical, not a parser: a marker inside a string literal still opens a comment.
+  let out = src.replace(/\/\*[\s\S]*?\*\//g, '');
+  if (SOURCE.test(path)) out = out.replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  if (/\.sql$/i.test(path)) out = out.replace(/^\s*--.*$/gm, '');
+  return out;
 }
 
 let raw = '';
@@ -269,8 +286,10 @@ process.stdin.on('end', () => {
 
   const isWholeFile = payload.tool_name === 'Write';
   const rawText = body(input);
+  // Empty means nothing was written. Text that only LOOKS empty once comments are stripped still
+  // runs every rule: exiting on it let a line like `//;--color-accent:#0f3a73;` skip them all.
+  if (!rawText.trim()) process.exit(0);
   const text = stripComments(rawText, path);
-  if (!text.trim()) process.exit(0);
 
   const hits = [];
   for (const r of RULES) {

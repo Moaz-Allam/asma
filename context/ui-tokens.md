@@ -319,16 +319,29 @@ classes in Tailwind 4.3.3).
 @import "tailwindcss";
 
 :root {
-  --ramp-primary-900: #0f3a73; --ramp-primary-700: #1e5fb3; --ramp-primary-300: #c3d0e4;
-  --ramp-primary-250: #d0dbeb; --ramp-primary-200: #dbe7f6; --ramp-primary-150: #e4ecf7;
-  --ramp-primary-100: #eaf1fa; --ramp-primary-50: #f2f6fc;
-  --ramp-ink-900: #22324f; --ramp-ink-800: #2c3c5e; --ramp-ink-700: #3d4d6c; --ramp-ink-600: #4b5b78;
-  --ramp-ink-500: #6a7a97; --ramp-white: #ffffff;
-  --ramp-danger: #c0262d; --ramp-danger-alert: #e5484d; --ramp-danger-50: #fde2e2;
+  --ramp-primary-900: #0f3a73;
+  --ramp-primary-700: #1e5fb3;
+  --ramp-primary-300: #c3d0e4;
+  --ramp-primary-250: #d0dbeb;
+  --ramp-primary-200: #dbe7f6;
+  --ramp-primary-150: #e4ecf7;
+  --ramp-primary-100: #eaf1fa;
+  --ramp-primary-50: #f2f6fc;
+  --ramp-ink-900: #22324f;
+  --ramp-ink-800: #2c3c5e;
+  --ramp-ink-700: #3d4d6c;
+  --ramp-ink-600: #4b5b78;
+  --ramp-ink-500: #6a7a97;
+  --ramp-white: #ffffff;
+  --ramp-danger: #c0262d;
+  --ramp-danger-alert: #e5484d;
+  --ramp-danger-50: #fde2e2;
   --ramp-shadow: rgb(15 58 115 / 0.18);
 }
 
 @theme inline {
+  --color-*: initial;                                  /* FIRST: drops Tailwind's own palette (D61) */
+
   --font-sans: var(--font-cairo), sans-serif;          /* next/font variables from the root layout */
   --font-display: var(--font-alexandria), sans-serif;
   --font-wordmark: var(--font-archivo-black), sans-serif;
@@ -399,8 +412,11 @@ classes in Tailwind 4.3.3).
 }
 ```
 
-Write the block one declaration per line (Prettier does): the write guard checks colour values line
-by line.
+`--color-*: initial` stays the **first** line of `@theme inline` (D61). It removes Tailwind's own
+palette, so `bg-red-500`, `text-white` and `var(--color-blue-900)` produce nothing and only our tokens
+exist. Placed after our tokens it deletes them too (both verified against Tailwind 4.3.3).
+`bg-transparent`, `text-current` and `bg-inherit` are not palette colours and still work; Tailwind's
+preflight defaults to `currentcolor`, so nothing in it depends on the palette.
 
 Order of work when a position first applies them: load the fonts with `next/font/google` in the root
 layout (variables `--font-cairo`, `--font-alexandria`, `--font-archivo-black`), paste the block, check
@@ -408,16 +424,20 @@ the built pages in `ar` and `tr`, then add shadcn (its init writes its own palet
 never keep its values).
 
 > **The write guard** (`.claude/hooks/guard.mjs`, rule `brand-value-in-globals`, updated 2026-10-25,
-> D60) allows colour values in `globals.css` **only on `--ramp-*` lines**; every other token must
-> reference a ramp. The old `/* placeholder */` lines stay allowed only until this block replaces them;
-> never mark a real value `placeholder` to get past the rule.
+> D60) allows colour values in `globals.css` **only in `--ramp-*` declarations**, checked line by line
+> and declaration by declaration; every other token must reference a ramp, and colours inside comments
+> are ignored. An Edit must carry the whole declaration (`--ramp-name: value;`): a bare value has no
+> name to check. The old `/* placeholder */` lines (neutral `oklch(L 0 0)` greys only) stay allowed
+> until this block replaces them: delete that escape from the guard in the same change, and never mark
+> a real value `placeholder` to get past the rule.
 
 ---
 
 ## 14. Invariants
 
 - Never use hex values in components; always semantic tokens
-- Never use raw Tailwind colour classes (`bg-blue-900`, `text-gray-600`) or the `--ramp-*` steps directly
+- Never use raw Tailwind colour classes (`bg-blue-900`, `text-gray-600`) or the `--ramp-*` steps directly;
+  once §13 lands, Tailwind's palette is switched off and those classes compile to nothing (D61)
 - Never define colours in `tailwind.config.ts`; `@theme` in `globals.css` only
 - Fonts are set once in the root layout; never a system font as primary
 - Every amount and currency sign is in `font-display` (Cairo has no `₺`)

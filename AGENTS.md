@@ -29,8 +29,10 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   `syrhavojjpabwwcaezee` is unverified, and the CLI and connectors are signed in to other accounts
   (R1, owner step S6).
 - 2026-10-17 · **Playbook bootstrap** done: docs layout, harness, review agents, quality tooling.
-  Verified locally (verify, build, e2e 6/6). Build plan v3 confirmed (D41). Branch
-  `chore/playbook-bootstrap`, PR into `master`. Next: merge on green CI, then `/architect` 00b.
+  Verified locally (verify, build, e2e 6/6). Build plan v3 confirmed (D41). Merged (PR #17).
+- 2026-10-25 · **Design handoff imported** (PR #18; S13, B4 closed, D48–D61): `docs/design/` (source,
+  53 screens, tools), the UI context rewritten from it, the write guard hardened. Tokens and fonts land
+  in `app/globals.css` with the first UI position. Next: `/architect` 00b.
 
 ## Stack (pinned exactly)
 
