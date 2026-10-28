@@ -72,7 +72,7 @@ from gate G3 (Hobby forbids commercial use) · an uptime monitor (Q3) · GitHub 
 | Command | Does |
 | --- | --- |
 | `npm run dev` | Dev server on port 3000. Agents start it through `.claude/launch.json` (`asma-dev`) |
-| `npm run build` / `npm start` | Production build / serve it |
+| `npm run build` / `npm start` | Production build / serve it. Locally, set `APP_LOCAL_ONLY=1` first: any production build or server off Vercel otherwise counts as a deployment and refuses to run without its Sentry and PostHog keys (`lib/deployment.ts`, spec 0004). Never set it on Vercel |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint, including the single door rules |
 | `npm run lint:rtl` | Fails on physical direction classes (`ml-`, `text-left`, …) with replacements |

@@ -16,6 +16,9 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    /* next.config.ts runs on Node's native TypeScript resolver, which needs the `.ts` extension on
+       a relative import (lib/deployment.ts, spec 0004). Safe with noEmit: nothing is compiled by tsc. */
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [

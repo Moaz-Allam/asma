@@ -42,7 +42,7 @@ function localSupabase() {
   if (process.env.E2E_NO_DB === '1') {
     // Shape-valid local values for suites that never reach the database. Never cloud values.
     return {
-      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
+      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54421',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: 'e2e-no-db-anon',
       SUPABASE_SERVICE_ROLE_KEY: 'e2e-no-db-service',
     };
@@ -88,6 +88,8 @@ const env = {
   APP_SUPPORTED_LOCALES: 'ar,tr,en',
   FEATURE_STORED_BALANCE_WALLET: 'false',
   NEXT_TELEMETRY_DISABLED: '1',
+  // A local production build and `next start`, never a deployment (lib/deployment.ts, spec 0004 AC-9).
+  APP_LOCAL_ONLY: '1',
   ...localSupabase(),
 };
 

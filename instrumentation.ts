@@ -11,5 +11,9 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { getEnv } = await import('@/lib/env');
     getEnv();
+
+    // Spec 0004 AC-9: a deployment refuses to boot without its keys, the same check the build ran.
+    const { assertDeploymentKeys } = await import('@/lib/deployment');
+    assertDeploymentKeys(process.env, 'runtime');
   }
 }

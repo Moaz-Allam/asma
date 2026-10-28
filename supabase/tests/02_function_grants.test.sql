@@ -7,7 +7,7 @@
 -- keep this test failing on any missed revoke (docs/engineering-approach.md §12, §23).
 --
 -- Allow lists: a function that PUBLIC or anon may call ON PURPOSE is named below with the position
--- that added it. Today both lists are empty.
+-- that added it. Signatures are always schema qualified, `public.name(argument types)`.
 --
 -- Run: supabase test db
 
@@ -19,11 +19,14 @@ SELECT plan(3);
 CREATE TEMP TABLE allowed_public (signature text PRIMARY KEY);
 CREATE TEMP TABLE allowed_anon (signature text PRIMARY KEY);
 -- INSERT INTO allowed_anon VALUES ('public.example(uuid)');  -- position NN, spec NNNN: why
+INSERT INTO allowed_anon VALUES ('public.health_ping()');  -- position 00b, spec 0004: health endpoint database ping
 
 -- Functions in the exposed schema that we wrote (members of an extension are not ours).
+-- The signature is built by hand: `regprocedure::text` drops the schema whenever it is on the
+-- search_path, which would make the allow list depend on the session's settings.
 CREATE TEMP VIEW our_functions AS
   SELECT p.oid,
-         p.oid::regprocedure::text AS signature,
+         n.nspname || '.' || p.proname || '(' || oidvectortypes(p.proargtypes) || ')' AS signature,
          p.prosecdef,
          p.proconfig,
          p.proacl
