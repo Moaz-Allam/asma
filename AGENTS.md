@@ -263,10 +263,10 @@ overrides):
 | Supabase (account connector) | Schema, advisors, logs for project `lrejqpcgsugjiijuakoq` | Signed in to org `aldebyani` only (2026-10-28). Write tools ask gated in `settings.json`, used only when the owner asks. Schema through migration files, never ad hoc SQL |
 | Vercel (account connector) | Deploy status, build and runtime logs | Project, env, domain, deploy, and purchase tools ask gated; production comes from merges only |
 | Sentry (account connector) | Errors in org and project `aldebyani` (EU, `de.sentry.io`) | `update_issue` ask gated; org `jawla-i1` and every other org are off limits |
-| PostHog (account connector) | Analytics and logs | Approved for gate G1 (2026-10-17), read only, writes gated. Connected but signed in to another org (US, 2026-10-28): off limits until it is signed in with the EU account that owns project `aldebyani` (S8) |
+| PostHog (account connector) | Analytics for project `aldebyani` (id 323846, EU Cloud) | Signed in to org `Aldebyani` only (2026-10-28). Read only use; writes (such as project settings) only when the owner asks, as on 2026-10-28 for the D68 settings |
 
 **Cloud accounts (rechecked 2026-10-28, R1):** the Vercel project `aldebyani` and the Supabase org
-`aldebyani` exist, and so do the Sentry org and project `aldebyani`; the PostHog EU project is pending (S8). The Supabase CLI
+`aldebyani` exist, and so do the Sentry org and project `aldebyani` and the PostHog EU project `aldebyani`. The Supabase CLI
 is linked to `lrejqpcgsugjiijuakoq` but still logged in to another account: log in with the `aldebyani`
 account before any push. The old ref `syrhavojjpabwwcaezee` is retired.
 
