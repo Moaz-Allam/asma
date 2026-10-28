@@ -67,7 +67,7 @@ Arabic (RTL), Turkish, English** — built for **Turkey** and **Saudi Arabia** f
 separated by a `region` column (D14). See [`i18n.md`](i18n.md).
 **Not in this release:** native mobile apps, multi-city expansion, AI features.
 
-**Launch: 2026-11-07, Turkey only (D22).** iyzico Marketplace holds the funds (D23). KSA stays in
+**Launch: 2026-11-28, Turkey only (D22; date replanned 2026-10-28, D65).** iyzico Marketplace holds the funds (D23). KSA stays in
 the schema with its region switched off until a Saudi PSP is chosen (Q7); nothing may hardcode Turkey,
 because the second region is a data change, not a rewrite.
 

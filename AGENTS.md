@@ -14,7 +14,7 @@ unlock fee** to see the customer's details, the work happens, and the funds are 
 the unlock fee plus commission. **We never hold funds.** Three locales (`ar` RTL, `tr`, `en`), two
 regions (TR, KSA) in one deployment, separated by a `region` column.
 
-Launch **2026-11-07, Turkey only** (iyzico Marketplace). KSA stays in the schema, switched off until a
+Launch **2026-11-28, Turkey only** (iyzico Marketplace; replanned 2026-10-28, D65). KSA stays in the schema, switched off until a
 Saudi PSP is chosen. Priority (owner confirmed, D42): **correct money and private data > the core
 journey working end to end in all three locales > design polish > extra features.**
 
@@ -24,15 +24,16 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 ## Status
 
 - 2026-08-18 · **00 scaffold** ✅ (specs 0001, 0003): Next 16, three locales, `proxy.ts`, env schema,
-  Supabase clients, `regions` + `platform_settings` with RLS and pgTAP. CI green. **No cloud project
-  exists yet for Aldebyani** (owner, 2026-10-17): nothing was ever pushed, the old ref
-  `syrhavojjpabwwcaezee` is unverified, and the CLI and connectors are signed in to other accounts
-  (R1, owner step S6).
+  Supabase clients, `regions` + `platform_settings` with RLS and pgTAP. CI green. Cloud projects exist
+  since 2026-10-18 (Vercel `aldebyani`; Supabase org `aldebyani`, project `lrejqpcgsugjiijuakoq`,
+  eu-central-1); no migration pushed yet; the remaining account steps are in R1.
 - 2026-10-17 · **Playbook bootstrap** done: docs layout, harness, review agents, quality tooling.
   Verified locally (verify, build, e2e 6/6). Build plan v3 confirmed (D41). Merged (PR #17).
 - 2026-10-25 · **Design handoff imported** (PR #18; S13, B4 closed, D48–D61): `docs/design/` (source,
   53 screens, tools), the UI context rewritten from it, the write guard hardened. Tokens and fonts land
-  in `app/globals.css` with the first UI position. Next: `/architect` 00b.
+  in `app/globals.css` with the first UI position.
+- 2026-10-28 · **Replanned** (D65): launch 2026-11-28, same scope; EU data regions (D62). Next:
+  `/architect` 00b, G0 by 2026-10-30.
 
 ## Stack (pinned exactly)
 
@@ -56,8 +57,8 @@ recording it here.** Install scripts run only for packages listed per version in
 | Types | `@types/node` 26.2.0 · `@types/react` 19.2.18 · `@types/react-dom` 19.2.4 | |
 
 **Services** (accounts are owner steps; no SDK is installed until its position's spec says so):
-Supabase Pro (project to be created, S6) · iyzico Marketplace (TR) · Resend Pro (REST over
-`fetch`) · Sentry free · PostHog free · Cloudflare (DNS, Turnstile) · Vercel Hobby while building, Pro
+Supabase (org `aldebyani`, eu-central-1; Free until launch, then Pro, D63) · iyzico Marketplace (TR) ·
+Resend Pro (REST over `fetch`) · Sentry free (EU) · PostHog free (EU Cloud) · Cloudflare (DNS, Turnstile) · Vercel Hobby while building, Pro
 from gate G3 (Hobby forbids commercial use) · an uptime monitor (Q3) · GitHub Actions.
 
 ## Commands
@@ -257,18 +258,17 @@ overrides):
 | Server | Use here | Gate |
 | --- | --- | --- |
 | `context7` (`.mcp.json`) | Current library docs | Read only |
-| `supabase` (`.mcp.json`, `--read-only`) | Schema, advisors | Needs `SUPABASE_PROJECT_REF` and a scoped `SUPABASE_ACCESS_TOKEN` in your shell. Failed to connect 2026-10-17; kept by the owner |
-| `playwright` (`.mcp.json`) | Browser driving | Failed to connect 2026-10-17; kept by the owner. The built in browser is the default |
-| Supabase (account connector) | Docs search only, for now | **Signed in to another org: it sees only `Jawla` (other work) (2026-10-17, R1).** Off limits until it shows the Aldebyani project. Write tools ask gated in `settings.json`, used only when the owner asks. Schema through migration files, never ad hoc SQL |
+| `supabase` (`.mcp.json`, `--read-only`) | Schema, advisors | Kept alongside the connector (D64). The committed file keeps the `${…}` placeholders; the owner's local copy holds the ref (`lrejqpcgsugjiijuakoq`) and an access token. **Never stage or commit `.mcp.json` changes** |
+| `playwright` (`.mcp.json`) | Browser driving | Connected (2026-10-28). The built in browser is the default |
+| Supabase (account connector) | Schema, advisors, logs for project `lrejqpcgsugjiijuakoq` | Signed in to org `aldebyani` only (2026-10-28). Write tools ask gated in `settings.json`, used only when the owner asks. Schema through migration files, never ad hoc SQL |
 | Vercel (account connector) | Deploy status, build and runtime logs | Project, env, domain, deploy, and purchase tools ask gated; production comes from merges only |
-| Sentry (account connector) | Errors in the Aldebyani project, once created (S7) | `update_issue` ask gated; other orgs and projects are off limits |
-| PostHog | Analytics and logs | Approved for gate G1 (2026-10-17), read only, writes gated. Not connected yet |
+| Sentry (account connector) | Errors in org and project `aldebyani` (EU, `de.sentry.io`) | `update_issue` ask gated; org `jawla-i1` and every other org are off limits |
+| PostHog (account connector) | Analytics and logs | Approved for gate G1 (2026-10-17), read only, writes gated. Connected but signed in to another org (US, 2026-10-28): off limits until it is signed in with the EU account that owns project `aldebyani` (S8) |
 
-**Remote projects are not created yet (owner, 2026-10-17):** Supabase, Vercel, Sentry, and PostHog
-projects for Aldebyani do not exist yet. When the owner creates them, **connect the right accounts**
-before any use: the Supabase CLI login and the claude.ai Supabase connector (today they see only
-`alqafila` and `Jawla`, other work), the Vercel team, the Sentry org, the PostHog project (S6). The
-older ref `syrhavojjpabwwcaezee` in `supabase/.temp` is unverified until then.
+**Cloud accounts (rechecked 2026-10-28, R1):** the Vercel project `aldebyani` and the Supabase org
+`aldebyani` exist, and so do the Sentry org and project `aldebyani`; the PostHog EU project is pending (S8). The Supabase CLI
+is linked to `lrejqpcgsugjiijuakoq` but still logged in to another account: log in with the `aldebyani`
+account before any push. The old ref `syrhavojjpabwwcaezee` is retired.
 
 Before any write: list the projects and confirm the target with the owner. Connectors attached to the
 account for other work (shop, forms, docs, automations and contacts, visualize, scheduled tasks) are

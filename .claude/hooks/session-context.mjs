@@ -79,7 +79,7 @@ try {
       '  • Lifecycle: OPEN → SELECTED → FUNDED → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION → RELEASED.\n' +
       '    The customer pays BEFORE the provider unlocks.\n' +
       '  • Money path is DB transaction → outbox_events → relay worker → PSP. Never an inline PSP call.\n' +
-      '  • Launch 2026-11-07, Turkey only, on iyzico Marketplace. KSA stays in the schema, switched off.\n' +
+      '  • Launch 2026-11-28, Turkey only, on iyzico Marketplace. KSA stays in the schema, switched off.\n' +
       '  • Three locales — ar (RTL), tr, en. Direction is derived from the locale at runtime. Regions live in\n' +
       '    a `region` COLUMN read from the owning row, never an env var; one account belongs to one region.\n' +
       '  • Never case-fold an identifier under a Turkish locale: "I".toLocaleLowerCase("tr") is "ı".\n' +

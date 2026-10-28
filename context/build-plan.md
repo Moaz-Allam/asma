@@ -1,9 +1,9 @@
 # Build Plan
 
 v3, 2026-10-17, rewritten for the playbook (`docs/engineering-approach.md` §5): positions, gates, cut
-list, and a target schedule for the **2026-11-07 Turkey launch**. Supersedes v2's seven phases, its
+list, and a target schedule for the **2026-11-28 Turkey launch** (replanned 2026-10-28, D65). Supersedes v2's seven phases, its
 "full UI with mock data first" principle, and the 54 numbered features. Spec 0002 keeps the old
-numbering; the map at the bottom translates it. **Status: confirmed by the owner 2026-10-17 (D41).**
+numbering; the map at the bottom translates it. **Status: confirmed by the owner 2026-10-17 (D41); schedule replanned 2026-10-28 (D65).**
 
 ---
 
@@ -87,47 +87,61 @@ idempotency, the reveal policy, the security review, backups.
 
 | Track | Owner steps | Blocks | Needed by |
 | --- | --- | --- | --- |
-| Accounts for the scaffold | S3 Vercel, S7 Sentry, S8 PostHog | 00b, G0 | 2026-10-18 |
-| Design handoff and tokens | S13 (B4) | UI layer from 01 | 2026-10-19 |
-| Email and bot check | S4 domain + DNS, S5 Resend + Supabase SMTP, S9 Turnstile | 01 sign in, 13 | 2026-10-19 |
-| Catalog data | S17 (B5, B6): one worked category first (home cleaning) | 03 content, G3 | first category 2026-10-21, all by 2026-11-04 |
-| iyzico sandbox | S1 (B11 individual sub-merchant, B3 sandbox facts) | 08–12 | 2026-10-25 |
-| Uptime monitor | S10 (Q3) | G1 | 2026-10-29 |
-| iyzico live terms | S2 (B3: max hold, real card fee, settlement delay) | G3 | 2026-11-03 |
-| Legal | S16 (B2, B9, B10, T&C and privacy texts) | G3 | 2026-11-04 |
+| Accounts for the scaffold | S3 Vercel ✅, S6 Supabase (CLI login, env vars), S7 Sentry (auth token), S8 PostHog EU, S19 `.env.local` | 00b, G0 | 2026-10-29 |
+| Design handoff and tokens | S13 (B4) | UI layer from 01 | ✅ 2026-10-25 |
+| Sign in | S20 SMS provider for Turkey, S9 Turnstile | 01 sign in | 2026-10-30 |
+| iyzico sandbox | S1 (B11 individual sub-merchant, B3 sandbox facts) | 02 (B11), 08–12 | 2026-10-31 |
+| Turkish copy | S21 translator (D58) | Turkish screens from 01 | 2026-11-01, then per position |
+| Catalog data | S17 (B5, B6): one worked category first (home cleaning) | 03 content, G3 | first category 2026-11-02, all by 2026-11-22 |
+| Email | S4 domain + DNS, S5 Resend + Supabase SMTP | 13, G3 | 2026-11-09 |
+| Uptime monitor | S10 (Q3) | G1 | 2026-11-12 |
+| iyzico live terms | S2 (B3: max hold, real card fee, settlement delay) | G3 | 2026-11-16 |
+| Legal | S16 (B2, B9, B10, T&C and privacy texts) | G3 | 2026-11-22 |
+| Launch accounts | Supabase Pro (D63), Vercel Pro (D25), iyzico live keys | 21, G3 | Supabase Pro 2026-11-22; iyzico live keys 2026-11-25 |
 | Claims and legacy data | S18 (B7, B8) | public copy, 19 | before any public claim |
 
 ---
 
 ## Target schedule (a target, not a limit)
 
-P0 alone is 16 positions in 19 days, so there is almost no slack. The critical path runs through the
-owner tracks above as much as through code.
+Replanned 2026-10-28 (D65). The v3 schedule (16 P0 positions from 2026-10-18 to a 2026-11-07 launch)
+slipped 11 days before 00b started: the design import and the owner tracks ran long. Same scope and
+cut list. The heavy positions get two days, and three buffer days each absorb one slip; anything past
+that moves the launch. The critical path runs through the owner tracks above as much as through code.
 
 | Day | Date | Target | Owner that day |
 | --- | --- | --- | --- |
-| Sat | 10-17 | Playbook bootstrap ✅ | Confirm the build order (Q2) |
-| Sun | 10-18 | 00b → **G0** | S3, S7, S8 |
-| Mon | 10-19 | 01 sign in | S13 design handoff, S4, S5, S9 |
-| Tue | 10-20 | 02 provider onboarding | |
-| Wed | 10-21 | 03 catalog and pricing | S17 first category |
-| Thu | 10-22 | 04 post a request | |
-| Fri | 10-23 | 05 feed and apply | |
-| Sat | 10-24 | 06 choose a provider | S1 sandbox facts |
-| Sun | 10-25 | 07 money core | |
-| Mon | 10-26 | 08 iyzico door, relay, callbacks | |
-| Tue | 10-27 | 09 customer pays | |
-| Wed | 10-28 | 10 unlock and reveal | S10 uptime |
-| Thu | 10-29 | 11 work and release → **G1** | |
-| Fri | 10-30 | 12 expiry, cancellation, refunds | |
-| Sat | 10-31 | 13 transactional email | |
-| Sun | 11-01 | 14 disputes | |
-| Mon | 11-02 | 15, 16 if on pace → **G2** | S2 live terms |
-| Tue | 11-03 | Buffer | |
-| Wed | 11-04 | 21 launch hardening | S16 legal, S17 all data |
-| Thu | 11-05 | **G3** checks, staging, Vercel Pro | |
-| Fri | 11-06 | Go live rehearsal | |
-| Sat | 11-07 | **Launch** | |
+| Thu | 10-29 | 00b scaffold completion: spec, build | S19, S6 CLI login, S7 auth token, S8, Vercel env |
+| Fri | 10-30 | 00b → **G0** | S20 SMS provider, S9 Turnstile |
+| Sat | 10-31 | 01 sign in (1 of 2) | **S1 iyzico sandbox (B11)** |
+| Sun | 11-01 | 01 sign in (2 of 2) | S21 translator |
+| Mon | 11-02 | 02 provider onboarding | S17 first category |
+| Tue | 11-03 | 03 catalog and pricing (1 of 2) | |
+| Wed | 11-04 | 03 catalog and pricing (2 of 2) | |
+| Thu | 11-05 | 04 post a request | |
+| Fri | 11-06 | 05 feed and apply | |
+| Sat | 11-07 | 06 choose a provider | |
+| Sun | 11-08 | 07 money core (1 of 2) | |
+| Mon | 11-09 | 07 money core (2 of 2) | S4 domain, S5 Resend |
+| Tue | 11-10 | 08 iyzico door, relay, callbacks (1 of 2) | |
+| Wed | 11-11 | 08 iyzico door, relay, callbacks (2 of 2) | |
+| Thu | 11-12 | 09 customer pays | S10 uptime |
+| Fri | 11-13 | 10 unlock and reveal | |
+| Sat | 11-14 | 11 work and release | |
+| Sun | 11-15 | **G1** review and fixes | |
+| Mon | 11-16 | 12 expiry, cancellation, refunds (1 of 2) | S2 live terms |
+| Tue | 11-17 | 12 expiry, cancellation, refunds (2 of 2) | |
+| Wed | 11-18 | 13 transactional email | |
+| Thu | 11-19 | 14 disputes | |
+| Fri | 11-20 | 15, 16 if on pace → **G2** | |
+| Sat | 11-21 | Buffer | |
+| Sun | 11-22 | 21 launch hardening (1 of 2) | S16 legal, S17 all data, Supabase Pro (D63) |
+| Mon | 11-23 | 21 launch hardening (2 of 2) | |
+| Tue | 11-24 | Buffer | |
+| Wed | 11-25 | **G3** checks, staging, Vercel Pro | iyzico live keys |
+| Thu | 11-26 | Go live rehearsal | |
+| Fri | 11-27 | Buffer | |
+| Sat | 11-28 | **Launch** | |
 
 ---
 
