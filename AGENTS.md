@@ -40,6 +40,10 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 `.npmrc` sets `save-exact=true`. **Never add a dependency without pinning its exact version and
 recording it here.** Install scripts run only for packages listed per version in `package.json`
 `allowScripts` (D45); a version bump needs the script reviewed again before `npm install-scripts approve`.
+Approved after review: `@parcel/watcher` 2.6.0, `@swc/core` 1.15.47, `unrs-resolver` 1.12.2 (D45);
+`@sentry/cli` 2.58.6 (a no op when its platform binary package is installed, else a checksum verified
+download from Sentry's CDN) and `core-js` 3.51.0 (a donation banner, through `posthog-js`), owner
+2026-10-28.
 
 | Layer | Package · version | Why this version |
 | --- | --- | --- |
@@ -47,6 +51,8 @@ recording it here.** Install scripts run only for packages listed per version in
 | App | `next` 16.4.3 · `react` / `react-dom` 19.2.8 · `typescript` 5.9.3 | TS 7 failed CI (dependabot PR). `next` 16.4.3 (2026-10-28, D66): 16.3.1 had critical unauthenticated remote code execution advisories |
 | i18n | `next-intl` 4.13.7 | |
 | Data | `@supabase/supabase-js` 2.112.3 · `@supabase/ssr` 0.12.4 · `server-only` 0.0.1 | |
+| Errors, traces, logs | `@sentry/nextjs` 10.75.2 (brings `@sentry/cli` 2.58.6) | Spec 0004 AC-20: the lowest version with Turbopack source map upload and Sentry Logs with `beforeSendLog`, raised to the first one clear of the critical tunnel advisory GHSA-mchm-gjx6-7h55 (every 10.x below 10.75.2). Released 2026-09-22. Owner choice 2026-10-28. Imported only in `lib/observability/` |
+| Analytics | `posthog-js` 1.418.11 | Spec 0004 AC-20: the lowest version with every option we set plus the fixes for a relative `api_host` proxy (scripts added several times) and the cookieless id leak. Released 2026-08-24. Owner choice 2026-10-28. Imported only in `lib/analytics/` |
 | Validation | `zod` 4.6.7 | Below 4.6.6, oversized constrained collections can exhaust memory (advisory, D66) |
 | Styling | `tailwindcss` + `@tailwindcss/postcss` 4.3.3 · shadcn/ui CLI deferred | B4 resolved 2026-10-25 (D48). shadcn init writes its own palette: run it only after the tokens land in `app/globals.css` (`ui-tokens.md` §13), and map its names to ours |
 | Lint | `eslint` 9.39.5 · `eslint-config-next` 16.4.3 · `typescript-eslint` 8.67.0 | ESLint 10 crashes eslint-config-next's react plugin; held at 9 (dependabot ignores ≥10) |
@@ -242,6 +248,17 @@ overrides):
   file, no `SKILL.md`; the widget wizard is left out.
 - `tailwind-design-system` (`.claude/skills/tailwind-design-system/`): installed 2026-08-17, source not
   recorded (Q8). `context/ui-tokens.md` wins.
+- `posthog-nextjs-app-router` (`.claude/skills/posthog-nextjs-app-router/`, frontmatter name
+  `integration-nextjs-app-router`): `PostHog/skills` @ `1914a60`, path
+  `skills/posthog/integration/skills/nextjs-app-router/`, MIT, vendored 2026-10-28 (D73). Kept `SKILL.md`,
+  `references/next-js.md`, `references/EXAMPLE.md`; the wizard workflow and `identify-users.md` are left
+  out. Spec 0004 wins: no wizard, no identification, cookieless, every option explicit, `lib/analytics/`
+  is the only importer.
+- Sentry skills (`sentry:sentry-instrument`, `sentry:sentry-get-started`, `sentry:sentry-setup-releases`,
+  `sentry:sentry-create-alert`): Sentry's official Claude plugin (`claude-plugins-official/sentry`), user
+  level, not vendored, updates itself (D73). Checked 2026-10-28 at plugin version 1.4.0. Spec 0004 wins
+  wherever it differs: no wizard, no edge config, no `dataCollection` object (it flips unset categories to
+  permissive), `sendDefaultPii` off, `lib/observability/` is the only importer.
 - caveman (user level plugin): chat only. Never applied to code, commits, or docs.
 
 **Declined:**
