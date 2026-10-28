@@ -6,8 +6,8 @@ not know it.
 
 **Last updated:** 2026-10-28
 **Phase:** Bootstrap done · design imported (PR #18) · position 00 ✅ · 00b in progress
-**Status:** 🟡 Replanned (D65): launch 2026-11-28; cloud accounts partly connected (R1)
-**Next:** `/architect` position 00b (scaffold completion) → G0 by 2026-10-30
+**Status:** 🟡 Spec 0004 (00b) accepted 2026-10-28; launch 2026-11-28 (D65); cloud accounts partly connected (R1)
+**Next:** `/develop` position 00b in a fresh session (spec 0004) → G0 by 2026-10-30
 
 ---
 
@@ -72,6 +72,12 @@ Dated bullets, newest at the bottom.
   autocapture on, env names our guard rejects); set aside with `git stash` as
   "posthog-wizard-2026-10-27" for the 00b spec. `npm audit`: critical `next` advisories, so security
   bumps ship before 00b (D66).
+- **2026-10-28** · PR #19 merged (D66, `64d2613`); production redeployed on Next 16.4.3, and Vercel's
+  Sentry integration created a matching Sentry release. Sentry project `aldebyani` (EU) created by the
+  agent at the owner's request; Sentry's onboarding run waits on the instrument step (00b). S19 fixed:
+  the dev server boots. **Spec 0004 (position 00b) accepted** after a cross check on Sonnet (22 gaps,
+  13 issues, all fixed): decisions D67 to D73. Still open for G0: S8 (PostHog EU), the Supabase CLI
+  login (S6), the Vercel toolbar off on previews, env values in both Vercel scopes.
 
 ---
 
@@ -111,6 +117,13 @@ struck through, with the replacement named.
 
 | # | Date | Decision | By | Where |
 | --- | --- | --- | --- | --- |
+| D73 | 2026-10-28 | **Skills for 00b:** Sentry's skills come from Sentry's official Claude plugin (user level, updates itself; no vendored copies); PostHog's `nextjs-app-router` skill is vendored at `PostHog/skills@1914a60` with a `VENDORED.md`. Any skill advising a setup wizard is overridden by spec 0004 | Owner (asked in chat) | spec 0004 AC-19 |
+| D72 | 2026-10-28 | **Vercel:** login protection stays on for previews, share links for anyone else; the Vercel toolbar is off on previews; the agent sets public env values through the connector, the owner sets secrets; values exist in both Preview and Production scopes; Vercel's Sentry integration is kept | Owner (asked in chat) | spec 0004 AC-16 |
+| D71 | 2026-10-28 | **Deployment guard and health:** `isDeployment()` is true on Vercel always and for any production build unless `APP_LOCAL_ONLY=1`; the Sentry DSN and the PostHog key are both required on deployments, each from the task that adds its door; `GET /api/health` checks the app plus a database ping through `health_ping()` (granted to `anon`) | Owner (asked in chat) | spec 0004 AC-9, AC-10 |
+| D70 | 2026-10-28 | **Money flags and KSA:** the five money flags are `platform_settings` rows per region (TR on, KSA off), read live on every call and failing closed; the env flag variables are removed; KSA's `regions.active` is false | Owner (asked in chat) | spec 0004 AC-14, AC-15 |
+| D69 | 2026-10-28 | **Security headers and CSP:** a strict nonce Content Security Policy, enforced now and reporting to Sentry, so pages render per request; HSTS at one day until the final domain (S4) | Owner (asked in chat) | spec 0004 AC-12, AC-13 |
+| D68 | 2026-10-28 | **Analytics:** PostHog EU in cookieless mode with no consent banner and no identification (legal to confirm under S16); one project with an `app_env` property; autocapture, session recording, surveys and remote flags off; 00b events `$pageview` and `locale_changed`; the server side client arrives with its first event (08 or 09) | Owner (asked in chat) | spec 0004 AC-6, AC-7 |
+| D67 | 2026-10-28 | **Observability:** Sentry EU is the one backend for errors, traces (10% production, 100% preview), logs (Sentry Logs), replays (on error only, masked, nothing kept in browser storage) and alerts (rules on new and escalating alert issues; the summary email arrives with 13). Personal data is scrubbed from every signal | Owner (asked in chat) | spec 0004 AC-1 to AC-5, AC-11 |
 | D66 | 2026-10-28 | **Security bumps before 00b**, in their own PR (`chore/security-bumps`): `next` and `eslint-config-next` 16.4.3 (16.3.1 has critical unauthenticated remote code execution advisories, among others), `zod` 4.6.7, `vitest` 5.0.5, and transitive fixes through `npm audit fix` without `--force`. Supersedes dependabot #16, #15 and #6 | Owner (asked in chat) | `package.json`, `AGENTS.md` stack table |
 | D65 | 2026-10-28 | **Launch moves to 2026-11-28** (replan). 11 days behind the v3 schedule: 00b was due 2026-10-18, and the design import and owner tracks ran long. Same scope and cut list; the heavy positions (00b, 01, 03, 07, 08, 12, 21) get two days each; three buffer days; gates G0 10-30, G1 11-15, G2 11-20, G3 11-25. Holds only if the owner steps land by the dates in `build-plan.md`. Supersedes the date in D22 and the schedule in D41 | Owner (asked in chat) | `build-plan.md` schedule and parallel tracks, `project-overview.md` §1, `AGENTS.md` |
 | D64 | 2026-10-28 | **Both Supabase MCP paths kept:** the claude.ai Supabase connector (now signed in to org `aldebyani` only; its write tools stay ask gated) and the project MCP in `.mcp.json` (`--read-only`). The committed `.mcp.json` keeps the `${SUPABASE_PROJECT_REF}` and `${SUPABASE_ACCESS_TOKEN}` placeholders; the owner's local copy holds the real values (owner, 2026-10-28) and is **never staged or committed** | Owner (asked in chat) | `AGENTS.md` MCP servers, S6 |
@@ -254,7 +267,7 @@ them.
 | S15 | **Close the stale dependabot PR** (TypeScript 5.9.3 → 7.0.2; CI rejected it) | — | — | ☐ |
 | S16 | **Legal (B2, B9, B10).** Custody confirmation; agent position; authoritative language; T&C (the service contract is customer to provider; we are intermediary and payment facilitator), privacy notice (KVKK), provider agreement with a data processing clause. **Also (2026-10-25):** provider verification collects a criminal record certificate and a liveness selfie (`p3`), both special categories of personal data under KVKK; confirm the legal basis, explicit consent wording and retention | Builds the legal pages | G3 | ☐ |
 | S17 | **Catalog data (B5, B6).** Launch categories; per category: questions (key, type, options, required, validation), labels in `ar`/`tr`/`en`, base price, modifiers, zones and multipliers; TR commission %, unlock fee, windows. Start with home cleaning | Seeds through admin UI, never invented | 03 content, G3 | ☐ |
-| S19 | **Fix `.env.local`.** `npm run dev` stops at boot: its `SUPABASE_DB_POOL_URL` lacks `pgbouncer=true`. Delete that line (it is optional now, D38, and the old project is unverified), or correct it once the new project exists (S6). The agent cannot read or edit this file, by design | Re-runs the dev server preview | Local `npm run dev` | ☐ still failing 2026-10-28 (`SUPABASE_DB_POOL_URL: must set pgbouncer=true`); the new project now exists, so point it at its transaction pooler with `pgbouncer=true`, or delete the line |
+| S19 | **Fix `.env.local`.** `npm run dev` stops at boot: its `SUPABASE_DB_POOL_URL` lacks `pgbouncer=true`. Delete that line (it is optional now, D38, and the old project is unverified), or correct it once the new project exists (S6). The agent cannot read or edit this file, by design | Re-runs the dev server preview | Local `npm run dev` | ✅ 2026-10-28: the dev server boots (the pool URL now points at the new project's transaction pooler) |
 | S18 | **Claims and legacy data (B7, B8).** The public quality claim and how it is computed; legacy provider job counts and the past customer list | 19, public copy | 19 | ☐ |
 | S21 | **Turkish translator (D58).** Choose who turns the English copy into Turkish (a native speaker or an agency), so each position's new strings can be translated before its screens ship; legal copy goes through S16 | Sends each position's `messages/en.json` additions for translation; marks untranslated keys | Turkish screens of every position | ☐ |
 | S20 | **SMS provider for Turkey (D55).** Open an account with an SMS provider Supabase Auth supports (Twilio, Twilio Verify, MessageBird, Vonage, or Textlocal; a local Turkish provider would need Supabase's Send SMS hook instead), register the sender ID for Turkey, and keep the credentials ready for the Supabase project's Auth settings (never in chat) | Wires phone sign-in in position 01; 6 digit codes | 01 | ☐ |
