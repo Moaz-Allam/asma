@@ -34,6 +34,9 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   in `app/globals.css` with the first UI position.
 - 2026-10-28 · **Replanned** (D65): launch 2026-11-28, same scope; EU data regions (D62). Next:
   `/architect` 00b, G0 by 2026-10-30.
+- 2026-10-28 · **00b built** (spec 0004, D74–D78) on `feat/00b-scaffold-completion`: Sentry and PostHog
+  doors, nonce CSP, `/api/health`, flags, alerts; migration applied to the cloud. Open: preview proof,
+  alert rules, dashboard settings, G0.
 
 ## Stack (pinned exactly)
 
@@ -172,6 +175,20 @@ released, refunded, partially released.
 - **Context hygiene:** long task notes go in `NOTES.md` (gitignored). Hold paths and identifiers, not
   file dumps. After a spec is accepted, build in a fresh session; the spec is on disk.
 
+## Single doors (lint enforced, `eslint.config.mjs`)
+
+Each risky system has one module that may import its SDK or read its key; everything else calls that
+door's functions. Every rule and exemption has a proof in `tests/lint/eslint-rules.test.ts`
+(architecture.md §42).
+
+| System | Door | Notes |
+| --- | --- | --- |
+| Supabase | `lib/db/` | The service role client (`lib/db/admin.ts`) for webhooks, jobs and the relay only; `createAnonClient()` for machine endpoints; the `Db` type for callers |
+| PSP | `lib/psp/` | Only the outbox relay calls it (rule 3) |
+| Sentry | `lib/observability/` | `next.config.ts` may import only `withSentryConfig` from `@sentry/nextjs/config`. Server: `initServer`, `captureRequestError`, `log`, `raiseAlert`; browser: `initClient`, `reportClientError`, `routerTransitionStart`. One scrubber (`scrub.ts`) for every signal |
+| PostHog | `lib/analytics/` | `initAnalytics`, `track`, `trackPageview`; events typed in `events.ts`, filtered again in `filter.ts` |
+| Telemetry keys | the two doors, `lib/env.ts`, `lib/deployment.ts`, `next.config.ts` | `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`; `SENTRY_AUTH_TOKEN` in `next.config.ts` only. Others ask `sentryDsn()` |
+
 ## Tooling gap scan (ask before adding)
 
 At bootstrap, at the start of each position, when a new service is chosen, when a review finds
@@ -278,7 +295,7 @@ overrides):
 | `supabase` (`.mcp.json`, `--read-only`) | Schema, advisors | Kept alongside the connector (D64). The committed file keeps the `${…}` placeholders; the owner's local copy holds the ref (`lrejqpcgsugjiijuakoq`) and an access token. **Never stage or commit `.mcp.json` changes** |
 | `playwright` (`.mcp.json`) | Browser driving | Connected (2026-10-28). The built in browser is the default |
 | Supabase (account connector) | Schema, advisors, logs for project `lrejqpcgsugjiijuakoq` | Signed in to org `aldebyani` only (2026-10-28). Write tools ask gated in `settings.json`, used only when the owner asks. Schema through migration files, never ad hoc SQL |
-| Vercel (account connector) | Deploy status, build and runtime logs | Project, env, domain, deploy, and purchase tools ask gated; production comes from merges only |
+| Vercel (account connector) | Deploy status, build and runtime logs | Project, env, domain, deploy, and purchase tools ask gated; production comes from merges only. Since 2026-10-28 it answers 403 on the team scope `moaz-allam-4163s-projects` even after approved team access links; the Vercel CLI (`npx vercel@65.5.0 … --scope moaz-allam-4163s-projects`, logged in to the owner) is the working path, ask gated like the connector |
 | Sentry (account connector) | Errors in org and project `aldebyani` (EU, `de.sentry.io`) | `update_issue` ask gated; org `jawla-i1` and every other org are off limits |
 | PostHog (account connector) | Analytics for project `aldebyani` (id 323846, EU Cloud) | Signed in to org `Aldebyani` only (2026-10-28). Read only use; writes (such as project settings) only when the owner asks, as on 2026-10-28 for the D68 settings |
 

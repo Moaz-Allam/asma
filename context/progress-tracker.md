@@ -6,8 +6,8 @@ not know it.
 
 **Last updated:** 2026-10-28
 **Phase:** Bootstrap done · design imported (PR #18) · position 00 ✅ · 00b in progress
-**Status:** 🟡 Spec 0004 (00b) accepted 2026-10-28; launch 2026-11-28 (D65); cloud accounts partly connected (R1)
-**Next:** `/develop` position 00b in a fresh session (spec 0004) → G0 by 2026-10-30
+**Status:** 🟡 00b built and pushed (branch `feat/00b-scaffold-completion`), migration in the cloud; preview proof, alert rules and dashboards open; launch 2026-11-28 (D65)
+**Next:** finish 00b tasks 7, 12, 15 (preview, `verify/00b-sentry`, Sentry alert rules, dashboard settings), then PR, `/check verify`, reviews → G0 by 2026-10-30
 
 ---
 
@@ -93,6 +93,19 @@ Dated bullets, newest at the bottom.
   `20260818135102_regions_and_settings` applied, `regions` (2 rows) and `platform_settings` (20 rows)
   with RLS on, security advisors clean. Vercel toolbar turned off on previews (D72). The Vercel
   connector returns 403 for the team scope until its team access is authorized.
+- **2026-10-28** · **00b built** (`/develop`, spec 0004), on `feat/00b-scaffold-completion`: `master`
+  merged (D66); PostHog skill vendored; Sentry 10.75.2 and posthog-js 1.418.11 pinned (D74); install
+  scripts reviewed (D75); migration `20261028180000_flags_ksa_health` (flags per region, the `_enabled`
+  CHECK, KSA off, `health_ping`, explicit grants D77) applied locally and, after a dry run, to the cloud
+  (verified through the connector, advisors clean); `lib/deployment.ts` gate; the Sentry and PostHog
+  doors with one scrubber; nonce CSP and security headers; `/api/health`; `isEnabled`; `raiseAlert`;
+  the logger; the localized global error page. Local: verify green, 338 unit tests, pgTAP 42/42, e2e
+  23/23 (4 single locale skips). Found and fixed: the URL scrubber redacted IP hosts, which lost every
+  local pageview silently. The e2e fixture hides Playwright's bot signals (posthog-js drops bot traffic,
+  which is right in production). Local Supabase moved to ports 544xx (D76). The Supabase CLI had
+  fallen back to another account; the owner logged in again and relinked. The Vercel connector still
+  answers 403 on the team scope after two approved links, so the owner set the env values in the
+  dashboard. Branch pushed 2026-10-28; CI runs on the PR.
 
 ---
 
@@ -114,7 +127,7 @@ Dated bullets, newest at the bottom.
 | B10 | **Legally authoritative language** for T&C and provider agreements | T&C copy, provider signup, G3 | None; owner track S16 | ⏳ open |
 | B7 | **Public quality claim wording**, backed by a computed rate or verifiable criterion | Public copy, 19 | Ship no claim until decided | ⏳ open |
 | B8 | **Legacy provider job counts and past customer list** for the reputation migration | 19 (Q9) | Not in P0 | ⏳ open |
-| R1 | **Cloud accounts partly connected** (rechecked 2026-10-28). Exist: Vercel project `aldebyani` (S3 ✅), Supabase org `aldebyani` with project `lrejqpcgsugjiijuakoq` (eu-central-1, linked; it replaces the old unverified ref `syrhavojjpabwwcaezee`), Sentry org and project `aldebyani` (EU). Missing: the Sentry auth token for source maps (S7); the PostHog EU project and the connector's sign in to it (S8); the Supabase CLI login to the `aldebyani` account (it still sees only `alqafila`); the project MCP's env vars (D64) | Any cloud push, G0 | Before any push, `npx supabase projects list` must show `lrejqpcgsugjiijuakoq` as linked. Each connector is used only for the `aldebyani` org or project; `Jawla`, `jawla-i1` and `alqafila` are other work and off limits | ⏳ open |
+| R1 | **Cloud accounts partly connected** (rechecked 2026-10-28). Exist: Vercel project `aldebyani` (S3 ✅), Supabase org `aldebyani` with project `lrejqpcgsugjiijuakoq` (eu-central-1, linked; it replaces the old unverified ref `syrhavojjpabwwcaezee`), Sentry org and project `aldebyani` (EU). Missing: the Sentry auth token for source maps (S7); the PostHog EU project and the connector's sign in to it (S8); the Supabase CLI login to the `aldebyani` account (it still sees only `alqafila`); the project MCP's env vars (D64) | Any cloud push, G0 | Before any push, `npx supabase projects list` must show `lrejqpcgsugjiijuakoq` as linked. Each connector is used only for the `aldebyani` org or project; `Jawla`, `jawla-i1` and `alqafila` are other work and off limits | ⏳ open. 2026-10-28 evening: the CLI had fallen back to another account; the owner logged in again and relinked (`projects list` shows `lrejqpcgsugjiijuakoq` linked). The Vercel connector still gets 403 on the team scope `moaz-allam-4163s-projects` after two approved links; the Vercel CLI here is logged in to the owner (`moaz-allam-4163`) and is the working path for read only checks |
 | R2 | **Deadline.** Replanned 2026-10-28 (D65): 16 P0 positions from 2026-10-29 to the 2026-11-28 launch, with 3 buffer days. The owner steps in `build-plan.md` (parallel tracks) are on the critical path, S1 and S16 most of all | Launch date | Cut list decided in advance (`build-plan.md`); replan honestly at each gate | ⏳ watching |
 | R3 | **Free plan limits.** Vercel Hobby forbids commercial use; Sentry and PostHog free quotas | G3 | Test data only before G3; Vercel Pro at G3 (D25); recheck quotas at G3 | ⏳ planned |
 | R4 | **Shared pre launch database.** Previews and production share the one Supabase project until G3 (D37) | G3 | Test data only; G3 wipes it, reapplies migrations, creates a staging project | ⏳ deliberate |
@@ -132,6 +145,11 @@ struck through, with the replacement named.
 
 | # | Date | Decision | By | Where |
 | --- | --- | --- | --- | --- |
+| D78 | 2026-10-28 | **00b implementation defaults** (agent, during `/develop`): the Sentry DSN must be the SaaS ingest host `o<org>.ingest.de.sentry.io` (only that shape engages the `/api/e` tunnel), not any `*.de.sentry.io`; source maps and the Sentry release exist only on a deployment build (the build plugin otherwise loads a local `.env.sentry-build-plugin` token and would upload a developer's build); the browser keeps no `dataCollection` object (it flips unset categories to permissive) and sets `sendDefaultPii: false`; posthog-js has no client option to withhold the IP (`ip` is a no op), so the project's "Discard client IP data" setting carries it (D68); PostHog loads no external script and no remote config (`disable_external_dependency_loading`, `advanced_disable_flags`), so a project setting cannot switch a feature back on | Default | `lib/deployment.ts`, `next.config.ts`, `lib/observability/`, `lib/analytics/client.ts` |
+| D77 | 2026-10-28 | **Explicit table grants, the same everywhere:** the cloud project kept Supabase's old default privileges (anon, authenticated and service_role held every privilege on every table, TRUNCATE included) while the local stack and CI use the hardened defaults (none), so the same migrations behaved differently. The 00b migration revokes all on `regions` and `platform_settings` and grants exactly the access model: read to authenticated and service_role, write on `platform_settings` to authenticated (the admin policy decides). pgTAP pins the grants. Each later table's migration grants its own access explicitly | Owner (asked in chat) | `20261028180000_flags_ksa_health.sql`, `supabase/tests/03` |
+| D76 | 2026-10-28 | **Local Supabase on ports 544xx**, not the CLI default 543xx: the owner runs other local Supabase projects on the defaults. CI and the e2e wrapper read the ports from `supabase status` | Owner (asked in chat) | `supabase/config.toml` |
+| D75 | 2026-10-28 | **Install scripts approved** after review: `@sentry/cli` 2.58.6 (a no op when its platform binary package is installed, else a checksum verified download) and `core-js` 3.51.0 (a donation banner, through posthog-js) | Owner (asked in chat) | `package.json` `allowScripts`, `AGENTS.md` |
+| D74 | 2026-10-28 | **SDK pins:** `@sentry/nextjs` 10.75.2, the lowest version with Turbopack source map upload and Sentry Logs with `beforeSendLog`, raised to the first one clear of the critical tunnel advisory GHSA-mchm-gjx6-7h55; `posthog-js` 1.418.11, the lowest with every option we set plus the relative `api_host` and cookieless id fixes | Owner (asked in chat) | `package.json`, `AGENTS.md` stack table |
 | D73 | 2026-10-28 | **Skills for 00b:** Sentry's skills come from Sentry's official Claude plugin (user level, updates itself; no vendored copies); PostHog's `nextjs-app-router` skill is vendored at `PostHog/skills@1914a60` with a `VENDORED.md`. Any skill advising a setup wizard is overridden by spec 0004 | Owner (asked in chat) | spec 0004 AC-19 |
 | D72 | 2026-10-28 | **Vercel:** login protection stays on for previews, share links for anyone else; the Vercel toolbar is off on previews; the agent sets public env values through the connector, the owner sets secrets; values exist in both Preview and Production scopes; Vercel's Sentry integration is kept | Owner (asked in chat) | spec 0004 AC-16 |
 | D71 | 2026-10-28 | **Deployment guard and health:** `isDeployment()` is true on Vercel always and for any production build unless `APP_LOCAL_ONLY=1`; the Sentry DSN and the PostHog key are both required on deployments, each from the task that adds its door; `GET /api/health` checks the app plus a database ping through `health_ping()` (granted to `anon`) | Owner (asked in chat) | spec 0004 AC-9, AC-10 |
@@ -267,7 +285,7 @@ them.
 | --- | --- | --- | --- | --- |
 | S1 | **iyzico sandbox.** Sign up at the iyzico sandbox merchant panel, copy the sandbox API key and secret into `.env.local` as `IYZICO_API_KEY` and `IYZICO_SECRET_KEY`. In the sandbox: create a `PERSONAL` sub-merchant (B11); run one marketplace payment; note the callback payload, its signature scheme, the event id, whether a partial refund works before approval, and how approval behaves | Records §7 facts; specs 08 | 08–12 | ☐ |
 | S2 | **iyzico live terms** (in writing from iyzico): max time a payment can stay unapproved; real per-card fees (domestic, foreign, installments); settlement delay for new sub-merchants; agreements users must accept; whether `PERSONAL` sub-merchants work in production | Records §7; sets `psp_max_hold_hours` | G3 | ☐ |
-| S3 | **Vercel.** vercel.com → Add New → Project → import `Moaz-Allam/asma`, name it `aldebyani` → framework Next.js, Node 24 → add env vars for Preview and Production (names from `.env.example`) → stay on Hobby until G3 | Preview checks, region pin (00b) | G0 | ✅ 2026-10-18 by the owner (found 2026-10-28). Env vars still to add: the Supabase ones now, Sentry and PostHog once the 00b spec names them |
+| S3 | **Vercel.** vercel.com → Add New → Project → import `Moaz-Allam/asma`, name it `aldebyani` → framework Next.js, Node 24 → add env vars for Preview and Production (names from `.env.example`) → stay on Hobby until G3 | Preview checks, region pin (00b) | G0 | ✅ 2026-10-18 by the owner (found 2026-10-28). Env (2026-10-28): Sentry's and Supabase's Vercel integrations added their variables (Supabase ones in Production only); the agent added `APP_DEFAULT_LOCALE`, `APP_SUPPORTED_LOCALES` (both scopes) and the public Supabase URL and anon key (Preview). Owner: `NEXT_PUBLIC_POSTHOG_KEY` (both scopes), `SUPABASE_SERVICE_ROLE_KEY` (Preview), and remove any Sentry log drain (it would bypass the scrubber) |
 | S4 | **Domain and DNS.** Buy the domain (Cloudflare Registrar sells at cost; it does not sell `.com.tr` or `.sa`) → DNS in Cloudflare → add it to Vercel with DNS only (grey cloud) records → tell me the name | Wires `appOrigin()`, Resend, Turnstile hostnames | S5, S9, G3 | ☐ |
 | S5 | **Resend and Supabase SMTP.** Resend → Domains → add the sending domain → add its SPF, DKIM, DMARC records in Cloudflare → verify → create a sending only API key → Vercel env and `.env.local` as `EMAIL_API_KEY` → turn off open and click tracking. Supabase → Authentication → SMTP settings → Resend SMTP (`smtp.resend.com`, port 465, user `resend`, password: an API key) with a `no-reply@` sender. Supabase's built in email only reaches project team members | Email OTP (Q4), position 13 | 01, 13 | ☐ |
 | S6 | **Create the Supabase project, then connect the right accounts (R1).** supabase.com → New project `aldebyani` in your own org, Free plan until launch then Pro (D63), region `eu-central-1` (D62) → `npx supabase login` with that account (unset any `SUPABASE_ACCESS_TOKEN` that points at another account) → `npx supabase link --project-ref <new ref>` → `npx supabase projects list` must show it as linked. For the MCP: a **scoped** personal access token limited to that project; set `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` in your shell profile. Reconnect the claude.ai Supabase connector to that org. **Same rule for every service:** connect the account that owns the Aldebyani project (Vercel team S3, Sentry org S7, PostHog project S8) before anything uses it | Verifies each link read only; updates `AGENTS.md` and the tracker with the new refs | Any cloud push, previews (G0) | ⏳ partly done 2026-10-28: project created 2026-10-18 in org `aldebyani` (eu-central-1, Free until launch, D63; default name, renaming is optional) and linked (`lrejqpcgsugjiijuakoq`). CLI logged in to that account, `.env.local` updated (S19), the project MCP served from the owner's local `.mcp.json` (D64), the position 00 migration pushed (2026-10-28). Still to do: the Supabase values in Vercel (both scopes) |
@@ -335,12 +353,12 @@ KSA facts are deferred with the KSA launch (D22).
 
 | Suite | Status | Last run | Notes |
 | --- | --- | --- | --- |
-| Guard suite (`npm run guardrails`) | 🟢 | 2026-10-25 | 63/63, including false positive, Edit and MultiEdit cases |
-| Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-25 | Lint includes the single door rules |
-| Unit (Vitest 5) | 🟢 | 2026-10-25 | 127 tests in 10 files, about 6s |
-| Build (`next build`) | 🟢 | 2026-10-17 | ar, tr, en prerendered |
-| pgTAP (`supabase test db`) | 🟢 in CI (2026-08-18) · ⏳ new meta tests | — | Needs Docker locally (S11); `02_function_grants` first runs in CI |
-| End to end (Playwright, 390px, ar/tr/en) | 🟢 local | 2026-10-17 | 6/6 with axe, no database (`E2E_NO_DB=1`); first CI run after the push |
+| Guard suite (`npm run guardrails`) | 🟢 | 2026-10-28 | 63/63, including false positive, Edit and MultiEdit cases |
+| Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-28 | Lint includes the single door rules, now with the Sentry and PostHog doors (35 proofs) |
+| Unit (Vitest 5) | 🟢 | 2026-10-28 | 338 tests in 19 files (scrubber, deployment gate, CSP, proxy, health, flags, doors, analytics), about 5s |
+| Build (`next build`) | 🟢 local · 🔴 first preview | 2026-10-28 | Locale pages are dynamic (nonce CSP); the first Vercel preview stopped at the build gate as designed: `NEXT_PUBLIC_POSTHOG_KEY` missing |
+| pgTAP (`supabase test db`) | 🟢 local | 2026-10-28 | 42/42 on the local stack (ports 544xx, D76), including `03_flags_and_health` and the grant pins; CI runs on the PR |
+| End to end (Playwright, 390px, ar/tr/en) | 🟢 local | 2026-10-28 | 23 passed, 4 single locale skips: smoke, CSP and headers, both SDKs against stubs, storage, scrubbed payloads, health, prerender manifest (`E2E_NO_DB=1`) |
 | Secret scan (gitleaks 8.30.1) | ⏳ | — | First run in CI after the push |
 | Money: property, race, idempotency, invariant | 🔴 | — | Required before position 09 |
 
