@@ -1,0 +1,8 @@
+# Findings gitleaks may skip. Each line is one exact finding fingerprint (commit:file:rule:line), never
+# a path or a rule, so anything new is still caught. Add a line only after checking the value is not a
+# secret, and say why.
+#
+# 2026-10-28, owner approved (PR #20): two made-up test values in commit e162eba, a fake PostHog project
+# key and a fake Sentry public key inside a fixture URL. Later commits use low-entropy fakes instead.
+e162ebade43bfd871d480f2f67d2a2a2e92137f6:tests/deployment.test.ts:generic-api-key:133
+e162ebade43bfd871d480f2f67d2a2a2e92137f6:tests/security-headers.test.ts:generic-api-key:13

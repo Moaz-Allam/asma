@@ -8,9 +8,9 @@ import { SECURITY_HEADERS } from '@/lib/security/headers';
  * Content Security Policy with exactly the directives of the spec's CSP table. Tests first.
  */
 
-const DSN = 'https://0a1b2c3d4e5f60718293a4b5c6d7e8f9@o4507000000000000.ingest.de.sentry.io/4507000000000001';
+const DSN = 'https://examplepublickey@o4507000000000000.ingest.de.sentry.io/4507000000000001';
 const REPORT =
-  'https://o4507000000000000.ingest.de.sentry.io/api/4507000000000001/security/?sentry_key=0a1b2c3d4e5f60718293a4b5c6d7e8f9';
+  'https://o4507000000000000.ingest.de.sentry.io/api/4507000000000001/security/?sentry_key=examplepublickey';
 
 function directives(policy: string): Record<string, string> {
   return Object.fromEntries(

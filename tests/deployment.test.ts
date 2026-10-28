@@ -73,7 +73,7 @@ describe('missingDeploymentKeys: what a deployment needs, per phase', () => {
   });
 });
 
-const DSN = 'https://0a1b2c3d4e5f60718293a4b5c6d7e8f9@o4507000000000000.ingest.de.sentry.io/4507000000000001';
+const DSN = 'https://examplepublickey@o4507000000000000.ingest.de.sentry.io/4507000000000001';
 
 describe('the Sentry keys (task 5): an EU DSN on build and boot, the auth token on build only', () => {
   const full = {
@@ -116,7 +116,7 @@ describe('the Sentry keys (task 5): an EU DSN on build and boot, the auth token 
 
   it('parses the DSN into the parts the CSP report endpoint needs', () => {
     expect(parseEuSentryDsn(DSN)).toEqual({
-      publicKey: '0a1b2c3d4e5f60718293a4b5c6d7e8f9',
+      publicKey: 'examplepublickey',
       host: 'o4507000000000000.ingest.de.sentry.io',
       projectId: '4507000000000001',
     });
@@ -130,7 +130,7 @@ describe('the PostHog key (task 10): a project key on build and boot', () => {
     VERCEL_GIT_COMMIT_SHA: SHA,
     NEXT_PUBLIC_SENTRY_DSN: DSN,
     SENTRY_AUTH_TOKEN: 'sntrys_x',
-    NEXT_PUBLIC_POSTHOG_KEY: 'phc_0a1b2c3d4e5f6g7h8i9j',
+    NEXT_PUBLIC_POSTHOG_KEY: 'phc_exampleprojectkey',
   };
 
   it('a complete deployment lacks nothing, at build or at boot', () => {
@@ -140,7 +140,7 @@ describe('the PostHog key (task 10): a project key on build and boot', () => {
 
   it.each([
     ['missing', undefined],
-    ['a personal API key, which must never be public', 'phx_0a1b2c3d4e5f'],
+    ['a personal API key, which must never be public', 'phx_examplepersonalkey'],
     ['just the prefix', 'phc_'],
     ['something else', 'abc'],
   ])('refuses a key that is %s', (_name, key) => {

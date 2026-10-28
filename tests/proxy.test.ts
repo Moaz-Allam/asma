@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
  */
 
 const env = vi.hoisted(() => ({
-  dsn: 'https://0a1b2c3d4e5f60718293a4b5c6d7e8f9@o4507000000000000.ingest.de.sentry.io/4507000000000001' as
+  dsn: 'https://examplepublickey@o4507000000000000.ingest.de.sentry.io/4507000000000001' as
     string | undefined,
 }));
 
