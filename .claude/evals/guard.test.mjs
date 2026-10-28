@@ -14,7 +14,11 @@ import { spawnSync } from 'node:child_process';
 
 const HOOK = '.claude/hooks/guard.mjs';
 
-/** @type {{name:string, expect:string|null, path:string, content:string}[]} */
+/**
+ * A case sends `content` with Write, `edit` (one new_string) with Edit, or `edits` (several
+ * new_strings) with MultiEdit. The guard never reads old_string.
+ * @type {{name:string, expect:string|null, path:string, content?:string, edit?:string, edits?:string[]}[]}
+ */
 const CASES = [
   // ---- must DENY ---------------------------------------------------------
   {
@@ -48,6 +52,24 @@ const CASES = [
     content: 'UPDATE ledger_entries SET credit = 0 WHERE id = $1;',
   },
   {
+    name: 'a real UPDATE after a SQL comment line',
+    expect: 'ledger-mutation',
+    path: 'supabase/migrations/0101_fix.sql',
+    content: '-- correct the posting\nUPDATE ledger_entries SET credit = 0;',
+  },
+  {
+    name: '// in SQL is text, so it cannot hide the code after it',
+    expect: 'ledger-mutation',
+    path: 'supabase/migrations/0102_fix.sql',
+    content: 'SELECT $q$a//b$q$; UPDATE ledger_entries SET credit = 0;',
+  },
+  {
+    name: 'Edit: a ratings UPDATE in a migration fragment',
+    expect: 'ledger-mutation',
+    path: 'supabase/migrations/0103_fix.sql',
+    edit: 'UPDATE ratings SET stars = 5 WHERE id = $1;',
+  },
+  {
     name: 'commission netted instead of posted as its own leg',
     expect: 'commission-netted',
     path: 'lib/money/post.ts',
@@ -67,6 +89,12 @@ const CASES = [
       'CREATE TABLE zones (id uuid PRIMARY KEY);\n' +
       'ALTER TABLE zones ENABLE ROW LEVEL SECURITY;\n' +
       'CREATE TABLE addons (id uuid PRIMARY KEY);',
+  },
+  {
+    name: 'RLS enabled only inside a SQL comment does not count',
+    expect: 'rls-missing-on-new-table',
+    path: 'supabase/migrations/0006_zones.sql',
+    content: 'CREATE TABLE zones (id uuid PRIMARY KEY);\n-- ALTER TABLE zones ENABLE ROW LEVEL SECURITY;',
   },
   {
     name: "server-only module missing its import 'server-only'",
@@ -99,6 +127,12 @@ const CASES = [
     content: 'const { data } = await supabase.from("requests").select("*");',
   },
   {
+    name: 'a TS line starting with -- is code, not a SQL comment',
+    expect: 'select-star',
+    path: 'lib/db/requests.ts',
+    content: 'let n = 3;\n--n; const { data } = await supabase.from("requests").select("*");',
+  },
+  {
     name: 'auth token written to localStorage',
     expect: 'client-storage-for-trust',
     path: 'components/features/auth/Login.tsx',
@@ -127,6 +161,66 @@ const CASES = [
     expect: 'brand-value-in-globals',
     path: 'app/globals.css',
     content: ':root { --background: oklch(1 0 0); --primary: oklch(0.21 0.006 285.9); }',
+  },
+  {
+    name: 'shadcn palette as written to disk: one indented custom property per line',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: ':root {\n  --background: oklch(1 0 0);\n  --primary: oklch(0.21 0.006 285.9);\n}',
+  },
+  {
+    name: 'a semantic token holding a raw colour instead of a ramp reference',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: '@theme inline {\n  --color-surface: var(--ramp-white);\n  --color-accent: #0f3a73;\n}',
+  },
+  {
+    name: 'globals.css: a ramp cannot carry a second declaration on its line',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: ':root {\n  --ramp-white: #ffffff; --color-surface: #000000;\n}',
+  },
+  {
+    name: 'globals.css: a placeholder comment on an ordinary rule is not the escape',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: 'body {\n  background: #ff0000; /* placeholder */\n}',
+  },
+  {
+    name: 'globals.css: a real brand value marked placeholder is not the escape',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: '@theme {\n  --color-accent: #0f3a73; /* placeholder */\n}',
+  },
+  {
+    name: 'globals.css: the ::placeholder selector is not the escape',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: 'input::placeholder { color: #9ca3af; }',
+  },
+  {
+    name: 'globals.css: a token NAMED placeholder is not the escape',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: '@theme inline {\n  --color-text-placeholder: #9ca3af;\n}',
+  },
+  {
+    name: 'globals.css Edit: a semantic token given a raw colour',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    edit: '  --color-accent: #0f3a73;',
+  },
+  {
+    name: 'globals.css Edit: // is not a comment in CSS, so it cannot hide a declaration',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    edit: '  //;--color-accent: #0f3a73;',
+  },
+  {
+    name: 'globals.css MultiEdit: a ramp fragment cannot cover the next fragment',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    edits: ['  --ramp-white: #ffffff', '  --color-accent: #ff0000'],
   },
   {
     name: 'raw Tailwind palette class',
@@ -200,10 +294,56 @@ const CASES = [
       '/* bg-gray-100 is banned */\nexport const x = 1;',
   },
   {
-    name: 'globals.css placeholder values are allowed while B4 is open',
+    name: 'globals.css: the pre-B4 neutral placeholders stay allowed until the tokens land',
     expect: null,
     path: 'app/globals.css',
     content: '@theme {\n  --color-surface: oklch(1 0 0); /* placeholder */\n  --radius-md: 8px;\n}',
+  },
+  {
+    name: 'globals.css: several ramps on one line, each its own declaration',
+    expect: null,
+    path: 'app/globals.css',
+    content: ':root {\n  --ramp-primary-900: #0f3a73; --ramp-primary-700: #1e5fb3;\n}',
+  },
+  {
+    name: 'globals.css: a colour quoted in a comment is prose',
+    expect: null,
+    path: 'app/globals.css',
+    content: '/* Brand navy is #0f3a73 (ui-tokens.md §2) */\n:root {\n  --ramp-primary-900: #0f3a73;\n}',
+  },
+  {
+    name: 'globals.css Edit: a whole ramp declaration',
+    expect: null,
+    path: 'app/globals.css',
+    edit: '  --ramp-primary-900: #123456;',
+  },
+  {
+    name: 'a SQL comment quoting UPDATE ledger_entries next to an INSERT',
+    expect: null,
+    path: 'supabase/migrations/0007_post.sql',
+    content:
+      '-- never UPDATE ledger_entries; corrections are new rows\nINSERT INTO ledger_entries (id) VALUES (1);',
+  },
+  {
+    name: 'Edit: an indented SQL comment quoting UPDATE ratings',
+    expect: null,
+    path: 'supabase/migrations/0008_ratings.sql',
+    edit: 'SELECT 1;\n    -- UPDATE ratings is revoked; hide a rating instead\nSELECT 2;',
+  },
+  {
+    name: 'Edit: the server-only check needs the whole file, so a fragment never trips it',
+    expect: null,
+    path: 'lib/money/ledger.ts',
+    edit: 'export function post() {}',
+  },
+  {
+    name: 'the --ramp-* palette block holds the real colours; tokens reference it',
+    expect: null,
+    path: 'app/globals.css',
+    content:
+      ':root {\n  --ramp-primary-900: #0f3a73;\n  --ramp-white: #ffffff;\n  --ramp-shadow: rgb(15 58 115 / 0.18);\n}\n' +
+      '@theme inline {\n  --color-accent: var(--ramp-primary-900);\n  --color-surface: var(--ramp-white);\n' +
+      '  --shadow-overlay: 0 20px 50px var(--ramp-shadow);\n}',
   },
   {
     name: 'border-red is not border-r',
@@ -279,11 +419,19 @@ const CASES = [
 let pass = 0;
 const failures = [];
 
+function payloadFor(c) {
+  if (c.edits)
+    return {
+      tool_name: 'MultiEdit',
+      tool_input: { file_path: c.path, edits: c.edits.map((s) => ({ old_string: '-', new_string: s })) },
+    };
+  if (c.edit !== undefined)
+    return { tool_name: 'Edit', tool_input: { file_path: c.path, old_string: '-', new_string: c.edit } };
+  return { tool_name: 'Write', tool_input: { file_path: c.path, content: c.content } };
+}
+
 for (const c of CASES) {
-  const payload = JSON.stringify({
-    tool_name: 'Write',
-    tool_input: { file_path: c.path, content: c.content },
-  });
+  const payload = JSON.stringify(payloadFor(c));
   const r = spawnSync(process.execPath, [HOOK], { input: payload, encoding: 'utf8' });
   const denied = r.stdout.includes('"permissionDecision":"deny"');
   const ruleFired = denied ? /\[([a-z-]+)\]/.exec(r.stdout)?.[1] : null;

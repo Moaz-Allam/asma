@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Alexandria:wght@400;500;600;700;800;900&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#e8eef6; }
+  .ar { font-family:"Cairo","Alexandria",system-ui,sans-serif; color:#0f3a73; }
+  .ar h1,.ar h2,.ar h3 { font-family:"Alexandria",system-ui,sans-serif; letter-spacing:-.02em; line-height:1.24 !important; margin:0; }
+  .mono { font-family:ui-monospace,Menlo,monospace; }
+  .ph { background:repeating-linear-gradient(135deg,#dfe7f3 0 7px,#f2f6fc 7px 14px); display:flex; align-items:flex-end; }
+  .ph span { font:400 12px ui-monospace,Menlo,monospace; color:#4b5b78; background:#fff; padding:3px 7px; margin:8px; border-radius:6px; }
+  a { color:#0f3a73; text-decoration:none; }
+  a:hover { color:#1e5fb3; }
+  .pill { border:0; cursor:pointer; border-radius:99px; font-family:"Cairo",system-ui,sans-serif; font-weight:700; white-space:nowrap; transition:transform .12s, background .12s; }
+  .pill:hover { transform:translateY(-1px); }
+  .pill:focus-visible { outline:3px solid #1e5fb3; outline-offset:3px; }
+  .fld { box-sizing:border-box; border:2px solid #dfe7f3; border-radius:14px; padding:11px 14px; font:500 14px "Cairo",system-ui,sans-serif; color:#0f3a73; background:#fff; }
+  .fld:focus { outline:none; border-color:#1e5fb3; }
+  input[type=range] { accent-color:#1e5fb3; }
+  .lbl { font:600 12px ui-monospace,Menlo,monospace; letter-spacing:.06em; color:#eaf1fa; background:#0f3a73; padding:5px 9px; border-radius:6px; text-decoration:none; }
+  .lbl:hover { color:#eaf1fa; background:#0f3a73; }
+  .scr { background:#fff; border-radius:22px; overflow:hidden; box-shadow:0 18px 50px rgba(15,58,115,.14); flex:none; }
+  .chrome { display:flex; align-items:center; gap:10px; padding:11px 16px; background:#f2f6fc; }
+  .dot3 { display:flex; gap:6px; }
+  .dot3 i { width:10px; height:10px; border-radius:50%; background:#d0dbeb; display:block; }
+  .url { flex:1; font:400 12px ui-monospace,Menlo,monospace; color:#4b5b78; background:#fff; padding:6px 12px; border-radius:99px; }
+</style>
+</helmet>
+
+<div style="padding:48px 56px 90px; display:flex; flex-direction:column; gap:28px; font-family:'Alexandria',system-ui,sans-serif">
+  <div style="max-width:940px; display:flex; flex-direction:column; gap:12px">
+    <span style="font:600 12px ui-monospace,Menlo,monospace; letter-spacing:.12em; color:#1e5fb3">ADMIN · V1 · AR-RTL · FULLY INTERACTIVE</span>
+    <h1 dir="rtl" style="margin:0; font:900 48px/1.28 Alexandria,system-ui,sans-serif; letter-spacing:-.035em">Aldebyani · لوحة الإدارة</h1>
+    <p style="margin:0; font:400 15px/1.7 Cairo,system-ui,sans-serif; color:#2c3c5e; max-width:76ch">One admin role, full access. The right sidebar switches between the eight sections. The header switch moves between Saudi Arabia and Turkey: currency, zones, names and settings change, and each region keeps its own settings. All figures are sample data for the mockup.</p>
+  </div>
+
+  <div class="scr" style="width:1440px; background:#fff; border-radius:22px; overflow:hidden; box-shadow:0 18px 50px rgba(15,58,115,.14); flex:none">
+    <div style="display:flex; align-items:center; gap:10px; padding:11px 16px; background:#f2f6fc">
+      <div style="display:flex; gap:6px"><i style="width:10px; height:10px; border-radius:50%; background:#d0dbeb; display:block"></i><i style="width:10px; height:10px; border-radius:50%; background:#d0dbeb; display:block"></i><i style="width:10px; height:10px; border-radius:50%; background:#d0dbeb; display:block"></i></div>
+      <div style="flex:1; font:400 12px ui-monospace,Menlo,monospace; color:#4b5b78; background:#fff; padding:6px 12px; border-radius:99px">aldebyani.com{{ route }}</div>
+    </div>
+
+    <div class="ar" dir="rtl" style="display:grid; grid-template-columns:268px minmax(0,1fr); min-height:980px">
+
+      <!-- SIDEBAR -->
+      <div style="background:#0f3a73; color:#fff; padding:26px 18px; display:flex; flex-direction:column; gap:6px">
+        <div style="padding:0 10px 22px; display:flex; align-items:center; gap:10px">
+          <span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em; color:#fff">Aldebyani</span>
+          <span style="background:#dbe7f6; color:#0f3a73; border-radius:99px; padding:5px 12px; font:700 12px Cairo,system-ui,sans-serif">الإدارة</span>
+        </div>
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="8">
+          <button class="pill" onClick="{{ n.go }}" style="{{ n.style }}">
+            <span style="display:flex; align-items:center; gap:12px; width:100%">
+              <span style="{{ n.dot }}"></span>
+              <span style="flex:1; text-align:start; font:700 14px Cairo,system-ui,sans-serif">{{ n.label }}</span>
+              <span style="{{ n.badgeStyle }}">{{ n.badge }}</span>
+            </span>
+          </button>
+        </sc-for>
+        <div style="flex:1"></div>
+        <div style="background:rgba(255,255,255,.08); border-radius:18px; padding:16px 18px; font:500 12px/1.7 Cairo,system-ui,sans-serif; color:#dbe7f6">لا يعدّل أي إجراء إداري سجل القيود المالية. كل تصحيح يُسجَّل كقيد معاكس جديد.</div>
+      </div>
+
+      <!-- MAIN -->
+      <div style="background:#fff; display:flex; flex-direction:column; min-width:0">
+        <div style="display:flex; align-items:center; gap:18px; padding:20px 32px; border-bottom:2px solid #f2f6fc">
+          <div style="flex:1; min-width:0">
+            <div style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ crumb }}</div>
+            <h1 style="font:900 30px Alexandria,system-ui,sans-serif">{{ title }}</h1>
+          </div>
+          <div style="position:relative; width:320px; flex:none">
+            <input class="fld" value="{{ q }}" onChange="{{ onQ }}" placeholder="ابحث برقم الطلب أو الجوال أو الاسم" style="width:100%; box-sizing:border-box; padding:11px 44px 11px 16px; font-size:13px; border-radius:99px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b5b78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; top:50%; right:16px; transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          </div>
+          <div style="display:flex; gap:4px; background:#f2f6fc; border-radius:99px; padding:4px">
+            <sc-for list="{{ regions }}" as="r" hint-placeholder-count="2">
+              <button class="pill" onClick="{{ r.pick }}" style="{{ r.style }}">{{ r.label }}</button>
+            </sc-for>
+          </div>
+          <span style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif">م</span>
+        </div>
+
+        <div style="padding:28px 32px 36px; display:flex; flex-direction:column; gap:18px">
+
+          <!-- ========== DASHBOARD ========== -->
+          <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-direction:column; gap:18px">
+              <div style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px">
+                <div style="background:#dbe7f6; border-radius:24px; padding:24px 26px">
+                  <div style="font:700 12px Cairo,system-ui,sans-serif">يحتاج إجراءً</div>
+                  <div style="font:900 52px/1.05 Alexandria,system-ui,sans-serif; margin:10px 0 6px">{{ actionTotal }}</div>
+                  <div style="font:500 12px/1.6 Cairo,system-ui,sans-serif">مزودون ونزاعات ومواعيد منتهية</div>
+                </div>
+                <div style="background:#f2f6fc; border-radius:24px; padding:24px 26px">
+                  <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78">محفوظ لدى مزود الدفع الآن</div>
+                  <div style="font:900 32px/1.2 Alexandria,system-ui,sans-serif; margin:10px 0 6px; white-space:nowrap">{{ escrowTotal }}</div>
+                  <div style="font:500 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">{{ escrowCount }} طلبًا ممولًا لم يُحرَّر بعد</div>
+                </div>
+                <div style="background:#f2f6fc; border-radius:24px; padding:24px 26px">
+                  <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78">إيراد المنصة · هذا الشهر</div>
+                  <div style="font:900 32px/1.2 Alexandria,system-ui,sans-serif; margin:10px 0 6px; white-space:nowrap">{{ revTotal }}</div>
+                  <div style="font:500 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">عمولة {{ revComm }} · رسوم فتح {{ revUnlock }}</div>
+                </div>
+                <div style="background:#f2f6fc; border-radius:24px; padding:24px 26px">
+                  <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78">نشطون آخر 30 يومًا</div>
+                  <div style="display:flex; gap:22px; margin-top:12px">
+                    <div><div style="font:900 34px/1.1 Alexandria,system-ui,sans-serif">{{ activeProv }}</div><div style="font:500 12px Cairo,system-ui,sans-serif">مزودًا</div></div>
+                    <div><div style="font:900 34px/1.1 Alexandria,system-ui,sans-serif">{{ activeCust }}</div><div style="font:500 12px Cairo,system-ui,sans-serif">عميلًا</div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1.35fr 1fr; gap:14px; align-items:start">
+                <div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden">
+                  <div style="padding:18px 22px; display:flex; align-items:center; gap:12px; border-bottom:2px solid #f2f6fc">
+                    <h3 style="flex:1; font:800 19px Alexandria,system-ui,sans-serif">يحتاج إجراءً منك</h3>
+                    <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">الأقدم أولًا</span>
+                  </div>
+                  <sc-for list="{{ actions }}" as="a" hint-placeholder-count="5">
+                    <div style="display:flex; align-items:center; gap:14px; padding:16px 22px; border-bottom:2px solid #f2f6fc">
+                      <span style="{{ a.chip }}">{{ a.kind }}</span>
+                      <span style="flex:1; min-width:0">
+                        <span style="display:block; font:700 14px Cairo,system-ui,sans-serif">{{ a.title }}</span>
+                        <span style="display:block; font:400 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">{{ a.note }}</span>
+                      </span>
+                      <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ a.age }}</span>
+                      <button class="pill" onClick="{{ a.go }}" style="background:#0f3a73; color:#fff; padding:10px 18px; font-size:13px">فتح</button>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="border:2px solid #e4ecf7; border-radius:24px; padding:20px 22px">
+                  <h3 style="font:800 19px Alexandria,system-ui,sans-serif; margin-bottom:14px">المحفوظ حسب حالة الطلب</h3>
+                  <div style="display:flex; flex-direction:column; gap:12px">
+                    <sc-for list="{{ escrowRows }}" as="e" hint-placeholder-count="5">
+                      <div>
+                        <div style="display:flex; justify-content:space-between; font:600 13px Cairo,system-ui,sans-serif; margin-bottom:6px"><span>{{ e.label }}</span><span>{{ e.amount }}</span></div>
+                        <div style="height:10px; border-radius:99px; background:#f2f6fc"><div style="{{ e.bar }}"></div></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="font:400 12px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:16px">المحفوظ = المُحرَّر + المسترد + المتبقي، في كل طلب وفي كل الأوقات.</div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ========== REQUESTS ========== -->
+          <sc-if value="{{ isReq }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:14px">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+                <sc-for list="{{ reqFilters }}" as="f" hint-placeholder-count="7">
+                  <button class="pill" onClick="{{ f.pick }}" style="{{ f.style }}">{{ f.label }}</button>
+                </sc-for>
+                <span style="flex:1"></span>
+                <span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">الترتيب</span>
+                <sc-for list="{{ reqSorts }}" as="o" hint-placeholder-count="2">
+                  <button class="pill" onClick="{{ o.pick }}" style="{{ o.style }}">{{ o.label }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ qOn }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; align-items:center; gap:10px; font:600 13px Cairo,system-ui,sans-serif; color:#2c3c5e">
+                  <span>نتائج البحث عن «{{ q }}»: {{ reqCount }}</span>
+                  <button class="pill" onClick="{{ clearQ }}" style="background:#f2f6fc; color:#0f3a73; padding:7px 14px; font-size:12px">مسح البحث</button>
+                </div>
+              </sc-if>
+              <div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden">
+                <div style="display:grid; grid-template-columns:80px minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 170px 110px 150px; gap:14px; padding:12px 22px; background:#f2f6fc; font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78">
+                  <span>الطلب</span><span>الخدمة والحي</span><span>العميل</span><span>المزود</span><span>الحالة</span><span>المبلغ</span><span></span>
+                </div>
+                <sc-for list="{{ reqRows }}" as="r" hint-placeholder-count="8">
+                  <div style="display:grid; grid-template-columns:80px minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 170px 110px 150px; gap:14px; align-items:center; padding:14px 22px; border-top:2px solid #f2f6fc; font:500 13px Cairo,system-ui,sans-serif">
+                    <span style="font:700 13px Cairo,system-ui,sans-serif">{{ r.ref }}</span>
+                    <span style="min-width:0"><span style="display:block; font:700 13px Cairo,system-ui,sans-serif">{{ r.service }}</span><span style="display:block; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ r.zone }} · {{ r.age }}</span></span>
+                    <span style="min-width:0"><span style="display:block">{{ r.customer }}</span><span dir="ltr" style="display:block; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; text-align:end">{{ r.phone }}</span></span>
+                    <span>{{ r.provider }}</span>
+                    <span><span style="{{ r.chip }}">{{ r.state }}</span></span>
+                    <span style="font:800 14px Alexandria,system-ui,sans-serif">{{ r.amount }}</span>
+                    <span style="display:flex; justify-content:flex-end">
+                      <sc-if value="{{ r.isDisp }}" hint-placeholder-val="{{ false }}"><button class="pill" onClick="{{ r.go }}" style="background:#0f3a73; color:#fff; padding:9px 16px; font-size:12px">افتح النزاع</button></sc-if>
+                      <sc-if value="{{ r.isCancel }}" hint-placeholder-val="{{ false }}"><a class="pill" href="#a3" style="background:#fff; border:2px solid #e4ecf7; color:#0f3a73; padding:8px 14px; font-size:12px">إلغاء أو استرداد</a></sc-if>
+                    </span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ reqEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:28px 22px; border-top:2px solid #f2f6fc; font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">لا توجد طلبات تطابق البحث أو الفلتر. جرّب رقم الطلب كاملًا أو آخر 4 أرقام من الجوال.</div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ========== PROVIDERS ========== -->
+          <sc-if value="{{ isProv }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:340px minmax(0,1fr); gap:14px; align-items:start">
+              <div style="display:flex; flex-direction:column; gap:8px">
+                <div style="display:flex; gap:6px; margin-bottom:6px">
+                  <sc-for list="{{ provFilters }}" as="f" hint-placeholder-count="3">
+                    <button class="pill" onClick="{{ f.pick }}" style="{{ f.style }}">{{ f.label }}</button>
+                  </sc-for>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px">
+                  <span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">الترتيب</span>
+                  <sc-for list="{{ provSorts }}" as="o" hint-placeholder-count="2">
+                    <button class="pill" onClick="{{ o.pick }}" style="{{ o.style }}">{{ o.label }}</button>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ bulkOn }}" hint-placeholder-val="{{ false }}">
+                  <button class="pill" onClick="{{ bulkApprove }}" style="background:#0f3a73; color:#fff; padding:12px 16px; font-size:13px; width:100%; text-align:start">اعتمد كل من اكتملت مستنداته ({{ bulkCount }})</button>
+                </sc-if>
+                <sc-for list="{{ provList }}" as="p" hint-placeholder-count="4">
+                  <button class="pill" onClick="{{ p.pick }}" style="{{ p.style }}">
+                    <span style="display:flex; align-items:center; gap:12px; width:100%">
+                      <span class="ph" style="width:42px; height:42px; border-radius:50%; flex:none"></span>
+                      <span style="flex:1; min-width:0; text-align:start">
+                        <span style="display:block; font:700 14px Cairo,system-ui,sans-serif">{{ p.name }}</span>
+                        <span style="display:block; font:400 12px Cairo,system-ui,sans-serif; opacity:.7">{{ p.meta }}</span>
+                      </span>
+                      <span style="{{ p.chip }}">{{ p.state }}</span>
+                    </span>
+                  </button>
+                </sc-for>
+                <sc-if value="{{ provEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:#f2f6fc; border-radius:18px; padding:22px; font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78; text-align:center">لا يوجد مزودون في هذا القسم.</div>
+                </sc-if>
+              </div>
+
+              <sc-if value="{{ provHas }}" hint-placeholder-val="{{ true }}">
+                <div style="border:2px solid #e4ecf7; border-radius:24px; padding:26px 28px">
+                  <div style="display:flex; align-items:flex-start; gap:18px; margin-bottom:20px">
+                    <div class="ph" style="width:78px; height:78px; border-radius:50%; flex:none"></div>
+                    <div style="flex:1">
+                      <h2 style="font:900 28px Alexandria,system-ui,sans-serif">{{ prov.name }}</h2>
+                      <div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:4px">{{ prov.meta }} · {{ prov.phone }} · سُجّل {{ prov.since }}</div>
+                      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px">
+                        <sc-for list="{{ prov.services }}" as="sv" hint-placeholder-count="3">
+                          <span style="background:#f2f6fc; border-radius:99px; padding:6px 12px; font:600 12px Cairo,system-ui,sans-serif">{{ sv.label }}</span>
+                        </sc-for>
+                      </div>
+                    </div>
+                    <span style="{{ prov.chip }}">{{ prov.state }}</span>
+                  </div>
+
+                  <div style="background:#f2f6fc; border-radius:18px; padding:16px 18px; font:500 13px/1.8 Cairo,system-ui,sans-serif; margin-bottom:18px">{{ prov.bio }}</div>
+
+                  <h3 style="font:800 17px Alexandria,system-ui,sans-serif; margin-bottom:12px">المستندات — راجع كل مستند يدويًا</h3>
+                  <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:20px">
+                    <sc-for list="{{ prov.docs }}" as="d" hint-placeholder-count="3">
+                      <div style="{{ d.wrap }}">
+                        <div class="ph" style="height:120px; border-radius:14px; margin-bottom:12px"><span>{{ d.file }}</span></div>
+                        <div style="font:700 14px Cairo,system-ui,sans-serif">{{ d.label }}</div>
+                        <div style="font:400 12px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78; margin:3px 0 12px">{{ d.note }}</div>
+                        <button class="pill" onClick="{{ d.toggle }}" style="{{ d.btn }}">{{ d.btnLabel }}</button>
+                      </div>
+                    </sc-for>
+                  </div>
+
+                  <sc-if value="{{ prov.pending }}" hint-placeholder-val="{{ true }}">
+                    <div>
+                      <label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">سبب الرفض (يُرسل للمزود إن رفضت)</label>
+                      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px">
+                        <sc-for list="{{ rejectReasons }}" as="rr" hint-placeholder-count="3">
+                          <button class="pill" onClick="{{ rr.pick }}" style="{{ rr.style }}">{{ rr.label }}</button>
+                        </sc-for>
+                      </div>
+                      <div style="display:flex; align-items:center; gap:10px">
+                        <button class="pill" onClick="{{ approve }}" style="{{ approveStyle }}">{{ approveLabel }}</button>
+                        <button class="pill" onClick="{{ reject }}" style="background:#fff; border:2px solid #0f3a73; color:#0f3a73; padding:14px 26px; font-size:15px">رفض الطلب</button>
+                        <span style="flex:1"></span>
+                        <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ docProgress }}</span>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ prov.decided }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; align-items:center; gap:14px; background:#dbe7f6; border-radius:18px; padding:16px 20px">
+                      <span style="flex:1; font:600 14px/1.7 Cairo,system-ui,sans-serif">{{ prov.decisionNote }}</span>
+                      <button class="pill" onClick="{{ undoDecision }}" style="background:#fff; color:#0f3a73; padding:11px 20px; font-size:13px">تراجع</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <!-- ========== DISPUTES ========== -->
+          <sc-if value="{{ isDisp }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:340px minmax(0,1fr); gap:14px; align-items:start">
+              <div style="display:flex; flex-direction:column; gap:8px">
+                <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px">
+                  <span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">الترتيب</span>
+                  <sc-for list="{{ dispSorts }}" as="o" hint-placeholder-count="2">
+                    <button class="pill" onClick="{{ o.pick }}" style="{{ o.style }}">{{ o.label }}</button>
+                  </sc-for>
+                </div>
+                <sc-for list="{{ dispList }}" as="d" hint-placeholder-count="3">
+                  <button class="pill" onClick="{{ d.pick }}" style="{{ d.style }}">
+                    <span style="display:block; text-align:start; width:100%">
+                      <span style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+                        <span style="{{ d.chip }}">{{ d.state }}</span>
+                        <span style="font:500 12px Cairo,system-ui,sans-serif; opacity:.7">{{ d.ref }}</span>
+                        <span style="flex:1"></span>
+                        <span style="font:800 14px Alexandria,system-ui,sans-serif">{{ d.amount }}</span>
+                      </span>
+                      <span style="display:block; font:700 14px Cairo,system-ui,sans-serif">{{ d.reason }}</span>
+                      <span style="display:block; font:400 12px Cairo,system-ui,sans-serif; opacity:.7; margin-top:2px">{{ d.age }}</span>
+                    </span>
+                  </button>
+                </sc-for>
+              </div>
+
+              <div style="border:2px solid #e4ecf7; border-radius:24px; padding:26px 28px">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px">
+                  <span style="{{ disp.chip }}">{{ disp.state }}</span>
+                  <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ disp.ref }} · فُتح من حالة {{ disp.from }}</span>
+                </div>
+                <h2 style="font:900 26px Alexandria,system-ui,sans-serif; margin:8px 0 4px">{{ disp.reason }}</h2>
+                <div style="font:500 13px Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:18px">{{ disp.service }} · {{ disp.zone }}</div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px">
+                  <div style="background:#f2f6fc; border-radius:18px; padding:16px 18px">
+                    <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:6px">العميل — {{ disp.customer }}</div>
+                    <div style="font:500 13px/1.8 Cairo,system-ui,sans-serif">{{ disp.customerText }}</div>
+                  </div>
+                  <div style="background:#f2f6fc; border-radius:18px; padding:16px 18px">
+                    <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:6px">المزود — {{ disp.provider }}</div>
+                    <div style="font:500 13px/1.8 Cairo,system-ui,sans-serif">{{ disp.providerText }}</div>
+                  </div>
+                </div>
+
+                <h3 style="font:800 16px Alexandria,system-ui,sans-serif; margin-bottom:10px">التسلسل الزمني</h3>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:22px">
+                  <sc-for list="{{ disp.timeline }}" as="t" hint-placeholder-count="5">
+                    <div style="display:flex; align-items:center; gap:12px; font:500 13px Cairo,system-ui,sans-serif">
+                      <span style="width:9px; height:9px; border-radius:50%; background:#0f3a73; flex:none"></span>
+                                            <span style="flex:1">{{ t.label }}</span>
+                      <span style="color:#4b5b78; font-size:12px; flex:none; white-space:nowrap">{{ t.when }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{ disp.open }}" hint-placeholder-val="{{ true }}">
+                  <div style="background:#eaf1fa; border-radius:22px; padding:22px 24px">
+                    <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:14px">
+                      <h3 style="flex:1; font:800 18px Alexandria,system-ui,sans-serif">القرار</h3>
+                      <span style="font:600 13px Cairo,system-ui,sans-serif">المبلغ المحفوظ: {{ disp.amount }}</span>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-bottom:16px">
+                      <sc-for list="{{ resModes }}" as="m" hint-placeholder-count="3">
+                        <button class="pill" onClick="{{ m.pick }}" style="{{ m.style }}">{{ m.label }}</button>
+                      </sc-for>
+                    </div>
+                    <sc-if value="{{ isPartial }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-bottom:14px">
+                        <div style="display:flex; justify-content:space-between; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:6px"><span>نسبة التحرير للمزود</span><span>{{ pctLabel }}</span></div>
+                        <input type="range" min="5" max="95" step="5" value="{{ pct }}" onChange="{{ onPct }}" style="width:100%">
+                      </div>
+                    </sc-if>
+                    <div style="background:#fff; border-radius:16px; padding:14px 18px; display:flex; flex-direction:column; gap:8px; margin-bottom:16px; font-family:Cairo,system-ui,sans-serif">
+                      <div style="display:flex; justify-content:space-between; font:600 13px"><span>يُحرَّر للمزود</span><span>{{ splitProv }}</span></div>
+                      <div style="display:flex; justify-content:space-between; font:600 13px"><span>يُسترد للعميل</span><span>{{ splitCust }}</span></div>
+                      <div style="height:2px; background:#eef3fa"></div>
+                      <div style="display:flex; justify-content:space-between; font:700 13px; color:#4b5b78"><span>المجموع = المحفوظ</span><span>{{ disp.amount }}</span></div>
+                    </div>
+                    <input class="fld" placeholder="ملاحظة القرار — تظهر للطرفين" style="width:100%; margin-bottom:14px">
+                    <button class="pill" onClick="{{ resolve }}" style="background:#0f3a73; color:#fff; padding:15px 28px; font-size:15px">اعتمد القرار</button>
+                    <span style="font:400 12px Cairo,system-ui,sans-serif; color:#2c3c5e; margin-inline-start:12px">يُنفَّذ مرة واحدة فقط، ويوقف التحرير التلقائي.</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ disp.closed }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; align-items:center; gap:14px; background:#dbe7f6; border-radius:18px; padding:16px 20px">
+                    <span style="flex:1; font:600 14px/1.7 Cairo,system-ui,sans-serif">{{ disp.outcome }}</span>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ========== CATALOG ========== -->
+          <sc-if value="{{ isCat }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:280px minmax(0,1fr); gap:14px; align-items:start">
+              <div style="display:flex; flex-direction:column; gap:8px">
+                <div style="font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:4px">الفئات</div>
+                <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+                  <div style="{{ c.wrap }}">
+                    <button class="pill" onClick="{{ c.pick }}" style="background:transparent; color:inherit; padding:0; flex:1; text-align:start">
+                      <span style="display:block; font:700 14px Cairo,system-ui,sans-serif">{{ c.label }}</span>
+                      <span style="display:block; font:400 12px Cairo,system-ui,sans-serif; opacity:.7">{{ c.meta }}</span>
+                    </button>
+                    <button class="pill" onClick="{{ c.toggle }}" style="{{ c.switchStyle }}"><span style="{{ c.knob }}"></span></button>
+                  </div>
+                </sc-for>
+                <button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:13px; font-size:13px; margin-top:4px">+ فئة جديدة</button>
+              </div>
+
+              <div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden">
+                <div style="padding:16px 22px; display:flex; align-items:center; gap:8px; border-bottom:2px solid #f2f6fc">
+                  <h3 style="flex:1; font:800 19px Alexandria,system-ui,sans-serif">{{ catName }}</h3>
+                  <sc-for list="{{ catTabs }}" as="t" hint-placeholder-count="4">
+                    <button class="pill" onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</button>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{ tabQ }}" hint-placeholder-val="{{ true }}">
+                  <div>
+                    <div style="display:flex; padding:12px 22px; background:#f2f6fc; font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78">
+                      <span style="width:34px"></span><span style="flex:1">السؤال</span><span style="width:150px">المفتاح</span><span style="width:110px">النوع</span><span style="width:150px">التحقق</span><span style="width:90px">يؤثر بالسعر</span><span style="width:60px">مفعّل</span>
+                    </div>
+                    <sc-for list="{{ questions }}" as="q" hint-placeholder-count="5">
+                      <div style="{{ q.row }}">
+                        <span style="width:34px; display:flex; flex-direction:column; gap:2px">
+                          <button class="pill" onClick="{{ q.up }}" style="background:#f2f6fc; color:#0f3a73; width:24px; height:18px; font-size:12px; padding:0">▲</button>
+                          <button class="pill" onClick="{{ q.down }}" style="background:#f2f6fc; color:#0f3a73; width:24px; height:18px; font-size:12px; padding:0">▼</button>
+                        </span>
+                        <span style="flex:1; min-width:0">
+                          <span style="display:block; font:700 14px Cairo,system-ui,sans-serif">{{ q.label }}</span>
+                          <span style="display:block; font:400 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ q.opts }}</span>
+                        </span>
+                        <span class="mono" style="width:150px; font-size:12px; color:#0f3a73">{{ q.key }}</span>
+                        <span style="width:110px; font:500 12px Cairo,system-ui,sans-serif">{{ q.type }}</span>
+                        <span style="width:150px; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ q.valid }}</span>
+                        <span style="width:90px"><span style="{{ q.priceChip }}">{{ q.price }}</span></span>
+                        <span style="width:60px"><button class="pill" onClick="{{ q.toggle }}" style="{{ q.switchStyle }}"><span style="{{ q.knob }}"></span></button></span>
+                      </div>
+                    </sc-for>
+                    <div style="padding:16px 22px; display:flex; align-items:center; gap:12px">
+                      <button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:12px 22px; font-size:13px">+ سؤال جديد</button>
+                      <span style="font:400 12px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">المفتاح ثابت ولا يُعاد تسميته. الأسئلة تُعطَّل ولا تُحذف حتى تبقى الإجابات القديمة مقروءة. النص الحر لا يؤثر على السعر.</span>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ tabS }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <sc-for list="{{ catServices }}" as="s" hint-placeholder-count="3">
+                      <div style="display:flex; align-items:center; gap:14px; padding:16px 22px; border-bottom:2px solid #f2f6fc">
+                        <span style="flex:1; font:700 14px Cairo,system-ui,sans-serif">{{ s.label }}</span>
+                        <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ s.note }}</span>
+                        <span style="background:#dbe7f6; border-radius:99px; padding:6px 12px; font:700 12px Cairo,system-ui,sans-serif">{{ s.state }}</span>
+                      </div>
+                    </sc-for>
+                    <div style="padding:16px 22px"><button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:12px 22px; font-size:13px">+ خدمة جديدة</button></div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ tabA }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <sc-for list="{{ catAddons }}" as="a" hint-placeholder-count="3">
+                      <div style="display:flex; align-items:center; gap:14px; padding:16px 22px; border-bottom:2px solid #f2f6fc">
+                        <span style="flex:1; font:700 14px Cairo,system-ui,sans-serif">{{ a.label }}</span>
+                        <span class="mono" style="font-size:12px; color:#0f3a73">{{ a.key }}</span>
+                        <span style="font:800 15px Alexandria,system-ui,sans-serif; width:110px; text-align:end">{{ a.price }}</span>
+                      </div>
+                    </sc-for>
+                    <div style="padding:16px 22px"><button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:12px 22px; font-size:13px">+ إضافة جديدة</button></div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ tabZ }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <sc-for list="{{ zones }}" as="z" hint-placeholder-count="4">
+                      <div style="display:flex; align-items:center; gap:14px; padding:14px 22px; border-bottom:2px solid #f2f6fc">
+                        <span style="flex:1; font:700 14px Cairo,system-ui,sans-serif">{{ z.label }}</span>
+                        <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">مضاعف السعر</span>
+                        <button class="pill" onClick="{{ z.dec }}" style="background:#f2f6fc; color:#0f3a73; width:32px; height:32px; font-size:15px">−</button>
+                        <span style="font:800 15px Alexandria,system-ui,sans-serif; width:56px; text-align:center">{{ z.mult }}</span>
+                        <button class="pill" onClick="{{ z.inc }}" style="background:#f2f6fc; color:#0f3a73; width:32px; height:32px; font-size:15px">+</button>
+                      </div>
+                    </sc-for>
+                    <div style="padding:16px 22px; font:400 12px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">المضاعف يُطبَّق بعد المعدِّلات والإضافات، قبل التقريب.</div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ========== PRICING ========== -->
+          <sc-if value="{{ isPrice }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:14px; align-items:start">
+              <div style="border:2px solid #e4ecf7; border-radius:24px; padding:24px 26px">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px">
+                  <h3 style="flex:1; font:800 19px Alexandria,system-ui,sans-serif">معادلة «تنظيف منازل»</h3>
+                  <span style="background:#dbe7f6; border-radius:99px; padding:6px 13px; font:700 12px Cairo,system-ui,sans-serif">الإصدار {{ formulaVer }}</span>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:14px; background:#f2f6fc; border-radius:18px; padding:16px 18px; margin-bottom:12px">
+                  <span style="font:800 13px Alexandria,system-ui,sans-serif; color:#4b5b78; width:22px">0</span>
+                  <span style="flex:1; font:700 14px Cairo,system-ui,sans-serif">السعر الأساسي</span>
+                  <button class="pill" onClick="{{ baseDec }}" style="background:#fff; color:#0f3a73; width:34px; height:34px; font-size:15px">−</button>
+                  <span style="font:900 18px Alexandria,system-ui,sans-serif; width:110px; text-align:center">{{ baseLabel }}</span>
+                  <button class="pill" onClick="{{ baseInc }}" style="background:#fff; color:#0f3a73; width:34px; height:34px; font-size:15px">+</button>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:10px">
+                  <sc-for list="{{ mods }}" as="m" hint-placeholder-count="4">
+                    <div style="border:2px solid #e4ecf7; border-radius:18px; padding:14px 16px">
+                      <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px">
+                        <span style="font:800 13px Alexandria,system-ui,sans-serif; color:#4b5b78; width:22px">{{ m.n }}</span>
+                        <span style="flex:1; font:700 14px Cairo,system-ui,sans-serif">{{ m.label }} <span class="mono" style="font-size:12px; color:#0f3a73">{{ m.key }}</span></span>
+                        <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ m.cond }}</span>
+                        <button class="pill" onClick="{{ m.up }}" style="background:#f2f6fc; color:#0f3a73; width:28px; height:28px; font-size:12px">▲</button>
+                        <button class="pill" onClick="{{ m.down }}" style="background:#f2f6fc; color:#0f3a73; width:28px; height:28px; font-size:12px">▼</button>
+                      </div>
+                      <div style="display:flex; align-items:center; gap:8px; padding-inline-start:34px">
+                        <sc-for list="{{ m.effects }}" as="ef" hint-placeholder-count="3">
+                          <button class="pill" onClick="{{ ef.pick }}" style="{{ ef.style }}">{{ ef.label }}</button>
+                        </sc-for>
+                        <span style="flex:1"></span>
+                        <button class="pill" onClick="{{ m.dec }}" style="background:#f2f6fc; color:#0f3a73; width:30px; height:30px; font-size:14px">−</button>
+                        <span style="font:900 16px Alexandria,system-ui,sans-serif; width:100px; text-align:center">{{ m.value }}</span>
+                        <button class="pill" onClick="{{ m.inc }}" style="background:#f2f6fc; color:#0f3a73; width:30px; height:30px; font-size:14px">+</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px; font:600 13px Cairo,system-ui,sans-serif; color:#4b5b78">
+                  <div style="background:#f2f6fc; border-radius:14px; padding:12px 16px">ثم: الإضافات المختارة ← مضاعف المنطقة ← التقريب مرة واحدة</div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:12px; margin-top:18px">
+                  <button class="pill" onClick="{{ publish }}" style="{{ publishStyle }}">{{ publishLabel }}</button>
+                  <span style="font:400 12px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78">النشر ينشئ إصدارًا جديدًا. الطلبات الموجودة تحتفظ بلقطة سعرها ولا يُعاد تسعيرها.</span>
+                </div>
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:14px">
+                <div style="background:#dbe7f6; border-radius:24px; padding:24px 26px">
+                  <div style="font:700 12px Cairo,system-ui,sans-serif">جرّب المعادلة</div>
+                  <div style="display:flex; align-items:baseline; gap:8px; margin:8px 0 16px"><span style="font:900 56px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.04em">{{ testTotal }}</span><span style="font:800 17px Alexandria,system-ui,sans-serif">{{ cur }}</span></div>
+                  <div style="background:#fff; border-radius:18px; padding:16px 18px; display:flex; flex-direction:column; gap:12px">
+                    <div style="display:flex; align-items:center; gap:10px"><span style="flex:1; font:600 13px Cairo,system-ui,sans-serif">rooms</span><button class="pill" onClick="{{ tRoomsDec }}" style="background:#f2f6fc; color:#0f3a73; width:28px; height:28px">−</button><span style="font:800 15px Alexandria,system-ui,sans-serif; width:30px; text-align:center">{{ tRooms }}</span><button class="pill" onClick="{{ tRoomsInc }}" style="background:#f2f6fc; color:#0f3a73; width:28px; height:28px">+</button></div>
+                    <div style="display:flex; align-items:center; gap:10px"><span style="flex:1; font:600 13px Cairo,system-ui,sans-serif">bathrooms</span><button class="pill" onClick="{{ tBathsDec }}" style="background:#f2f6fc; color:#0f3a73; width:28px; height:28px">−</button><span style="font:800 15px Alexandria,system-ui,sans-serif; width:30px; text-align:center">{{ tBaths }}</span><button class="pill" onClick="{{ tBathsInc }}" style="background:#f2f6fc; color:#0f3a73; width:28px; height:28px">+</button></div>
+                    <div style="display:flex; align-items:center; gap:10px"><span style="flex:1; font:600 13px Cairo,system-ui,sans-serif">property_type</span><button class="pill" onClick="{{ tVilla }}" style="{{ tVillaStyle }}">{{ tVillaLabel }}</button></div>
+                    <div style="display:flex; align-items:center; gap:10px"><span style="flex:1; font:600 13px Cairo,system-ui,sans-serif">has_pets</span><button class="pill" onClick="{{ tPets }}" style="{{ tPetsStyle }}">{{ tPetsLabel }}</button></div>
+                    <div style="display:flex; align-items:center; gap:10px"><span style="flex:1; font:600 13px Cairo,system-ui,sans-serif">إضافة: نوافذ</span><button class="pill" onClick="{{ tWin }}" style="{{ tWinStyle }}">{{ tWinLabel }}</button></div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap"><span style="font:600 13px Cairo,system-ui,sans-serif; width:100%">المنطقة</span>
+                      <sc-for list="{{ tZones }}" as="tz" hint-placeholder-count="4"><button class="pill" onClick="{{ tz.pick }}" style="{{ tz.style }}">{{ tz.label }}</button></sc-for>
+                    </div>
+                  </div>
+                </div>
+                <div style="border:2px solid #e4ecf7; border-radius:24px; padding:20px 22px">
+                  <h3 style="font:800 16px Alexandria,system-ui,sans-serif; margin-bottom:12px">تفصيل السعر — كما يُحفظ في لقطة الطلب</h3>
+                  <div style="display:flex; flex-direction:column; gap:8px">
+                    <sc-for list="{{ testLines }}" as="l" hint-placeholder-count="6">
+                      <div style="display:flex; justify-content:space-between; gap:12px; font:500 13px Cairo,system-ui,sans-serif"><span>{{ l.label }}</span><span class="mono" style="font-size:12px">{{ l.value }}</span></div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ========== SETTINGS ========== -->
+          <sc-if value="{{ isSet }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:14px">
+              <div style="background:#dbe7f6; border-radius:18px; padding:14px 20px; font:600 13px/1.7 Cairo,system-ui,sans-serif">تُطبَّق الإعدادات على {{ regionName }} فقط، وعلى الطلبات الجديدة بعد الحفظ. الطلبات الموجودة تحتفظ بقيمها.</div>
+              <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px">
+                <sc-for list="{{ settings }}" as="st" hint-placeholder-count="5">
+                  <div style="{{ st.wrap }}">
+                    <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px">
+                      <span style="flex:1; font:800 17px Alexandria,system-ui,sans-serif">{{ st.label }}</span>
+                    </div>
+                    <div style="font:400 12px/1.7 Cairo,system-ui,sans-serif; color:#4b5b78; margin-bottom:16px">{{ st.note }}</div>
+                    <div style="display:flex; align-items:center; gap:12px">
+                      <button class="pill" onClick="{{ st.dec }}" style="background:#f2f6fc; color:#0f3a73; width:40px; height:40px; font-size:18px">−</button>
+                      <span style="font:900 34px/1 Alexandria,system-ui,sans-serif; min-width:140px; text-align:center">{{ st.value }}</span>
+                      <button class="pill" onClick="{{ st.inc }}" style="background:#f2f6fc; color:#0f3a73; width:40px; height:40px; font-size:18px">+</button>
+                      <span style="flex:1"></span>
+                      <span style="{{ st.changedStyle }}">{{ st.changed }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; background:#eef4fd; border:2px solid #dbe7f6; border-radius:20px; padding:16px 22px; color:#0f3a73">
+                <span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">{{ dirtyLabel }}</span>
+                <button class="pill" onClick="{{ resetSettings }}" style="background:transparent; color:#0f3a73; border:2px solid rgba(255,255,255,.4); padding:12px 22px; font-size:14px">تراجع</button>
+                <button class="pill" onClick="{{ saveSettings }}" style="{{ saveStyle }}">احفظ الإعدادات</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ========== REPORTS ========== -->
+          <sc-if value="{{ isRep }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:14px">
+              <div style="display:flex; align-items:center; gap:8px">
+                <sc-for list="{{ periods }}" as="p" hint-placeholder-count="3">
+                  <button class="pill" onClick="{{ p.pick }}" style="{{ p.style }}">{{ p.label }}</button>
+                </sc-for>
+                <span style="flex:1"></span>
+                <button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:11px 20px; font-size:13px">تصدير CSV</button>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px">
+                <sc-for list="{{ repKpis }}" as="k" hint-placeholder-count="4">
+                  <div style="{{ k.wrap }}">
+                    <div style="font:700 12px Cairo,system-ui,sans-serif; opacity:.75">{{ k.label }}</div>
+                    <div style="font:900 32px/1.15 Alexandria,system-ui,sans-serif; margin-top:10px">{{ k.value }}</div>
+                    <div style="font:500 12px Cairo,system-ui,sans-serif; opacity:.75; margin-top:4px">{{ k.note }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="border:2px solid #e4ecf7; border-radius:24px; padding:22px 24px">
+                <div style="display:flex; align-items:center; gap:18px; margin-bottom:18px">
+                  <h3 style="flex:1; font:800 18px Alexandria,system-ui,sans-serif">إيراد المنصة</h3>
+                  <span style="display:flex; align-items:center; gap:6px; font:600 12px Cairo,system-ui,sans-serif"><span style="width:12px; height:12px; border-radius:3px; background:#0f3a73"></span>العمولة</span>
+                  <span style="display:flex; align-items:center; gap:6px; font:600 12px Cairo,system-ui,sans-serif"><span style="width:12px; height:12px; border-radius:3px; background:#dbe7f6"></span>رسوم فتح البيانات</span>
+                </div>
+                <div style="display:flex; align-items:flex-end; gap:10px; height:220px">
+                  <div style="display:flex; flex-direction:column; justify-content:space-between; height:190px; margin-bottom:30px; width:72px; flex:none; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">
+                    <sc-for list="{{ yTicks }}" as="y" hint-placeholder-count="3"><span>{{ y.v }}</span></sc-for>
+                  </div>
+                  <sc-for list="{{ bars }}" as="b" hint-placeholder-count="8">
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end">
+                      <div style="width:100%; display:flex; flex-direction:column; justify-content:flex-end; height:190px">
+                        <div style="{{ b.top }}"></div>
+                        <div style="{{ b.bottom }}"></div>
+                      </div>
+                      <span style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ b.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden">
+                <div style="display:flex; padding:12px 22px; background:#f2f6fc; font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78">
+                  <span style="flex:1">الفئة</span><span style="width:120px; text-align:end">طلبات مُحرَّرة</span><span style="width:160px; text-align:end">قيمة الطلبات</span><span style="width:140px; text-align:end">العمولة</span><span style="width:140px; text-align:end">رسوم الفتح</span>
+                </div>
+                <sc-for list="{{ repRows }}" as="r" hint-placeholder-count="4">
+                  <div style="display:flex; padding:14px 22px; border-top:2px solid #f2f6fc; font:500 13px Cairo,system-ui,sans-serif">
+                    <span style="flex:1; font-weight:700">{{ r.label }}</span><span style="width:120px; text-align:end">{{ r.count }}</span><span style="width:160px; text-align:end">{{ r.gmv }}</span><span style="width:140px; text-align:end">{{ r.comm }}</span><span style="width:140px; text-align:end">{{ r.unlock }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ========== LEAKAGE ========== -->
+          <sc-if value="{{ isLeak }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:14px">
+              <div style="display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:14px">
+                <div style="background:#f2f6fc; border-radius:22px; padding:20px 24px; font:500 13px/1.8 Cairo,system-ui,sans-serif; color:#2c3c5e">يقارن عدد مرات فتح المزود لبيانات العملاء بعدد الأعمال التي أُنجزت عبر المنصة. فتح بيانات دون إتمام قد يعني أن التعامل انتقل خارج المنصة. القائمة للمراجعة فقط ولا تتخذ إجراءً تلقائيًا.</div>
+                <div style="background:#eaf1fa; border-radius:22px; padding:20px 24px; display:flex; align-items:center; gap:14px">
+                  <span style="flex:1; font:700 14px Cairo,system-ui,sans-serif">حد التنبيه: نسبة الإتمام أقل من</span>
+                  <button class="pill" onClick="{{ thDec }}" style="background:#fff; color:#0f3a73; width:34px; height:34px">−</button>
+                  <span style="font:900 22px Alexandria,system-ui,sans-serif; width:64px; text-align:center">{{ thLabel }}</span>
+                  <button class="pill" onClick="{{ thInc }}" style="background:#fff; color:#0f3a73; width:34px; height:34px">+</button>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px">
+                <sc-for list="{{ leakFilters }}" as="f" hint-placeholder-count="2">
+                  <button class="pill" onClick="{{ f.pick }}" style="{{ f.style }}">{{ f.label }}</button>
+                </sc-for>
+                <span style="flex:1"></span>
+                <span style="font:600 13px Cairo,system-ui,sans-serif; color:#4b5b78">{{ leakCount }}</span>
+              </div>
+              <div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden">
+                <div style="display:flex; padding:12px 22px; background:#f2f6fc; font:700 12px Cairo,system-ui,sans-serif; color:#4b5b78">
+                  <span style="flex:1">المزود</span><span style="width:110px; text-align:center">فتح بيانات</span><span style="width:110px; text-align:center">إتمام</span><span style="width:220px">نسبة الإتمام</span><span style="width:110px"></span>
+                </div>
+                <sc-for list="{{ leakRows }}" as="l" hint-placeholder-count="6">
+                  <div style="{{ l.row }}">
+                    <span style="flex:1; min-width:0">
+                      <span style="display:block; font:700 14px Cairo,system-ui,sans-serif">{{ l.name }}</span>
+                      <span style="display:block; font:400 12px Cairo,system-ui,sans-serif; color:#4b5b78">{{ l.meta }}</span>
+                    </span>
+                    <span style="width:110px; text-align:center; font:800 16px Alexandria,system-ui,sans-serif">{{ l.unlocks }}</span>
+                    <span style="width:110px; text-align:center; font:800 16px Alexandria,system-ui,sans-serif">{{ l.done }}</span>
+                    <span style="width:220px; display:flex; align-items:center; gap:10px">
+                      <span style="flex:1; height:10px; border-radius:99px; background:#f2f6fc"><span style="{{ l.bar }}"></span></span>
+                      <span style="font:700 13px Cairo,system-ui,sans-serif; width:44px">{{ l.pct }}</span>
+                    </span>
+                    <span style="width:110px; display:flex; justify-content:flex-end"><span style="{{ l.chip }}">{{ l.flag }}</span></span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap"><a class="lbl" href="#a1">A1 ملف المزود</a><a class="lbl" href="#a2">A2 إجراءات المزود</a><a class="lbl" href="#a3">A3 إلغاء إداري</a><a class="lbl" href="#a4">A4 الأخطاء</a><a class="lbl" href="#a5">A5 الجوال</a><a class="lbl" href="#a6">A6 SMS والبريد</a></div>
+  <!-- ============ A1 ============ -->
+  <div id="a1" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#a1">A1</a><span style="font:600 13px Alexandria,system-ui,sans-serif">ملف المزود — lifecycle, derived metrics (read-only), documents, admin actions</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:1440px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/admin/providers/ahmed-saeed</div></div><div class="ar" dir="rtl" style="display:grid; grid-template-columns:268px minmax(0,1fr)"><div style="background:#0f3a73; color:#fff; padding:26px 18px; display:flex; flex-direction:column; gap:6px"><div style="padding:0 10px 22px; display:flex; align-items:center; gap:10px"><span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em; color:#fff">Aldebyani</span><span style="background:#dbe7f6; color:#0f3a73; border-radius:99px; padding:5px 12px; font:700 12px Cairo,system-ui,sans-serif">الإدارة</span></div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">لوحة التحكم</div><div style="background:#dbe7f6; color:#0f3a73; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">اعتماد المزودين</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">النزاعات</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">الكتالوج</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">قواعد التسعير</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">الإعدادات</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">التقارير</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">مراقبة التسرّب</div></div><div style="background:#fff; min-width:0"><div style="display:flex; align-items:center; gap:18px; padding:20px 32px; border-bottom:2px solid #f2f6fc"><div style="flex:1"><div style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">المزودون › أحمد سعيد عبد الحميد</div><h1 style="font:900 30px Alexandria,system-ui,sans-serif; margin:0">ملف المزود</h1></div><div style="display:flex; gap:4px; background:#f2f6fc; border-radius:99px; padding:4px"><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 18px; font:700 13px Cairo,system-ui,sans-serif">السعودية</span><span style="border-radius:99px; padding:9px 18px; font:700 13px Cairo,system-ui,sans-serif">تركيا</span></div><a href="#a1" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">م</a></div><div style="padding:28px 32px 36px"><div style="display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:14px; align-items:start"><div style="min-width:0"><div style="display:flex; align-items:center; gap:18px; margin-bottom:20px"><div class="ph" style="width:76px; height:76px; border-radius:50%; flex:none"></div><div style="flex:1"><div style="font:900 26px/1.3 Alexandria,system-ui,sans-serif">أحمد سعيد عبد الحميد</div><div style="display:flex; gap:8px; margin-top:6px"><span style="background:#eaf1fa; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">نشط</span><span style="background:#f2f6fc; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">عضو منذ مارس 2024</span><span style="background:#f2f6fc; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">تنظيف منازل · الملقا، النرجس، حطين</span></div></div></div>
+   <div style="display:flex; gap:6px; margin-bottom:22px"><div style="flex:1; text-align:center"><div style="height:8px; border-radius:99px; background:#0f3a73; margin-bottom:8px"></div><span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">تقدّم</span></div><div style="flex:1; text-align:center"><div style="height:8px; border-radius:99px; background:#0f3a73; margin-bottom:8px"></div><span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">رفع المستندات</span></div><div style="flex:1; text-align:center"><div style="height:8px; border-radius:99px; background:#0f3a73; margin-bottom:8px"></div><span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">تحقق المستندات</span></div><div style="flex:1; text-align:center"><div style="height:8px; border-radius:99px; background:#0f3a73; margin-bottom:8px"></div><span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">الفحص الأمني</span></div><div style="flex:1; text-align:center"><div style="height:8px; border-radius:99px; background:#0f3a73; margin-bottom:8px"></div><span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">التقييم</span></div><div style="flex:1; text-align:center"><div style="height:8px; border-radius:99px; background:#0f3a73; margin-bottom:8px"></div><span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">فترة التجربة</span></div><div style="flex:1; text-align:center"><div style="height:8px; border-radius:99px; background:#0f3a73; margin-bottom:8px"></div><span style="font:600 12px Cairo,system-ui,sans-serif; color:#0f3a73">نشط</span></div></div>
+   <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px"><span style="font:800 17px Alexandria,system-ui,sans-serif; flex:1">المؤشرات</span><span style="background:#dbe7f6; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">محسوبة تلقائيًا — لا تُعدَّل</span></div>
+   <div style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:10px"><div style="background:#f2f6fc; border-radius:20px; padding:18px 20px"><div style="font:900 26px/1.1 Alexandria,system-ui,sans-serif">4.8</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">التقييم · 26</div></div><div style="background:#f2f6fc; border-radius:20px; padding:18px 20px"><div style="font:900 26px/1.1 Alexandria,system-ui,sans-serif">34</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">أعمال على المنصة</div></div><div style="background:#f2f6fc; border-radius:20px; padding:18px 20px"><div style="font:900 26px/1.1 Alexandria,system-ui,sans-serif">98%</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">نسبة الإتمام</div></div><div style="background:#f2f6fc; border-radius:20px; padding:18px 20px"><div style="font:900 26px/1.1 Alexandria,system-ui,sans-serif">96%</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">الالتزام بالموعد</div></div><div style="background:#f2f6fc; border-radius:20px; padding:18px 20px"><div style="font:900 26px/1.1 Alexandria,system-ui,sans-serif">1%</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">نسبة الإلغاء</div></div><div style="background:#f2f6fc; border-radius:20px; padding:18px 20px"><div style="font:900 26px/1.1 Alexandria,system-ui,sans-serif">3%</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">نسبة النزاعات</div></div><div style="background:#f2f6fc; border-radius:20px; padding:18px 20px"><div style="font:900 26px/1.1 Alexandria,system-ui,sans-serif">31%</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; color:#4b5b78; margin-top:6px">تكرار العملاء</div></div><div style="background:#eaf1fa; border-radius:20px; padding:18px 20px"><div style="font:900 26px/1.1 Alexandria,system-ui,sans-serif">120</div><div style="font:500 12px/1.5 Cairo,system-ui,sans-serif; margin-top:6px">أعمال سابقة مستوردة · منفصلة</div></div></div>
+   <div style="font:800 17px Alexandria,system-ui,sans-serif; margin:22px 0 10px">المستندات</div>
+   <div style="border:2px solid #e4ecf7; border-radius:22px; overflow:hidden"><div style="display:flex; align-items:center; gap:14px; padding:14px 20px;"><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">الهوية الوطنية</span><span style="width:170px; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">سارية حتى 2029</span><span style="background:#eaf1fa; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">معتمد</span><a href="#a1" style="font:700 12px Cairo,system-ui,sans-serif; width:60px; text-align:start">عرض</a></div><div style="display:flex; align-items:center; gap:14px; padding:14px 20px; border-top:2px solid #f2f6fc;"><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">صورة حيّة مع الهوية</span><span style="width:170px; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">—</span><span style="background:#eaf1fa; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">معتمد</span><a href="#a1" style="font:700 12px Cairo,system-ui,sans-serif; width:60px; text-align:start">عرض</a></div><div style="display:flex; align-items:center; gap:14px; padding:14px 20px; border-top:2px solid #f2f6fc;"><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">السجل الجنائي</span><span style="width:170px; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">ينتهي فبراير 2027</span><span style="background:#eaf1fa; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">معتمد</span><a href="#a1" style="font:700 12px Cairo,system-ui,sans-serif; width:60px; text-align:start">عرض</a></div><div style="display:flex; align-items:center; gap:14px; padding:14px 20px; border-top:2px solid #f2f6fc;"><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">شهادة مهارة (اختياري)</span><span style="width:170px; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">—</span><span style="background:#f2f6fc; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">لم يُرفع</span><a href="#a1" style="font:700 12px Cairo,system-ui,sans-serif; width:60px; text-align:start">عرض</a></div><div style="display:flex; align-items:center; gap:14px; padding:14px 20px; border-top:2px solid #f2f6fc;"><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">الحساب البنكي</span><span style="width:170px; font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78">عبر مزود خدمة الدفع</span><span style="background:#eaf1fa; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">متحقَّق</span><a href="#a1" style="font:700 12px Cairo,system-ui,sans-serif; width:60px; text-align:start">عرض</a></div></div>
+   <div style="font:800 17px Alexandria,system-ui,sans-serif; margin:22px 0 10px">آخر التقييمات</div>
+   <div style="display:flex; flex-direction:column; gap:8px"><div style="border:2px solid #e4ecf7; border-radius:18px; padding:14px 18px; display:flex; gap:12px; align-items:center"><span style="font:700 14px Cairo,system-ui,sans-serif">هدى م.</span><span style="font:700 13px Cairo,system-ui,sans-serif">5 ★</span><span style="flex:1; font:400 13px Cairo,system-ui,sans-serif; color:#3d4d6c">وصل في الموعد تمامًا وترك المنزل نظيفًا جدًا.</span></div><div style="border:2px solid #e4ecf7; border-radius:18px; padding:14px 18px; display:flex; gap:12px; align-items:center"><span style="font:700 14px Cairo,system-ui,sans-serif">م. ع.</span><span style="font:700 13px Cairo,system-ui,sans-serif">4 ★</span><span style="background:#dbe7f6; color:#0f3a73; border-radius:99px; padding:7px 14px; font:700 12px Cairo,system-ui,sans-serif; white-space:nowrap; display:inline-block">مستورد — عميل سابق</span><span style="flex:1; font:400 13px Cairo,system-ui,sans-serif; color:#3d4d6c">كان دقيقًا جدًا في المواعيد.</span></div></div></div><div style="display:flex; flex-direction:column; gap:14px; min-width:0"><div style="background:#f2f6fc; border-radius:26px; padding:28px 30px; padding:24px 24px"><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">إجراءات</div><div style="display:flex; flex-direction:column; gap:8px"><a class="pill" href="#a2" style="background:#f2f6fc; color:#0f3a73; padding:14px 18px; font-size:14px; text-align:start; display:block">إيقاف الحساب مع ذكر السبب</a><a class="pill" href="#a2" style="background:#fff; color:#0f3a73; padding:14px 18px; font-size:14px; text-align:start; display:block">منح شارة المزود المؤسِّس</a><a class="pill" href="#a2" style="background:#fff; color:#0f3a73; padding:14px 18px; font-size:14px; text-align:start; display:block">استيراد أعمال سابقة</a><a class="pill" href="#a2" style="background:#fff; color:#0f3a73; padding:14px 18px; font-size:14px; text-align:start; display:block">إنشاء رابط دعوة للتقييم</a><a class="pill" href="#a2" style="background:#fff; color:#0f3a73; padding:14px 18px; font-size:14px; text-align:start; display:block">تعديل النبذة والمهارات</a></div></div>
+   <div style="background:#eaf1fa; border-radius:26px; padding:28px 30px; padding:22px 24px"><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#0f3a73; margin-bottom:12px">آخر تعديل إداري</div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#22324f">عُدّلت النبذة في 4 يوليو. يُحفظ التعديل مع علامة تبيّن أنه من الإدارة.</div></div></div></div></div></div></div></div></div>
+  </div>
+
+  <!-- ============ A2 ============ -->
+  <div id="a2" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#a2">A2</a><span style="font:600 13px Alexandria,system-ui,sans-serif">إجراءات المزود — suspend, rating invitation, legacy import</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:460px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">admin › إيقاف الحساب</div></div><div class="ar" dir="rtl" style="background:#eef1f6; padding:26px 34px 34px"><div style="background:#fff; border-radius:26px; padding:28px 26px; box-shadow:0 20px 50px rgba(15,58,115,.18)"><h3 style="margin:0 0 10px; font:900 24px Alexandria,system-ui,sans-serif">إيقاف أحمد سعيد عبد الحميد</h3><p style="margin:0px 0 0; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">لا يستطيع المزود الموقوف التقدّم على طلبات جديدة. يصله السبب الذي تكتبه.</p><div style="height:16px"></div><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">السبب (إلزامي، يُرسل للمزود)</label><div style="border:2px solid #dfe7f3; border-radius:16px; padding:14px 18px; font:500 14px/1.8 Cairo,system-ui,sans-serif; min-height:84px">انخفض متوسط التقييم عن الحد الأدنى بعد إنذار سابق.</div></div><div style="display:flex; gap:8px; margin-top:16px"><button class="pill" style="background:#0f3a73; color:#fff; padding:15px; font-size:14px; flex:1">أوقف الحساب</button><button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:15px 20px; font-size:14px">إلغاء</button></div></div></div></div><div class="scr" style="width:460px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">admin › رابط دعوة للتقييم</div></div><div class="ar" dir="rtl" style="background:#eef1f6; padding:26px 34px 34px"><div style="background:#fff; border-radius:26px; padding:28px 26px; box-shadow:0 20px 50px rgba(15,58,115,.18)"><h3 style="margin:0 0 10px; font:900 24px Alexandria,system-ui,sans-serif">رابط دعوة للتقييم</h3><p style="margin:0px 0 0; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">العميل السابق يكتب التقييم بنفسه. يظهر التقييم مُعلَّمًا كمستورد.</p><div style="height:16px"></div><div style="display:flex; flex-direction:column; gap:10px"><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">وصف العمل السابق</label><input class="fld" value="تنظيف عميق — فيلا" style="width:100%"></div><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">المكان والتاريخ</label><input class="fld" value="حي الياسمين · مارس 2024" style="width:100%"></div><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">صلاحية الرابط حتى</label><input class="fld" value="26 أكتوبر 2026" style="width:100%"></div></div><div dir="ltr" style="background:#f2f6fc; border-radius:14px; padding:12px 14px; font:500 12px ui-monospace,Menlo,monospace; margin-top:14px">aldebyani.com/rate/inv_7Kq2…</div><div style="display:flex; gap:8px; margin-top:14px"><button class="pill" style="background:#0f3a73; color:#fff; padding:15px; font-size:14px; flex:1">أنشئ الرابط ونسخه</button></div></div></div></div><div class="scr" style="width:460px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">admin › استيراد أعمال سابقة</div></div><div class="ar" dir="rtl" style="background:#eef1f6; padding:26px 34px 34px"><div style="background:#fff; border-radius:26px; padding:28px 26px; box-shadow:0 20px 50px rgba(15,58,115,.18)"><h3 style="margin:0 0 10px; font:900 24px Alexandria,system-ui,sans-serif">استيراد أعمال سابقة</h3><p style="margin:0px 0 0; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">يظهر الرقم منفصلًا ومُعلَّمًا في ملف المزود، ولا يدخل في عدد أعمال المنصة أو أي نسبة.</p><div style="height:16px"></div><div style="display:flex; flex-direction:column; gap:10px"><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">عدد الأعمال</label><input class="fld" value="120" style="width:100%"></div><div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">المصدر والإثبات</label><div style="border:2px solid #dfe7f3; border-radius:16px; padding:14px 18px; font:500 14px/1.8 Cairo,system-ui,sans-serif; min-height:84px">كشف أعمال من شركة سابقة، مرفق في ملف المزود.</div></div></div><div style="display:flex; gap:8px; margin-top:16px"><button class="pill" style="background:#0f3a73; color:#fff; padding:15px; font-size:14px; flex:1">استورد</button><button class="pill" style="background:#f2f6fc; color:#0f3a73; padding:15px 20px; font-size:14px">إلغاء</button></div></div></div></div></div>
+  </div>
+
+  <!-- ============ A3 ============ -->
+  <div id="a3" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#a3">A3</a><span style="font:600 13px Alexandria,system-ui,sans-serif">إلغاء أو استرداد إداري — attribution, outcome and ledger preview are interactive</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:1440px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/admin/requests/8412/resolve</div></div><div class="ar" dir="rtl" style="display:grid; grid-template-columns:268px minmax(0,1fr)"><div style="background:#0f3a73; color:#fff; padding:26px 18px; display:flex; flex-direction:column; gap:6px"><div style="padding:0 10px 22px; display:flex; align-items:center; gap:10px"><span dir="ltr" style="font:400 22px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em; color:#fff">Aldebyani</span><span style="background:#dbe7f6; color:#0f3a73; border-radius:99px; padding:5px 12px; font:700 12px Cairo,system-ui,sans-serif">الإدارة</span></div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">لوحة التحكم</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">اعتماد المزودين</div><div style="background:#dbe7f6; color:#0f3a73; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">النزاعات</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">الكتالوج</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">قواعد التسعير</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">الإعدادات</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">التقارير</div><div style="background:transparent; color:#fff; padding:13px 14px; border-radius:16px; font:700 14px Cairo,system-ui,sans-serif">مراقبة التسرّب</div></div><div style="background:#fff; min-width:0"><div style="display:flex; align-items:center; gap:18px; padding:20px 32px; border-bottom:2px solid #f2f6fc"><div style="flex:1"><div style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">الطلبات › #8412 › إلغاء إداري</div><h1 style="font:900 30px Alexandria,system-ui,sans-serif; margin:0">إلغاء أو استرداد إداري</h1></div><div style="display:flex; gap:4px; background:#f2f6fc; border-radius:99px; padding:4px"><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:9px 18px; font:700 13px Cairo,system-ui,sans-serif">السعودية</span><span style="border-radius:99px; padding:9px 18px; font:700 13px Cairo,system-ui,sans-serif">تركيا</span></div><a href="#a1" style="width:40px; height:40px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:800 14px Alexandria,system-ui,sans-serif; color:#0f3a73; flex:none">م</a></div><div style="padding:28px 32px 36px"><div style="display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:14px; align-items:start"><div style="min-width:0"><div style="border:2px solid #e4ecf7; border-radius:24px; overflow:hidden"><div style="display:flex; gap:14px; padding:15px 22px;"><span style="width:140px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">الطلب</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">تنظيف عادي — 3 غرف + صالة · حي الملقا</span></div><div style="display:flex; gap:14px; padding:15px 22px; border-top:2px solid #f2f6fc;"><span style="width:140px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">الحالة</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">قيد التنفيذ</span></div><div style="display:flex; gap:14px; padding:15px 22px; border-top:2px solid #f2f6fc;"><span style="width:140px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">العميل / المزود</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">منى عبدالله · أحمد سعيد عبد الحميد</span></div><div style="display:flex; gap:14px; padding:15px 22px; border-top:2px solid #f2f6fc;"><span style="width:140px; flex:none; font:500 13px/1.6 Cairo,system-ui,sans-serif; color:#4b5b78">المبلغ المحفوظ</span><span style="flex:1; min-width:0; font:600 13px/1.6 Cairo,system-ui,sans-serif">₺3,200</span></div></div>
+   <div style="font:800 17px Alexandria,system-ui,sans-serif; margin:22px 0 10px">على من يُحتسب؟</div><div style="display:flex; gap:8px"><sc-for list="{{ aAttrs }}" as="o" hint-placeholder-count="3"><button class="pill" onClick="{{ o.pick }}" style="{{ o.style }}">{{ o.label }}</button></sc-for></div>
+   <div style="font:800 17px Alexandria,system-ui,sans-serif; margin:22px 0 10px">النتيجة</div><div style="display:flex; gap:8px"><sc-for list="{{ aOuts }}" as="o" hint-placeholder-count="3"><button class="pill" onClick="{{ o.pick }}" style="{{ o.style }}">{{ o.label }}</button></sc-for></div>
+   <div style="display:flex; align-items:center; gap:14px; margin:22px 0 10px; padding:16px 20px; border:2px solid #e4ecf7; border-radius:18px"><span style="flex:1; font:600 14px Cairo,system-ui,sans-serif">إعادة رسم فتح البيانات للمزود (₺250)</span><button class="pill" onClick="{{ aFeeToggle }}" style="{{ aFeeStyle }}"><span style="{{ aFeeKnob }}"></span></button></div>
+   <div><label style="display:block; font:700 13px Cairo,system-ui,sans-serif; margin-bottom:8px">سبب القرار (إلزامي، يظهر للطرفين)</label><div style="border:2px solid #dfe7f3; border-radius:16px; padding:14px 18px; font:500 14px/1.8 Cairo,system-ui,sans-serif; min-height:84px">لم يحضر المزود في الموعد وأكّد ذلك العميل بصور.</div></div></div><div style="display:flex; flex-direction:column; gap:14px; min-width:0"><div style="background:#f2f6fc; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#4b5b78; margin-bottom:12px">القيود التي ستُنشأ</div><sc-for list="{{ aLedger }}" as="l" hint-placeholder-count="3"><div style="display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:2px solid #e4ecf7; font:600 13px/1.6 Cairo,system-ui,sans-serif"><span>{{ l.label }}</span><span style="font-weight:800; white-space:nowrap">{{ l.amount }}</span></div></sc-for><p style="margin:12px 0 0; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">كل قيد جديد يعاكس قيدًا سابقًا. لا يُعدَّل ولا يُحذف أي قيد.</p></div>
+   <div style="background:#eaf1fa; border-radius:26px; padding:28px 30px; "><div style="font:700 12px Cairo,system-ui,sans-serif; letter-spacing:.06em; color:#0f3a73; margin-bottom:12px">الملخص</div><div style="font:800 18px/1.6 Alexandria,system-ui,sans-serif">{{ aSummary }}</div></div>
+   <button class="pill" style="background:#0f3a73; color:#fff; padding:18px; font-size:16px; width:100%">نفّذ القرار</button></div></div></div></div></div></div></div>
+  </div>
+
+  <!-- ============ A4 ============ -->
+  <div id="a4" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#a4">A4</a><span style="font:600 13px Alexandria,system-ui,sans-serif">حالات الخطأ والفراغ — 404, empty queue, PSP reconciliation error</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div class="scr" style="width:629px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/admin/providers/unknown</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="padding:30px 6px 10px; background:#fff"><div style="font:900 84px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.05em; margin-bottom:18px">404</div><h2 style="margin:0 0 10px; font:900 28px/1.3 Alexandria,system-ui,sans-serif">لا يوجد مزود بهذا المعرّف</h2><p style="margin:0 0 22px; font:500 14px/1.8 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:44ch">قد يكون الرابط خاطئًا أو أن الحساب في المنطقة الأخرى.</p><div style="display:flex; gap:10px; flex-wrap:wrap"><a class="pill" href="#a1" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">قائمة المزودين</a><a class="pill" href="#a1" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">بدّل إلى تركيا</a></div></div></div></div><div class="scr" style="width:629px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/admin/disputes</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="padding:30px 6px 10px; background:#fff"><div style="font:900 84px/1 Alexandria,system-ui,sans-serif; letter-spacing:-.05em; margin-bottom:18px">0</div><h2 style="margin:0 0 10px; font:900 28px/1.3 Alexandria,system-ui,sans-serif">لا توجد نزاعات مفتوحة</h2><p style="margin:0 0 22px; font:500 14px/1.8 Cairo,system-ui,sans-serif; color:#3d4d6c; max-width:44ch">كل النزاعات في السعودية محلولة. تظهر النزاعات الجديدة هنا فور فتحها.</p><div style="display:flex; gap:10px; flex-wrap:wrap"><a class="pill" href="#a3" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center">النزاعات المغلقة</a></div></div></div></div><div class="scr" style="width:629px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">aldebyani.com/admin</div></div><div class="ar" dir="rtl" style="background:#fff; padding:26px 34px 34px"><div style="background:#dbe7f6; border-radius:22px; padding:22px 24px"><div style="font:800 20px/1.5 Alexandria,system-ui,sans-serif; margin-bottom:6px">تعذّرت مطابقة 3 عمليات مع تقرير التسوية</div><div style="font:500 13px/1.8 Cairo,system-ui,sans-serif; margin-bottom:14px">سجل القيود لا يطابق تقرير مزود خدمة الدفع ليوم 12 أغسطس بفارق ₺7,400.</div><div style="display:flex; gap:8px"><a class="pill" href="#a3" style="background:#0f3a73; color:#fff; padding:16px 26px; font-size:15px; display:inline-block; text-align:center; padding:12px 20px; font-size:13px">اعرض العمليات</a><a class="pill" href="#a3" style="background:#fff; color:#0f3a73; padding:16px 26px; font-size:15px; display:inline-block; text-align:center; padding:12px 20px; font-size:13px">أعد المطابقة</a></div></div></div></div></div>
+  </div>
+
+  <!-- ============ A5 ============ -->
+  <div id="a5" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#a5">A5</a><span style="font:600 13px Alexandria,system-ui,sans-serif">الجوال — dashboard and dispute decision</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div style="display:flex; flex-direction:column; gap:10px"><div style="width:390px; height:844px; border-radius:48px; background:#0f3a73; padding:10px; box-sizing:border-box; flex:none; box-shadow:0 18px 50px rgba(15,58,115,.18)"><div class="ar" dir="rtl" style="width:100%; height:100%; border-radius:38px; background:#fff; overflow:hidden; display:flex; flex-direction:column"><div dir="ltr" style="display:flex; justify-content:space-between; align-items:center; padding:14px 30px 6px; font:600 14px Cairo,system-ui,sans-serif; flex:none"><span>9:41</span><span style="width:104px; height:28px; border-radius:99px; background:#0f3a73; display:block"></span><span>100%</span></div><div style="display:flex; align-items:center; gap:10px; padding:10px 20px 12px; flex:none"><span dir="ltr" style="font:400 18px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><span style="flex:1"></span><span style="background:#0f3a73; color:#fff; border-radius:99px; padding:7px 12px; font:700 12px Cairo,system-ui,sans-serif">السعودية</span></div><div style="flex:1; min-height:0; overflow:hidden; padding:4px 20px 16px; display:flex; flex-direction:column; gap:12px"><div style="font:900 24px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.03em">يحتاج إجراءً</div><div style="background:#dbe7f6; border-radius:22px; padding:18px 20px"><div style="display:flex; align-items:center"><span style="flex:1; font:700 14px Cairo,system-ui,sans-serif">مزودون بانتظار الاعتماد</span><span style="font:900 28px Alexandria,system-ui,sans-serif">7</span></div></div><div style="background:#dbe7f6; border-radius:22px; padding:18px 20px"><div style="display:flex; align-items:center"><span style="flex:1; font:700 14px Cairo,system-ui,sans-serif">نزاعات مفتوحة</span><span style="font:900 28px Alexandria,system-ui,sans-serif">3</span></div></div><div style="background:#eaf1fa; border-radius:22px; padding:18px 20px"><div style="display:flex; align-items:center"><span style="flex:1; font:700 14px Cairo,system-ui,sans-serif">مهل منتهية</span><span style="font:900 28px Alexandria,system-ui,sans-serif">2</span></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px"><div style="background:#f2f6fc; border-radius:22px; padding:18px 20px"><div style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">محفوظ الآن</div><div style="font:900 20px Alexandria,system-ui,sans-serif">48,200</div></div><div style="background:#f2f6fc; border-radius:22px; padding:18px 20px"><div style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">إيراد الشهر</div><div style="font:900 20px Alexandria,system-ui,sans-serif">12,640</div></div></div></div><div style="padding:14px 20px 26px; border-top:2px solid #f2f6fc; flex:none"><div style="display:flex; justify-content:space-around; font:700 12px Cairo,system-ui,sans-serif"><span>اللوحة</span><span>الطلبات</span><span>النزاعات</span><span>الإعدادات</span></div></div></div></div><span style="font:600 12px Alexandria,system-ui,sans-serif; color:#3d4d6c">لوحة التحكم</span></div><div style="display:flex; flex-direction:column; gap:10px"><div style="width:390px; height:844px; border-radius:48px; background:#0f3a73; padding:10px; box-sizing:border-box; flex:none; box-shadow:0 18px 50px rgba(15,58,115,.18)"><div class="ar" dir="rtl" style="width:100%; height:100%; border-radius:38px; background:#fff; overflow:hidden; display:flex; flex-direction:column"><div dir="ltr" style="display:flex; justify-content:space-between; align-items:center; padding:14px 30px 6px; font:600 14px Cairo,system-ui,sans-serif; flex:none"><span>9:41</span><span style="width:104px; height:28px; border-radius:99px; background:#0f3a73; display:block"></span><span>100%</span></div><div style="display:flex; align-items:center; gap:10px; padding:10px 20px 12px; flex:none"><span dir="ltr" style="font:400 18px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span><span style="flex:1"></span><span style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">#8240</span></div><div style="flex:1; min-height:0; overflow:hidden; padding:4px 20px 16px; display:flex; flex-direction:column; gap:12px"><div style="font:900 22px/1.2 Alexandria,system-ui,sans-serif; letter-spacing:-.03em">نزاع — جودة العمل</div><div style="background:#f2f6fc; border-radius:22px; padding:18px 20px"><div style="font:600 12px Cairo,system-ui,sans-serif; color:#4b5b78">المبلغ المحفوظ</div><div style="font:900 22px Alexandria,system-ui,sans-serif">₺2,600</div></div><div style="font:500 13px/1.7 Cairo,system-ui,sans-serif; color:#3d4d6c">العميل: المطبخ لم يُنظَّف. المزود: نُفّذ كل ما في الطلب.</div><div style="display:flex; flex-direction:column; gap:8px"><div style="display:flex; align-items:center; gap:14px; padding:15px 20px; border-radius:18px; border:2px solid #e4ecf7"><span style="width:20px; height:20px; border-radius:50%; flex:none; box-sizing:border-box; border:2px solid #c3d0e4"></span><span style="flex:1; font:600 14px/1.6 Cairo,system-ui,sans-serif">استرداد كامل للعميل</span></div><div style="display:flex; align-items:center; gap:14px; padding:15px 20px; border-radius:18px; background:#dbe7f6"><span style="width:20px; height:20px; border-radius:50%; flex:none; box-sizing:border-box; background:#0f3a73; border:5px solid #dbe7f6; outline:2px solid #0f3a73"></span><span style="flex:1; font:600 14px/1.6 Cairo,system-ui,sans-serif">تحرير جزئي — 60%</span></div><div style="display:flex; align-items:center; gap:14px; padding:15px 20px; border-radius:18px; border:2px solid #e4ecf7"><span style="width:20px; height:20px; border-radius:50%; flex:none; box-sizing:border-box; border:2px solid #c3d0e4"></span><span style="flex:1; font:600 14px/1.6 Cairo,system-ui,sans-serif">تحرير كامل للمزود</span></div></div></div><div style="padding:14px 20px 26px; border-top:2px solid #f2f6fc; flex:none"><span style="display:block; text-align:center; background:#0f3a73; color:#fff; border-radius:99px; padding:16px; font:700 15px Cairo,system-ui,sans-serif">نفّذ القرار</span></div></div></div><span style="font:600 12px Alexandria,system-ui,sans-serif; color:#3d4d6c">قرار نزاع</span></div></div>
+  </div>
+
+  <!-- ============ A6 ============ -->
+  <div id="a6" style="display:flex; flex-direction:column; gap:12px; scroll-margin-top:16px">
+    <div style="display:flex; align-items:baseline; gap:10px"><a class="lbl" href="#a6">A6</a><span style="font:600 13px Alexandria,system-ui,sans-serif">رسائل SMS والبريد — admin alerts</span></div>
+    <div style="display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start"><div style="display:flex; flex-direction:column; gap:10px"><div style="width:390px; height:844px; border-radius:48px; background:#0f3a73; padding:10px; box-sizing:border-box; flex:none; box-shadow:0 18px 50px rgba(15,58,115,.18)"><div class="ar" dir="rtl" style="width:100%; height:100%; border-radius:38px; background:#fff; overflow:hidden; display:flex; flex-direction:column"><div dir="ltr" style="display:flex; justify-content:space-between; align-items:center; padding:14px 30px 6px; font:600 14px Cairo,system-ui,sans-serif; flex:none"><span>9:41</span><span style="width:104px; height:28px; border-radius:99px; background:#0f3a73; display:block"></span><span>100%</span></div><div style="padding:8px 20px 14px; border-bottom:2px solid #f2f6fc; display:flex; flex-direction:column; align-items:center; gap:6px; flex:none"><span style="width:52px; height:52px; border-radius:50%; background:#dbe7f6; display:flex; align-items:center; justify-content:center; font:400 20px 'Archivo Black',system-ui,sans-serif">A</span><span dir="ltr" style="font:600 13px Cairo,system-ui,sans-serif">Aldebyani</span></div><div style="flex:1; padding:18px 16px; display:flex; flex-direction:column; gap:14px; overflow:hidden"><div style="font:500 12px Cairo,system-ui,sans-serif; color:#4b5b78; text-align:center">اليوم 8:40 ص</div><div style="background:#e7edf6; border-radius:20px; padding:12px 16px; font:400 14px/1.75 Cairo,system-ui,sans-serif; max-width:290px">نزاع جديد على طلب #8405 (السعودية). aldebyani.com/admin/disputes</div></div></div></div><span style="font:600 12px Alexandria,system-ui,sans-serif; color:#3d4d6c">SMS — الإدارة</span></div><div class="scr" style="width:640px"><div class="chrome"><div class="dot3"><i></i><i></i><i></i></div><div class="url">البريد الوارد — ops@aldebyani.com</div></div><div class="ar" dir="rtl" style="background:#f2f6fc; padding:22px"><div style="font:700 15px/1.6 Cairo,system-ui,sans-serif; margin:0 6px 4px">نزاع جديد — طلب #8405</div><div style="font:400 12px Cairo,system-ui,sans-serif; color:#4b5b78; margin:0 6px 16px" dir="ltr">Aldebyani &lt;no-reply@aldebyani.com&gt;</div><div style="background:#fff; border-radius:22px; overflow:hidden"><div style="background:#dbe7f6; padding:22px 28px"><span dir="ltr" style="font:400 20px/1.4 'Archivo Black',system-ui,sans-serif; letter-spacing:-.01em">Aldebyani</span></div><div style="padding:28px 28px 30px"><h2 style="margin:0 0 12px; font:900 26px/1.35 Alexandria,system-ui,sans-serif">فُتح نزاع جديد</h2><p style="margin:0 0 14px; font:500 14px/1.85 Cairo,system-ui,sans-serif; color:#22324f">فتحت العميلة سارة ع. نزاعًا على طلب #8405 (تنظيف عميق — حي النرجس) قبل انتهاء مدة التحرير. أُوقف التحرير التلقائي.</p><div style="background:#f2f6fc; border-radius:16px; padding:14px 18px; margin:6px 0 16px; font:600 13px/1.8 Cairo,system-ui,sans-serif">المنطقة: السعودية<br>المبلغ المحفوظ: ₺3,500<br>السبب: لم يكتمل العمل</div><span style="display:inline-block; background:#0f3a73; color:#fff; border-radius:99px; padding:15px 26px; font:700 14px Cairo,system-ui,sans-serif; margin-top:6px">افتح النزاع</span></div><div style="padding:18px 28px; border-top:2px solid #f2f6fc; font:400 12px/1.8 Cairo,system-ui,sans-serif; color:#4b5b78">وصلتك هذه الرسالة لأن لديك حسابًا في Aldebyani. يمكنك تعديل إشعارات البريد من صفحة حسابي. المنصة لا تحتفظ بأموالك — المبالغ محفوظة لدى مزود خدمة الدفع.</div></div></div></div></div>
+  </div>
+
+  <div style="max-width:84ch; display:flex; flex-direction:column; gap:8px">
+    <p style="margin:0; font:700 14px Cairo,system-ui,sans-serif">أمور لم تحددها الوثيقة — تحتاج قرارك</p>
+    <p style="margin:0; font:400 13px/1.8 Cairo,system-ui,sans-serif; color:#3d4d6c">1) قائمة أسباب رفض المزود. 2) ماذا يفعل المسؤول بمزود في قائمة التسرّب — حاليًا عرض فقط بلا إجراء. 3) سعر صرف أرقام العينة بين المنطقتين تقريبي للعرض. 4) لا يوجد في الوثيقة قسم لإدارة العملاء أو المدفوعات للمزودين، فلم أضفهما.</p>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1560}}">
+const AR = n => String(n).replace(/[0-9]/g, d => "0123456789"[d]);
+const fmt = n => AR(Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+const INK = "#0f3a73", BLUE = "#1e5fb3", NAVY = "#0f3a73", YEL = "#dbe7f6", PALE = "#eaf1fa", TINT = "#dbe7f6", GREY = "#f2f6fc";
+
+const REG = {
+  ksa: { label: "السعودية · ₺", name: "السعودية", cur: "₺", f: 10,
+    zones: ["الملقا", "النرجس", "حطين", "الياسمين"],
+    people: ["أحمد سعيد", "محمود السيد", "منى عبد الله", "عمرو الشافعي", "هاني عبد العزيز", "نهى إبراهيم"],
+    cust: ["هدى م.", "كريم ع.", "سارة ح."] },
+  tr: { label: "تركيا · ₺", name: "تركيا", cur: "₺", f: 10,
+    zones: ["كاديكوي", "بشيكتاش", "شيشلي", "أوسكودار"],
+    people: ["محمد ياسين", "دعاء كامل", "مصطفى درويش", "زينب شاكر", "إسلام فتحي", "فاطمة حسين"],
+    cust: ["شيماء ك.", "طارق ي.", "سلمى أ."] },
+};
+
+const NAV = [
+  { key: "dash", label: "لوحة التحكم", route: "/admin" },
+  { key: "req", label: "الطلبات", route: "/admin/requests" },
+  { key: "prov", label: "اعتماد المزودين", route: "/admin/providers" },
+  { key: "disp", label: "النزاعات", route: "/admin/disputes" },
+  { key: "cat", label: "الكتالوج", route: "/admin/catalog" },
+  { key: "price", label: "قواعد التسعير", route: "/admin/pricing" },
+  { key: "set", label: "الإعدادات", route: "/admin/settings" },
+  { key: "rep", label: "التقارير", route: "/admin/reports" },
+  { key: "leak", label: "مراقبة التسرّب", route: "/admin/reports/leakage" },
+];
+
+const STATE_AR = { OPEN: "مفتوح", FUNDED: "بانتظار فتح البيانات", UNLOCKED: "تم فتح البيانات", IN_PROGRESS: "قيد التنفيذ", AWAITING_CONFIRMATION: "بانتظار تأكيد العميل", DISPUTED: "نزاع", COMPLETED: "مكتمل", CANCELLED: "ملغى" };
+
+const DOCS = [
+  { key: "id", label: "الهوية الوطنية أو الإقامة", file: "id-front.jpg · id-back.jpg" },
+  { key: "live", label: "صورة حيّة مع الهوية", file: "liveness.jpg" },
+  { key: "crim", label: "السجل الجنائي", file: "record.pdf" },
+];
+
+const SETTINGS = [
+  { key: "commission_pct", label: "عمولة المنصة", note: "نسبة تُخصم من قيمة الطلب عند الدفع، وتُعكس بقيد معاكس إن استُرد الطلب كاملًا.", step: 1, min: 0, max: 40, unit: "pct" },
+  { key: "unlock_fee", label: "رسم فتح البيانات", note: "مبلغ ثابت يدفعه المزود المختار مرة واحدة لكل اختيار.", step: 5, min: 0, max: 500, unit: "money" },
+  { key: "hold_hours", label: "مدة الحفظ قبل التحرير التلقائي", note: "تبدأ عند إبلاغ المزود بإتمام العمل.", step: 12, min: 24, max: 240, unit: "h" },
+  { key: "unlock_hours", label: "مهلة فتح البيانات", note: "بعدها يعود الطلب مفتوحًا ويبقى المبلغ محفوظًا.", step: 6, min: 6, max: 72, unit: "h" },
+  { key: "applicant_cap", label: "الحد الأقصى للعروض", note: "يُقفل التقدّم على الطلب عند الوصول إليه.", step: 1, min: 3, max: 30, unit: "n" },
+];
+
+const CATS = [
+  { label: "تنظيف منازل",
+    services: [["تنظيف عادي", "دوري أو عند الحاجة"], ["تنظيف عميق", "بعد التشطيب أو قبل المناسبات"], ["تنظيف قبل الانتقال", "منزل فارغ"]],
+    addons: [["نوافذ وشرفات", "windows", 40], ["كيّ وترتيب", "ironing", 50], ["فرن وثلاجة", "oven_fridge", 60]],
+    questions: [
+      { key: "rooms", label: "عدد الغرف", type: "رقم", valid: "إلزامي · 1 — 10", price: true, opts: "خطوة 1" },
+      { key: "bathrooms", label: "عدد دورات المياه", type: "رقم", valid: "إلزامي · 1 — 6", price: true, opts: "خطوة 1" },
+      { key: "property_type", label: "نوع العقار", type: "اختيار واحد", valid: "إلزامي", price: true, opts: "شقة · فيلا" },
+      { key: "has_pets", label: "هل توجد حيوانات أليفة؟", type: "نعم / لا", valid: "إلزامي", price: true, opts: "" },
+      { key: "start_date", label: "تاريخ البدء", type: "تاريخ", valid: "إلزامي", price: false, opts: "" },
+      { key: "notes", label: "ملاحظات", type: "نص طويل", valid: "اختياري · 500 حرف", price: false, opts: "لا يؤثر على السعر أبدًا" },
+    ] },
+  { label: "تنظيف مكيفات",
+    services: [["سبليت", "وحدات داخلية"], ["مركزي", "مخارج ومجاري"]],
+    addons: [["استبدال الفلاتر", "filters", 55]],
+    questions: [
+      { key: "units", label: "عدد الوحدات", type: "رقم", valid: "إلزامي · 1 — 20", price: true, opts: "" },
+      { key: "ac_type", label: "نوع المكيف", type: "اختيار واحد", valid: "إلزامي", price: true, opts: "سبليت · شباك · مركزي" },
+      { key: "notes", label: "ملاحظات", type: "نص طويل", valid: "اختياري", price: false, opts: "" },
+    ] },
+  { label: "سجاد وأثاث",
+    services: [["غسيل كنب", "بالبخار"], ["غسيل سجاد", "في الموقع"]],
+    addons: [["مراتب النوم", "mattress", 90]],
+    questions: [
+      { key: "pieces", label: "عدد القطع", type: "رقم", valid: "إلزامي · 1 — 30", price: true, opts: "" },
+      { key: "stains", label: "بقع صعبة", type: "نعم / لا", valid: "إلزامي", price: true, opts: "" },
+    ] },
+  { label: "صيانة عامة", inactive: true,
+    services: [["سباكة", "قريبًا"]],
+    addons: [],
+    questions: [{ key: "issue", label: "وصف المشكلة", type: "نص طويل", valid: "إلزامي", price: false, opts: "" }] },
+];
+
+const MODS0 = [
+  { key: "rooms", label: "عدد الغرف", effect: "unit", value: 40 },
+  { key: "bathrooms", label: "دورات المياه", effect: "unit", value: 25 },
+  { key: "property_type", label: "نوع العقار = فيلا", effect: "mult", value: 1.3 },
+  { key: "has_pets", label: "حيوانات أليفة = نعم", effect: "fixed", value: 20 },
+];
+
+class Component extends DCLogic {
+  state = {
+    region: "ksa", sec: "dash", aOut: 0, aAttr: 1, aFee: false,
+    prov: { ksa: { sel: 0, filter: "pending", decided: {}, docs: {} }, tr: { sel: 0, filter: "pending", decided: {}, docs: {} } },
+    reason: 0,
+    disp: { ksa: { sel: 0, res: {} }, tr: { sel: 0, res: {} } },
+    mode: "partial", pct: 60,
+    cat: 0, catTab: "q", catOff: { 3: true }, qOff: {}, qOrder: {},
+    zoneMult: { ksa: [1, 1, 1.1, 1.05], tr: [1, 1.15, 1.1, 1] },
+    pricing: { ksa: { base: 1200, mods: MODS0.map(m => ({ ...m, value: m.effect === "mult" ? m.value : m.value * 10 })), ver: 4, dirty: false },
+               tr: { base: 1200, mods: MODS0.map(m => ({ ...m, value: m.effect === "mult" ? m.value : m.value * 10 })), ver: 2, dirty: false } },
+    test: { rooms: 3, baths: 2, villa: false, pets: true, win: true, zone: 0 },
+    settings: { ksa: { commission_pct: 15, unlock_fee: 250, hold_hours: 72, unlock_hours: 24, applicant_cap: 10 },
+                tr: { commission_pct: 15, unlock_fee: 250, hold_hours: 72, unlock_hours: 24, applicant_cap: 10 } },
+    saved: { ksa: { commission_pct: 15, unlock_fee: 250, hold_hours: 72, unlock_hours: 24, applicant_cap: 10 },
+             tr: { commission_pct: 15, unlock_fee: 250, hold_hours: 72, unlock_hours: 24, applicant_cap: 10 } },
+    period: 30, threshold: 70, leakFilter: "flag",
+    q: "", reqFilter: "all", reqSort: "new", provSort: "old", dispSort: "old",
+  };
+
+  sub(key, patch) {
+    this.setState(st => ({ [key]: { ...st[key], [st.region]: { ...st[key][st.region], ...(typeof patch === "function" ? patch(st[key][st.region]) : patch) } } }));
+  }
+
+  providersFor(R) {
+    const z = R.zones;
+    return [
+      { name: R.people[3], meta: "3 سنوات خبرة · " + z[0], phone: "•••• 4567", since: "قبل يومين", services: ["تنظيف عادي", "نوافذ وشرفات"], bio: "أعمل لحسابي، أحضر أدواتي ومنظفاتي. خبرة في الشقق والفلل الصغيرة." , preset: { id: true, live: true } },
+      { name: R.people[4], meta: "8 سنوات خبرة · " + z[1], phone: "•••• 1102", since: "قبل 3 أيام", services: ["تنظيف عميق", "سجاد وأثاث"], bio: "فريق من شخصين، متخصص في التنظيف بعد التشطيب وغسيل الكنب بالبخار.", preset: {} },
+      { name: R.people[5], meta: "سنتان خبرة · " + z[2], phone: "•••• 7730", since: "قبل 4 أيام", services: ["تنظيف عادي"], bio: "خبرة سنتين في تنظيف المنازل، أتحدث العربية والإنجليزية.", preset: { id: true } },
+      { name: R.people[0], meta: "6 سنوات خبرة · " + z[0], phone: "•••• 2209", since: "2024", services: ["تنظيف عادي", "تنظيف عميق", "نوافذ وشرفات"], bio: "مزود معتمد ونشط.", approved: true, preset: { id: true, live: true, crim: true } },
+    ];
+  }
+
+  disputesFor(R) {
+    const f = R.f;
+    return [
+      { ref: "#8402", amount: 320 * f, reason: "العمل لم يُنفَّذ كما هو موصوف", from: "AWAITING_CONFIRMATION", service: "تنظيف عادي — 3 غرف", zone: R.zones[0], age: "منذ 5 ساعات",
+        customer: R.cust[0], provider: R.people[1],
+        customerText: "المطبخ ودورات المياه لم تُنظَّف جيدًا، والنوافذ لم يُعمل عليها رغم أنها ضمن الطلب.",
+        providerText: "نظّفت كل الغرف والمطبخ. النوافذ الخارجية لم تكن ممكنة بسبب الارتفاع وأبلغت العميل وقتها." },
+      { ref: "#8388", amount: 450 * f, reason: "المزود لم يحضر بعد فتح البيانات", from: "UNLOCKED", service: "تنظيف عميق — فيلا", zone: R.zones[1], age: "منذ يوم",
+        customer: R.cust[1], provider: R.people[3],
+        customerText: "دفع المزود رسم فتح البيانات ثم لم يحضر في الموعد ولا يرد على الاتصال.",
+        providerText: "لم يصل رد من المزود حتى الآن." },
+      { ref: "#8351", amount: 260 * f, reason: "نُفِّذ جزء من العمل فقط", from: "IN_PROGRESS", service: "نوافذ وشرفات", zone: R.zones[2], age: "منذ 3 أيام",
+        customer: R.cust[2], provider: R.people[2],
+        customerText: "غادر المزود بعد ساعتين وأنجز نصف النوافذ تقريبًا.",
+        providerText: "تعطّل السلّم واتفقت مع العميل على العودة، لكنه فتح النزاع قبل ذلك." },
+    ];
+  }
+
+  money(n, R) { return R.cur + Math.round(n).toLocaleString("en-US"); }
+
+  sw(on) {
+    return {
+      style: `width:44px; height:24px; border-radius:99px; padding:0; position:relative; flex:none; background:${on ? INK : "#d0dbeb"}`,
+      knob: `position:absolute; top:3px; ${on ? "left:3px" : "right:3px"}; width:18px; height:18px; border-radius:50%; background:#fff; display:block`,
+    };
+  }
+
+  tab(on, extra) {
+    return `background:${on ? INK : GREY}; color:${on ? "#fff" : INK}; padding:${extra || "10px 18px"}; font-size:13px`;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const R = REG[s.region];
+    const navItem = NAV.find(n => n.key === s.sec);
+
+    // providers
+    const P = s.prov[s.region];
+    const provAll = this.providersFor(R).map((p, i) => {
+      const d = P.decided[i] || (p.approved ? "approved" : null);
+      const docs = { ...p.preset, ...(P.docs[i] || {}) };
+      return { ...p, i, decision: d, docs };
+    });
+    const pendingCount = provAll.filter(p => !p.decision).length;
+    const provShown = provAll.filter(p => P.filter === "pending" ? !p.decision : P.filter === "approved" ? p.decision === "approved" : p.decision === "rejected");
+    const selP = provShown.find(p => p.i === P.sel) || provShown[0];
+    const stateOf = p => p.decision === "approved" ? ["معتمد", TINT] : p.decision === "rejected" ? ["مرفوض", "#fde2e2"] : ["قيد المراجعة", PALE];
+    const chip = bg => `background:${bg}; border-radius:99px; padding:6px 12px; font:700 12px Cairo,system-ui,sans-serif; color:#0f3a73; flex:none`;
+    const docsOk = selP ? DOCS.filter(d => selP.docs[d.key]).length : 0;
+
+    // disputes
+    const D = s.disp[s.region];
+    const dispAll = this.disputesFor(R).map((d, i) => ({ ...d, i, res: D.res[i] }));
+    const openDisp = dispAll.filter(d => !d.res).length;
+    const selD = dispAll[D.sel] || dispAll[0];
+    const amt = selD.amount;
+    const pp = s.mode === "release" ? 100 : s.mode === "refund" ? 0 : s.pct;
+    const toProv = Math.round(amt * pp / 100), toCust = amt - toProv;
+
+    // catalog
+    const cat = CATS[s.cat];
+    const order = s.qOrder[s.cat] || cat.questions.map((_, i) => i);
+
+    // pricing
+    const PR = s.pricing[s.region];
+    const t = s.test;
+    const ansOf = key => key === "rooms" ? t.rooms : key === "bathrooms" ? t.baths : key === "property_type" ? (t.villa ? 1 : 0) : key === "has_pets" ? (t.pets ? 1 : 0) : 0;
+    let run = PR.base;
+    const tl = [{ label: "السعر الأساسي", value: fmt(run) }];
+    PR.mods.forEach(m => {
+      const a = ansOf(m.key);
+      if (m.effect === "unit") { const add = m.value * a; run += add; tl.push({ label: m.label + " × " + AR(a), value: "+" + fmt(add) }); }
+      else if (m.effect === "fixed") { if (a > 0) { run += m.value; tl.push({ label: m.label + " (ثابت)", value: "+" + fmt(m.value) }); } else tl.push({ label: m.label + " — لا ينطبق", value: "0" }); }
+      else { if (a > 0) { run *= m.value; tl.push({ label: m.label + " (مضاعف)", value: "× " + AR(m.value.toFixed(2)) }); } else tl.push({ label: m.label + " — لا ينطبق", value: "× 1" }); }
+    });
+    const winPrice = 40 * R.f;
+    if (t.win) { run += winPrice; tl.push({ label: "إضافة: نوافذ وشرفات", value: "+" + fmt(winPrice) }); }
+    const zm = s.zoneMult[s.region][t.zone];
+    run *= zm;
+    tl.push({ label: "مضاعف المنطقة — " + R.zones[t.zone], value: "× " + AR(zm.toFixed(2)) });
+    const rounded = Math.round(run);
+    tl.push({ label: "التقريب مرة واحدة", value: fmt(rounded) + " " + R.cur });
+
+    const setMod = (i, patch) => this.sub("pricing", cur => ({ dirty: true, mods: cur.mods.map((m, j) => j === i ? { ...m, ...patch(m) } : m) }));
+    const moveMod = (i, dir) => this.sub("pricing", cur => {
+      const j = i + dir; if (j < 0 || j >= cur.mods.length) return {};
+      const mods = cur.mods.slice(); [mods[i], mods[j]] = [mods[j], mods[i]];
+      return { mods, dirty: true };
+    });
+
+    // settings
+    const ST = s.settings[s.region], SV = s.saved[s.region];
+    const fmtSet = (d, v) => d.unit === "pct" ? AR(v) + "%" : d.unit === "money" ? R.cur + Math.round(v).toLocaleString("en-US") : d.unit === "h" ? AR(v) + " ساعة" : AR(v);
+    const dirtyN = SETTINGS.filter(d => ST[d.key] !== SV[d.key]).length;
+    const stepOf = d => d.unit === "money" ? d.step * R.f : d.step;
+    const maxOf = d => d.unit === "money" ? d.max * R.f : d.max;
+
+    // reports
+    const n = s.period === 7 ? 7 : s.period === 30 ? 8 : 12;
+    const lab = s.period === 7 ? ["سبت", "أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة"] : s.period === 30 ? ["أ1", "أ2", "أ3", "أ4", "أ5", "أ6", "أ7", "أ8"] : ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+    const scale = (s.period === 7 ? 1 : s.period === 30 ? 3.5 : 7) * R.f;
+    const ser = Array.from({ length: n }, (_, i) => ({ c: (380 + ((i * 137) % 260)) * scale, u: (90 + ((i * 53) % 70)) * scale }));
+    const maxV = Math.max(...ser.map(x => x.c + x.u));
+    const sumC = ser.reduce((a, x) => a + x.c, 0), sumU = ser.reduce((a, x) => a + x.u, 0);
+    const gmv = sumC / (ST.commission_pct / 100);
+
+    // leakage
+    const leakAll = R.people.map((nm, i) => {
+      const unl = [14, 22, 9, 11, 17, 6][i], done = [13, 12, 9, 5, 15, 2][i];
+      return { name: nm, meta: R.zones[i % 4] + " · " + ["معتمد منذ 2024", "معتمد منذ 2024", "معتمد منذ 2025", "معتمد منذ 2025", "معتمد منذ 2023", "معتمد منذ شهرين"][i], unl, done, r: done / unl };
+    }).sort((a, b) => a.r - b.r);
+    const flagged = leakAll.filter(l => l.r * 100 < s.threshold);
+    const leakShown = s.leakFilter === "flag" ? flagged : leakAll;
+
+    const actions = [];
+    provAll.filter(p => !p.decision).forEach(p => actions.push({ kind: "مزود", tone: PALE, title: "اعتماد " + p.name, note: p.meta + " · " + DOCS.filter(d => p.docs[d.key]).length + "/3 مستندات مُراجَعة", age: p.since, go: () => this.setState(st => ({ sec: "prov", prov: { ...st.prov, [st.region]: { ...st.prov[st.region], sel: p.i, filter: "pending" } } })) }));
+    dispAll.filter(d => !d.res).forEach(d => actions.push({ kind: "نزاع", tone: "#fde2e2", title: d.reason, note: d.ref + " · " + this.money(d.amount, R) + " محفوظة · التحرير موقوف", age: d.age, go: () => this.setState(st => ({ sec: "disp", disp: { ...st.disp, [st.region]: { ...st.disp[st.region], sel: d.i } } })) }));
+    actions.push({ kind: "موعد منتهٍ", tone: TINT, title: "تجاوز start_deadline — #8370", note: "UNLOCKED · لا استرداد تلقائي، يلزم قرار إداري", age: "منذ 6 ساعات", go: () => this.setState({ sec: "disp" }) });
+    actions.push({ kind: "موعد منتهٍ", tone: TINT, title: "تجاوز completion_deadline — #8361", note: "IN_PROGRESS · العمل قد يكون جاريًا", age: "منذ يوم", go: () => this.setState({ sec: "disp" }) });
+
+    const esc = [["بانتظار فتح البيانات", "FUNDED", 4], ["تم فتح البيانات", "UNLOCKED", 6], ["قيد التنفيذ", "IN_PROGRESS", 9], ["بانتظار تأكيد العميل", "AWAITING_CONFIRMATION", 12], ["نزاع", "DISPUTED", openDisp]];
+    const escAmt = esc.map(e => e[2] * 290 * R.f);
+    const escTotal = escAmt.reduce((a, b) => a + b, 0);
+    const escMax = Math.max(...escAmt, 1);
+
+    return {
+      route: navItem.route,
+      ...(() => {
+        const V = 320, CM = 0.15;
+        const ATTR = ["العميل", "المزود", "المنصة"];
+        const OUT = ["استرداد كامل للعميل", "تحرير جزئي 60%", "تحرير كامل للمزود"];
+        const rel = [0, 0.6, 1][s.aOut] * V, ref = V - rel, com = rel * CM;
+        const L = [];
+        if (ref) L.push({ label: "استرداد للعميل من المبلغ المحفوظ", amount: "₺" + Math.round(ref).toLocaleString("en-US") });
+        if (rel) L.push({ label: "تحرير للمزود", amount: "₺" + Math.round(rel - com).toLocaleString("en-US") });
+        L.push({ label: rel ? "عمولة المنصة على الجزء المحرَّر" : "عكس العمولة كاملة", amount: "₺" + Math.round(rel ? com : V * CM).toLocaleString("en-US") });
+        if (s.aFee) L.push({ label: "إعادة رسم فتح البيانات للمزود", amount: "₺250" });
+        const seg = (on) => `background:${on ? INK : GREY}; color:${on ? "#fff" : INK}; padding:12px 20px; font-size:14px`;
+        return {
+          aAttrs: ATTR.map((t, i) => ({ label: t, style: seg(i === s.aAttr), pick: () => this.setState({ aAttr: i }) })),
+          aOuts: OUT.map((t, i) => ({ label: t, style: seg(i === s.aOut), pick: () => this.setState({ aOut: i }) })),
+          aLedger: L,
+          aSummary: OUT[s.aOut] + " · يُحتسب على " + ATTR[s.aAttr] + (s.aFee ? " · يُعاد الرسم للمزود" : " · لا يُعاد الرسم"),
+          aFeeToggle: () => this.setState(x => ({ aFee: !x.aFee })),
+          aFeeStyle: `width:44px; height:24px; border-radius:99px; padding:0; position:relative; flex:none; background:${s.aFee ? INK : "#d0dbeb"}`,
+          aFeeKnob: `position:absolute; top:3px; ${s.aFee ? "left:3px" : "right:3px"}; width:18px; height:18px; border-radius:50%; background:#fff; display:block`,
+        };
+      })(),
+      title: navItem.label,
+      crumb: "الإدارة · " + R.name,
+      cur: R.cur,
+      regionName: R.name,
+      regions: Object.keys(REG).map(k => ({ label: REG[k].label, style: `background:${s.region === k ? INK : "transparent"}; color:${s.region === k ? "#fff" : INK}; padding:10px 18px; font-size:13px`, pick: () => this.setState({ region: k, test: { ...s.test, zone: 0 } }) })),
+      nav: NAV.map(nv => {
+        const on = nv.key === s.sec;
+        const badge = nv.key === "prov" ? pendingCount : nv.key === "disp" ? openDisp : nv.key === "leak" ? flagged.length : 0;
+        return {
+          label: nv.label, badge: badge ? AR(badge) : "",
+          style: `background:${on ? YEL : "transparent"}; color:${on ? INK : "#fff"}; padding:13px 14px; border-radius:16px; width:100%`,
+          dot: `width:8px; height:8px; border-radius:50%; flex:none; background:${on ? INK : "rgba(255,255,255,.35)"}`,
+          badgeStyle: badge ? `background:${on ? INK : YEL}; color:${on ? YEL : INK}; border-radius:99px; padding:2px 9px; font:800 12px Cairo,system-ui,sans-serif` : "display:none",
+          go: () => this.setState({ sec: nv.key }),
+        };
+      }),
+      ...(() => {
+        const Z = R.zones, P2 = R.people, C2 = R.cust, f = R.f;
+        const ROWS = [
+          ["#8434", "نوافذ وشرفات — شقة", 0, C2[0], "050 123 4567", "—", "OPEN", 220, "منذ ساعة", 1],
+          ["#8430", "تنظيف عميق — فيلا", 1, C2[1], "055 980 2214", "—", "OPEN", 350, "منذ 3 ساعات", 2],
+          ["#8412", "تنظيف عادي — 3 غرف", 0, C2[2], "053 441 0987", P2[0], "FUNDED", 320, "منذ 5 ساعات", 3],
+          ["#8405", "تنظيف عادي — شقة", 0, C2[0], "050 123 4567", P2[1], "IN_PROGRESS", 280, "اليوم", 4],
+          ["#8402", "تنظيف عادي — 3 غرف", 0, C2[0], "050 123 4567", P2[1], "DISPUTED", 320, "منذ 5 ساعات", 5],
+          ["#8398", "سجاد وأثاث", 3, C2[1], "055 980 2214", P2[4], "UNLOCKED", 240, "أمس", 6],
+          ["#8391", "نوافذ وشرفات — فيلا", 2, C2[2], "053 441 0987", P2[2], "AWAITING_CONFIRMATION", 300, "أمس", 7],
+          ["#8388", "تنظيف عميق — فيلا", 1, C2[1], "055 980 2214", P2[3], "DISPUTED", 450, "منذ يوم", 8],
+          ["#8370", "تنظيف عادي — شقة", 2, C2[0], "050 123 4567", P2[0], "COMPLETED", 260, "منذ 3 أيام", 9],
+          ["#8355", "تنظيف مكيفات", 3, C2[2], "053 441 0987", "—", "CANCELLED", 180, "منذ 4 أيام", 10],
+        ];
+        const TONE = { OPEN: PALE, FUNDED: YEL, UNLOCKED: TINT, IN_PROGRESS: TINT, AWAITING_CONFIRMATION: PALE, DISPUTED: "#fde2e2", COMPLETED: GREY, CANCELLED: GREY };
+        const FIL = [["all", "الكل"], ["OPEN", "مفتوح"], ["live", "ممول وجارٍ"], ["AWAITING_CONFIRMATION", "بانتظار التأكيد"], ["DISPUTED", "نزاع"], ["COMPLETED", "مكتمل"], ["CANCELLED", "ملغى"]];
+        const LIVE = ["FUNDED", "UNLOCKED", "IN_PROGRESS"];
+        const norm = x => String(x).replace(/[0-9]/g, d => "0123456789".indexOf(d)).replace(/[\s#]/g, "");
+        const q = s.q.trim(), nq = norm(q);
+        const hit = r => !q || norm(r[0]).includes(nq) || norm(r[4]).includes(nq) || r[3].includes(q) || r[5].includes(q);
+        const okF = r => s.reqFilter === "all" || (s.reqFilter === "live" ? LIVE.includes(r[6]) : r[6] === s.reqFilter);
+        let rows = ROWS.filter(r => hit(r) && okF(r));
+        rows = s.reqSort === "amount" ? [...rows].sort((a, b) => b[7] - a[7]) : rows;
+        const pill = on => `background:${on ? INK : GREY}; color:${on ? "#fff" : INK}; padding:9px 16px; font-size:13px`;
+        return {
+          isReq: s.sec === "req",
+          q: s.q, qOn: !!q, reqCount: AR(rows.length), reqEmpty: rows.length === 0,
+          onQ: e => this.setState({ q: e.target.value, sec: "req" }),
+          clearQ: () => this.setState({ q: "" }),
+          reqFilters: FIL.map(([k, l]) => ({ label: l, style: pill(s.reqFilter === k), pick: () => this.setState({ reqFilter: k }) })),
+          reqSorts: [["new", "الأحدث"], ["amount", "الأعلى مبلغًا"]].map(([k, l]) => ({ label: l, style: pill(s.reqSort === k), pick: () => this.setState({ reqSort: k }) })),
+          reqRows: rows.map(r => ({
+            ref: r[0], service: r[1], zone: Z[r[2]], customer: r[3], phone: r[4], provider: r[5], age: r[8],
+            state: STATE_AR[r[6]], chip: chip(TONE[r[6]]), amount: this.money(r[7] * f, R),
+            isDisp: r[6] === "DISPUTED", isCancel: ["OPEN", "FUNDED", "UNLOCKED", "IN_PROGRESS", "AWAITING_CONFIRMATION"].includes(r[6]),
+            go: () => this.setState({ sec: "disp" }),
+          })),
+          provSorts: [["old", "الأقدم أولًا"], ["new", "الأحدث"]].map(([k, l]) => ({ label: l, style: pill(s.provSort === k), pick: () => this.setState({ provSort: k }) })),
+          dispSorts: [["old", "الأقدم أولًا"], ["amount", "الأعلى مبلغًا"]].map(([k, l]) => ({ label: l, style: pill(s.dispSort === k), pick: () => this.setState({ dispSort: k }) })),
+        };
+      })(),
+      isDash: s.sec === "dash", isProv: s.sec === "prov", isDisp: s.sec === "disp", isCat: s.sec === "cat",
+      isPrice: s.sec === "price", isSet: s.sec === "set", isRep: s.sec === "rep", isLeak: s.sec === "leak",
+
+      actionTotal: AR(actions.length),
+      escrowTotal: this.money(escTotal, R),
+      escrowCount: AR(esc.reduce((a, e) => a + e[2], 0)),
+      revComm: this.money(sumC * (30 / (s.period === 7 ? 7 : s.period === 30 ? 30 : 90)) / (s.period === 30 ? 1 : 1), R),
+      revUnlock: this.money(sumU, R),
+      revTotal: this.money(sumC + sumU, R),
+      activeProv: AR(s.region === "ksa" ? 86 : 41),
+      activeCust: fmt(s.region === "ksa" ? 1405 : 612),
+      actions: actions.map(a => ({ ...a, chip: chip(a.tone) })),
+      escrowRows: esc.map((e, i) => ({ label: e[0], code: e[1], amount: this.money(escAmt[i], R), bar: `height:10px; border-radius:99px; background:${e[1] === "DISPUTED" ? "#e5484d" : INK}; width:${Math.max(4, escAmt[i] / escMax * 100)}%` })),
+
+      provFilters: [["pending", "قيد المراجعة"], ["approved", "معتمد"], ["rejected", "مرفوض"]].map(([k, l]) => ({ label: l, style: this.tab(P.filter === k), pick: () => this.sub("prov", { filter: k, sel: -1 }) })),
+      provList: (s.provSort === "new" ? provShown : [...provShown].reverse()).map(p => ({
+        name: p.name, meta: p.meta, state: stateOf(p)[0], chip: chip(stateOf(p)[1]),
+        style: `background:${selP && selP.i === p.i ? GREY : "#fff"}; color:${INK}; border:2px solid ${selP && selP.i === p.i ? INK : "#e4ecf7"}; padding:12px 14px; border-radius:18px; width:100%`,
+        pick: () => this.sub("prov", { sel: p.i }),
+      })),
+      ...(() => {
+        const ready = provAll.filter(p => !p.decision && DOCS.every(d => p.docs[d.key]));
+        return {
+          bulkOn: ready.length > 0, bulkCount: AR(ready.length),
+          bulkApprove: () => this.sub("prov", cur => { const d = { ...cur.decided }; ready.forEach(p => { d[p.i] = "approved"; }); return { decided: d }; }),
+        };
+      })(),
+      provEmpty: provShown.length === 0,
+      provHas: !!selP,
+      prov: selP ? {
+        name: selP.name, meta: selP.meta, phone: selP.phone, since: selP.since, bio: selP.bio,
+        services: selP.services.map(x => ({ label: x })),
+        state: stateOf(selP)[0], chip: chip(stateOf(selP)[1]),
+        pending: !selP.decision, decided: !!selP.decision,
+        decisionNote: selP.decision === "approved" ? "تم الاعتماد — يمكن للمزود الآن رؤية الطلبات والتقدّم عليها، ووصلته رسالة." : "تم الرفض — أُرسل السبب للمزود ولا يمكنه التقدّم على الطلبات.",
+        docs: DOCS.map(d => {
+          const ok = !!selP.docs[d.key];
+          return {
+            label: d.label, file: d.file, note: ok ? "تمت المراجعة يدويًا" : "لم يُراجَع بعد",
+            wrap: `border:2px solid ${ok ? BLUE : "#e4ecf7"}; background:${ok ? "#f2f7fd" : "#fff"}; border-radius:18px; padding:14px`,
+            btn: `background:${ok ? INK : GREY}; color:${ok ? "#fff" : INK}; padding:10px 16px; font-size:12px; width:100%`,
+            btnLabel: ok ? "✓ مطابق" : "علّم كمطابق",
+            toggle: () => this.sub("prov", cur => ({ docs: { ...cur.docs, [selP.i]: { ...(cur.docs[selP.i] || {}), [d.key]: !ok } } })),
+          };
+        }),
+      } : { services: [], docs: [] },
+      docProgress: AR(docsOk) + " من 3 مستندات مُراجَعة",
+      rejectReasons: ["مستند غير واضح", "عدم تطابق الصورة الحيّة", "سجل جنائي غير سارٍ"].map((l, i) => ({ label: l, style: this.tab(s.reason === i, "9px 16px"), pick: () => this.setState({ reason: i }) })),
+      approveLabel: docsOk === 3 ? "اعتمد المزود" : "راجع المستندات الثلاثة أولًا",
+      approveStyle: docsOk === 3 ? "background:#0f3a73; color:#fff; padding:15px 28px; font-size:15px" : "background:#f2f6fc; color:#4b5b78; padding:15px 28px; font-size:15px; cursor:not-allowed",
+      approve: () => { if (selP && docsOk === 3) this.sub("prov", cur => ({ decided: { ...cur.decided, [selP.i]: "approved" } })); },
+      reject: () => { if (selP) this.sub("prov", cur => ({ decided: { ...cur.decided, [selP.i]: "rejected" } })); },
+      undoDecision: () => { if (selP) this.sub("prov", cur => { const d = { ...cur.decided }; delete d[selP.i]; return { decided: d }; }); },
+
+      dispList: (s.dispSort === "amount" ? [...dispAll].sort((a, b) => b.amount - a.amount) : [...dispAll].reverse()).map(d => ({
+        ref: d.ref, amount: this.money(d.amount, R), reason: d.reason, age: d.age,
+        state: d.res ? "مُغلق" : "مفتوح", chip: chip(d.res ? TINT : "#fde2e2"),
+        style: `background:${d.i === selD.i ? GREY : "#fff"}; color:${INK}; border:2px solid ${d.i === selD.i ? INK : "#e4ecf7"}; padding:14px 16px; border-radius:18px; width:100%`,
+        pick: () => this.sub("disp", { sel: d.i }),
+      })),
+      disp: {
+        ref: selD.ref, reason: selD.reason, from: STATE_AR[selD.from] || selD.from, service: selD.service, zone: selD.zone,
+        customer: selD.customer, provider: selD.provider, customerText: selD.customerText, providerText: selD.providerText,
+        amount: this.money(amt, R),
+        state: selD.res ? "مُغلق" : "مفتوح · التحرير موقوف", chip: chip(selD.res ? TINT : "#fde2e2"),
+        open: !selD.res, closed: !!selD.res,
+        outcome: selD.res ? (selD.res.mode === "release" ? "RELEASED — حُرِّر المبلغ كاملًا للمزود." : selD.res.mode === "refund" ? "REFUNDED — استُرد المبلغ كاملًا للعميل وعُكست العمولة بقيد معاكس." : "PARTIALLY_RELEASED — " + AR(selD.res.pct) + "% للمزود والباقي للعميل.") : "",
+        timeline: [
+          { code: "FUNDED", label: "دفع العميل والمبلغ محفوظ", when: "قبل 4 أيام" },
+          { code: "UNLOCKED", label: "دفع المزود رسم فتح البيانات", when: "قبل 4 أيام" },
+          ...(selD.from !== "UNLOCKED" ? [{ code: "IN_PROGRESS", label: "بدأ المزود العمل", when: "قبل 3 أيام" }] : []),
+          ...(selD.from === "AWAITING_CONFIRMATION" ? [{ code: "AWAITING_CONF.", label: "أبلغ المزود بالإتمام", when: "قبل يومين" }] : []),
+          { code: "DISPUTED", label: "فتح العميل نزاعًا", when: selD.age },
+        ],
+      },
+      resModes: [["release", "تحرير كامل"], ["partial", "تحرير جزئي"], ["refund", "استرداد كامل"]].map(([k, l]) => ({ label: l, style: this.tab(s.mode === k, "11px 20px"), pick: () => this.setState({ mode: k }) })),
+      isPartial: s.mode === "partial",
+      pct: s.pct, pctLabel: AR(s.pct) + "%",
+      onPct: e => this.setState({ pct: Number(e.target.value) }),
+      splitProv: this.money(toProv, R), splitCust: this.money(toCust, R),
+      resolve: () => this.sub("disp", cur => ({ res: { ...cur.res, [selD.i]: { mode: s.mode, pct: pp } } })),
+
+      cats: CATS.map((c, i) => {
+        const off = !!s.catOff[i]; const w = this.sw(!off);
+        return {
+          label: c.label, meta: off ? "معطّلة · لا تظهر للعملاء" : AR(c.services.length) + " خدمات · " + AR(c.questions.length) + " أسئلة",
+          wrap: `display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:18px; border:2px solid ${i === s.cat ? INK : "#e4ecf7"}; background:${i === s.cat ? GREY : "#fff"}; opacity:${off ? .6 : 1}`,
+          switchStyle: w.style, knob: w.knob,
+          pick: () => this.setState({ cat: i }),
+          toggle: () => this.setState(st => ({ catOff: { ...st.catOff, [i]: !st.catOff[i] } })),
+        };
+      }),
+      catName: cat.label,
+      catTabs: [["q", "الأسئلة"], ["s", "الخدمات"], ["a", "الإضافات"], ["z", "المناطق"]].map(([k, l]) => ({ label: l, style: this.tab(s.catTab === k, "9px 16px"), pick: () => this.setState({ catTab: k }) })),
+      tabQ: s.catTab === "q", tabS: s.catTab === "s", tabA: s.catTab === "a", tabZ: s.catTab === "z",
+      questions: order.map((qi, pos) => {
+        const q = cat.questions[qi]; const id = s.cat + ":" + q.key; const off = !!s.qOff[id]; const w = this.sw(!off);
+        const move = dir => this.setState(st => {
+          const o = (st.qOrder[st.cat] || cat.questions.map((_, i) => i)).slice(); const j = pos + dir;
+          if (j < 0 || j >= o.length) return {}; [o[pos], o[j]] = [o[j], o[pos]];
+          return { qOrder: { ...st.qOrder, [st.cat]: o } };
+        });
+        return {
+          label: q.label, key: q.key, type: q.type, valid: q.valid, opts: off ? "معطّل — الإجابات السابقة محفوظة" : q.opts,
+          price: q.price ? "نعم" : "لا", priceChip: chip(q.price ? PALE : GREY),
+          row: `display:flex; align-items:center; gap:0; padding:12px 22px; border-top:2px solid #f2f6fc; opacity:${off ? .5 : 1}`,
+          switchStyle: w.style, knob: w.knob,
+          toggle: () => this.setState(st => ({ qOff: { ...st.qOff, [id]: !st.qOff[id] } })),
+          up: () => move(-1), down: () => move(1),
+        };
+      }),
+      catServices: cat.services.map(([l, n]) => ({ label: l, note: n, state: s.catOff[s.cat] ? "معطّلة" : "مفعّلة" })),
+      catAddons: cat.addons.map(([l, k, p]) => ({ label: l, key: k, price: this.money(p * R.f, R) })),
+      zones: R.zones.map((z, i) => ({
+        label: z, mult: "× " + AR(s.zoneMult[s.region][i].toFixed(2)),
+        dec: () => this.setState(st => ({ zoneMult: { ...st.zoneMult, [st.region]: st.zoneMult[st.region].map((v, j) => j === i ? Math.max(0.5, +(v - 0.05).toFixed(2)) : v) } })),
+        inc: () => this.setState(st => ({ zoneMult: { ...st.zoneMult, [st.region]: st.zoneMult[st.region].map((v, j) => j === i ? Math.min(2, +(v + 0.05).toFixed(2)) : v) } })),
+      })),
+
+      formulaVer: AR(PR.ver),
+      baseLabel: this.money(PR.base, R),
+      baseDec: () => this.sub("pricing", cur => ({ base: Math.max(0, cur.base - 10 * R.f), dirty: true })),
+      baseInc: () => this.sub("pricing", cur => ({ base: cur.base + 10 * R.f, dirty: true })),
+      mods: PR.mods.map((m, i) => ({
+        n: AR(i + 1), label: m.label, key: m.key,
+        cond: m.effect === "unit" ? "لكل وحدة من الإجابة" : "عند تحقق الشرط",
+        value: m.effect === "mult" ? "× " + AR(m.value.toFixed(2)) : "+" + this.money(m.value, R),
+        effects: [["fixed", "مبلغ ثابت"], ["unit", "لكل وحدة"], ["mult", "مضاعف"]].map(([k, l]) => ({
+          label: l, style: this.tab(m.effect === k, "7px 13px"),
+          pick: () => setMod(i, () => ({ effect: k, value: k === "mult" ? 1.2 : (m.effect === "mult" ? 20 * R.f : m.value) })),
+        })),
+        dec: () => setMod(i, x => ({ value: x.effect === "mult" ? Math.max(1, +(x.value - 0.05).toFixed(2)) : Math.max(0, x.value - 5 * R.f) })),
+        inc: () => setMod(i, x => ({ value: x.effect === "mult" ? +(x.value + 0.05).toFixed(2) : x.value + 5 * R.f })),
+        up: () => moveMod(i, -1), down: () => moveMod(i, 1),
+      })),
+      publishLabel: PR.dirty ? "انشر الإصدار " + AR(PR.ver + 1) : "منشور — لا تغييرات",
+      publishStyle: PR.dirty ? "background:#0f3a73; color:#fff; padding:14px 26px; font-size:14px; flex:none" : "background:#f2f6fc; color:#4b5b78; padding:14px 26px; font-size:14px; flex:none",
+      publish: () => { if (PR.dirty) this.sub("pricing", cur => ({ ver: cur.ver + 1, dirty: false })); },
+      testTotal: fmt(rounded),
+      testLines: tl,
+      tRooms: AR(t.rooms), tBaths: AR(t.baths),
+      tRoomsDec: () => this.setState(st => ({ test: { ...st.test, rooms: Math.max(1, st.test.rooms - 1) } })),
+      tRoomsInc: () => this.setState(st => ({ test: { ...st.test, rooms: Math.min(10, st.test.rooms + 1) } })),
+      tBathsDec: () => this.setState(st => ({ test: { ...st.test, baths: Math.max(1, st.test.baths - 1) } })),
+      tBathsInc: () => this.setState(st => ({ test: { ...st.test, baths: Math.min(6, st.test.baths + 1) } })),
+      tVillaLabel: t.villa ? "فيلا" : "شقة", tVillaStyle: this.tab(t.villa, "8px 16px"), tVilla: () => this.setState(st => ({ test: { ...st.test, villa: !st.test.villa } })),
+      tPetsLabel: t.pets ? "نعم" : "لا", tPetsStyle: this.tab(t.pets, "8px 16px"), tPets: () => this.setState(st => ({ test: { ...st.test, pets: !st.test.pets } })),
+      tWinLabel: t.win ? "مضافة" : "غير مضافة", tWinStyle: this.tab(t.win, "8px 16px"), tWin: () => this.setState(st => ({ test: { ...st.test, win: !st.test.win } })),
+      tZones: R.zones.map((z, i) => ({ label: z, style: this.tab(t.zone === i, "7px 13px"), pick: () => this.setState(st => ({ test: { ...st.test, zone: i } })) })),
+
+      settings: SETTINGS.map(d => {
+        const v = ST[d.key], changed = v !== SV[d.key];
+        return {
+          label: d.label, key: d.key, note: d.note, value: fmtSet(d, v),
+          changed: changed ? "كان " + fmtSet(d, SV[d.key]) : "",
+          changedStyle: changed ? "background:#eaf1fa; border-radius:99px; padding:6px 12px; font:700 12px Cairo,system-ui,sans-serif" : "display:none",
+          wrap: `border:2px solid ${changed ? YEL : "#e4ecf7"}; border-radius:22px; padding:22px 24px`,
+          dec: () => this.sub("settings", cur => ({ [d.key]: Math.max(d.min, cur[d.key] - stepOf(d)) })),
+          inc: () => this.sub("settings", cur => ({ [d.key]: Math.min(maxOf(d), cur[d.key] + stepOf(d)) })),
+        };
+      }),
+      dirtyLabel: dirtyN ? AR(dirtyN) + " تغييرات غير محفوظة — " + R.name : "لا توجد تغييرات — " + R.name,
+      saveStyle: dirtyN ? "background:#dbe7f6; color:#0f3a73; padding:12px 24px; font-size:14px" : "background:rgba(255,255,255,.15); color:rgba(255,255,255,.5); padding:12px 24px; font-size:14px; cursor:not-allowed",
+      saveSettings: () => { if (dirtyN) this.setState(st => ({ saved: { ...st.saved, [st.region]: { ...st.settings[st.region] } } })); },
+      resetSettings: () => this.setState(st => ({ settings: { ...st.settings, [st.region]: { ...st.saved[st.region] } } })),
+
+      periods: [[7, "7 أيام"], [30, "30 يومًا"], [90, "90 يومًا"]].map(([k, l]) => ({ label: l, style: this.tab(s.period === k, "10px 20px"), pick: () => this.setState({ period: k }) })),
+      repKpis: [
+        { label: "إجمالي إيراد المنصة", value: this.money(sumC + sumU, R), note: "عمولة + رسوم فتح", wrap: "background:#dbe7f6; border-radius:22px; padding:20px 22px" },
+        { label: "العمولة", value: this.money(sumC, R), note: AR(ST.commission_pct) + "% من قيمة الطلبات", wrap: "background:#0f3a73; color:#fff; border-radius:22px; padding:20px 22px" },
+        { label: "رسوم فتح البيانات", value: this.money(sumU, R), note: AR(Math.round(sumU / ST.unlock_fee)) + " عملية فتح", wrap: "background:#dbe7f6; border-radius:22px; padding:20px 22px" },
+        { label: "قيمة الطلبات المدفوعة", value: this.money(gmv, R), note: "محفوظة لدى مزود الدفع لا لدى المنصة", wrap: "background:#f2f6fc; border-radius:22px; padding:20px 22px" },
+      ],
+      yTicks: [maxV, maxV / 2, 0].map(v => ({ v: fmt(Math.round(v)) })),
+      bars: ser.map((x, i) => ({
+        label: lab[i],
+        top: `width:100%; background:#dbe7f6; border-radius:8px 8px 0 0; height:${x.u / maxV * 190}px`,
+        bottom: `width:100%; background:#0f3a73; border-radius:0 0 8px 8px; height:${x.c / maxV * 190}px`,
+      })),
+      repRows: [["تنظيف منازل", 0.62], ["تنظيف مكيفات", 0.21], ["سجاد وأثاث", 0.17]].map(([l, sh]) => ({
+        label: l, count: AR(Math.round(gmv * sh / (300 * R.f))), gmv: this.money(gmv * sh, R), comm: this.money(sumC * sh, R), unlock: this.money(sumU * sh, R),
+      })),
+
+      thLabel: AR(s.threshold) + "%",
+      thDec: () => this.setState(st => ({ threshold: Math.max(30, st.threshold - 5) })),
+      thInc: () => this.setState(st => ({ threshold: Math.min(95, st.threshold + 5) })),
+      leakFilters: [["flag", "المنبَّه عليهم"], ["all", "كل المزودين"]].map(([k, l]) => ({ label: l, style: this.tab(s.leakFilter === k), pick: () => this.setState({ leakFilter: k }) })),
+      leakCount: AR(flagged.length) + " من " + AR(leakAll.length) + " تحت الحد",
+      leakRows: leakShown.map(l => {
+        const low = l.r * 100 < s.threshold;
+        return {
+          name: l.name, meta: l.meta, unlocks: AR(l.unl), done: AR(l.done), pct: AR(Math.round(l.r * 100)) + "%",
+          row: `display:flex; align-items:center; padding:14px 22px; border-top:2px solid #f2f6fc; background:${low ? "#f2f7fd" : "#fff"}`,
+          bar: `display:block; height:10px; border-radius:99px; background:${low ? "#e5484d" : INK}; width:${Math.round(l.r * 100)}%`,
+          flag: low ? "تحت الحد" : "طبيعي", chip: chip(low ? "#fde2e2" : TINT),
+        };
+      }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
