@@ -15,11 +15,13 @@ import '../globals.css';
  * next-intl documents removing pass-through root layouts because they conflict
  * with the localized one. Machine endpoints under app/api are not localized and
  * need no layout at all.
+ *
+ * Every page renders per request (spec 0004 AC-13, D69): the Content Security Policy carries a fresh
+ * nonce from proxy.ts, and a nonce cannot exist in a page prerendered at build. So there is no
+ * generateStaticParams, and the whole tree below is forced dynamic. The e2e suite checks the prerender
+ * manifest holds no locale page.
  */
-
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+export const dynamic = 'force-dynamic';
 
 type Props = {
   children: React.ReactNode;
@@ -39,8 +41,8 @@ export default async function LocaleLayout({ children, params }: Props) {
   // trusts it — an unknown locale is a 404, never a silent fallback.
   if (!hasLocale(routing.locales, locale)) notFound();
 
-  // Enables static rendering for every Server Component beneath this layout.
-  // Must be repeated in each page.tsx.
+  // Hands the locale to every Server Component beneath this layout without reading it from the
+  // request again. Must be repeated in each page.tsx.
   setRequestLocale(locale);
 
   return (

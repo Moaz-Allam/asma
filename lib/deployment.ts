@@ -47,6 +47,34 @@ export function isCommitSha(value: string): boolean {
   return /^[0-9a-f]{40}$/.test(value);
 }
 
+export type SentryDsn = { publicKey: string; host: string; projectId: string };
+
+/**
+ * The parts of a Sentry DSN on the EU ingest (`https://<key>@o<org>.ingest.de.sentry.io/<project>`), or
+ * null for anything else: another region, plain http, a missing key, a look alike host. D62 keeps every
+ * event in the EU; lib/security/csp.ts derives the report endpoint from these parts without the SDK.
+ */
+export function parseEuSentryDsn(value: string): SentryDsn | null {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  const projectId = url.pathname.slice(1);
+  const wellFormed =
+    url.protocol === 'https:' &&
+    url.username !== '' &&
+    url.password === '' &&
+    url.port === '' &&
+    url.search === '' &&
+    url.hash === '' &&
+    // The SaaS ingest host. Only this shape engages the /api/e tunnel (@sentry/nextjs tunnelRoute.js).
+    /^o\d+\.ingest\.de\.sentry\.io$/.test(url.hostname) &&
+    /^\d+$/.test(projectId);
+  return wellFormed ? { publicKey: url.username, host: url.hostname, projectId } : null;
+}
+
 type Requirement = {
   name: string;
   phases: readonly DeploymentPhase[];
@@ -69,7 +97,35 @@ const REQUIREMENTS: readonly Requirement[] = [
     expected: 'the full 40 character commit SHA (Vercel sets it for Git deployments)',
     valid: isCommitSha,
   },
+  // Task 5: the Sentry door (lib/observability).
+  {
+    name: 'NEXT_PUBLIC_SENTRY_DSN',
+    phases: ['build', 'runtime'],
+    vercelOnly: false,
+    expected: 'an EU Sentry DSN, https://<key>@o<org>.ingest.de.sentry.io/<project>',
+    valid: (value) => parseEuSentryDsn(value) !== null,
+  },
+  {
+    name: 'SENTRY_AUTH_TOKEN',
+    phases: ['build'],
+    vercelOnly: false,
+    expected: 'a Sentry auth token for the source map upload (a secret, set by the owner, build only)',
+    valid: (value) => value.trim() !== '',
+  },
+  // Task 10: the PostHog door (lib/analytics).
+  {
+    name: 'NEXT_PUBLIC_POSTHOG_KEY',
+    phases: ['build', 'runtime'],
+    vercelOnly: false,
+    expected: 'a PostHog project key, phc_… (never a personal API key, phx_…)',
+    valid: isPostHogProjectKey,
+  },
 ];
+
+/** A PostHog project key (`phc_…`), public by design. A personal API key (`phx_…`) must never ship. */
+export function isPostHogProjectKey(value: string): boolean {
+  return /^phc_[A-Za-z0-9]+$/.test(value);
+}
 
 /** The names of the keys a deployment lacks, or holds malformed, in this phase. Assumes a deployment. */
 export function missingDeploymentKeys(env: DeploymentEnv, phase: DeploymentPhase): string[] {

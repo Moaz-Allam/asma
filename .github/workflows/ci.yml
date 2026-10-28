@@ -146,6 +146,8 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: '1'
           APP_LOCAL_ONLY: '1'
+          NEXT_PUBLIC_SENTRY_DSN: https://ci000000000000000000000000000000@o0.ingest.de.sentry.io/0
+          NEXT_PUBLIC_POSTHOG_KEY: phc_ci00000000000000000000000000000
           APP_DEFAULT_LOCALE: ar
           APP_SUPPORTED_LOCALES: ar,tr,en
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54421

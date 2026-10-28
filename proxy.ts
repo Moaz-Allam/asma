@@ -1,6 +1,9 @@
 import createIntlProxy from 'next-intl/middleware';
+import { NextRequest, type NextResponse } from 'next/server';
 
+import { getEnv, sentryDsn } from '@/lib/env';
 import { routing } from '@/lib/i18n/routing';
+import { buildCsp, cspReportUri, reportingEndpoints } from '@/lib/security/csp';
 
 /**
  * ⚠️ This file MUST be named `proxy.ts` and export `proxy`.
@@ -14,14 +17,55 @@ import { routing } from '@/lib/i18n/routing';
  *    Handler, independently. There are no "already protected by proxy" shortcuts.
  *    Next.js itself now recommends against relying on this layer for auth.
  *
- * Today it does one job: negotiate the locale and redirect accordingly.
- * Feature 02 adds an unauthenticated-user redirect here for UX — and the real
- * check in the actions themselves.
+ * Two jobs: negotiate the locale and redirect accordingly, and give every page response an enforced
+ * Content Security Policy with a fresh nonce (spec 0004 AC-13). The nonce reaches Next through the
+ * request headers (Next reads it from the request's policy and stamps its own scripts with it), and the
+ * same policy goes on the response. Feature 02 adds an unauthenticated-user redirect here for UX — and
+ * the real check in the actions themselves.
  */
-export const proxy = createIntlProxy(routing);
+
+const intlProxy = createIntlProxy(routing);
+
+function policyFor(nonce: string): { csp: string; reportingEndpoints?: string } {
+  const reportUri = cspReportUri(sentryDsn());
+  return {
+    csp: buildCsp(nonce, {
+      dev: process.env.NODE_ENV === 'development',
+      supabaseUrl: getEnv().NEXT_PUBLIC_SUPABASE_URL,
+      reportUri,
+    }),
+    ...(reportUri ? { reportingEndpoints: reportingEndpoints(reportUri) } : {}),
+  };
+}
+
+export function proxy(request: NextRequest): NextResponse {
+  // A random one time token per request, base64 as CSP nonces are written.
+  const nonce = btoa(crypto.randomUUID());
+  const { csp, reportingEndpoints: endpoints } = policyFor(nonce);
+
+  const headers = new Headers(request.headers);
+  headers.set('x-nonce', nonce);
+  headers.set('content-security-policy', csp);
+  // next-intl forwards these request headers to the page. Only the URL, method and headers are carried
+  // over: the body stays with the original request.
+  const response = intlProxy(new NextRequest(request.url, { headers, method: request.method }));
+
+  response.headers.set('Content-Security-Policy', csp);
+  if (endpoints) response.headers.set('Reporting-Endpoints', endpoints);
+  return response;
+}
 
 export const config = {
-  // Everything except Next internals, the API surface, and static files.
-  // `api` is deliberately excluded: machine endpoints are not localized.
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+  matcher: [
+    {
+      // Everything except Next internals, the API surface, and static files. `api` is deliberately
+      // excluded: machine endpoints (/api/health, the /api/e and /api/a rewrites) are not localized.
+      source: '/((?!api|_next|_vercel|.*\\..*).*)',
+      // Prefetches render no document, so they need no nonce (and no locale negotiation).
+      missing: [
+        { type: 'header', key: 'next-router-prefetch' },
+        { type: 'header', key: 'purpose', value: 'prefetch' },
+      ],
+    },
+  ],
 };

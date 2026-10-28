@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/check-sourcemaps.mjs",
     "start": "next start",
     "lint": "eslint .",
     "lint:rtl": "node scripts/check-logical-classes.mjs",

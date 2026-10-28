@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * Scaffold smoke journey, run once per locale project (ar, tr, en) at 390px.

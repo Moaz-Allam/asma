@@ -90,6 +90,9 @@ const env = {
   NEXT_TELEMETRY_DISABLED: '1',
   // A local production build and `next start`, never a deployment (lib/deployment.ts, spec 0004 AC-9).
   APP_LOCAL_ONLY: '1',
+  // Shape valid telemetry keys, so both SDKs run; the journeys stub /api/e and /api/a in the browser.
+  NEXT_PUBLIC_SENTRY_DSN: 'https://e2e00000000000000000000000000000@o0.ingest.de.sentry.io/0',
+  NEXT_PUBLIC_POSTHOG_KEY: 'phc_e2e0000000000000000000000000000',
   ...localSupabase(),
 };
 
