@@ -8,7 +8,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(23);
+SELECT plan(25);
 
 -- ── KSA is switched off (AC-15) ──────────────────────────────────────────────
 SELECT is(
@@ -126,6 +126,24 @@ SELECT is(
   (SELECT value FROM public.platform_settings WHERE region = 'TR' AND key = 'funding_enabled'),
   'true'::jsonb,
   'a signed in user who is not an admin cannot switch a flag off'
+);
+
+-- Rule 7's negative tests for the other two writes the grant allows (review 2026-10-29): a DELETE
+-- would turn a feature off (the read finds no row), an INSERT of a missing flag as true would turn
+-- one on. Only the admin policy stops both, so both are proven here.
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000a1", "role": "authenticated", "app_metadata": {}}';
+DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'funding_enabled';
+SELECT throws_ok(
+  $$ INSERT INTO public.platform_settings (region, key, value) VALUES ('KSA', 'wallet_enabled', 'true') $$,
+  '42501', NULL,
+  'a signed in user who is not an admin cannot add a flag'
+);
+RESET ROLE;
+SELECT is(
+  (SELECT count(*)::int FROM public.platform_settings WHERE region = 'TR' AND key = 'funding_enabled'),
+  1,
+  'a signed in user who is not an admin cannot delete a flag'
 );
 
 SET LOCAL ROLE authenticated;

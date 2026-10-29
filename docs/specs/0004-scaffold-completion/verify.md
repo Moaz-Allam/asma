@@ -80,7 +80,7 @@ tests and e2e green again on a clean clone of `f636c8f` (G0 run); quotas checked
       included), the replay masks and a sampler that ignores an incoming flag → AC-2 to AC-6, D83
 - [ ] `npx vitest run tests/lint/eslint-rules.test.ts` → 51 proofs green (`import()`, `require()`,
       destructuring, computed and spread env included, D86) → AC-8
-- [ ] `npx supabase test db` → 42/42: KSA inactive, the 10 flags, the `_enabled` CHECK both ways, the
+- [ ] `npx supabase test db` → 51/51: KSA inactive, the 10 flags, the `_enabled` CHECK both ways, non admin flag writes refused, new objects start with no grant (D86), the
       exact grants, `health_ping` for `anon` and `authenticated` only → AC-10, AC-14, AC-15 (flag value
       source)
 - [ ] `E2E_NO_DB=1 npm run test:e2e` → green in `ar`, `tr`, `en` → AC-2, AC-3, AC-6, AC-7, AC-10, AC-12,

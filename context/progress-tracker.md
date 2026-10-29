@@ -142,9 +142,12 @@ Dated bullets, newest at the bottom.
   - the proxy never throws (tested against the real environment), `check-sourcemaps.mjs` checks every
     deployment build, AC-17 is tested, the registry has `GlobalError`;
   - lint closes `import()`, `require()`, destructured keys and computed or spread `process.env` (D86).
-  Unit tests 461 (from 338), lint proofs 51 (from 35). Still to do before merge: the default privileges
-  migration (needs Docker to read the local defaults), `npm run db:test`, e2e with the database, a
-  preview check of the three relays. Owner steps left in Sentry: the onboarding run, the 26 keys of D82
+  Unit tests 461 (from 338), lint proofs 51 (from 35). Migration `20261029120000_default_privileges`
+  (D86): read on 2026-10-29, new objects of `postgres` in public granted the cloud's API roles
+  everything and the local stack's still MAINTAIN, REFERENCES, TRIGGER, TRUNCATE (and UPDATE on
+  sequences); now none on either, proven by `supabase/tests/04`; pgTAP 51/51 locally. Still to do
+  before merge: e2e with the database, the cloud push of the migration (dry run first), a preview check
+  of the three relays. Owner steps left in Sentry: the onboarding run, the 26 keys of D82
   as additional sensitive fields, the inbound filters (browser extensions, localhost, legacy browsers,
   web crawlers), and a look that spike protection is on.
 
@@ -406,11 +409,11 @@ KSA facts are deferred with the KSA launch (D22).
 
 | Suite | Status | Last run | Notes |
 | --- | --- | --- | --- |
-| Guard suite (`npm run guardrails`) | 🟢 | 2026-10-28 | 63/63, including false positive, Edit and MultiEdit cases |
-| Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-28 | Lint includes the single door rules, now with the Sentry and PostHog doors (35 proofs) |
-| Unit (Vitest 5) | 🟢 | 2026-10-28 | 338 tests in 19 files (scrubber, deployment gate, CSP, proxy, health, flags, doors, analytics), about 5s |
+| Guard suite (`npm run guardrails`) | 🟢 | 2026-10-29 | 63/63, including false positive, Edit and MultiEdit cases |
+| Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-29 | Lint includes the single door rules, the telemetry doors and the ways around them (51 proofs, D86) |
+| Unit (Vitest 5) | 🟢 | 2026-10-29 | 461 tests in 22 files (scrubber, relays, SDK options, deployment gate, CSP, proxy, health, flags, doors, analytics, global error), about 5s |
 | Build (`next build`) | 🟢 local · 🔴 first preview | 2026-10-28 | Locale pages are dynamic (nonce CSP); the first Vercel preview stopped at the build gate as designed: `NEXT_PUBLIC_POSTHOG_KEY` missing |
-| pgTAP (`supabase test db`) | 🟢 local | 2026-10-28 | 42/42 on the local stack (ports 544xx, D76), including `03_flags_and_health` and the grant pins; CI runs on the PR |
+| pgTAP (`supabase test db`) | 🟢 local | 2026-10-29 | 51/51 on the local stack (ports 544xx, D76): RLS on tables, partitioned tables and views, the grant pins, non admin flag writes refused, the default privileges (`04`) |
 | End to end (Playwright, 390px, ar/tr/en) | 🟢 local | 2026-10-28 | 23 passed, 4 single locale skips: smoke, CSP and headers, both SDKs against stubs, storage, scrubbed payloads, health, prerender manifest (`E2E_NO_DB=1`) |
 | Secret scan (gitleaks 8.30.1) | ⏳ | — | First run in CI after the push |
 | Money: property, race, idempotency, invariant | 🔴 | — | Required before position 09 |
