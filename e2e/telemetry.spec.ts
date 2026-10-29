@@ -148,18 +148,21 @@ test('the telemetry relays are our own handlers, refusing anything not ours befo
   ).toBe(415);
 });
 
-test('the health endpoint answers degraded without a database, uncached, with nothing else in it', async ({
+test('the health endpoint pings the real database (ok with it, degraded without it), uncached, with nothing else in it', async ({
   request,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'en', 'one locale is enough for a machine endpoint');
+  // With the local stack, health_ping() runs through the anon key against the migrated database
+  // (review 2026-10-29); with E2E_NO_DB=1 (CI today) there is no database to answer.
+  const withDatabase = process.env.E2E_NO_DB !== '1';
   const response = await request.get('/api/health');
-  expect(response.status()).toBe(503);
+  expect(response.status()).toBe(withDatabase ? 200 : 503);
   expect(response.headers()['cache-control']).toBe('no-store');
   expect(response.headers()).toMatchObject(STATIC_HEADERS);
   const body: unknown = await response.json();
   expect(body).toEqual({
-    status: 'degraded',
-    db: 'down',
+    status: withDatabase ? 'ok' : 'degraded',
+    db: withDatabase ? 'ok' : 'down',
     commit: 'local',
     region: 'local',
     checkedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
