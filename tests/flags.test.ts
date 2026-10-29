@@ -142,3 +142,17 @@ describe('isEnabled fails closed, logs, and raises flag_read_failed', () => {
     });
   });
 });
+
+describe('a value no row could hold is a caller bug, not a failed read (review 2026-10-29)', () => {
+  it.each([
+    ['an unknown region', 'funding_enabled', 'EG'],
+    ['a region in the wrong case', 'funding_enabled', 'tr'],
+    ['an unknown flag', 'wallet_enabled', 'TR'],
+  ])('%s: off, logged, no alert and no query', async (_name, flag, region) => {
+    const { db, calls } = fakeDb({ data: { value: true }, error: null });
+    await expect(isEnabled(flag as (typeof MONEY_FLAGS)[number], region as 'TR', db)).resolves.toBe(false);
+    expect(calls).toHaveLength(0);
+    expect(doors.log).toHaveBeenCalledWith('flag_read_failed');
+    expect(doors.raiseAlert).not.toHaveBeenCalled();
+  });
+});

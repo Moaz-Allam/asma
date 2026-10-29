@@ -6,12 +6,16 @@
  * environment, sdk, tags, fingerprint, the trace and device contexts), so grouping and trace joins
  * keep working. Inside user data:
  *   - a value under a personal key is replaced by FILTERED (the key stays, so the shape is visible);
- *   - URLs lose their sensitive parameters and every fragment;
+ *     keys match after camelCase, `-` and `.` are folded to `_` (`phoneNumber` is `phone_number`);
+ *   - every URL, alone or inside text, keeps only the `utm_*` and `page` parameters (D85), and loses
+ *     every fragment and any credentials;
  *   - email addresses and IPv4/IPv6 addresses are redacted anywhere;
  *   - phone numbers are redacted in message like fields only (messages, exception values, console
  *     arguments, log templates), with the anchored pattern below, so trace ids, uuids and commit SHAs
  *     survive everywhere.
  * `request` is reduced to method, url, query string and allow listed headers; `user` is never sent.
+ * The walk is bounded: a cycle, a value seen before, or anything past the node budget becomes FILTERED,
+ * so a cyclic or huge console argument costs linear time, never exponential.
  * Every exported function fails closed: if scrubbing throws, it returns null and the caller drops the
  * payload. No SDK import here, so the browser, the server, logs and replays share exactly one copy.
  */
@@ -23,6 +27,10 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'first_name',
   'last_name',
   'full_name',
+  'user_name',
+  'username',
+  'customer_name',
+  'display_name',
   'email',
   'phone',
   'phone_number',
@@ -55,6 +63,10 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'message',
   'body',
   'comment',
+  // Postgres error fields: they quote the row that failed, such as `Key (phone)=(+90…) already exists.`
+  'detail',
+  'details',
+  'hint',
   'national_id',
   'tckn',
   'identity_number',
@@ -65,20 +77,25 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'date_of_birth',
   'dob',
 ]);
-const PERSONAL_SUFFIXES = ['_email', '_phone', '_address', '_token', '_secret', '_key', '_password'] as const;
-
-const SENSITIVE_URL_PARAMS: ReadonlySet<string> = new Set([
-  'token',
-  'access_token',
-  'refresh_token',
-  'token_hash',
-  'code',
-  'email',
-  'phone',
-  'q',
-  'ref',
-  'customer',
-]);
+const PERSONAL_SUFFIXES = [
+  '_email',
+  '_phone',
+  '_phone_number',
+  '_address',
+  '_first_name',
+  '_last_name',
+  '_full_name',
+  '_postal_code',
+  '_national_id',
+  '_birth_date',
+  '_card_number',
+  '_token',
+  '_secret',
+  '_key',
+  '_password',
+  '_cookie',
+  '_authorization',
+] as const;
 
 /** The only request headers that leave. Never cookie, authorization, x-forwarded-for, x-real-ip or x-vercel-ip-*. */
 export const ALLOWED_REQUEST_HEADERS: readonly string[] = [
@@ -112,13 +129,15 @@ const SDK_CONTEXTS: ReadonlySet<string> = new Set([
   'flags',
   'profile',
   'replay',
-  'feedback',
-  'state',
 ]);
 
-const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
-const IPV4 =
-  /(?<![\w.])(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}(?![\w.])/g;
+const EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.\p{L}{2,}/gu;
+const OCTET = '(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)';
+const V4 = `${OCTET}(?:\\.${OCTET}){3}`;
+// A full stop after an address ends the sentence; only `.digit` continues a number.
+const IPV4 = new RegExp(`(?<![\\w.])${V4}(?!\\w|\\.\\d)`, 'g');
+// IPv6 ending in an IPv4 (`::ffff:203.0.113.9`, the form Node reports for a dual stack peer), whole.
+const IPV6_WITH_V4 = new RegExp(`(?<![\\w:])(?:[0-9A-Fa-f]{0,4}:){2,7}${V4}(?!\\w|\\.\\d)`, 'g');
 const H = '[0-9A-Fa-f]{1,4}';
 // The full eight group form, or any form with `::`. Times (12:30:45) and MAC addresses never match.
 const IPV6 = new RegExp(
@@ -135,14 +154,33 @@ const IPV6 = new RegExp(
   ].join('|')})(?![\\w:])`,
   'g',
 );
-// Spec 0004, verbatim: anchored so a digit run inside a word, a uuid or a SHA never matches.
-const PHONE = /(?<![\w-])\+?\d(?:[\s().-]?\d){6,}(?![\w-])/g;
+// Spec 0004's pattern, widened after the 00b reviews: Arabic-Indic and Persian digits (the `ar`
+// locale), an opening bracket, and up to two separators in a row (`+90 (555) 123 45 67`). Still
+// anchored, so a digit run inside a word, a uuid or a SHA never matches.
+const DIGIT = '[0-9\\u0660-\\u0669\\u06F0-\\u06F9]';
+const PHONE = new RegExp(`(?<![\\w-])\\+?\\(?${DIGIT}(?:[\\s().-]{0,2}${DIGIT}){6,}(?![\\w-])`, 'g');
 const ABSOLUTE_URL = /https?:\/\/[^\s"'<>]+/gi;
+// A relative URL with a query or a fragment, standing alone (after a space, a quote, a bracket or `=`).
+const RELATIVE_URL = /(?<![\w/:.%@-])\/[^\s"'<>?#]*[?#][^\s"'<>]*/g;
+// The `[name="value"]` parts of a CSS selector, as in `button[aria-label="Ali Veli"]`.
+const SELECTOR_ATTRIBUTES = /\[[^\]]*\]/g;
+// `GET /tr/auth/callback?code=…`: the transaction name the Next SDK gives a request.
+const METHOD_AND_PATH = /^([A-Z]+ )(\/.*)$/s;
 
 type Obj = Record<string, unknown>;
 type Mode = 'data' | 'message';
 
 const MAX_DEPTH = 12;
+// Sentry's own normalize keeps 1000 entries per level; the node budget covers a large transaction.
+const MAX_BREADTH = 1000;
+const MAX_NODES = 50_000;
+
+/** The walk's bounds for one payload: nodes left, and every object already visited. */
+type Budget = { nodes: number; seen: WeakSet<object> };
+
+function newBudget(): Budget {
+  return { nodes: MAX_NODES, seen: new WeakSet() };
+}
 
 function isObj(value: unknown): value is Obj {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -153,13 +191,34 @@ function normalizeKey(key: string): string {
   return key.toLowerCase().replaceAll('-', '_');
 }
 
+/** camelCase split into words, then lowercase, with `-`, `.` and spaces folded to `_`. */
+function foldKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/[-.\s]+/g, '_');
+}
+
 export function isPersonalKey(key: string): boolean {
-  const k = normalizeKey(key);
+  const k = foldKey(key);
   return PERSONAL_KEYS.has(k) || PERSONAL_SUFFIXES.some((suffix) => k.endsWith(suffix));
 }
 
-function isSensitiveParam(name: string): boolean {
-  return SENSITIVE_URL_PARAMS.has(normalizeKey(name)) || isPersonalKey(name);
+/** A URL fragment kept apart from its URL, such as the SDK's `http.fragment` span attribute. */
+function isFragmentKey(key: string): boolean {
+  const k = normalizeKey(key);
+  return k === 'hash' || k === 'fragment' || k.endsWith('.fragment') || k.endsWith('_fragment');
+}
+
+function isFilteredKey(key: string): boolean {
+  return isPersonalKey(key) || isFragmentKey(key);
+}
+
+/** The only query parameters a URL keeps (D85): campaign tags and the page number. */
+function isAllowedParam(name: string): boolean {
+  const k = normalizeKey(name);
+  return k === 'page' || /^utm_[a-z]+$/.test(k);
 }
 
 function isUrlKey(key: string): boolean {
@@ -184,6 +243,7 @@ function isQueryKey(key: string): boolean {
   return k === 'query' || k === 'query_string' || k.endsWith('.query');
 }
 
+/** A query string part: `+` is a space there. */
 function decode(part: string): string {
   try {
     return decodeURIComponent(part.replaceAll('+', ' '));
@@ -192,12 +252,35 @@ function decode(part: string): string {
   }
 }
 
-/** Emails and IP addresses, anywhere in a user data string. */
-function redactData(text: string): string {
-  return text.replace(EMAIL, '[email]').replace(IPV6, '[ip]').replace(IPV4, '[ip]');
+/** A path: `+` is itself there. */
+function decodePath(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
 }
 
-/** Message like text: emails, IPs, and phone numbers. */
+/** Emails and IP addresses. */
+function redactPlain(text: string): string {
+  return text
+    .replace(EMAIL, '[email]')
+    .replace(IPV6_WITH_V4, '[ip]')
+    .replace(IPV6, '[ip]')
+    .replace(IPV4, '[ip]');
+}
+
+/** Every URL inside a text, absolute or relative, scrubbed as a URL. */
+function scrubUrlsInText(text: string): string {
+  return text.replace(ABSOLUTE_URL, (url) => scrubUrl(url)).replace(RELATIVE_URL, (url) => scrubUrl(url));
+}
+
+/** User data text: URLs, emails and IP addresses. */
+function redactData(text: string): string {
+  return redactPlain(scrubUrlsInText(text));
+}
+
+/** Message like text: URLs, emails, IPs, and phone numbers. */
 export function redactMessage(text: string): string {
   return redactData(text).replace(PHONE, '[phone]');
 }
@@ -207,16 +290,24 @@ function keepParam(pair: string): boolean {
   const eq = pair.indexOf('=');
   const name = decode(eq === -1 ? pair : pair.slice(0, eq));
   const value = eq === -1 ? '' : decode(pair.slice(eq + 1));
-  return !isSensitiveParam(name) && redactMessage(value) === value;
+  return isAllowedParam(name) && redactMessage(value) === value;
+}
+
+/** Emails and IPs in a path, also when percent encoded (`/u/ali%40x.com`). */
+function redactPath(path: string): string {
+  const redacted = redactPlain(path);
+  const decoded = decodePath(redacted);
+  const decodedRedacted = redactPlain(decoded);
+  return decodedRedacted === decoded ? redacted : decodedRedacted;
 }
 
 // `scheme://` and the authority of an absolute URL: everything up to the path, query or fragment.
 const SCHEME_AND_AUTHORITY = /^([a-z][a-z0-9+.-]*:\/\/)([^/?#]*)/i;
 
 /**
- * Drops every fragment, any credentials, and the sensitive parameters, and redacts emails and IPs in
- * the path. The host stays as it is: it is our server, even when it is an IP address (local, e2e).
- * Absolute or relative.
+ * Keeps only the allowed parameters (D85), drops every fragment and any credentials, and redacts
+ * emails and IPs in the path. The host stays as it is: it is our server, even when it is an IP address
+ * (local, e2e). Absolute or relative. `&` and `;` both separate parameters.
  */
 export function scrubUrl(url: string): string {
   const withoutFragment = url.split('#', 1)[0] ?? '';
@@ -226,11 +317,11 @@ export function scrubUrl(url: string): string {
   const origin = authority ? `${scheme}${hostPart.slice(hostPart.lastIndexOf('@') + 1)}` : '';
   const rest = withoutFragment.slice(prefix.length);
   const q = rest.indexOf('?');
-  const path = origin + redactData(q === -1 ? rest : rest.slice(0, q));
+  const path = origin + redactPath(q === -1 ? rest : rest.slice(0, q));
   if (q === -1) return path;
   const kept = rest
     .slice(q + 1)
-    .split('&')
+    .split(/[&;]/)
     .filter(keepParam);
   return kept.length > 0 ? `${path}?${kept.join('&')}` : path;
 }
@@ -239,34 +330,50 @@ function scrubQueryString(query: string): string {
   return scrubUrl(`?${query.replace(/^\?/, '')}`).slice(1);
 }
 
-function scrubUrlsInText(text: string): string {
-  return redactData(text.replace(ABSOLUTE_URL, (url) => scrubUrl(url)));
+/** `/tr/x?…` or `GET /tr/x?…`; any other name is left to the SDK. */
+function scrubTransactionName(name: string): string {
+  if (name.startsWith('/')) return scrubUrl(name);
+  const match = METHOD_AND_PATH.exec(name);
+  return match ? `${match[1]}${scrubUrl(match[2] ?? '')}` : name;
 }
 
-function walk(value: unknown, mode: Mode, depth: number, key?: string): unknown {
-  if (depth > MAX_DEPTH) return FILTERED;
+function walk(value: unknown, mode: Mode, budget: Budget, depth: number, key?: string): unknown {
+  budget.nodes -= 1;
+  if (depth > MAX_DEPTH || budget.nodes < 0) return FILTERED;
   if (typeof value === 'string') {
     if (key !== undefined && isQueryKey(key)) return scrubQueryString(value);
     if ((key !== undefined && isUrlKey(key)) || /^https?:\/\//i.test(value)) return scrubUrl(value);
     return mode === 'message' ? redactMessage(value) : redactData(value);
   }
-  if (Array.isArray(value)) return value.map((item) => walk(item, mode, depth + 1));
-  if (isObj(value)) {
-    const out: Obj = {};
-    for (const [k, v] of Object.entries(value))
-      out[k] = isPersonalKey(k) ? FILTERED : walk(v, mode, depth + 1, k);
-    return out;
+  if (typeof value !== 'object' || value === null) return value;
+  // A cycle, or an object already sent once in this payload.
+  if (budget.seen.has(value)) return FILTERED;
+  budget.seen.add(value);
+  if (Array.isArray(value)) {
+    const items = value.slice(0, MAX_BREADTH).map((item) => walk(item, mode, budget, depth + 1));
+    if (value.length > MAX_BREADTH) items.push(FILTERED);
+    return items;
   }
-  return value;
+  const out: Obj = {};
+  let count = 0;
+  for (const k of Object.keys(value)) {
+    if (count === MAX_BREADTH) {
+      out[FILTERED] = FILTERED;
+      break;
+    }
+    count += 1;
+    out[k] = isFilteredKey(k) ? FILTERED : walk((value as Obj)[k], mode, budget, depth + 1, k);
+  }
+  return out;
 }
 
 /** Span and log attributes: `sentry.*` belongs to the SDK, except the message template and its parameters. */
-function scrubAttributes(attributes: Obj): Obj {
+function scrubAttributes(attributes: Obj, budget: Budget): Obj {
   const out: Obj = {};
   for (const [k, v] of Object.entries(attributes)) {
-    if (k.startsWith('sentry.message.')) out[k] = walk(v, 'message', 1);
+    if (k.startsWith('sentry.message.')) out[k] = walk(v, 'message', budget, 1);
     else if (k.startsWith('sentry.')) out[k] = v;
-    else out[k] = isPersonalKey(k) ? FILTERED : walk(v, 'data', 1, k);
+    else out[k] = isFilteredKey(k) ? FILTERED : walk(v, 'data', budget, 1, k);
   }
   return out;
 }
@@ -311,32 +418,55 @@ function scrubRequest(request: Obj): Obj {
   return out;
 }
 
-function scrubContexts(contexts: Obj): Obj {
+function scrubContexts(contexts: Obj, budget: Budget): Obj {
   const out: Obj = {};
   for (const [name, context] of Object.entries(contexts)) {
     if (name === 'trace' && isObj(context)) {
-      out[name] = isObj(context.data) ? { ...context, data: scrubAttributes(context.data) } : context;
+      out[name] = isObj(context.data) ? { ...context, data: scrubAttributes(context.data, budget) } : context;
     } else if (SDK_CONTEXTS.has(name)) {
       out[name] = context;
     } else {
-      out[name] = isPersonalKey(name) ? FILTERED : walk(context, 'data', 1);
+      out[name] = isFilteredKey(name) ? FILTERED : walk(context, 'data', budget, 1);
     }
   }
   return out;
 }
 
-function scrubCrumb(crumb: Obj): Obj {
+/** A `ui.*` breadcrumb or span names an element by a CSS selector: its attribute values are user text. */
+function withoutSelectorAttributes(text: string): string {
+  return text.replace(SELECTOR_ATTRIBUTES, '');
+}
+
+function scrubCrumb(crumb: Obj, budget: Budget): Obj {
   const out: Obj = { ...crumb };
-  if (typeof crumb.message === 'string') out.message = redactMessage(crumb.message);
+  const ui = typeof crumb.category === 'string' && crumb.category.startsWith('ui.');
+  if (typeof crumb.message === 'string') {
+    out.message = redactMessage(ui ? withoutSelectorAttributes(crumb.message) : crumb.message);
+  }
   if (crumb.data !== undefined)
-    out.data = walk(crumb.data, crumb.category === 'console' ? 'message' : 'data', 1);
+    out.data = walk(crumb.data, crumb.category === 'console' ? 'message' : 'data', budget, 1);
   return out;
 }
 
-function scrubSpan(span: Obj): Obj {
+function scrubSpanFields(span: Obj, budget: Budget): Obj {
   const out: Obj = { ...span };
-  if (typeof span.description === 'string') out.description = scrubUrlsInText(span.description);
-  if (isObj(span.data)) out.data = scrubAttributes(span.data);
+  const ui = typeof span.op === 'string' && span.op.startsWith('ui.');
+  if (typeof span.description === 'string') {
+    out.description = redactData(ui ? withoutSelectorAttributes(span.description) : span.description);
+  }
+  if (isObj(span.data)) out.data = scrubAttributes(span.data, budget);
+  return out;
+}
+
+function scrubFrame(frame: unknown): unknown {
+  if (!isObj(frame)) return frame;
+  // Local variables are user data; the SDK only adds them when asked, and we never ask.
+  const { vars: _vars, ...out } = frame;
+  // A stackless browser error gets the page URL, query and fragment included, as its frame's file.
+  for (const key of ['filename', 'abs_path'] as const) {
+    const path = out[key];
+    if (typeof path === 'string' && /^https?:\/\//i.test(path)) out[key] = scrubUrl(path);
+  }
   return out;
 }
 
@@ -348,47 +478,39 @@ function scrubException(exception: Obj): Obj {
       if (!isObj(value)) return value;
       const out: Obj = { ...value };
       if (typeof value.value === 'string') out.value = redactMessage(value.value);
-      // Local variables are user data; the SDK only adds them when asked, and we never ask.
       if (isObj(value.stacktrace) && Array.isArray(value.stacktrace.frames)) {
-        out.stacktrace = {
-          ...value.stacktrace,
-          frames: value.stacktrace.frames.map((frame: unknown) => {
-            if (!isObj(frame) || !('vars' in frame)) return frame;
-            const { vars: _vars, ...rest } = frame;
-            return rest;
-          }),
-        };
+        out.stacktrace = { ...value.stacktrace, frames: value.stacktrace.frames.map(scrubFrame) };
       }
       return out;
     }),
   };
 }
 
-function scrubEventFields(event: Obj): Obj {
+function scrubEventFields(event: Obj, budget: Budget): Obj {
   const out: Obj = { ...event };
   delete out.user;
   if (isObj(event.request)) out.request = scrubRequest(event.request);
-  if (event.extra !== undefined) out.extra = walk(event.extra, 'data', 0);
-  if (isObj(event.contexts)) out.contexts = scrubContexts(event.contexts);
+  if (event.extra !== undefined) out.extra = walk(event.extra, 'data', budget, 0);
+  if (isObj(event.contexts)) out.contexts = scrubContexts(event.contexts, budget);
   if (typeof event.message === 'string') out.message = redactMessage(event.message);
   if (isObj(event.logentry)) {
     const { message, params } = event.logentry;
     out.logentry = {
       ...event.logentry,
       ...(typeof message === 'string' ? { message: redactMessage(message) } : {}),
-      ...(params !== undefined ? { params: walk(params, 'message', 1) } : {}),
+      ...(params !== undefined ? { params: walk(params, 'message', budget, 1) } : {}),
     };
   }
   if (isObj(event.exception)) out.exception = scrubException(event.exception);
   if (Array.isArray(event.breadcrumbs)) {
-    out.breadcrumbs = event.breadcrumbs.map((crumb: unknown) => (isObj(crumb) ? scrubCrumb(crumb) : crumb));
+    out.breadcrumbs = event.breadcrumbs.map((crumb: unknown) =>
+      isObj(crumb) ? scrubCrumb(crumb, budget) : crumb,
+    );
   }
   if (Array.isArray(event.spans)) {
-    out.spans = event.spans.map((span: unknown) => (isObj(span) ? scrubSpan(span) : span));
+    out.spans = event.spans.map((span: unknown) => (isObj(span) ? scrubSpanFields(span, budget) : span));
   }
-  if (typeof event.transaction === 'string' && event.transaction.startsWith('/')) {
-    out.transaction = scrubUrl(event.transaction);
-  }
+  if (typeof event.transaction === 'string') out.transaction = scrubTransactionName(event.transaction);
   if (event.type === 'replay_event' && Array.isArray(event.urls)) {
     out.urls = event.urls.map((url: unknown) => (typeof url === 'string' ? scrubUrl(url) : url));
   }
@@ -405,11 +527,45 @@ function failClosed<T>(scrub: () => T): T | null {
 
 /** An error, transaction or replay event. Returns null when it cannot be scrubbed: the caller drops it. */
 export function scrubEvent<T extends object>(event: T): T | null {
-  return failClosed(() => scrubEventFields(event as Obj) as T);
+  return failClosed(() => scrubEventFields(event as Obj, newBudget()) as T);
 }
 
 export function scrubBreadcrumb<T extends object>(breadcrumb: T): T | null {
-  return failClosed(() => scrubCrumb(breadcrumb as Obj) as T);
+  return failClosed(() => scrubCrumb(breadcrumb as Obj, newBudget()) as T);
+}
+
+const SPAN_IDS = [
+  'span_id',
+  'trace_id',
+  'parent_span_id',
+  'segment_id',
+  'start_timestamp',
+  'timestamp',
+  'op',
+  'origin',
+  'status',
+  'is_segment',
+] as const;
+
+/** A span's ids and timing, each read on its own so one hostile field cannot take the rest down. */
+function spanIdsOnly(span: Obj): Obj {
+  const out: Obj = { description: FILTERED, data: {} };
+  for (const key of SPAN_IDS) {
+    try {
+      if (span[key] !== undefined) out[key] = span[key];
+    } catch {
+      // A field that cannot be read stays out.
+    }
+  }
+  return out;
+}
+
+/**
+ * A span sent on its own (`beforeSendSpan`), such as a standalone INP span named after the element
+ * clicked. Sentry cannot drop a span here, so a span that cannot be scrubbed keeps only its ids.
+ */
+export function scrubSpan<T extends object>(span: T): T {
+  return (failClosed(() => scrubSpanFields(span as Obj, newBudget())) ?? spanIdsOnly(span as Obj)) as T;
 }
 
 /** A Sentry Logs record: the message is message like, the attributes are user data. */
@@ -418,9 +574,51 @@ export function scrubLog<T extends object>(log: T): T | null {
     const record = log as Obj;
     const out: Obj = { ...record };
     if (typeof record.message === 'string') out.message = redactMessage(record.message);
-    if (isObj(record.attributes)) out.attributes = scrubAttributes(record.attributes);
+    if (isObj(record.attributes)) out.attributes = scrubAttributes(record.attributes, newBudget());
     return out as T;
   });
+}
+
+// The URL fields of a CSP report, from `report-uri` (kebab case) and the Reporting API (camel case).
+const CSP_URL_KEYS: ReadonlySet<string> = new Set([
+  'document-uri',
+  'referrer',
+  'blocked-uri',
+  'source-file',
+  'url',
+  'documenturl',
+  'blockedurl',
+  'sourcefile',
+]);
+const CSP_SAMPLE_KEYS: ReadonlySet<string> = new Set(['script-sample', 'sample']);
+
+function scrubCspValue(value: unknown, budget: Budget, depth: number, key?: string): unknown {
+  budget.nodes -= 1;
+  if (depth > MAX_DEPTH || budget.nodes < 0) return FILTERED;
+  if (typeof value === 'string') {
+    const k = key?.toLowerCase();
+    // `inline`, `eval`, `data` and extension schemes are not URLs of ours: they stay as they are.
+    if (k !== undefined && CSP_URL_KEYS.has(k))
+      return /^(?:https?:)?\//i.test(value) ? scrubUrl(value) : value;
+    if (k !== undefined && CSP_SAMPLE_KEYS.has(k)) return redactMessage(value);
+    return redactData(value);
+  }
+  if (Array.isArray(value))
+    return value.slice(0, MAX_BREADTH).map((item) => scrubCspValue(item, budget, depth + 1));
+  if (isObj(value)) {
+    const out: Obj = {};
+    for (const [k, v] of Object.entries(value)) out[k] = scrubCspValue(v, budget, depth + 1, k);
+    return out;
+  }
+  return value;
+}
+
+/**
+ * A CSP violation report, from `report-uri` or the Reporting API (D83): every URL in it scrubbed (the
+ * document, the referrer, the blocked resource, the source file) and the script sample redacted.
+ */
+export function scrubCspReport(report: unknown): unknown {
+  return failClosed(() => scrubCspValue(report, newBudget(), 0));
 }
 
 /** One rrweb event inside a replay recording: the page URL, and breadcrumbs and spans recorded into it. */
@@ -434,11 +632,12 @@ export function scrubRecordingEvent<T extends object>(recordingEvent: T): T | nu
     }
     if (event.type === 5 && isObj(data.payload)) {
       const payload = data.payload;
+      const budget = newBudget();
       if (data.tag === 'breadcrumb')
-        return { ...event, data: { ...data, payload: scrubCrumb(payload) } } as T;
+        return { ...event, data: { ...data, payload: scrubCrumb(payload, budget) } } as T;
       if (data.tag === 'performanceSpan')
-        return { ...event, data: { ...data, payload: scrubSpan(payload) } } as T;
-      return { ...event, data: { ...data, payload: walk(payload, 'data', 1) } } as T;
+        return { ...event, data: { ...data, payload: scrubSpanFields(payload, budget) } } as T;
+      return { ...event, data: { ...data, payload: walk(payload, 'data', budget, 1) } } as T;
     }
     return recordingEvent;
   });

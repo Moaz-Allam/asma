@@ -5,8 +5,8 @@
 import type { AppEnv } from '@/lib/deployment';
 
 /**
- * The same origin path browser reports travel through (AC-2). `withSentryConfig` rewrites it to the
- * EU ingest; the browser SDK picks it up only for a SaaS DSN (o<org>.ingest.de.sentry.io).
+ * The same origin path browser reports travel through (AC-2): the browser SDK's `tunnel`, served by our
+ * own Route Handler, which forwards only our envelopes to the EU ingest (app/api/e, D83).
  */
 export const SENTRY_TUNNEL_ROUTE = '/api/e';
 
@@ -21,13 +21,13 @@ export function tracesSampleRate(environment: AppEnv): number {
   return 0;
 }
 
-/** The two telemetry paths: Sentry's tunnel and PostHog's proxy never get a span (AC-2). */
+/** The telemetry paths: Sentry's tunnel, PostHog's relay and the CSP reports never get a span (AC-2). */
 export function isTelemetryPath(url: string): boolean {
-  return /^(?:https?:\/\/[^/]+)?\/api\/[ea](?:[/?#]|$)/.test(url);
+  return /^(?:https?:\/\/[^/]+)?\/api\/(?:e|a|csp)(?:[/?#]|$)/.test(url);
 }
 
-/** The same paths as span and transaction names, such as `POST /api/e` or `GET /api/a/static/x.js`. */
-export const TELEMETRY_SPAN_NAMES: RegExp[] = [/\/api\/[ea](?:[/?#\s]|$)/];
+/** The same paths as span and transaction names, such as `POST /api/e` or `POST /api/a/[...path]`. */
+export const TELEMETRY_SPAN_NAMES: RegExp[] = [/\/api\/(?:e|a|csp)(?:[/?#\s]|$)/];
 
 /**
  * Known noise from browser extensions and injected scripts (AC-21), after Sentry's own declutter list.

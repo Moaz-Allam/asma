@@ -6,7 +6,6 @@ import createNextIntlPlugin from 'next-intl/plugin';
 // Node's native TypeScript resolver loads this file: a relative import needs its `.ts` extension, and
 // lib/deployment.ts stays free of dependencies and `@/` imports for the same reason.
 import { appEnv, appRelease, assertDeploymentKeys, isCommitSha, isDeployment } from './lib/deployment.ts';
-import { SENTRY_TUNNEL_ROUTE } from './lib/observability/shared.ts';
 import { SECURITY_HEADERS } from './lib/security/headers.ts';
 
 // Points next-intl at the per-request config (locale + messages).
@@ -47,16 +46,10 @@ export default function config(phase: string): NextConfig {
       return [{ source: '/:path*', headers: [...SECURITY_HEADERS] }];
     },
 
-    // PostHog through the same origin (spec 0004 AC-6, D62: EU Cloud). Assets first, the rest after.
-    // Sentry's /api/e tunnel is added by withSentryConfig below.
-    async rewrites() {
-      return [
-        { source: '/api/a/static/:path*', destination: 'https://eu-assets.i.posthog.com/static/:path*' },
-        { source: '/api/a/array/:path*', destination: 'https://eu-assets.i.posthog.com/array/:path*' },
-        { source: '/api/a/:path*', destination: 'https://eu.i.posthog.com/:path*' },
-      ];
-    },
-    // PostHog calls its endpoints with a trailing slash; the cost is that /ar and /ar/ both answer.
+    // No rewrites: the telemetry paths /api/e, /api/a/* and /api/csp are our own Route Handlers, which
+    // forward no visitor header and only for our own DSN or key (D83).
+    // PostHog calls its endpoints with a trailing slash (/api/a/e/), which must reach the handler as a
+    // POST, not a redirect; the cost is that /ar and /ar/ both answer.
     skipTrailingSlashRedirect: true,
   };
 
@@ -77,8 +70,8 @@ export default function config(phase: string): NextConfig {
     // deployment build creates one.
     release: deploymentBuild && isCommitSha(release) ? { name: release } : { create: false },
 
-    // Browser reports travel through the same origin, so a blocker of *.sentry.io loses nothing (AC-2).
-    tunnelRoute: SENTRY_TUNNEL_ROUTE,
+    // No `tunnelRoute`: its rewrite forwards the visitor's headers and serves any Sentry org. The browser
+    // SDK's `tunnel` option points at our own /api/e handler instead (lib/observability/client.ts, D83).
 
     // Source maps: on a deployment build they are uploaded, then deleted, and never served (AC-1). The
     // plugin only logs a failed upload by default; rethrowing makes it fail the build instead. Every

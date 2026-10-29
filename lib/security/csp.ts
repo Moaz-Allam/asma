@@ -1,12 +1,10 @@
-import { parseEuSentryDsn } from '@/lib/deployment';
-
 /**
  * The Content Security Policy, built per request in proxy.ts with a fresh nonce (spec 0004 AC-13, D69).
  * Exactly the directives of the spec's CSP table; each later position adds its own sources here
  * (Turnstile in 01, Supabase storage images in 02, the iyzico redirect in 09).
  *
- * Never throws: a missing or malformed DSN leaves out only the report directives, and a malformed
- * Supabase URL leaves connect-src at 'self'. It parses the DSN itself, without the Sentry SDK.
+ * Never throws: a malformed Supabase URL leaves connect-src at 'self'. Violation reports go to our own
+ * /api/csp handler, which scrubs them before they reach Sentry (D83), never straight to Sentry.
  */
 
 export type CspOptions = {
@@ -14,12 +12,15 @@ export type CspOptions = {
   dev: boolean;
   /** NEXT_PUBLIC_SUPABASE_URL: its origin joins connect-src, with ws or wss to match the scheme. */
   supabaseUrl: string;
-  /** The Sentry security endpoint, or none. */
+  /** Where violation reports go (`cspReportUri()`), or none. */
   reportUri?: string;
 };
 
 /** The reporting group named by `report-to`, declared in the Reporting-Endpoints response header. */
 export const REPORT_GROUP = 'csp-endpoint';
+
+/** Our own report handler (app/api/csp, D83). */
+export const CSP_REPORT_PATH = '/api/csp';
 
 function supabaseSources(supabaseUrl: string): string[] {
   try {
@@ -42,7 +43,7 @@ export function buildCsp(nonce: string, { dev, supabaseUrl, reportUri }: CspOpti
     ['img-src', ["'self'", 'blob:', 'data:']],
     // next/font serves the fonts from our own origin.
     ['font-src', ["'self'"]],
-    // Sentry's tunnel and PostHog's proxy are same origin (/api/e, /api/a).
+    // Sentry's tunnel and PostHog's relay are same origin (/api/e, /api/a).
     ['connect-src', ["'self'", ...supabaseSources(supabaseUrl)]],
     // Sentry Replay compresses in a worker started from a blob.
     ['worker-src', ["'self'", 'blob:']],
@@ -56,11 +57,9 @@ export function buildCsp(nonce: string, { dev, supabaseUrl, reportUri }: CspOpti
   return directives.map(([name, values]) => `${name} ${values.join(' ')}`).join('; ');
 }
 
-/** The Sentry security endpoint for violation reports, derived from an EU DSN; none for anything else. */
-export function cspReportUri(dsn: string | undefined): string | undefined {
-  const parts = dsn ? parseEuSentryDsn(dsn) : null;
-  if (parts === null) return undefined;
-  return `https://${parts.host}/api/${parts.projectId}/security/?sentry_key=${parts.publicKey}`;
+/** The absolute URL of our report handler for a page on `origin`; the Reporting API wants it absolute. */
+export function cspReportUri(origin: string): string {
+  return `${origin}${CSP_REPORT_PATH}`;
 }
 
 /** The Reporting-Endpoints header value that names the `report-to` group. */

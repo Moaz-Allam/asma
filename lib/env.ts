@@ -139,10 +139,15 @@ export function getEnv(): Env {
 }
 
 /**
- * The Sentry DSN, for server code outside the Sentry door: the CSP report endpoint in proxy.ts.
+ * The Sentry DSN, for server code outside the Sentry door: the /api/e and /api/csp routes (D83).
  * Only the doors, lib/env.ts, lib/deployment.ts and next.config.ts may name the variable itself
  * (spec 0004 AC-8, lint enforced), so everyone else asks here.
  */
 export function sentryDsn(): string | undefined {
   return getEnv().NEXT_PUBLIC_SENTRY_DSN;
+}
+
+/** The PostHog project key, for the /api/a route (D83). Same rule as `sentryDsn()`. */
+export function posthogKey(): string | undefined {
+  return getEnv().NEXT_PUBLIC_POSTHOG_KEY;
 }

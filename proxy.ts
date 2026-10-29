@@ -1,7 +1,7 @@
 import createIntlProxy from 'next-intl/middleware';
 import { NextRequest, type NextResponse } from 'next/server';
 
-import { getEnv, sentryDsn } from '@/lib/env';
+import { getEnv } from '@/lib/env';
 import { routing } from '@/lib/i18n/routing';
 import { buildCsp, cspReportUri, reportingEndpoints } from '@/lib/security/csp';
 
@@ -26,22 +26,27 @@ import { buildCsp, cspReportUri, reportingEndpoints } from '@/lib/security/csp';
 
 const intlProxy = createIntlProxy(routing);
 
-function policyFor(nonce: string): { csp: string; reportingEndpoints?: string } {
-  const reportUri = cspReportUri(sentryDsn());
-  return {
-    csp: buildCsp(nonce, {
-      dev: process.env.NODE_ENV === 'development',
-      supabaseUrl: getEnv().NEXT_PUBLIC_SUPABASE_URL,
-      reportUri,
-    }),
-    ...(reportUri ? { reportingEndpoints: reportingEndpoints(reportUri) } : {}),
-  };
+/**
+ * The Supabase origin for connect-src. Never throws (AC-13): a broken environment already stops the
+ * boot in instrumentation.ts, and if one ever slips past, the policy only gets stricter ('self').
+ */
+function supabaseUrl(): string {
+  try {
+    return getEnv().NEXT_PUBLIC_SUPABASE_URL;
+  } catch {
+    return '';
+  }
 }
 
 export function proxy(request: NextRequest): NextResponse {
   // A random one time token per request, base64 as CSP nonces are written.
   const nonce = btoa(crypto.randomUUID());
-  const { csp, reportingEndpoints: endpoints } = policyFor(nonce);
+  const reportUri = cspReportUri(request.nextUrl.origin);
+  const csp = buildCsp(nonce, {
+    dev: process.env.NODE_ENV === 'development',
+    supabaseUrl: supabaseUrl(),
+    reportUri,
+  });
 
   const headers = new Headers(request.headers);
   headers.set('x-nonce', nonce);
@@ -51,7 +56,7 @@ export function proxy(request: NextRequest): NextResponse {
   const response = intlProxy(new NextRequest(request.url, { headers, method: request.method }));
 
   response.headers.set('Content-Security-Policy', csp);
-  if (endpoints) response.headers.set('Reporting-Endpoints', endpoints);
+  response.headers.set('Reporting-Endpoints', reportingEndpoints(reportUri));
   return response;
 }
 
@@ -59,7 +64,7 @@ export const config = {
   matcher: [
     {
       // Everything except Next internals, the API surface, and static files. `api` is deliberately
-      // excluded: machine endpoints (/api/health, the /api/e and /api/a rewrites) are not localized.
+      // excluded: machine endpoints (/api/health, /api/e, /api/a, /api/csp) are not localized.
       source: '/((?!api|_next|_vercel|.*\\..*).*)',
       // Prefetches render no document, so they need no nonce (and no locale negotiation).
       missing: [

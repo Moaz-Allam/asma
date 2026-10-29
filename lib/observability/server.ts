@@ -11,6 +11,7 @@ import {
   scrubBreadcrumb,
   scrubEvent,
   scrubLog,
+  scrubSpan,
   scrubUrl,
 } from '@/lib/observability/scrub';
 import { TELEMETRY_SPAN_NAMES, tracesSampleRate } from '@/lib/observability/shared';
@@ -32,26 +33,35 @@ export function initServer(): void {
   if (started || !dsn) return;
   started = true;
   try {
-    const environment = appEnv(process.env);
-    init({
-      dsn,
-      environment,
-      release: appRelease(process.env),
-      sendDefaultPii: false,
-      includeLocalVariables: false,
-      tracesSampleRate: tracesSampleRate(environment),
-      tracePropagationTargets: [],
-      enableLogs: true,
-      ignoreTransactions: TELEMETRY_SPAN_NAMES,
-      ignoreSpans: TELEMETRY_SPAN_NAMES,
-      beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb),
-      beforeSend: (event) => scrubEvent(event),
-      beforeSendTransaction: (event) => scrubEvent(event),
-      beforeSendLog: (log) => scrubLog(log),
-    });
+    init(serverOptions(dsn));
   } catch (error) {
     console.error('[observability] Sentry did not start', error instanceof Error ? error.name : 'unknown');
   }
+}
+
+/** Everything `init` gets, built apart so the tests can read it (AC-1, AC-3, AC-5). */
+export function serverOptions(dsn: string): Parameters<typeof init>[0] {
+  const environment = appEnv(process.env);
+  const rate = tracesSampleRate(environment);
+  return {
+    dsn,
+    environment,
+    release: appRelease(process.env),
+    sendDefaultPii: false,
+    includeLocalVariables: false,
+    // Our own rate, whatever an incoming `sentry-trace` header asks: a caller cannot force sampling
+    // and spend the span quota (review 2026-10-29). Our browser never sends that header to us.
+    tracesSampler: () => rate,
+    tracePropagationTargets: [],
+    enableLogs: true,
+    ignoreTransactions: TELEMETRY_SPAN_NAMES,
+    ignoreSpans: TELEMETRY_SPAN_NAMES,
+    beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb),
+    beforeSend: (event) => scrubEvent(event),
+    beforeSendTransaction: (event) => scrubEvent(event),
+    beforeSendSpan: (span) => scrubSpan(span),
+    beforeSendLog: (log) => scrubLog(log),
+  };
 }
 
 /**

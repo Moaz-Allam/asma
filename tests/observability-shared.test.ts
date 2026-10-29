@@ -32,21 +32,28 @@ describe('the telemetry paths get no span (AC-2)', () => {
     '/api/a/e/',
     '/api/a/static/array.js',
     'https://x.test/api/a/i/v0/e/',
+    '/api/csp',
+    'https://x.test/api/csp',
   ])('%s is telemetry', (url) => {
     expect(isTelemetryPath(url)).toBe(true);
   });
 
-  it.each(['/api/health', '/api/explore', '/api/admin', '/en/api/e', 'https://x.test/api/events'])(
-    '%s is not',
-    (url) => {
-      expect(isTelemetryPath(url)).toBe(false);
-    },
-  );
+  it.each([
+    '/api/health',
+    '/api/explore',
+    '/api/admin',
+    '/en/api/e',
+    'https://x.test/api/events',
+    '/api/cspx',
+  ])('%s is not', (url) => {
+    expect(isTelemetryPath(url)).toBe(false);
+  });
 
-  it('matches the server span names of the rewrites, and nothing else', () => {
+  it('matches the server span names of the relays, and nothing else', () => {
     const ignored = (name: string) => TELEMETRY_SPAN_NAMES.some((pattern) => pattern.test(name));
     expect(ignored('POST /api/e')).toBe(true);
-    expect(ignored('GET /api/a/static/array.js')).toBe(true);
+    expect(ignored('POST /api/a/[...path]')).toBe(true);
+    expect(ignored('POST /api/csp')).toBe(true);
     expect(ignored('GET /api/health')).toBe(false);
     expect(ignored('GET /[locale]')).toBe(false);
   });

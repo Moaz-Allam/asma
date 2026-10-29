@@ -78,7 +78,24 @@ describe('what an allowed event carries (AC-3, AC-6)', () => {
       $referrer: 'https://mail.example/',
       $initial_current_url: 'https://aldebyani.test/tr',
       app_env: 'preview',
+      $geoip_disable: true,
     });
+  });
+
+  it('drops the person fields the SDK sets beside the properties, and asks PostHog for no location', () => {
+    const out = filterAnalyticsEvent(
+      {
+        ...captured('$pageview', { ...SDK_PROPS }),
+        $set: { email: 'ali@example.com' },
+        $set_once: { name: 'Ali' },
+        $unset: ['x'],
+      },
+      'production',
+    );
+    expect(out).not.toHaveProperty('$set');
+    expect(out).not.toHaveProperty('$set_once');
+    expect(out).not.toHaveProperty('$unset');
+    expect(out?.properties.$geoip_disable).toBe(true);
   });
 
   it('locale_changed keeps its two typed properties', () => {
@@ -91,6 +108,7 @@ describe('what an allowed event carries (AC-3, AC-6)', () => {
       from_locale: 'ar',
       to_locale: 'tr',
       app_env: 'production',
+      $geoip_disable: true,
     });
   });
 

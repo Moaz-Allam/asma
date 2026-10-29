@@ -7,7 +7,8 @@ stays on, D72)._
 **Evidence so far (2026-10-28):** local `npm run verify`, 338 unit tests, pgTAP 42/42, e2e 23/23 in
 `ar`, `tr`, `en`; preview `96a26c7` built (maps uploaded and deleted, release = full SHA); throwaway
 `verify/00b-sentry` proved AC-1, AC-2, AC-3, AC-4, AC-11, AC-14, AC-18 in Sentry (ALDEBYANI-2 to 5,
-resolved); the geo rule (D79) and the two alert rules (D80) are in place.
+resolved); the geo rule (D79) and the two alert rules (D80) are in place. 2026-10-29: verify, the unit
+tests and e2e green again on a clean clone of `f636c8f` (G0 run); quotas checked (D81).
 
 ## UI / manual
 
@@ -21,12 +22,19 @@ resolved); the geo rule (D79) and the two alert rules (D80) are in place.
       geolocation=(), payment=()` → AC-12
 - [ ] `connect-src` holds `'self'` plus the Supabase origin with `https` and `wss` (on a local stack:
       `http` and `ws`) → AC-13 (Supabase origin source)
-- [ ] `report-uri` points at `o<org>.ingest.de.sentry.io/api/<project>/security/?sentry_key=<key>`
-      from the DSN, with `report-to csp-endpoint` and a matching `Reporting-Endpoints` header →
-      AC-13 (report endpoint source)
-- [ ] Browse a page, wait a few seconds: one `$pageview` reaches `/api/a/…` with a scrubbed
-      `$current_url` (no `token`, `code`, `email`, `phone`, `q`, `ref`, `customer`, no `#fragment`)
-      and `app_env` equal to `preview` (`production` on production) → AC-6, AC-7 (`app_env` source)
+- [ ] `report-uri` points at `<page origin>/api/csp` (our own handler, D83), with `report-to
+      csp-endpoint` and a matching `Reporting-Endpoints` header; nothing in the policy names
+      `sentry.io` → AC-13 (report endpoint source)
+- [ ] Browse a page, wait a few seconds: one `$pageview` reaches `/api/a/e/` with a scrubbed
+      `$current_url` (only `utm_*` and `page` parameters kept, D85, no `#fragment`), `app_env` equal
+      to `preview` (`production` on production) and `$geoip_disable: true`; the handler answers 200,
+      and the event shows in PostHog → AC-6, AC-7 (`app_env` source), D83
+- [ ] A browser error reaches Sentry through `/api/e` (POST, 200), and the issue carries no visitor
+      IP and no geo; in PostHog and Sentry no request shows the visitor's cookie or referer (the
+      handlers forward the content type only) → AC-2, AC-3, D83
+- [ ] Trigger a CSP violation on a preview URL carrying `?token=x&email=a@b.co` (for example a
+      blocked inline script from the console) → one security event in Sentry whose document URL has
+      no query, filed under `preview` → AC-3, AC-13, D83
 - [ ] Switch language with the switcher → one `locale_changed` with `from_locale` the old locale and
       `to_locale` the new one, then the next `$pageview` → AC-7 (switcher source)
 - [ ] After a visit, DevTools shows no cookie except `NEXT_LOCALE`, and `localStorage` and
@@ -65,8 +73,13 @@ resolved); the geo rule (D79) and the two alert rules (D80) are in place.
 - [ ] `npx vitest run tests/health.test.ts tests/flags.test.ts tests/observability-doors.test.ts` →
       green → AC-5, AC-10, AC-11, AC-14
 - [ ] `npx vitest run tests/observability-shared.test.ts` → production samples 0.1, preview 1, local 0;
-      `/api/e` and `/api/a` get no span → AC-2, AC-5 (sample rate source)
-- [ ] `npx vitest run tests/lint/eslint-rules.test.ts` → 35 proofs green → AC-8
+      `/api/e`, `/api/a` and `/api/csp` get no span → AC-2, AC-5 (sample rate source)
+- [ ] `npx vitest run tests/telemetry-forward.test.ts tests/observability-init.test.ts` → the three
+      relays forward only our DSN or key, to fixed EU URLs, with no visitor header, and refuse oversize
+      bodies and gzip bombs; both SDKs start with the tunnel, the scrub hooks (`beforeSendSpan`
+      included), the replay masks and a sampler that ignores an incoming flag → AC-2 to AC-6, D83
+- [ ] `npx vitest run tests/lint/eslint-rules.test.ts` → 51 proofs green (`import()`, `require()`,
+      destructuring, computed and spread env included, D86) → AC-8
 - [ ] `npx supabase test db` → 42/42: KSA inactive, the 10 flags, the `_enabled` CHECK both ways, the
       exact grants, `health_ping` for `anon` and `authenticated` only → AC-10, AC-14, AC-15 (flag value
       source)
@@ -81,8 +94,9 @@ resolved); the geo rule (D79) and the two alert rules (D80) are in place.
       request, and only `request_id`, `region`, `user_id` as ids → AC-5 (correlation id source)
 - [ ] In Sentry, alert rules `1429069` and `1429070` exist, limited to tag `alert` and environment
       `production`, emailing the owner → AC-11
-- [ ] Sentry project settings: IP storage off, the geo removal rule, the scrubber keys as additional
-      sensitive fields, inbound filters for extensions, localhost and legacy browsers → AC-3, AC-21
+- [ ] Sentry project settings: IP storage off, the geo removal rule, the 26 keys of D82 as additional
+      sensitive fields (not the whole scrubber list), inbound filters for extensions, localhost, legacy browsers and web crawlers
+      (D81), spike protection on → AC-3, AC-21
 - [ ] PostHog project settings: discard client IP on, autocapture off, recordings off, cookieless on
       → AC-6
 
@@ -106,9 +120,10 @@ resolved); the geo rule (D79) and the two alert rules (D80) are in place.
 - AC-14 · money flags: flags tests, pgTAP, table editor flip
 - AC-15 · KSA off: pgTAP
 - AC-16 · preview in `fra1` serving three locales: preview visit, build log
-- AC-17 · global error and boundaries: throwaway layout crash
+- AC-17 · global error and boundaries: `tests/global-error.test.ts`, `tests/observability-init.test.ts`, throwaway layout crash
 - AC-18 · Sentry verification: done 2026-10-28; Sentry's onboarding run is completed by the owner in
   Sentry
 - AC-19 · skills: `AGENTS.md` entries and `VENDORED.md`
 - AC-20 · pins and install scripts: `package.json`, `AGENTS.md` stack table
-- AC-21 · inbound filters, noise lists, quotas: Sentry settings and the quota check
+- AC-21 · inbound filters, noise lists, quotas: Sentry settings; the quota check done 2026-10-29 (D81),
+  rates unchanged

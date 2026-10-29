@@ -3,7 +3,7 @@ import 'server-only';
 import type { Db } from '@/lib/db/types';
 import { raiseAlert, type AlertCause } from '@/lib/observability/alert';
 import { log } from '@/lib/observability/log';
-import type { Region } from '@/lib/region';
+import { isRegion, type Region } from '@/lib/region';
 
 /**
  * The money kill switches (spec 0004 AC-14, D70; architecture.md §38). Each flag is a
@@ -65,6 +65,12 @@ async function read(flag: MoneyFlag, region: Region, db: Db): Promise<Read> {
  * decides what it may read. Never throws.
  */
 export async function isEnabled(flag: MoneyFlag, region: Region, db: Db): Promise<boolean> {
+  // A caller's bug, not a failed read: off, logged, and no alert, so a bad value can never open a new
+  // Sentry issue (and an owner email) per value it takes (review 2026-10-29).
+  if (!isRegion(region) || !(MONEY_FLAGS as readonly string[]).includes(flag)) {
+    log.error('flag_read_failed');
+    return false;
+  }
   let result: Read;
   try {
     result = await read(flag, region, db);

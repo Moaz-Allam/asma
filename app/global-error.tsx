@@ -3,8 +3,8 @@
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
-import { dirFor, isLocale, type Locale } from '@/lib/i18n/direction';
-import { routing } from '@/lib/i18n/routing';
+import { dirFor, type Locale } from '@/lib/i18n/direction';
+import { localeOfPath } from '@/lib/i18n/path-locale';
 import { reportClientError } from '@/lib/observability/client';
 import ar from '@/messages/ar.json';
 import en from '@/messages/en.json';
@@ -24,8 +24,7 @@ import './globals.css';
 const COPY: Readonly<Record<Locale, typeof en.Error>> = { ar: ar.Error, tr: tr.Error, en: en.Error };
 
 export default function GlobalError({ error, retry }: { error: unknown; retry: () => void }) {
-  const segment = usePathname()?.split('/')[1] ?? '';
-  const locale: Locale = isLocale(segment) ? segment : routing.defaultLocale;
+  const locale = localeOfPath(usePathname());
   const copy = COPY[locale];
 
   useEffect(() => {

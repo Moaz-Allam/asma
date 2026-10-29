@@ -10,6 +10,7 @@ import {
   scrubEvent,
   scrubLog,
   scrubRecordingEvent,
+  scrubSpan,
   scrubUrl,
 } from '@/lib/observability/scrub';
 
@@ -54,6 +55,9 @@ const traceId = hex(32);
 const sha = hex(40);
 const uuid = fc.uuid().filter((u) => /[a-f]/.test(u));
 
+const TRACE = 'a3f9c2b1d4e5f60718293a4b5c6d7e8f';
+const TRACE_ID = TRACE;
+
 // ── the key rule ─────────────────────────────────────────────────────────────────────────────
 describe('isPersonalKey: the keys whose values never leave', () => {
   it.each([
@@ -87,6 +91,24 @@ describe('isPersonalKey: the keys whose values never leave', () => {
     'client_secret',
     'api_key',
     'db_password',
+    // camelCase and dotted keys fold to the same words (review 2026-10-29).
+    'phoneNumber',
+    'firstName',
+    'fullName',
+    'customerPhone',
+    'customerEmail',
+    'emailAddress',
+    'postalCode',
+    'nationalId',
+    'birthDate',
+    'accessToken',
+    'apiKey',
+    'APIKey',
+    'clientSecret',
+    'user.name',
+    'client.address',
+    'details',
+    'hint',
   ])('%s is personal', (key) => {
     expect(isPersonalKey(key)).toBe(true);
   });
@@ -102,14 +124,21 @@ describe('isPersonalKey: the keys whose values never leave', () => {
     'locale',
     'count',
     'tokens',
+    'requestId',
+    'userId',
+    'traceId',
+    'statusCode',
+    'url.full',
+    'http.route',
+    'db.collection.name',
   ])('%s is not', (key) => {
     expect(isPersonalKey(key)).toBe(false);
   });
 });
 
 // ── URLs ─────────────────────────────────────────────────────────────────────────────────────
-describe('scrubUrl: sensitive parameters and every fragment go', () => {
-  it('drops the listed parameters, in any case and with - or _', () => {
+describe('scrubUrl: only utm_* and page stay (D85), every fragment goes', () => {
+  it('drops the parameters the spec listed, in any case and with - or _', () => {
     expect(
       scrubUrl(
         'https://x.test/tr/a?token=abc&Access-Token=1&refresh_token=2&token_hash=3&code=4&email=5&phone=6&q=7&ref=8&customer=9&page=2',
@@ -141,8 +170,26 @@ describe('scrubUrl: sensitive parameters and every fragment go', () => {
     expect(scrubUrl('https://x.test/u/85.105.1.2')).toBe('https://x.test/u/[ip]');
   });
 
-  it('redacts an email in the path', () => {
-    expect(scrubUrl('/en/u/ali@example.com?x=1')).toBe('/en/u/[email]?x=1');
+  it('redacts an email in the path, also percent encoded', () => {
+    expect(scrubUrl('/en/u/ali@example.com?x=1')).toBe('/en/u/[email]');
+    expect(scrubUrl('https://x.test/u/ali%40example.com/edit')).toBe('https://x.test/u/[email]/edit');
+  });
+
+  it('drops every parameter that is not allow listed: names nobody thought of are safe too', () => {
+    expect(
+      scrubUrl(
+        '/tr/search?search=ali&query=veli&term=x&code[]=1&ids=1,2&page=3&utm_source=ad&UTM_Medium=cpc',
+      ),
+    ).toBe('/tr/search?page=3&utm_source=ad&UTM_Medium=cpc');
+  });
+
+  it('splits parameters on ; as well as &', () => {
+    expect(scrubUrl('/tr?utm_source=x;code=secret;page=2')).toBe('/tr?utm_source=x&page=2');
+  });
+
+  it('drops an allowed parameter whose value holds personal data or a URL with a token', () => {
+    expect(scrubUrl('/tr?utm_source=ali%40x.com&page=2')).toBe('/tr?page=2');
+    expect(scrubUrl('/tr?utm_content=https%3A%2F%2Fx.test%2Fa%3Fcode%3Ds3cr3t')).toBe('/tr');
   });
 
   it('keeps a clean URL unchanged', () => {
@@ -151,28 +198,225 @@ describe('scrubUrl: sensitive parameters and every fragment go', () => {
     );
   });
 
-  it('property: no sensitive parameter value survives', () => {
-    const param = fc.constantFrom('token', 'access_token', 'code', 'email', 'phone', 'q', 'ref', 'customer');
+  it('property: no parameter value survives unless its name is allow listed', () => {
     fc.assert(
-      fc.property(param, word(6, 12), fc.boolean(), (name, secret, fragment) => {
-        const url = `https://x.test/en/p?keep=1&${name}=${secret}${fragment ? `#${secret}` : ''}`;
+      fc.property(word(1, 10), word(6, 12), fc.boolean(), (name, secret, fragment) => {
+        fc.pre(name !== 'page' && !name.startsWith('utm_'));
+        const url = `https://x.test/en/p?page=1&${name}=${secret}${fragment ? `#${secret}` : ''}`;
         const out = scrubUrl(url);
         expect(out).not.toContain(secret);
-        expect(out).toContain('keep=1');
+        expect(out).toBe('https://x.test/en/p?page=1');
       }),
     );
   });
 });
 
+describe('URLs inside text keep no token, code or fragment (review 2026-10-29)', () => {
+  it.each([
+    [
+      'Redirect to https://x.test/auth/callback?code=abc123&access_token=zzz#refresh_token=yyy failed',
+      'Redirect to https://x.test/auth/callback failed',
+    ],
+    [
+      'Failed to fetch RSC payload for https://x.test/tr/a?token=t0k&email=ali%40x.com. Falling back',
+      'Failed to fetch RSC payload for https://x.test/tr/a Falling back',
+    ],
+    ['GET /tr/auth/callback?code=SECRET6 took 30ms', 'GET /tr/auth/callback took 30ms'],
+    ['see "/tr?token_hash=abc#access_token=z" now', 'see "/tr" now'],
+    [
+      'kept: https://x.test/tr?page=2 and /tr/x?utm_source=ad',
+      'kept: https://x.test/tr?page=2 and /tr/x?utm_source=ad',
+    ],
+  ])('%s', (input, expected) => {
+    expect(redactMessage(input)).toBe(expected);
+  });
+
+  it('scrubs a URL in an exception value, a console breadcrumb message and a log message', () => {
+    const url = 'https://x.test/auth/confirm?token_hash=abc#access_token=zzz';
+    const event = scrubEvent({ exception: { values: [{ type: 'Error', value: `bad ${url}` }] } });
+    const crumb = scrubBreadcrumb({
+      category: 'console',
+      message: `callback ${url}`,
+      data: { arguments: ['callback', url] },
+    });
+    const log = scrubLog({ message: `confirm ${url}`, attributes: {} });
+    for (const out of [event, crumb, log]) {
+      const json = JSON.stringify(out);
+      expect(json).toContain('https://x.test/auth/confirm');
+      for (const secret of ['abc', 'zzz', 'token_hash', 'access_token']) expect(json).not.toContain(secret);
+    }
+  });
+
+  it('scrubs a URL inside a user data string and a relative URL in a span description', () => {
+    const out = scrubEvent({
+      extra: { note_text: 'came from https://x.test/tr?code=c0d' },
+      spans: [{ span_id: 'c1c2d3e4f5a6b7c8', description: 'GET /api/x?email=ali%40x.com&code=c0d' }],
+    });
+    const json = JSON.stringify(out);
+    for (const secret of ['c0d', 'ali%40x.com']) expect(json).not.toContain(secret);
+    expect(out?.spans?.[0]?.description).toBe('GET /api/x');
+  });
+});
+
+describe('frames, transaction names and fragment attributes', () => {
+  it('scrubs a page URL used as the file of a stackless browser error', () => {
+    const page = 'https://x.test/tr?code=SECRET1#access_token=SECRET2';
+    const out = scrubEvent({
+      exception: {
+        values: [
+          {
+            type: 'Error',
+            value: 'x',
+            stacktrace: {
+              frames: [
+                { filename: page, abs_path: page, lineno: 1 },
+                { filename: 'app:///_next/static/chunks/a.js', abs_path: 'app:///_next/static/chunks/a.js' },
+              ],
+            },
+          },
+        ],
+      },
+    });
+    const frames = out?.exception?.values?.[0]?.stacktrace?.frames;
+    expect(frames?.[0]).toEqual({ filename: 'https://x.test/tr', abs_path: 'https://x.test/tr', lineno: 1 });
+    expect(frames?.[1]?.filename).toBe('app:///_next/static/chunks/a.js');
+  });
+
+  it.each([
+    ['GET /tr/auth/callback?code=SECRET6', 'GET /tr/auth/callback'],
+    ['/tr/x?token=1#y', '/tr/x'],
+    ['GET /tr/[id]', 'GET /tr/[id]'],
+    ['checkout flow', 'checkout flow'],
+  ])('the transaction %s becomes %s', (transaction, expected) => {
+    expect(scrubEvent({ type: 'transaction', transaction })?.transaction).toBe(expected);
+  });
+
+  it('filters the fragment attributes the SDK records apart from the URL', () => {
+    const out = scrubEvent({
+      spans: [
+        {
+          span_id: 'c1c2d3e4f5a6b7c8',
+          data: {
+            'http.fragment': '#access_token=x',
+            'url.fragment': 'refresh_token=y',
+            'http.method': 'GET',
+          },
+        },
+      ],
+    });
+    expect(out?.spans?.[0]?.data).toEqual({
+      'http.fragment': FILTERED,
+      'url.fragment': FILTERED,
+      'http.method': 'GET',
+    });
+  });
+
+  it('walks the feedback and state contexts as user data', () => {
+    const out = scrubEvent({
+      contexts: {
+        feedback: { contact_email: 'ali@example.com', message: 'call me' },
+        state: { phone: '+905551234567' },
+      },
+    });
+    expect(JSON.stringify(out)).not.toMatch(/ali@example\.com|call me|905551234567/);
+  });
+});
+
+describe('ui breadcrumbs and spans name elements without their attribute values', () => {
+  it('drops the attribute values of a ui.click selector', () => {
+    expect(
+      scrubBreadcrumb({ category: 'ui.click', message: 'body > div.card > button[aria-label="Ali Veli"]' }),
+    ).toEqual({ category: 'ui.click', message: 'body > div.card > button' });
+  });
+
+  it('scrubs a standalone span sent through beforeSendSpan, such as an INP span', () => {
+    const span = {
+      span_id: 'c1c2d3e4f5a6b7c8',
+      trace_id: TRACE_ID,
+      op: 'ui.interaction.click',
+      description: 'body > button[title="Ali Veli"][name="phone"]',
+      data: {
+        'sentry.op': 'ui.interaction.click',
+        'http.url': 'https://x.test/a?code=c0d',
+        'client.address': '85.105.1.2',
+      },
+    };
+    expect(scrubSpan(span)).toEqual({
+      ...span,
+      description: 'body > button',
+      data: {
+        'sentry.op': 'ui.interaction.click',
+        'http.url': 'https://x.test/a',
+        'client.address': FILTERED,
+      },
+    });
+  });
+
+  it('keeps only the ids of a span it cannot scrub, and never throws', () => {
+    const hostile = {
+      span_id: 'c1c2d3e4f5a6b7c8',
+      get data(): unknown {
+        throw new Error('boom');
+      },
+    };
+    expect(() => scrubSpan(hostile)).not.toThrow();
+    expect(scrubSpan(hostile)).toMatchObject({
+      span_id: 'c1c2d3e4f5a6b7c8',
+      description: FILTERED,
+      data: {},
+    });
+  });
+});
+
+describe('the walk is bounded: cycles and huge values cost linear time (review 2026-10-29)', () => {
+  it('scrubs an object with six self references in well under a second', () => {
+    const node: Record<string, unknown> = { email: 'ali@example.com', label: 'x' };
+    for (let i = 0; i < 6; i += 1) node[`self${i}`] = node;
+    const started = performance.now();
+    const out = scrubBreadcrumb({ category: 'console', data: { arguments: [node] } });
+    expect(performance.now() - started).toBeLessThan(200);
+    expect(JSON.stringify(out)).not.toContain('ali@example.com');
+    expect(JSON.stringify(out)).toContain(FILTERED);
+  });
+
+  it('caps a very wide object and a very long array', () => {
+    const wide = Object.fromEntries(Array.from({ length: 5000 }, (_, i) => [`k${i}`, i]));
+    const long = Array.from({ length: 5000 }, (_, i) => i);
+    const out = scrubEvent({ extra: { wide, long } }) as { extra: { wide: object; long: unknown[] } } | null;
+    expect(Object.keys(out?.extra.wide ?? {}).length).toBe(1001);
+    expect(out?.extra.long.length).toBe(1001);
+    expect(out?.extra.long.at(-1)).toBe(FILTERED);
+  });
+});
+
 // ── free text ────────────────────────────────────────────────────────────────────────────────
 describe('redactMessage: emails, IPs and phones in message like text', () => {
-  it('property: no seeded email, IP or phone survives', () => {
-    fc.assert(
-      fc.property(fc.oneof(email, phone, ipv4, ipv6), word(0, 8), word(0, 8), (pii, before, after) => {
-        const out = redactMessage(`${before} ${pii} ${after}`);
-        expect(out).not.toContain(pii);
-      }),
+  it('property: a seeded email, IP or phone becomes exactly one marker, with no residue', () => {
+    const tagged = fc.oneof(
+      email.map((value) => [value, '[email]'] as const),
+      phone.map((value) => [value, '[phone]'] as const),
+      ipv4.map((value) => [value, '[ip]'] as const),
+      ipv6.map((value) => [value, '[ip]'] as const),
     );
+    fc.assert(
+      fc.property(tagged, word(0, 8), word(0, 8), ([pii, marker], before, after) => {
+        expect(redactMessage(`${before} ${pii} ${after}`)).toBe(`${before} ${marker} ${after}`);
+      }),
+      { numRuns: 500 },
+    );
+  });
+
+  it.each([
+    ['blocked 203.0.113.9.', 'blocked [ip].'],
+    ['peer ::ffff:203.0.113.9 left', 'peer [ip] left'],
+    ['peer c8:22::c8:67.3.216.85 left', 'peer [ip] left'],
+    ['peer d3:a4:d:2c:669:3:48.111.6.224 left', 'peer [ip] left'],
+    ['call +90 (555) 123 45 67 now', 'call [phone] now'],
+    ['رقمي ٠٥٥٥١٢٣٤٥٦٧ شكرا', 'رقمي [phone] شكرا'],
+    ['شماره ۰۵۵۵۱۲۳۴۵۶۷', 'شماره [phone]'],
+    ['yaz çağrı@örnek.com.tr bana', 'yaz [email] bana'],
+  ])('%s', (input, expected) => {
+    expect(redactMessage(input)).toBe(expected);
   });
 
   it('property: trace ids, uuids and commit SHAs survive', () => {
@@ -192,7 +436,7 @@ describe('redactMessage: emails, IPs and phones in message like text', () => {
   it.each([
     ['contact ali.veli+x@example.com.tr now', 'contact [email] now'],
     ['from 192.168.1.20 and 2001:db8::8a2e:370:7334', 'from [ip] and [ip]'],
-    ['call +90 555 123 45 67 or (555) 123-4567', 'call [phone] or (555) [phone]'],
+    ['call +90 555 123 45 67 or (555) 123-4567', 'call [phone] or [phone]'],
     ['status 404 after 3 tries, v10.75.2', 'status 404 after 3 tries, v10.75.2'],
   ])('%s', (input, expected) => {
     expect(redactMessage(input)).toBe(expected);
@@ -200,7 +444,6 @@ describe('redactMessage: emails, IPs and phones in message like text', () => {
 });
 
 // ── whole events ─────────────────────────────────────────────────────────────────────────────
-const TRACE = 'a3f9c2b1d4e5f60718293a4b5c6d7e8f';
 const SHA = '0123456789abcdef0123456789abcdef01234567';
 
 function errorEvent() {

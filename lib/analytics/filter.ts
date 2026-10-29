@@ -7,14 +7,15 @@ import { scrubUrl } from '@/lib/observability/scrub';
  *
  * Only allow listed events pass, whatever generated them. Each keeps the SDK's own `$` properties (with
  * every URL among them scrubbed), the two fields the SDK needs (`token`, `distinct_id`), its own typed
- * properties, and `app_env`. Person properties (`$set`, `$set_once`), campaign parameters and anything
- * else are dropped. A failure drops the event.
+ * properties, `app_env`, and `$geoip_disable`, so PostHog never derives a location from an IP.
+ * Person fields (`$set`, `$set_once`, `$unset`, inside the properties or beside them), campaign
+ * parameters and anything else are dropped. A failure drops the event.
  */
 
 type Captured = { event: string; properties: Record<string, unknown> };
 
 const SDK_FIELDS: ReadonlySet<string> = new Set(['token', 'distinct_id']);
-const PERSON_PROPERTIES: ReadonlySet<string> = new Set(['$set', '$set_once']);
+const PERSON_PROPERTIES: ReadonlySet<string> = new Set(['$set', '$set_once', '$unset']);
 
 function isUrlProperty(key: string): boolean {
   return /url|referrer|pathname/i.test(key);
@@ -32,7 +33,9 @@ export function filterAnalyticsEvent<T extends Captured>(event: T | null, appEnv
       properties[key] = typeof value === 'string' && isUrlProperty(key) ? scrubUrl(value) : value;
     }
     properties.app_env = appEnv;
-    return { ...event, properties };
+    properties.$geoip_disable = true;
+    const { $set: _set, $set_once: _setOnce, $unset: _unset, ...rest } = event as T & Record<string, unknown>;
+    return { ...rest, properties } as T;
   } catch {
     return null;
   }

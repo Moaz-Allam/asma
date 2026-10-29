@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 
 import { expect, test } from './fixtures';
 
@@ -126,6 +127,25 @@ test('a browser error reaches the tunnel with its personal data scrubbed', async
   for (const pii of ['ali@example.com', '85.105.1.2', '555 123 45 67']) expect(sent).not.toContain(pii);
   expect(sent).not.toMatch(/"user":\s*\{/);
   expect(telemetry.offOrigin).toEqual([]);
+});
+
+test('the telemetry relays are our own handlers, refusing anything not ours before calling out (D83)', async ({
+  request,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'en', 'one locale is enough for a machine endpoint');
+  const foreign = JSON.stringify({ dsn: 'https://other@o9.ingest.de.sentry.io/9' });
+  expect((await request.post('/api/e', { data: `${foreign}\n{"type":"event"}\n{}` })).status()).toBe(403);
+  expect((await request.get('/api/e')).status()).toBe(405);
+
+  // posthog-js posts to /api/a/e/ with a trailing slash: it must reach the handler, not a redirect.
+  const event = gzipSync(JSON.stringify([{ event: '$pageview', properties: { token: 'phc_bbbbbbbbbbbb' } }]));
+  const capture = await request.post('/api/a/e/?compression=gzip-js', { data: event, maxRedirects: 0 });
+  expect(capture.status()).toBe(403);
+  expect((await request.post('/api/a/array/phc_x/config.js', { data: '{}' })).status()).toBe(404);
+
+  expect(
+    (await request.post('/api/csp', { data: '{}', headers: { 'content-type': 'text/plain' } })).status(),
+  ).toBe(415);
 });
 
 test('the health endpoint answers degraded without a database, uncached, with nothing else in it', async ({

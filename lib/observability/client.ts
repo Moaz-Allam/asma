@@ -8,10 +8,11 @@ import {
 } from '@sentry/nextjs';
 
 import { afterHydration } from '@/lib/browser/after-hydration';
-import { scrubBreadcrumb, scrubEvent, scrubRecordingEvent } from '@/lib/observability/scrub';
+import { scrubBreadcrumb, scrubEvent, scrubRecordingEvent, scrubSpan } from '@/lib/observability/scrub';
 import {
   DENY_URLS,
   IGNORE_ERRORS,
+  SENTRY_TUNNEL_ROUTE,
   appEnvOf,
   isTelemetryPath,
   tracesSampleRate,
@@ -37,26 +38,7 @@ export function initClient(): void {
   if (started || !DSN) return;
   started = true;
   try {
-    init({
-      dsn: DSN,
-      environment: ENVIRONMENT,
-      release: RELEASE,
-      sendDefaultPii: false,
-      tracesSampleRate: tracesSampleRate(ENVIRONMENT),
-      // No trace header goes to any other origin (AC-2), and the telemetry paths get no span.
-      tracePropagationTargets: [],
-      integrations: [
-        browserTracingIntegration({ shouldCreateSpanForRequest: (url) => !isTelemetryPath(url) }),
-      ],
-      // A replay is kept only for a session in which an error happened (AC-4).
-      replaysSessionSampleRate: 0,
-      replaysOnErrorSampleRate: 1,
-      ignoreErrors: IGNORE_ERRORS,
-      denyUrls: DENY_URLS,
-      beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb),
-      beforeSend: (event) => scrubEvent(event),
-      beforeSendTransaction: (event) => scrubEvent(event),
-    });
+    init(clientOptions());
     // Replay events skip beforeSend, and the pages they list are user data (AC-3).
     addEventProcessor((event) => (event.type === 'replay_event' ? scrubEvent(event) : event));
     afterHydration(() => void loadReplay());
@@ -65,16 +47,55 @@ export function initClient(): void {
   }
 }
 
-/** Session replay, added lazily: masked, nothing kept in sessionStorage, nothing from the network. */
+/** Everything `init` gets, built apart so the tests can read it (AC-2 to AC-4). */
+export function clientOptions(): Parameters<typeof init>[0] {
+  return {
+    dsn: DSN,
+    environment: ENVIRONMENT,
+    release: RELEASE,
+    // Envelopes go to our own /api/e handler, which forwards only ours, without the visitor's
+    // cookies, referer or IP (D83); the SDK writes the DSN into each envelope for it to check.
+    tunnel: SENTRY_TUNNEL_ROUTE,
+    sendDefaultPii: false,
+    tracesSampleRate: tracesSampleRate(ENVIRONMENT),
+    // No trace header goes to any other origin (AC-2), and the telemetry paths get no span.
+    tracePropagationTargets: [],
+    integrations: [browserTracingIntegration({ shouldCreateSpanForRequest: (url) => !isTelemetryPath(url) })],
+    // A replay is kept only for a session in which an error happened (AC-4).
+    replaysSessionSampleRate: 0,
+    replaysOnErrorSampleRate: 1,
+    ignoreErrors: IGNORE_ERRORS,
+    denyUrls: DENY_URLS,
+    beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb),
+    beforeSend: (event) => scrubEvent(event),
+    beforeSendTransaction: (event) => scrubEvent(event),
+    // Standalone spans (INP, named after the element clicked) skip both hooks above.
+    beforeSendSpan: (span) => scrubSpan(span),
+  };
+}
+
+/**
+ * The replay's options (AC-4): masked text, inputs and media, and the attributes that can carry a
+ * person's data (a `tel:` or `mailto:` link, an image or form URL, an option value) on top of
+ * Sentry's default three. Nothing kept in sessionStorage, nothing from the network.
+ */
+export const REPLAY_OPTIONS = {
+  maskAllText: true,
+  maskAllInputs: true,
+  blockAllMedia: true,
+  maskAttributes: ['title', 'placeholder', 'aria-label', 'href', 'src', 'value', 'alt', 'action'],
+  stickySession: false,
+  networkDetailAllowUrls: [],
+} as const;
+
+/** Session replay, added lazily. */
 async function loadReplay(): Promise<void> {
   try {
     const { replayIntegration } = await import('@sentry/nextjs');
     addIntegration(
       replayIntegration({
-        maskAllText: true,
-        maskAllInputs: true,
-        blockAllMedia: true,
-        stickySession: false,
+        ...REPLAY_OPTIONS,
+        maskAttributes: [...REPLAY_OPTIONS.maskAttributes],
         networkDetailAllowUrls: [],
         beforeAddRecordingEvent: (event) => scrubRecordingEvent(event),
       }),

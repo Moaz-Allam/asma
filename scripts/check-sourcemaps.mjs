@@ -13,7 +13,8 @@ import { join } from 'node:path';
 // Node strips the types natively; lib/deployment.ts has no dependencies for exactly this reason.
 import { isDeployment } from '../lib/deployment.ts';
 
-if (!isDeployment(process.env)) {
+// The build phase next.config.ts sees, so an off Vercel deployment build is checked too (review 2026-10-29).
+if (!isDeployment({ ...process.env, NEXT_PHASE: 'phase-production-build' })) {
   console.log('sourcemaps: not a deployment build, check skipped.');
   process.exit(0);
 }

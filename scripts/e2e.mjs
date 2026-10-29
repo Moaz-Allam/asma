@@ -5,7 +5,8 @@
  * 1. Gets LOCAL Supabase values from `supabase status` (starting the local stack if needed).
  * 2. Builds the app with those values passed as process variables. Process variables beat env files,
  *    and every other variable named in .env.example is set to empty, so nothing from a developer's
- *    cloud env file can reach an e2e build. Analytics and error reporting stay off.
+ *    cloud env file can reach an e2e build. Analytics and error reporting run with dummy keys, and the
+ *    journeys stub both telemetry paths in the browser (e2e/fixtures.ts), so nothing leaves the machine.
  * 3. Runs Playwright (390px, ar + tr + en). Extra arguments pass through: `-- --project=ar`.
  *
  * Flags: --reuse-build   skip the build when the last one was made by this wrapper.

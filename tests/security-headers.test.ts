@@ -8,9 +8,7 @@ import { SECURITY_HEADERS } from '@/lib/security/headers';
  * Content Security Policy with exactly the directives of the spec's CSP table. Tests first.
  */
 
-const DSN = 'https://examplepublickey@o4507000000000000.ingest.de.sentry.io/4507000000000001';
-const REPORT =
-  'https://o4507000000000000.ingest.de.sentry.io/api/4507000000000001/security/?sentry_key=examplepublickey';
+const REPORT = 'https://aldebyani.test/api/csp';
 
 function directives(policy: string): Record<string, string> {
   return Object.fromEntries(
@@ -83,13 +81,10 @@ describe('buildCsp (AC-13)', () => {
   });
 });
 
-describe('cspReportUri: the Sentry security endpoint, derived from the DSN without the SDK', () => {
-  it('builds it from the ingest host, project id and public key', () => {
-    expect(cspReportUri(DSN)).toBe(REPORT);
+describe('cspReportUri: our own /api/csp handler, which scrubs before Sentry (D83)', () => {
+  it('is absolute on the page origin, and names the report-to group', () => {
+    expect(cspReportUri('https://aldebyani.test')).toBe(REPORT);
+    expect(cspReportUri('http://127.0.0.1:3100')).toBe('http://127.0.0.1:3100/api/csp');
     expect(reportingEndpoints(REPORT)).toBe(`csp-endpoint="${REPORT}"`);
-  });
-
-  it.each([undefined, '', 'nonsense', 'https://key@o1.ingest.us.sentry.io/2'])('gives none for %j', (dsn) => {
-    expect(cspReportUri(dsn)).toBeUndefined();
   });
 });

@@ -2,13 +2,16 @@ import 'server-only';
 
 import { captureMessage, getClient, withScope } from '@sentry/nextjs';
 
+import { appEnv } from '@/lib/deployment';
 import { flushSoon } from '@/lib/observability/server';
 import type { Region } from '@/lib/region';
 
 /**
- * `raiseAlert` (spec 0004 AC-11, D67): one Sentry event tagged `alert`, fingerprinted by reason plus
- * record id, so repeats for the same record join one issue. Two Sentry alert rules (production only)
- * email the owner: one on a new alert issue, one when an issue passes 10 events in 10 minutes.
+ * `raiseAlert` (spec 0004 AC-11, D67): one Sentry event tagged `alert`, fingerprinted by reason, record
+ * id and environment, so repeats for the same record join one issue, and a preview alert never hides
+ * the first production one inside an existing issue (D84). Two Sentry alert rules (production only)
+ * email the owner: one on a new or returning alert issue, one when an issue passes 10 events in 15
+ * minutes (D80).
  *
  * The send is flushed with `after()` before the function freezes. Never throws; without the SDK it
  * mirrors to the console.
@@ -36,7 +39,7 @@ export function raiseAlert(reason: AlertReason, detail: AlertDetail): void {
       scope.setTag('alert', reason);
       if (detail.region !== undefined) scope.setTag('region', detail.region);
       if (detail.cause !== undefined) scope.setTag('cause', detail.cause);
-      scope.setFingerprint(['alert', reason, detail.recordId]);
+      scope.setFingerprint(['alert', reason, detail.recordId, appEnv(process.env)]);
       captureMessage(`alert ${reason}`, 'error');
     });
     flushSoon();

@@ -64,9 +64,22 @@ describe('raiseAlert (AC-11)', () => {
   it('sends one event tagged alert, fingerprinted by reason and record, flushed after the response', () => {
     raiseAlert('flag_read_failed', { recordId: 'TR:funding_enabled', region: 'TR', cause: 'timeout' });
     expect(sentry.tags).toEqual({ alert: 'flag_read_failed', region: 'TR', cause: 'timeout' });
-    expect(sentry.fingerprint).toEqual(['alert', 'flag_read_failed', 'TR:funding_enabled']);
+    expect(sentry.fingerprint).toEqual(['alert', 'flag_read_failed', 'TR:funding_enabled', 'local']);
     expect(sentry.captureMessage).toHaveBeenCalledWith('alert flag_read_failed', 'error');
     expect(sentry.after).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['production', 'production'],
+    ['preview', 'preview'],
+  ])('keeps a %s alert apart from every other environment (D84)', (vercelEnv, expected) => {
+    vi.stubEnv('VERCEL_ENV', vercelEnv);
+    try {
+      raiseAlert('flag_read_failed', { recordId: 'TR:funding_enabled' });
+      expect(sentry.fingerprint).toEqual(['alert', 'flag_read_failed', 'TR:funding_enabled', expected]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it('starts the flush at once outside a request, where after() is unavailable', () => {

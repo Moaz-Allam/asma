@@ -158,7 +158,8 @@ Domain components. Path: `components/features/<domain>/`.
 | Layout | Path | Purpose | Design ref | Status |
 | --- | --- | --- | --- | --- |
 | `NotFound` | `app/[locale]/not-found.tsx` | Unknown locale or missing route; localised | s17 | ✅ done · ⚠️ restyle to the design |
-| `ErrorBoundary` | `app/[locale]/error.tsx` | Route error boundary; logs digest, never renders it | s17 | ✅ done · ⚠️ restyle to the design |
+| `ErrorBoundary` | `app/[locale]/error.tsx` | Route error boundary; reports an error without a digest to Sentry, never renders it | s17 | ✅ done · ⚠️ restyle to the design |
+| `GlobalError` | `app/global-error.tsx` | Last resort for a crash outside the locale layout: own `<html>`, locale from the path (`localeOfPath`), `Error` copy from each catalogue | s17 | ✅ done · ⚠️ restyle to the design |
 | `RootLayout` | `app/[locale]/layout.tsx` | `lang={locale}` + `dir={dirFor(locale)}`, **derived, never hardcoded**; providers; `setRequestLocale` | — | ✅ done (fonts per `ui-rules.md` §12 still to load) |
 | `LocaleSwitcher` | `components/layout/LocaleSwitcher.tsx` | ar / tr / en; persists to cookie | s12 | ✅ done · ⚠️ restyle to the design |
 | `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, nav, bell, avatar; signed-out pills | s1, s3, s6 | 📋 planned |
@@ -283,9 +284,21 @@ Heading: text-2xl font-semibold text-text-primary
 Button:  rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground
 ```
 
-Notes: ⚠️ **`ui-rules.md` §7 — never render the error.** The `digest` is logged in a `useEffect`;
-the user sees plain-language copy from `messages.Error.generic` plus a retry that calls `reset()`.
-No stack trace, no SQL, no PSP payload. Must stay a Client Component (`'use client'`).
+Notes: ⚠️ **`ui-rules.md` §7 — never render the error.** In a `useEffect` it calls
+`reportClientError()` (spec 0004 AC-17), which reports only an error without a `digest` (the server
+reported the rest); the user sees plain-language copy from `messages.Error.generic` plus a retry that
+calls `retry()` (Next 16). No stack trace, no SQL, no PSP payload. Must stay a Client Component
+(`'use client'`).
+
+### GlobalError
+**Path:** app/global-error.tsx
+**Used by:** a crash that escapes `app/[locale]/layout.tsx`; it replaces the whole document
+**RTL checked:** ✅ (`dir` from the locale, tested in `tests/global-error.test.ts`)
+
+Notes: no next-intl provider exists here, so the locale is `localeOfPath(usePathname())`
+(`lib/i18n/path-locale.ts`: the first segment when it is a supported locale, exact match, else the
+default) and the copy is the `Error` part of each catalogue, imported statically. Same classes, same
+reporting rule and same `retry()` as `ErrorBoundary`.
 
 ### Landing page
 **Path:** app/[locale]/page.tsx

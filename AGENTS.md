@@ -178,16 +178,19 @@ released, refunded, partially released.
 ## Single doors (lint enforced, `eslint.config.mjs`)
 
 Each risky system has one module that may import its SDK or read its key; everything else calls that
-door's functions. Every rule and exemption has a proof in `tests/lint/eslint-rules.test.ts`
-(architecture.md §42).
+door's functions. The rules also catch `import()`, `require()`, a destructured key, and a computed or
+spread `process.env` (D86). Every rule and exemption has a proof in `tests/lint/eslint-rules.test.ts`
+(architecture.md §42). A file named `*relay*` gets the outbox relay's rights (PSP, service role), so no
+other module may be named that way.
 
 | System | Door | Notes |
 | --- | --- | --- |
 | Supabase | `lib/db/` | The service role client (`lib/db/admin.ts`) for webhooks, jobs and the relay only; `createAnonClient()` for machine endpoints; the `Db` type for callers |
 | PSP | `lib/psp/` | Only the outbox relay calls it (rule 3) |
-| Sentry | `lib/observability/` | `next.config.ts` may import only `withSentryConfig` from `@sentry/nextjs/config`. Server: `initServer`, `captureRequestError`, `log`, `raiseAlert`; browser: `initClient`, `reportClientError`, `routerTransitionStart`. One scrubber (`scrub.ts`) for every signal |
-| PostHog | `lib/analytics/` | `initAnalytics`, `track`, `trackPageview`; events typed in `events.ts`, filtered again in `filter.ts` |
-| Telemetry keys | the two doors, `lib/env.ts`, `lib/deployment.ts`, `next.config.ts` | `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`; `SENTRY_AUTH_TOKEN` in `next.config.ts` only. Others ask `sentryDsn()` |
+| Sentry | `lib/observability/` | `next.config.ts` may import only `withSentryConfig` from `@sentry/nextjs/config`. Server: `initServer`, `captureRequestError`, `log`, `raiseAlert`; browser: `initClient`, `reportClientError`, `routerTransitionStart`; routes: `createEnvelopeForwarder` (`/api/e`), `createCspReportForwarder` (`/api/csp`) in `forward.ts` (D83). One scrubber (`scrub.ts`) for every signal, CSP reports included |
+| PostHog | `lib/analytics/` | `initAnalytics`, `track`, `trackPageview`; events typed in `events.ts`, filtered again in `filter.ts`; route: `createPostHogForwarder` (`/api/a/*`) in `forward.ts` (D83) |
+| Telemetry keys | the two doors, `lib/env.ts`, `lib/deployment.ts`, `next.config.ts` | `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`; `SENTRY_AUTH_TOKEN` in `next.config.ts` only. Others ask `sentryDsn()` or `posthogKey()` |
+| Public machine endpoints | `app/api/health`, `app/api/e`, `app/api/a/[...path]`, `app/api/csp` | No session, so no `requireRole()` (D71, D83); position 01's action guard meta test exempts exactly these by name |
 
 ## Tooling gap scan (ask before adding)
 
