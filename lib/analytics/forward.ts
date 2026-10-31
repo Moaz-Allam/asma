@@ -1,7 +1,6 @@
 import 'server-only';
 
-import { gunzipSync } from 'node:zlib';
-
+import { captureKeys } from '@/lib/analytics/capture-body';
 import { readCapped } from '@/lib/http/body';
 
 /**
@@ -16,8 +15,6 @@ import { readCapped } from '@/lib/http/body';
 
 /** One capture call, compressed; posthog-js batches a few events at a time. */
 export const CAPTURE_LIMIT_BYTES = 1024 * 1024;
-/** The same call decompressed: a gzip bomb stops here. */
-const DECODED_LIMIT_BYTES = 5 * 1024 * 1024;
 const POSTHOG_HOST = 'https://eu.i.posthog.com';
 /** The endpoints posthog-js sends events to; `e` with our config, the others if a version moves. */
 const CAPTURE_PATHS: ReadonlySet<string> = new Set(['e', 'i/v0/e', 'batch']);
@@ -31,42 +28,6 @@ export type PostHogForwarderOptions = {
   fetch?: typeof fetch;
   timeoutMs?: number;
 };
-
-function decodePayload(body: Uint8Array, compression: string | null): unknown {
-  if (compression === 'gzip-js' || compression === 'gzip') {
-    return JSON.parse(gunzipSync(body, { maxOutputLength: DECODED_LIMIT_BYTES }).toString('utf8'));
-  }
-  const text = new TextDecoder().decode(body);
-  if (compression === 'base64') {
-    const data = new URLSearchParams(text).get('data') ?? '';
-    return JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
-  }
-  return JSON.parse(text);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/** Every project key a payload names: per event (`properties.token`) and per batch (`api_key`). */
-function keysOf(payload: unknown): string[] {
-  const keys: string[] = [];
-  const visit = (item: unknown): void => {
-    if (!isRecord(item)) return;
-    for (const field of ['api_key', 'token']) {
-      const value = item[field];
-      if (typeof value === 'string') keys.push(value);
-    }
-    if (isRecord(item.properties) && typeof item.properties.token === 'string')
-      keys.push(item.properties.token);
-  };
-  if (Array.isArray(payload)) payload.forEach(visit);
-  else {
-    visit(payload);
-    if (isRecord(payload) && Array.isArray(payload.batch)) payload.batch.forEach(visit);
-  }
-  return keys;
-}
 
 /** POST /api/a/<endpoint>: a capture call naming only our key, to its fixed EU Cloud URL. */
 export function createPostHogForwarder(
@@ -83,10 +44,9 @@ export function createPostHogForwarder(
 
     const url = new URL(request.url);
     const encoding = request.headers.get('content-encoding');
-    const compression = url.searchParams.get('compression') ?? (encoding === 'gzip' ? 'gzip' : null);
     let keys: string[];
     try {
-      keys = keysOf(decodePayload(body, compression));
+      keys = captureKeys(body, url.searchParams.get('compression'));
     } catch {
       return new Response(null, { status: 400 });
     }

@@ -244,3 +244,13 @@ unlisted install script).
 | Nit · pageview at navigation start | Recorded (R6) |
 | Nit · `/api/health` and rule 11 | Recorded: the public machine endpoints row in `AGENTS.md` and D83 |
 | Nit · non admin INSERT and DELETE | Fixed |
+
+## After the reviews (2026-10-31, same branch)
+
+No review caught this, and neither did CI. `/api/a/e/` answered 400 to every real posthog-js call: the
+handler read a `compression` parameter that posthog-js 1.418 no longer sends. The unit tests assumed the
+parameter and the e2e journeys stub the path, so a relay refusing all real traffic stayed green. It came
+to light because the owner's preview visit left nothing in PostHog or Sentry. Fixed tests first in
+`lib/analytics/capture-body.ts` (gzip recognised by its first two bytes, `api_key` read beside a `batch`),
+with the e2e suite now running the SDK's real bytes through that parser. Both relays were then run against
+the real services. For later positions: a handler behind a stub still needs one real call.

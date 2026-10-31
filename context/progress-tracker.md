@@ -7,7 +7,7 @@ not know it.
 **Last updated:** 2026-10-31
 **Phase:** Bootstrap done · design imported (PR #18) · position 00 ✅ · 00b in review (PR #20)
 **Status:** 🟡 00b green in CI with the review fixes, all migrations in the cloud; money model changed to cash (D87 to D96: no escrow); launch 2026-11-20 (D94)
-**Next:** owner: preview check of the relays, Sentry settings → merge PR #20 → G0 → `/architect` 01
+**Next:** CI green on the relay fix → merge PR #20 → check the relays on production → G0 → `/architect` 01
 
 ---
 
@@ -160,6 +160,19 @@ Dated bullets, newest at the bottom.
   e2e, Vercel). The owner pushed `20261029120000_default_privileges` to the cloud (the CLI answered 403 on
   its login role until a fresh login and relink); verified through the connector: only `postgres` keeps
   default privileges in public, security advisors clean.
+- **2026-10-31** · **A real relay bug, found before merge.** The owner's preview visit left nothing in
+  PostHog or Sentry (last event 2026-10-28) and no record in Vercel's runtime logs, so the running code
+  was tested against the real services: `/api/a/e/` answered 400 to every real call. posthog-js 1.418
+  gzips with no `compression` parameter in the URL, and the handler read that parameter to know how to
+  decode. Every unit test assumed the parameter and every e2e journey stubs the path, so all were green.
+  Fixed tests first: `lib/analytics/capture-body.ts` recognises gzip by its first two bytes and also
+  reads `api_key` beside a `batch`. The e2e suite now runs the real SDK's real bytes through that parser
+  and parses the DSN out of each real envelope. Proved locally against the real services: `/api/e` 200,
+  issue ALDEBYANI-6 with the address scrubbed and no user (resolved); `/api/a/e/` 200, the `$pageview` in
+  PostHog with the token and fragment gone, `$geoip_disable` true, no `$ip`. Lesson: a stub hides the
+  handler, so a relay needs one real call before it counts as proved. Still unexplained: why the
+  owner's visit reached neither service; production is checked directly after the merge. The test error
+  from localhost was accepted, so Sentry's localhost inbound filter looks off.
 
 ---
 
@@ -431,10 +444,10 @@ KSA facts are deferred with the KSA launch (D22).
 | --- | --- | --- | --- |
 | Guard suite (`npm run guardrails`) | 🟢 | 2026-10-29 | 63/63, including false positive, Edit and MultiEdit cases |
 | Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-29 | Lint includes the single door rules, the telemetry doors and the ways around them (51 proofs, D86) |
-| Unit (Vitest 5) | 🟢 | 2026-10-29 | 461 tests in 22 files (scrubber, relays, SDK options, deployment gate, CSP, proxy, health, flags, doors, analytics, global error), about 5s |
+| Unit (Vitest 5) | 🟢 | 2026-10-31 | 463 tests in 22 files (scrubber, relays, SDK options, deployment gate, CSP, proxy, health, flags, doors, analytics, global error), about 5s |
 | Build (`next build`) | 🟢 local · 🔴 first preview | 2026-10-28 | Locale pages are dynamic (nonce CSP); the first Vercel preview stopped at the build gate as designed: `NEXT_PUBLIC_POSTHOG_KEY` missing |
 | pgTAP (`supabase test db`) | 🟢 local | 2026-10-29 | 51/51 on the local stack (ports 544xx, D76): RLS on tables, partitioned tables and views, the grant pins, non admin flag writes refused, the default privileges (`04`) |
-| End to end (Playwright, 390px, ar/tr/en) | 🟢 local | 2026-10-28 | 23 passed, 4 single locale skips: smoke, CSP and headers, both SDKs against stubs, storage, scrubbed payloads, health, prerender manifest (`E2E_NO_DB=1`) |
+| End to end (Playwright, 390px, ar/tr/en) | 🟢 local | 2026-10-31 | 24 passed, 6 single locale skips: smoke, CSP and headers, both SDKs against stubs, storage, scrubbed payloads, health, prerender manifest (`E2E_NO_DB=1`) |
 | Secret scan (gitleaks 8.30.1) | ⏳ | — | First run in CI after the push |
 | Money: property, race, idempotency, invariant | 🔴 | — | Required before position 09 |
 

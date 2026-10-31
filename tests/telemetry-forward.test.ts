@@ -274,6 +274,37 @@ describe('POST /api/a/*: the PostHog relay', () => {
   });
   const gzip = (payload: unknown) => gzipSync(Buffer.from(JSON.stringify(payload)));
 
+  // What posthog-js 1.418 really sends: gzip with nothing in the URL to say so, as text/plain, the events
+  // in a `batch` beside `api_key`. A local run against the real SDK found the handler refusing this
+  // (2026-10-31): the tests had assumed a `compression` parameter, and e2e stubs this path in the browser.
+  it('forwards the call the real SDK sends: gzip, no query, a batch beside api_key', async () => {
+    const { sent, fetch } = recorder(() => new Response('{"status":1}', { status: 200 }));
+    const relay = createPostHogForwarder({ key: () => KEY, fetch });
+    const body = gzip({ api_key: KEY, batch: [event(KEY)], sent_at: '2026-10-31T12:00:00.000Z' });
+    const response = await relay(
+      post('https://aldebyani.test/api/a/e/', body, { 'content-type': 'text/plain' }),
+      ['e'],
+    );
+
+    expect(response.status).toBe(200);
+    expect(sent[0]?.url).toBe('https://eu.i.posthog.com/e/');
+    expect(headersOf(sent[0] as Sent)).toEqual({ 'content-type': 'text/plain' });
+    expect(Buffer.from(sent[0]?.init.body as Uint8Array).equals(body)).toBe(true);
+  });
+
+  it('reads the base64 form the SDK falls back to', async () => {
+    const { sent, fetch } = recorder();
+    const data = Buffer.from(JSON.stringify([event(KEY)])).toString('base64');
+    const response = await createPostHogForwarder({ key: () => KEY, fetch })(
+      post('https://x.test/api/a/e/?compression=base64', `data=${encodeURIComponent(data)}`, {
+        'content-type': 'application/x-www-form-urlencoded',
+      }),
+      ['e'],
+    );
+    expect(response.status).toBe(200);
+    expect(sent).toHaveLength(1);
+  });
+
   it('forwards a gzip capture call for our key to EU Cloud, with the content type only', async () => {
     const { sent, fetch } = recorder(() => new Response('{"status":1}', { status: 200 }));
     const relay = createPostHogForwarder({ key: () => KEY, fetch });

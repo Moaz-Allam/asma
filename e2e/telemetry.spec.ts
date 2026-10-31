@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
+import { captureKeys } from '../lib/analytics/capture-body';
+import { parseEuSentryDsn } from '../lib/deployment';
+
 import { expect, test } from './fixtures';
 
 /**
@@ -63,6 +66,15 @@ test('both SDKs run with zero CSP violations, nothing leaves the origin, nothing
   expect(pageview?.properties).not.toHaveProperty('utm_source');
   expect(telemetry.posthog.every((e) => ['$pageview', 'locale_changed'].includes(e.event))).toBe(true);
 
+  // The stub hides the handler, so the real SDK's real bytes go through the relay's own parser: a handler
+  // that refused every real call once passed this whole suite (2026-10-31).
+  expect(telemetry.posthogCalls.length).toBeGreaterThan(0);
+  for (const { body, compression } of telemetry.posthogCalls) {
+    const keys = captureKeys(body, compression);
+    expect(keys.length).toBeGreaterThan(0);
+    expect(keys.every((key) => key.startsWith('phc_'))).toBe(true);
+  }
+
   expect(await telemetry.cspViolations()).toEqual([]);
   expect(telemetry.offOrigin).toEqual([]);
 
@@ -122,6 +134,12 @@ test('a browser error reaches the tunnel with its personal data scrubbed', async
       timeout: 20_000,
     })
     .toBe(true);
+  // The relay forwards an envelope only when its first line names our DSN: the SDK must write it there.
+  for (const envelope of telemetry.sentry) {
+    const header = JSON.parse(envelope.split('\n', 1)[0] ?? '{}') as { dsn?: string };
+    expect(parseEuSentryDsn(header.dsn ?? '')).not.toBeNull();
+  }
+
   const sent = telemetry.sentry.join('\n');
   expect(sent).toContain('e2e failure for [email] from [ip] at [phone]');
   for (const pii of ['ali@example.com', '85.105.1.2', '555 123 45 67']) expect(sent).not.toContain(pii);

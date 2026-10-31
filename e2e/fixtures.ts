@@ -18,8 +18,10 @@ export type PostHogEvent = { event: string; properties: Record<string, unknown> 
 export type Telemetry = {
   /** Raw Sentry envelopes posted to the /api/e tunnel. */
   sentry: string[];
-  /** Events posted to the /api/a proxy, decoded. */
+  /** Events posted to the /api/a relay, decoded. */
   posthog: PostHogEvent[];
+  /** The same calls as the SDK sent them, for the relay's own parser: the stub hides the handler. */
+  posthogCalls: Array<{ body: Buffer; compression: string | null }>;
   /** Requests to any other origin (blob: and data: aside). */
   offOrigin: string[];
   cspViolations: () => Promise<string[]>;
@@ -59,6 +61,7 @@ export const test = base.extend<{ telemetry: Telemetry }>({
       const telemetry: Telemetry = {
         sentry: [],
         posthog: [],
+        posthogCalls: [],
         offOrigin: [],
         cspViolations: () => page.evaluate(() => window.__cspViolations ?? []),
       };
@@ -90,7 +93,13 @@ export const test = base.extend<{ telemetry: Telemetry }>({
       await page.route(
         (url) => url.pathname.startsWith('/api/a/'),
         async (route) => {
-          telemetry.posthog.push(...decodePostHog(route.request()));
+          const request = route.request();
+          telemetry.posthog.push(...decodePostHog(request));
+          const body = request.postDataBuffer();
+          if (body) {
+            const compression = new URL(request.url()).searchParams.get('compression');
+            telemetry.posthogCalls.push({ body, compression });
+          }
           await route.fulfill({ status: 200, contentType: 'application/json', body: '{"status":1}' });
         },
       );

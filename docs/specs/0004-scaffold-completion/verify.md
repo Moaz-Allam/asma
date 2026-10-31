@@ -1,4 +1,4 @@
-# Verify: Scaffold completion (00b) · spec 0004 · updated 2026-10-28
+# Verify: Scaffold completion (00b) · spec 0004 · updated 2026-10-31
 
 _Steps derived from spec 0004 acceptance criteria and its Value sourcing table. `/check verify` runs
 these; `/test` locks the durable ones. A preview needs the owner logged in to Vercel (login protection
@@ -8,7 +8,12 @@ stays on, D72)._
 `ar`, `tr`, `en`; preview `96a26c7` built (maps uploaded and deleted, release = full SHA); throwaway
 `verify/00b-sentry` proved AC-1, AC-2, AC-3, AC-4, AC-11, AC-14, AC-18 in Sentry (ALDEBYANI-2 to 5,
 resolved); the geo rule (D79) and the two alert rules (D80) are in place. 2026-10-29: verify, the unit
-tests and e2e green again on a clean clone of `f636c8f` (G0 run); quotas checked (D81).
+tests and e2e green again on a clean clone of `f636c8f` (G0 run); quotas checked (D81). 2026-10-31: the
+e2e journeys stub both relays, so the relays were run against the real services once: `/api/a/e/`
+answered 400 to every real call (posthog-js sends no `compression` parameter), fixed, and both relays
+then delivered (ALDEBYANI-6, a `$pageview` with `app_env` `local`). The e2e suite now feeds the SDK's real
+bytes through the relay's parser. A stub proves the SDK, never the handler, so the steps below that
+name a relay stay manual on purpose.
 
 ## UI / manual
 
