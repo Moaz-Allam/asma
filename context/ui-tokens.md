@@ -62,7 +62,7 @@ Named as the case study names them ("الأساسي", "النصوص والسطح
 | --- | --- | --- |
 | danger | `#C0262D` | Error text, destructive actions (text on white) |
 | danger alert | `#E5484D` | Unread dots and alert marks. **Never text** (3.91:1) |
-| danger 50 | `#FDE2E2` | Error panels, the dispute chip, the "release suspended" chip, the rejected provider chip |
+| danger 50 | `#FDE2E2` | Error panels, the rejected provider chip |
 | shadow | `rgb(15 58 115 / 0.18)` | The design's one shadow colour (overlays only, §8) |
 
 **There is no green and no amber.** By decision D49 the statuses stay on the blue ramp; meaning comes
@@ -100,8 +100,8 @@ colour names a component may use.
 | `accent-light` | primary 200 | Emphasis panels (price, summary), avatar discs, count badges |
 | `accent-muted` | primary 100 | Quiet chips, star buttons, notice cards, hover on secondary |
 | `info` / `info-light` / `info-foreground` | primary 900 / primary 100 / primary 900 | Neutral and waiting states |
-| `pending` / `pending-light` / `pending-foreground` | primary 900 / primary 200 / primary 900 | Active states: chosen, held, unlocked, in progress |
-| `success` / `success-light` / `success-foreground` | primary 900 / primary 50 / primary 900 | Finished: released, completed (quiet, by design) |
+| `pending` / `pending-light` / `pending-foreground` | primary 900 / primary 200 / primary 900 | Active states: chosen, paid, unlocked, in progress |
+| `success` / `success-light` / `success-foreground` | primary 900 / primary 50 / primary 900 | Finished: completed (quiet, by design) |
 | `warning` / `warning-light` / `warning-foreground` | primary 900 / primary 100 / primary 900 | Waiting on someone: awaiting confirmation, under review |
 | `error` / `error-light` / `error-foreground` | danger / danger 50 / danger | Errors, disputes, destructive actions |
 | `alert` | danger alert | Unread dots, alert marks (non-text) |
@@ -121,14 +121,11 @@ Arabic below is the design's wording. Chips are pills: 12px Cairo 700, `px-3 py-
 | --- | --- | --- | --- |
 | `OPEN` | مفتوح | `bg-info-light` | Provider feed shows «مفتوح · N من 10 عروض» |
 | `SELECTED` | بانتظار الدفع (customer) · اختارك العميل (provider) | `bg-pending-light` | |
-| `FUNDED` | بانتظار فتح البيانات | `bg-pending-light` | Provider side adds «· المبلغ محفوظ» |
+| `COMMISSION_PAID` | بانتظار فتح البيانات | `bg-pending-light` | |
 | `UNLOCKED` | فُتحت البيانات | `bg-pending-light` | |
 | `IN_PROGRESS` | قيد التنفيذ | `bg-pending-light` | The design also shows an inverted variant (`bg-accent text-accent-muted`) for the current step in a stepper |
 | `AWAITING_CONFIRMATION` | بانتظار تأكيدك (customer) · بانتظار تأكيد العميل (provider) | `bg-warning-light` | |
-| `RELEASED` | مكتمل | `bg-success-light` | |
-| `DISPUTED` | نزاع · مفتوح · التحرير موقوف | `bg-error-light` | The only red chip; text stays navy |
-| `REFUNDED` | (not in the design) | `bg-success-light` | Follows the closed states; label from the catalogue |
-| `PARTIALLY_RELEASED` | (not in the design) | `bg-success-light` | Same |
+| `COMPLETED` | مكتمل | `bg-success-light` | |
 | `CANCELLED` | ملغى | `bg-success-light` | **D59:** this spelling and colour (the design also had «ملغي» on primary 100) |
 | Closed to new offers | مقفل | `bg-success-light` | Feed row at the applicant cap |
 
@@ -166,7 +163,7 @@ weight), so the design's sizes never need arbitrary values. Pair Alexandria role
 | Display XL | `text-display` | 84px | Alexandria 900 | 1.24 | -0.055em | Case study and landing section display |
 | Hero | `text-hero` | 76px | Alexandria 700 | 1.24 | -0.05em | Landing hero «خلّها علينا» (kashida stretched, as designed) |
 | Price XL | `text-price-xl` | 72px | Alexandria 900 | 1 | -0.05em | The fixed price on the request form (s4), the countdown card |
-| Price L | `text-price-l` | 66px | Alexandria 900 | 1 | -0.05em | Request value (p8), wallet balance |
+| Price L | `text-price-l` | 66px | Alexandria 900 | 1 | -0.05em | Request value (p8) |
 | Display L | `text-display-l` | 48px | Alexandria 900 | 1.24 | -0.045em | Landing section titles (the design varies 46–52px) |
 | Page title (h1) | `text-title` | 44px | Alexandria 900 | 1.24 | -0.04em | Every page title |
 | Section (h2) | `text-section` | 28px | Alexandria 900 | 1.24 | -0.02em | Section headings |
@@ -220,7 +217,7 @@ Tailwind v4 `--spacing` stays 4px; the design's values map to quarter steps.
 | --- | --- | --- |
 | `rounded-full` | pill / circle | Buttons, chips, avatars, toggles, search field (the design's 99px and 50%) |
 | `rounded-panel` | 26px | Big panels: hero, price card, summary card, page shell |
-| `rounded-block` | 24px | Strips inside panels (the held amount strip) |
+| `rounded-block` | 24px | Strips inside panels |
 | `rounded-card` | 22px | Offer cards, list cards, collapsed applicants |
 | `rounded-tile` | 20px | Notification items, service tiles, mid cards |
 | `rounded-row` | 18px | White rows inside navy or tinted panels (promise chips) |

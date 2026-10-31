@@ -2,6 +2,11 @@
      The .docx remains the human-authored original; edit that, then re-convert.
      Formatting (tables, images, comments) is lost in this direction. -->
 
+> ⛔ **The money model changed on 2026-10-30 (D87 to D95): no escrow.** The job price is cash from customer
+> to provider; the gateway only takes the platform's two fees. Anything below about escrow, hold, release,
+> payouts, sub-merchants, provider balances or disputes is history. `project-overview.md` and the decision
+> log win.
+
 ## Architecture Review  -  Technical Critique
 
 Reviewer stance: senior engineering leadership. Scope: engineering only  -  stack, correctness, operability, maintainability. Business model is settled and out of scope.

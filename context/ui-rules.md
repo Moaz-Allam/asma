@@ -119,8 +119,8 @@ Money and status screens additionally need a **stale/refreshing** indication aft
   are wrong), with a resend countdown.
 - Errors appear **next to the field**, in plain language from the catalogue, saying how to fix it.
 - Disable the submit button while submitting **and** guard the action server-side (idempotency).
-- Destructive or money actions (choose provider, pay, pay the unlock fee, confirm completion, dispute,
-  withdraw) require an **explicit confirmation step** stating the consequence and the amount.
+- Destructive or money actions (choose provider, pay the commission, pay the provider fee, confirm
+  completion, cancel) require an **explicit confirmation step** stating the consequence and the amount.
 
 ---
 
@@ -131,18 +131,19 @@ Money and status screens additionally need a **stale/refreshing** indication aft
 - **The price card** (request form, review, offers, payment): an eyebrow label («السعر الثابت»), the
   amount at 72px, the currency sign smaller beside it, a one-line explanation, then a white inner card
   with the breakdown rows, then the main action. Panel `bg-accent-light rounded-panel`.
-- Show **what the user actually gets or pays**: for providers, the request value, the platform's
-  commission and the net. Never only a gross figure.
-- **Commission copy (D53):** the commission is taken when the customer pays; the provider receives the
-  net amount when the job is released. Several design screens say the commission is deducted «عند
-  تحرير المبلغ»: that wording is wrong and is not copied.
+- Show **what the user actually gets or pays**: for customers, the job price, the commission to pay
+  now and the cash due after the service; for providers, the fee to pay now and the cash to collect.
+  Never only a gross figure.
+- **Commission copy (D88):** the commission is part of the job price, paid online after choosing; the
+  rest is cash to the provider after the service. A screen that says money is held or released is out
+  of date until the design is re-exported (S24).
 - Amounts are formatted for the locale: `tr` `₺3.200`, `en` `₺3,200`, `ar` with Western digits
   (`i18n.md` §7). The mockups' `₺3,200` is not a fixed format.
-- **The held amount strip** (confirmation): «₺3,200 محفوظة لدى مزود خدمة الدفع», the confirm button in the
-  same strip, and the auto-release countdown under it. The copy never says the platform holds the money.
+- **The agreement reminder** (D92): a short line with a link to the agreement statement above every
+  payment button. Copy never says the platform holds money, or that it will collect the cash for anyone.
 - Status is rendered from the canonical state machine (`project-overview.md` §4) through the one status
   chip (`ui-tokens.md` §4). Never invent labels.
-- Deadlines (unlock window, release date) show an **absolute time plus a relative hint**, from server
+- Deadlines (payment, pay and confirm windows) show an **absolute time plus a relative hint**, from server
   time. A running window can show the big countdown card of the design (`19:24:08`, Alexandria 900).
 
 ---
@@ -154,7 +155,7 @@ Money and status screens additionally need a **stale/refreshing** indication aft
 - Before selection the customer sees a provider as **first name + family initial** («أحمد س.») with the
   initial avatar; the full name appears only once the provider is revealed.
 - **Never build a UI that would leak PII if RLS were removed.**
-- The reveal of customer details is a distinct, deliberate UI moment, after the unlock fee is confirmed
+- The reveal of contact details is a distinct, deliberate UI moment, once both fees are confirmed
   (`p11` → `p12`).
 - Application messages warn, **before submission**, that contact information is not allowed; the design
   shows the live scan result («تم الفحص — لا بيانات تواصل»).
@@ -202,14 +203,14 @@ Money and status screens additionally need a **stale/refreshing** indication aft
 - **Never copy an image from the design.** Its photos and avatars are borrowed (tracker Q12). Until owned
   or licensed images exist, use the design's own placeholder (diagonal stripes, `bg-surface-secondary`)
   or a tinted panel with a line icon; avatars are initials on `bg-accent-light`.
-- **Never copy a number from a mockup** (prices, commission, unlock fee): real values come from
+- **Never copy a number from a mockup** (prices, commission, provider fee): real values come from
   `platform_settings` and the pricing engine.
 - Never copy the mock browser bar or the annotations around the frames.
 - Region specific details follow the row's region, never the mockup. The design's mock region is
   Saudi Arabia (Riyadh districts, «مدى», 05x phones, «السعودية · ₺»); v1 builds Turkey (D57): Turkish
   districts, `+90` phones, the iyzico card form.
-- **Disputes resolve as full release or full refund at launch (D54).** The design's partial release
-  (`s9` copy, the admin decision in `a5`) stays hidden until P1.
+- **There are no disputes (D92).** The design's dispute screens become a problem report after the
+  re-export (S24).
 - The design's «كرّر الطلب» on `s9` **is** in v1 (D56, position 04).
 - The full exclusions list is in `docs/design/README.md`.
 
@@ -329,7 +330,7 @@ All pill-shaped (`rounded-full`), Cairo.
 | Destructive | `bg-surface text-error` | Cancel, reject, "I can't do this job"; never a red fill |
 | Link | `text-link` | Inline navigation |
 
-Money actions (pay, pay the unlock fee, confirm completion, withdraw) always open a **confirmation dialog
+Money actions (pay the commission, pay the provider fee, confirm completion) always open a **confirmation dialog
 stating the exact amount** before executing.
 
 ---

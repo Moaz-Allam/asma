@@ -44,6 +44,22 @@ describe('environment fails fast and loudly', () => {
       parseEnv({ ...valid, SUPABASE_DB_POOL_URL: 'postgresql://u:p@x.pooler.supabase.com:6543/postgres' }),
     ).toThrow(/pgbouncer=true/);
   });
+
+  it('accepts the Sentry DSN only on the EU ingest, and lets it be absent locally (D62)', () => {
+    const eu = 'https://key@o123.ingest.de.sentry.io/456';
+    expect(parseEnv({ ...valid, NEXT_PUBLIC_SENTRY_DSN: eu }).NEXT_PUBLIC_SENTRY_DSN).toBe(eu);
+    expect(parseEnv(valid).NEXT_PUBLIC_SENTRY_DSN).toBeUndefined();
+    expect(() =>
+      parseEnv({ ...valid, NEXT_PUBLIC_SENTRY_DSN: 'https://key@o123.ingest.us.sentry.io/456' }),
+    ).toThrow(/NEXT_PUBLIC_SENTRY_DSN/);
+  });
+
+  it('accepts APP_LOCAL_ONLY only as exactly 1, or unset (spec 0004 AC-9)', () => {
+    expect(parseEnv({ ...valid, APP_LOCAL_ONLY: '1' }).APP_LOCAL_ONLY).toBe('1');
+    expect(parseEnv(valid).APP_LOCAL_ONLY).toBeUndefined();
+    expect(parseEnv({ ...valid, APP_LOCAL_ONLY: '' }).APP_LOCAL_ONLY).toBeUndefined();
+    expect(() => parseEnv({ ...valid, APP_LOCAL_ONLY: 'true' })).toThrow(/APP_LOCAL_ONLY/);
+  });
 });
 
 describe('the pre-D14 deployment model cannot come back', () => {

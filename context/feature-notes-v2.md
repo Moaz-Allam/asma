@@ -1,5 +1,10 @@
 # Feature notes (v2 archive)
 
+> ⛔ **The money model changed on 2026-10-30 (D87 to D95): no escrow.** The job price is cash from customer
+> to provider; the gateway only takes the platform's two fees. Anything below about escrow, hold, release,
+> payouts, sub-merchants, provider balances or disputes is history. `project-overview.md` and the decision
+> log win.
+
 v2 archive, created 2026-10-17. This is build-plan v2's numbered feature breakdown, **verbatim**,
 kept as requirement seeds for position specs. Its phases, ordering, and the "full UI with mock data
 first" principle are **superseded** by `build-plan.md` v3 (positions, tracer bullets). Use the old

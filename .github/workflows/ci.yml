@@ -139,14 +139,18 @@ jobs:
       - run: npm run format:check
       - run: npm test
 
-      # Local, shape valid values only: CI never holds cloud credentials.
+      # Local, shape valid values only: CI never holds cloud credentials. APP_LOCAL_ONLY marks a local
+      # production build, so the deployment key checks (lib/deployment.ts, spec 0004 AC-9) stand aside.
       - name: Production build
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+          APP_LOCAL_ONLY: '1'
+          NEXT_PUBLIC_SENTRY_DSN: https://ci000000000000000000000000000000@o0.ingest.de.sentry.io/0
+          NEXT_PUBLIC_POSTHOG_KEY: phc_ci00000000000000000000000000000
           APP_DEFAULT_LOCALE: ar
           APP_SUPPORTED_LOCALES: ar,tr,en
-          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54421
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-anon
           SUPABASE_SERVICE_ROLE_KEY: ci-build-service
 

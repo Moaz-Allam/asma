@@ -1,7 +1,8 @@
 # Project Overview
 
-v3, 2026-10-17: §0 doc map and precedence rewritten for the playbook layout; §1 gains the launch date,
-scope test, and Turkey first launch; §5 becomes the canonical text of the rules that never bend.
+v7, 2026-10-30: the money model changed to cash, no escrow (D87 to D95). §1 to §7, §9, §11 to §17, §19,
+§21, §22, §24, §34 and §36 are rewritten for it. v3, 2026-10-17: §0 doc map and precedence rewritten for
+the playbook layout; §5 became the canonical text of the rules that never bend.
 
 > **Read this first** (after `AGENTS.md`). This file is the source of truth for **what** we are
 > building and **why**. `architecture.md` covers **how**. Until the owner's brief is imported into
@@ -57,8 +58,10 @@ A **home-services marketplace** (starting with home cleaning) that connects **cu
 
 The platform is the intermediary. It sets prices, controls matching, and earns money two ways:
 
-1. **Unlock fee** — a fixed fee paid by the provider *who gets chosen*, to reveal the customer's full details.
-2. **Commission** — a percentage of the job price, deducted when the customer pays.
+1. **Commission**: a percentage of the job price, paid online by the customer after choosing a provider. It is part of the price, not on top: on a 7000 job at 10%, the customer pays 700 online and 6300 in cash, 7000 in total.
+2. **Provider fee**: paid online by the chosen provider to take the request and reach the customer. A fixed amount or a percent of the job price, whichever admin sets for the region.
+
+Both payments mark both sides as responsible and serious. **The job price never passes through the platform:** the customer pays the provider in cash, in person, after the service, and the platform is not responsible if the customer does not pay (D87).
 
 The business currently runs manually in a WhatsApp group of 400+ members. This platform replaces that.
 
@@ -67,7 +70,7 @@ Arabic (RTL), Turkish, English** — built for **Turkey** and **Saudi Arabia** f
 separated by a `region` column (D14). See [`i18n.md`](i18n.md).
 **Not in this release:** native mobile apps, multi-city expansion, AI features.
 
-**Launch: 2026-11-07, Turkey only (D22).** iyzico Marketplace holds the funds (D23). KSA stays in
+**Launch: 2026-11-20, Turkey only (D22; date D94).** Standard iyzico checkout takes the two fees (D93). KSA stays in
 the schema with its region switched off until a Saudi PSP is chosen (Q7); nothing may hardcode Turkey,
 because the second region is a data change, not a rewrite.
 
@@ -83,68 +86,27 @@ in the brief is asked about before it is built, and logged as an override in the
 
 | Actor | Description |
 | --- | --- |
-| **Customer** | Posts a service request, chooses a provider, pays, confirms completion, rates. |
-| **Provider** | Applies to requests, pays the unlock fee when chosen, performs the service, gets paid. |
-| **Admin** | Sets pricing formulas, fees, and commission. Approves providers. Resolves disputes. |
-| **PSP** | External licensed payment service provider. Holds all money. See §6. |
+| **Customer** | Posts a service request, chooses a provider, pays the commission online, pays the provider in cash after the service, confirms completion, rates. |
+| **Provider** | Applies to requests, pays the provider fee when chosen, performs the service, collects the cash. |
+| **Admin** | Sets pricing formulas, commission and fees. Approves providers. Handles problem reports. Can refund a fee by hand with a recorded reason. |
+| **PSP** | External licensed payment service provider. Takes the platform's two fees, nothing else. Never sees the cash. See §6. |
 
 ---
 
-## 3. The transaction flow — ⛔ SUPERSEDED BY §21. DO NOT IMPLEMENT FROM THIS SECTION.
+## 3. The transaction flow
 
-> **The payment order below is WRONG and was corrected in v3.** It has the provider paying the
-> unlock fee *before* the customer pays. The real order is the reverse: **the customer pays first,
-> then the chosen provider unlocks.** The provider must not risk the unlock fee until the customer's
-> money is already secured.
->
-> **Read [§21](#21-corrected-transaction-order-important) instead.** Steps 1–4 and 8–11 below are
-> still accurate; steps 5–7 are inverted. Kept only as history — the "do not improve these" table
-> that follows applies to the *reasoning*, not to the sequence.
-
-```
-1.  Customer posts a request
-       → platform computes a FIXED price from an admin-configured formula (server-side only)
-
-2.  Eligible providers see SHORT DETAILS ONLY
-       → service type, general area (district, never street), date/time, price
-       → NEVER: customer name, phone, exact address
-
-3.  Providers APPLY FOR FREE, each with a message
-       → message is scanned server-side; contact info (phone/email/links/handles) is REJECTED
-
-4.  Customer reviews applicants (rating, completed jobs, message) and CHOOSES ONE
-
-5.  The CHOSEN provider pays a FIXED UNLOCK FEE
-       → this is platform revenue, captured immediately
-       → only the chosen provider ever pays; applying is always free
-
-6.  Customer's full details are revealed to the provider
-       → both parties may now contact each other freely; there is NO number masking
-
-7.  Customer pays the full price
-       → commission goes to the platform
-       → the remainder is HELD (escrow) at the PSP
-
-8.  Service is performed offline
-
-9.  Provider marks the job complete → then ONE of:
-       a. Customer confirms          → funds released
-       b. Hold period expires         → funds AUTO-RELEASE
-       c. Customer disputes in time   → release suspended, admin resolves
-
-10. Funds land in the provider's earnings balance → provider withdraws
-
-11. Customer may OPTIONALLY rate. Rating NEVER gates payment.
-```
+⛔ The old flow that stood here (escrow, then unlock) is gone (D87). The one flow is
+[§21](#21-corrected-transaction-order-important). The number stays so cross references keep working.
 
 ### Why the design is this way (do not "improve" these)
 
 | Rule | Reason |
 | --- | --- |
 | Applying is free; only the chosen provider pays | Competitors charge for shared leads that never convert. Charging only on won work is our differentiator. |
-| Auto-release exists | Without it, an inactive or hostile customer traps the provider's money forever. |
-| Rating never gates payment | Otherwise providers pressure customers for good ratings, and ratings become worthless. |
-| No number masking | The model deliberately reveals contact. Leakage is handled economically — we already took the unlock fee. |
+| Both sides pay before either sees a contact | Each payment marks its side as serious, and neither side can go around their fee (D89). |
+| The job price is cash, outside the platform | The platform never holds job money, so it carries no custody risk and no payment dispute (D87). |
+| Rating never gates anything | Otherwise providers pressure customers for good ratings, and ratings become worthless. |
+| No number masking | The model deliberately reveals contact. Leakage is handled economically: both fees are already paid. |
 | Price is computed server-side, always | The client is hostile. A client-supplied price is always ignored. |
 
 ---
@@ -154,23 +116,22 @@ in the brief is asked about before it is built, and logged as an override in the
 The canonical states. Do not invent new ones without updating this file.
 
 ```
-OPEN → SELECTED → FUNDED → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION → RELEASED
+OPEN → SELECTED → COMMISSION_PAID → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION → COMPLETED
 ```
 
-> ⚠️ **Corrected in v3.** This previously read `SELECTED → UNLOCKED → FUNDED`. `FUNDED` comes
-> **before** `UNLOCKED` — the customer pays, then the chosen provider unlocks. Per-state meanings and
-> the full guard table are in [§21](#21-corrected-transaction-order-important) and
-> `architecture.md` §21.
+Per-state meanings are in [§21](#21-corrected-transaction-order-important).
 
 Branches:
 - `OPEN → CANCELLED` (customer cancels or request expires)
-- `SELECTED → OPEN` (customer does not pay within the payment window — applicants restored)
-- **`FUNDED → OPEN`** (chosen provider misses the unlock window — **funds STAY HELD**, the customer re-selects without paying again, that application → `EXPIRED`). Capped at 3 re-selections, then full refund
-- **`UNLOCKED | IN_PROGRESS | AWAITING_CONFIRMATION → DISPUTED`** (G1). A customer whose provider took the PII and then vanished must be able to act — dispute was previously reachable only from `AWAITING_CONFIRMATION`, which left money held with no exit
-- `UNLOCKED → *` and `IN_PROGRESS → *` also expire on `start_deadline` / `completion_deadline` (G1) — flags the request for admin action; never an automatic refund, since the work may be underway offline
-- `DISPUTED → RELEASED | REFUNDED | PARTIALLY_RELEASED` (admin resolution)
+- `SELECTED → OPEN` (customer does not pay within the payment window, or the chosen provider withdraws; applicants restored)
+- `SELECTED → CANCELLED` (customer cancels)
+- **`COMMISSION_PAID → OPEN`** (chosen provider misses the pay window or withdraws, that application → `EXPIRED` or `WITHDRAWN`). **The commission stays paid:** the customer's next pick goes straight back to `COMMISSION_PAID` with no new payment. After 3 failed picks, or when no applicant is left, the commission is refunded and the request → `CANCELLED`
+- `COMMISSION_PAID → CANCELLED` (customer cancels; the commission is refunded automatically)
+- `UNLOCKED | IN_PROGRESS → CANCELLED` (either side cancels; no automatic refund, §36)
+- `UNLOCKED` and `IN_PROGRESS` also pass `start_deadline` / `completion_deadline` (G1): this flags the request for admin, and nothing moves by itself, since the work may be underway offline
+- `AWAITING_CONFIRMATION → COMPLETED` (customer confirms, or the confirm window passes)
 
-Terminal states: `RELEASED`, `REFUNDED`, `PARTIALLY_RELEASED`, `CANCELLED`.
+Terminal states: `COMPLETED`, `CANCELLED`. A problem report (D92) is not a state: it never moves a request.
 
 ---
 
@@ -185,15 +146,17 @@ number everywhere ("rule 3"); `AGENTS.md` carries a one line summary and this te
    `lib/pricing/` (server only) evaluates structured formula rows; the request stores
    `pricing_snapshot`; a client supplied price is ignored. Enforced by the server action and a tamper
    test. *Why:* §1, §20; a tampered price loses money on every job.
-2. **Customer PII is visible only after a paid unlock, and no provider ever reads another provider's
-   data.** RLS on the PII tables requires a `paid` row in `unlock_fees` for that `(request, provider)`;
-   request status `FUNDED` is **not** sufficient. A provider can never read another provider's
-   application, earnings, or balance. Enforced by RLS with negative pgTAP tests, never by hiding a
-   field in React. *Why:* §3, §14, §21; the reveal is what the unlock fee sells.
+2. **Contact details are visible only after both sides have paid, and no provider ever reads another
+   provider's data.** RLS on the PII tables requires a `paid` commission and a `paid` provider fee for
+   that `(request, provider)`; request status `COMMISSION_PAID` is **not** sufficient. The reveal is
+   mutual (§25): the provider gets the customer's contact and exact address, the customer gets the
+   provider's contact. A provider can never read another provider's application or fee history.
+   Enforced by RLS with negative pgTAP tests, never by hiding a field in React. *Why:* §14, §21; the
+   reveal is what both fees buy.
 3. **No external call in a request path; money state changes only on verified PSP facts.** Money flow
    is DB transaction → `outbox_events` → relay worker → PSP; the relay is the only mutating caller of
-   `lib/psp`. A payment, refund, or release is recorded only from a verified callback or a server to
-   server lookup, never from a browser redirect. Enforced by lint (single door), the write guard, CI,
+   `lib/psp`. A payment or refund is recorded only from a verified callback or a server to server
+   lookup, never from a browser redirect. Enforced by lint (single door), the write guard, CI,
    and callback tests. *Why:* `architecture-review.md` P0-1; an inline call cannot be atomic with the
    commit.
 4. **Money is integer minor units.** No float or double anywhere money flows, no client side money
@@ -205,10 +168,10 @@ number everywhere ("rule 3"); `AGENTS.md` carries a one line summary and this te
    Enforced by grants and pgTAP. *Why:* `architecture.md` §28; history must be reconstructible.
 6. **Every money operation is idempotent, atomic, and balanced.** Deterministic keys derived from domain
    ids with a unique constraint; a replay returns the **stored** response; debits and credits commit
-   together or not at all; balances never go negative (database constraint); held funds leave exactly
-   once (`held = released + refunded + remaining`, per `(region, currency)`); **commission is its own
-   ledger leg**, never `escrow = price − commission` as one line. Enforced by the posting function,
-   constraints, property and race tests. *Why:* §6, D20; a double charge or a lost fee is real money.
+   together or not at all; a fee is charged at most once per `(request, provider, kind)` and refunded at
+   most once; amounts are computed once on the server and stored, never recomputed. Enforced by the
+   posting function, constraints, property and race tests. *Why:* §6, D20; a double charge or a lost fee
+   is real money.
 7. **RLS enabled + policy written + negative test proving the wrong user is denied, in the same
    migration and commit as the table.** Default deny; each position adds only its own write path; meta
    pgTAP tests enumerate every table and function so a new one cannot slip past. *Why:* a missing
@@ -216,8 +179,9 @@ number everywhere ("rule 3"); `AGENTS.md` carries a one line summary and this te
 8. **Never execute an admin authored string.** No `eval`, `new Function`, or dynamic import of admin
    input. Pricing formulas are structured rows interpreted by our own code. Enforced by the write guard
    and lint. *Why:* D10; an admin account is not a code execution boundary.
-9. **The platform never holds user funds.** A licensed PSP holds everything (iyzico Marketplace in
-   Turkey); our database is a ledger that mirrors it. No wallet top up, no stored balance;
+9. **The platform never holds or moves job money.** The job price passes in cash from customer to
+   provider, outside the platform. The gateway takes only the platform's own two fees (standard iyzico
+   checkout in Turkey, D93); our database is a ledger of those fees. No wallet top up, no stored balance;
    `FEATURE_STORED_BALANCE_WALLET` stays OFF until legal sign off is recorded. *Why:* §6; custody makes
    the platform a regulated money transmitter.
 10. **Three locales and two regions, by construction.** `ar` (RTL), `tr`, `en`; direction derived from
@@ -235,32 +199,31 @@ including in emails; a secret is read only inside its single door.
 
 ---
 
-## 6. Money custody — read carefully
+## 6. Money custody: read carefully
 
-> **The platform must never hold, touch, or control user funds.**
+> **The platform never holds, touches, or controls job money (D87).**
 
 Holding customer money in escrow, or holding stored balances in provider wallets, is exactly what causes a platform to be classified as a **regulated money transmitter / e-money issuer**. That would require a licence we do not have.
 
+| Money (a 7000 job at 10%) | Who pays | Who receives | How |
+| --- | --- | --- | --- |
+| Commission, 700 | Customer | Platform | Online, hosted card page, after choosing a provider |
+| Provider fee | Chosen provider | Platform | Online, hosted card page, within the pay window |
+| Cash due, 6300 | Customer | Provider | **Cash, in person, after the service. Outside the platform** |
+
 **Therefore:**
 
-- All funds are held by a **licensed PSP**: iyzico Marketplace in Turkey (D23); the Saudi PSP is chosen before the KSA launch (Q7). See `architecture.md` §5.
-- Providers are onboarded to the PSP as **sub-merchants**; the PSP pays them directly.
-- Escrow "hold" and "release" are **PSP operations we trigger by API**, not money sitting in our account.
-- Our database stores a **ledger that mirrors** the PSP's state. It is a record, not a treasury.
+- The gateway only ever moves money **to the platform**. There is no escrow, no hold, no release, no payout, no sub-merchant, no provider balance.
+- **The platform is not responsible if the customer does not pay the provider**, and the terms say so plainly (B2, S16). The agreement statement (D92) covers legal action against a party that does wrong.
+- The two fees are the platform's own revenue, not user funds. A fee that goes back is a **refund of a fee** (§36), never a release of held money.
+- Our database stores a ledger of those fees. It records our revenue; it records nothing about the cash.
+- Standard iyzico checkout in Turkey (D93); the Saudi PSP is chosen before the KSA launch (Q7). See `architecture.md` v7.
 
-### The wallet — default is NON-CUSTODIAL
+### No wallet
 
-The provider "wallet" is, by default, a **read-only earnings view**: pending, available, and paid-out amounts mirrored from the PSP.
+A provider's page is a read only **jobs and fees history** (D91): jobs taken, fees paid, the cash each job was worth. Nothing in it is a balance.
 
-The unlock fee is charged **per transaction**, either:
-- **(A default)** to the provider's saved card **at unlock — i.e. once the request is already `FUNDED`**, or
-- **(B)** netted out of the provider's payout on that job.
-
-> ⚠️ **Corrected in v3.** This previously said "at the moment of selection". After the payment-order
-> correction (§21) the fee is charged at **unlock**, which happens strictly *after* the customer has
-> paid and the request has reached `FUNDED`. A provider is never asked for money before the
-> customer's funds are secured. The charge is also **never inline** — it is an `outbox_events` row
-> processed by the relay (`architecture.md` §27).
+Each fee is charged **per payment** on a hosted card page, with no saved cards at launch (D93). Money state changes only on a verified PSP fact, and refunds go through `outbox_events` and the relay (`architecture.md` §27).
 
 > ⛔ **A stored, pre-loadable balance (provider tops up, spends later) is NOT to be implemented.**
 > It sits behind the feature flag `FEATURE_STORED_BALANCE_WALLET`, which is **OFF** and must remain off until written legal sign-off is recorded in `progress-tracker.md`. If a task asks you to build top-up, **STOP and ask** (see §8).
@@ -273,16 +236,19 @@ The unlock fee is charged **per transaction**, either:
 | --- | --- |
 | **Request** | A job posted by a customer. The central entity. (Not "order".) |
 | **Application** | A provider's free bid on a request, with a message. |
-| **Unlock fee** | Fixed fee paid by the chosen provider to reveal customer details. |
-| **Commission** | Platform's percentage of the job price. |
-| **Escrow / hold** | Customer funds held at the PSP between payment and release. |
-| **Release** | Moving held funds to the provider. |
-| **Hold period** | Time after completion before funds auto-release (default 72h, admin-configurable). |
-| **Unlock window** | Time a chosen provider has to pay the fee before the request reopens (default 24h). |
-| **Short details** | The PII-free subset of a request that providers see before unlock. |
-| **PSP** | Payment Service Provider — the licensed party that holds funds. |
-| **Sub-merchant** | A provider registered with the PSP so it can pay them directly. |
-| **Ledger** | Append-only double-entry record of all money movement. |
+| **Job price** | The fixed price the platform computes from the customer's answers. Commission plus cash due. |
+| **Commission** | The platform's percentage of the job price, paid online by the customer after choosing a provider. Part of the price, not on top. |
+| **Provider fee** | Paid online by the chosen provider to take the request and reach the customer. Fixed or a percent of the job price, per region (D88). |
+| **Cash due** | The job price minus the commission: what the customer hands the provider in cash after the service. |
+| **Reveal, unlock** | Both fees are paid, so each side sees the other's contact details. State `UNLOCKED`. |
+| **Payment window** | Time the customer has to pay the commission after choosing (default 24h). |
+| **Pay window** | Time a chosen provider has to pay the provider fee before the request reopens (default 24h). |
+| **Confirm window** | Time after the provider marks a job done before it closes by itself (default 72h, admin-configurable). |
+| **Short details** | The PII-free subset of a request that providers see before the reveal. |
+| **Report** | A problem report from either side to admin (D92). Not a state of the request. |
+| **Agreement statement** | The statement users accept that the platform may take legal action if one of the two parties does something wrong (D92). |
+| **PSP** | Payment Service Provider: the licensed gateway that takes the platform's two fees. |
+| **Ledger** | Append-only double-entry record of the platform's fees and refunds. |
 
 ---
 
@@ -296,11 +262,11 @@ Do not guess on these. Stop, state the question (multiple choice, one recommende
 - Two documents disagree and the precedence order in §0 does not settle it.
 - Money, auth, or personal data is touched and the spec is silent on it.
 - The same problem survives one corrective attempt: stop patching and run `/debug` from a reproduction.
-- A task requires **holding user funds** in a platform account, or implementing **wallet top-up / stored balance**.
-- A change would let a provider see **customer PII before unlock**, or see **another provider's data**.
+- A task requires **taking or holding job money**, or implementing **wallet top-up / stored balance**.
+- A change would let either side see the other's **contact details before both have paid**, or a provider see **another provider's data**.
 - You need to **weaken, disable, or bypass an RLS policy** to make something work.
 - A money operation cannot be made **idempotent or atomic** as specified.
-- The **PSP does not support** a capability this document assumes (e.g. no hold/release API, no sub-merchant payouts).
+- The **PSP does not support** a capability this document assumes (e.g. no hosted checkout, no refund API).
 - The target market (**Turkey vs Saudi Arabia**) affects the task and is not yet recorded in `progress-tracker.md`.
 - A **legal, tax, KYC, or invoicing (ZATCA/e-fatura)** requirement is implicated.
 - Anything in §5 would have to be violated.
@@ -314,13 +280,12 @@ Do not invent answers. If blocked, use the default and flag it in `progress-trac
 | # | Decision | Default until decided |
 | --- | --- | --- |
 | 1 | ~~Target market: Turkey or Saudi Arabia (or both)~~ | ✅ Both, one deployment (D14); Turkey launches first, KSA later (D22). Still never hardcode either |
-| 2 | Unlock fee: flat amount or % band of price | Flat, admin-configurable |
-| 3 | Hold period before auto-release | 72 hours |
-| 4 | Unlock window before request reopens | 24 hours |
+| 2 | ~~Provider fee: flat amount or percent~~ | ✅ Admin picks either, per region (D88) |
+| 3 | Confirm window before a job closes by itself | 72 hours |
+| 4 | Pay window before the request reopens | 24 hours |
 | 5 | Max applications per request | 10 |
-| 6 | Is the unlock fee refunded if the customer cancels post-unlock? | Yes, refund to provider |
-| 7 | Withdrawal minimum and payout schedule | PSP default |
-| 8 | Unlock fee charged to card (A) or netted from payout (B) | A |
+| 6 | ~~Are fees refunded after the reveal?~~ | ✅ Not automatically; admin by hand with a reason (D90) |
+| 7 | Commission percent and provider fee values | From S17, per region |
 
 ---
 
@@ -338,21 +303,21 @@ numbers — cross-references throughout the docs cite these section numbers._
 /login                     → OTP auth (phone default)
 /requests/new              → Customer: post a request
 /requests                  → Customer: my requests list
-/requests/[id]             → Customer: request detail + applicants + payment
+/requests/[id]             → Customer: request detail + applicants + commission payment
 /provider                  → Provider: dashboard
 /provider/feed             → Provider: open requests — SHORT DETAILS ONLY
 /provider/feed/[id]        → Provider: request detail + apply
 /provider/applications     → Provider: my applications
 /provider/jobs/[id]        → Provider: won job detail (post-unlock, full details)
-/provider/earnings         → Provider: earnings + payouts
+/provider/history          → Provider: jobs and fees history (read only)
 /provider/profile          → Provider: profile, zones, availability, documents
 /admin                     → Admin: dashboard
 /admin/catalog             → Admin: categories, services, addons, zones
 /admin/pricing             → Admin: pricing rules
-/admin/settings            → Admin: fees, commission, hold window, unlock window
+/admin/settings            → Admin: commission, provider fee, windows
 /admin/providers           → Admin: provider approval queue
 /admin/requests            → Admin: request management
-/admin/disputes            → Admin: dispute queue
+/admin/problems            → Admin: problem report queue
 /admin/reports             → Admin: reports
 ```
 
@@ -364,8 +329,8 @@ Top navbar only. No sidebar. Full width layout on all pages. Nav items are **rol
 
 ```
 Customer:   الطلبات (Requests)      طلب جديد (New Request)      حسابي (Account)
-Provider:   الفرص (Feed)            طلباتي (Applications)       أرباحي (Earnings)     حسابي (Account)
-Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)          النزاعات (Disputes)   الإعدادات (Settings)
+Provider:   الفرص (Feed)            طلباتي (Applications)       سجلّي (History)       حسابي (Account)
+Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)          البلاغات (Reports)    الإعدادات (Settings)
 ```
 
 - Active item: accent colour, weight 500
@@ -388,6 +353,7 @@ Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)        
 
 - User signs in via OTP (phone by default)
 - Role chosen at first sign-up: customer or provider
+- **Required tick:** the user accepts the terms and the agreement statement (D92). Stored with the terms version and date
 - Provider → redirected to `/provider/profile` to complete registration; cannot apply to requests until admin-approved
 - Customer → redirected to `/requests/new`
 
@@ -411,49 +377,54 @@ Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)        
 ### Customer — choose a provider
 
 - Request detail lists all applicants: rating, jobs completed, message
-- Customer picks one → that application becomes `SELECTED`, the rest `NOT_SELECTED` (12-value enum, UPPERCASE — `architecture.md` §13)
-- Request status → `SELECTED`, `unlock_deadline` starts (default 24h)
+- Customer picks one → that application becomes `SELECTED`, the rest `NOT_SELECTED` (UPPERCASE enum, §22)
+- Request status → `SELECTED`, `payment_deadline` starts (default 24h)
 - Chosen provider is notified
 
-### Provider — unlock
+### Customer — pay the commission
 
-- Chosen provider sees "You were selected" with the fixed unlock fee shown
-- Pays the fee → confirmation dialog states the exact amount first
-- On success → request status `UNLOCKED`, customer's full details revealed to the provider
+- The page shows the split: job price, the commission to pay now, the cash due to the provider after the service
+- A short reminder line with a link to the agreement statement sits above the payment button (D92)
+- Customer pays on the hosted card page. On a verified payment → `COMMISSION_PAID`, `provider_pay_deadline` starts (default 24h)
+- If the customer does not pay in time → back to `OPEN`, applicants restored
+
+### Provider — pay the fee
+
+- Chosen provider sees "You were selected", the exact fee, and the cash they will collect
+- The same reminder line sits above the payment button
+- A confirmation dialog states the exact amount first; the provider pays on the hosted card page
+- On a verified payment → `UNLOCKED`, **each side sees the other's contact details**, and the provider gets the exact address
 - **Both parties may now contact each other directly. There is no masking**
-- If the provider does not pay within the unlock window → request returns to `OPEN` and the customer may pick again
-
-### Customer — pay
-
-- After unlock, the customer pays the full price
-- Commission is deducted to the platform; the remainder is **held at the PSP**
-- Request status → `FUNDED`
+- If the provider does not pay in time → `OPEN`. The commission stays paid and the customer's next pick needs no new payment (max 3 failed picks, then a refund)
 
 ### Service and completion
 
 - Provider marks the job started → `IN_PROGRESS`
-- Provider marks complete → `AWAITING_CONFIRMATION`, `release_deadline` set (default 72h)
-- Then exactly one of:
-  - Customer confirms → funds released
-  - Deadline passes with no action → **auto-release**
-  - Customer disputes before the deadline → release suspended, admin resolves
+- Provider marks it done → `AWAITING_CONFIRMATION`, `confirm_deadline` set (default 72h)
+- **The customer pays the provider the cash due, in person.** The platform records nothing about the cash
+- Customer confirms, or the deadline passes → `COMPLETED`. No money depends on this step
 
 ### Rating
 
-- After release, the customer is invited to rate
-- **Optional. Never blocks payment.** Skipping it changes nothing about the money
+- After `COMPLETED`, the customer is invited to rate
+- **Optional.** Skipping it changes nothing
 
-### Provider — earnings
+### Provider — jobs and fees history
 
-- Earnings screen shows pending / available / paid out
-- **Read-only mirror of the ledger. There is no top-up and no stored balance**
-- Provider requests a withdrawal of available balance → payout via PSP
+- Read only: jobs taken, fees paid, the cash each job was worth
+- **There is no balance, no withdrawal, and no top up**
+
+### Report a problem
+
+- Either side can report from the request after the reveal: no-show, cash not paid, bad work
+- Admin reviews, can warn or suspend, and can refund a fee by hand with a recorded reason
+- The platform makes no promise to collect the cash
 
 ### Admin
 
 - Approves or rejects providers after reviewing documents
-- Manages catalog, pricing rules, fees, commission, and the two windows
-- Resolves disputes: full release, partial release, or refund
+- Manages catalog, pricing rules, commission, provider fee, and the windows
+- Handles problem reports
 - Views reports and the leakage watchlist
 
 ---
@@ -462,18 +433,18 @@ Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)        
 
 ### Request data
 - Lives in `requests`
-- Created by the customer; `fixed_price` and `commission_amount` are written **server-side only**
+- Created by the customer; `fixed_price`, `commission_amount` and `cash_due` are written **server-side only**
 - Status transitions are performed only by server code, never by a client write
 
-### PII (customer contact + exact address)
+### PII (contact details + exact address)
 - Lives in `profiles` and `addresses`
-- **Visible to a provider only when a paid `unlock_fees` row exists for that request and provider**
+- **Visible to the other side only when both fees are `paid` for that request and provider**
 - Enforced by RLS, not by the UI
 
 ### Money data
-- `ledger_entries` is the source of truth. Append-only
-- `provider_balances` is a projection, updated in the same transaction as the ledger
-- `escrows` mirrors funds held at the PSP. The PSP holds the money; we hold the record
+- `ledger_entries` is the source of truth for the platform's fees and refunds. Append-only
+- Fee payment rows mirror the gateway: one per fee, with its kind, amount and status (position 07's spec names them)
+- The cash is not recorded anywhere as money: `cash_due` is what the page shows, nothing confirms it was paid
 - **No agent, job, or admin action ever edits a ledger row**
 
 ### Application data
@@ -493,20 +464,23 @@ Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)        
 - Provider zones and availability
 - Admin catalog management — categories, services, addons, zones
 - Admin pricing rules and server-side pricing engine
-- Admin settings — commission %, unlock fee, hold period, unlock window, applicant cap
+- Admin settings — commission %, provider fee (fixed or %), the windows, applicant cap
 - Customer request posting with server-computed fixed price
 - Provider feed with short details only
 - Free applications with contact-info rejection
 - Applicant comparison and provider selection
-- Fixed unlock fee charged to the chosen provider only
-- Reveal of customer details after unlock
-- Customer payment with commission split and escrow hold
-- Completion, customer confirmation, and timed auto-release
-- Disputes with admin resolution — full, partial, or refund
-- Provider earnings view and payout requests
-- Optional post-release ratings
+- Commission paid online by the customer after choosing
+- Provider fee paid online by the chosen provider only
+- Mutual reveal of contact details once both have paid
+- The split shown to both sides: commission now, cash due after the service
+- Job tracking with no money attached: started, done, confirmed, timed auto close
+- Fee refunds: automatic before the reveal, by admin with a recorded reason after it
+- Report a problem, handled by admin
+- Agreement statement: required tick at sign up, reminder above every payment button
+- Provider jobs and fees history (read only)
+- Optional ratings after completion
 - Notifications on key events
-- Admin dispute queue, request management, reports
+- Admin problem report queue, request management, reports
 - Leakage monitoring — unlocks vs completions
 - Append-only audit log
 - Three-locale UI throughout (`ar` RTL, `tr` LTR, `en` LTR) with a locale switcher
@@ -519,13 +493,14 @@ Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)        
 - Native mobile apps
 - Number masking / in-app chat between customer and provider
 - **Wallet top-up or any stored, pre-loadable balance**
+- **Escrow, held funds, payouts, provider balances, sub-merchants** (D87)
+- Taking the job price through the platform, or collecting or tracking the cash
 - Multi-currency or currency conversion
 - Automatic provider assignment (fastest / nearest / highest-rated)
 - Scheduled or recurring bookings
-- Cash on delivery
-- **Satisfaction guarantee or re-do policy** — dropped by D17. Escrow, vetting, and ratings carry the
-  trust burden; disputes handle disagreement. A guarantee of the outcome is a principal's obligation
-  and contradicts the agent position (D12)
+- **Satisfaction guarantee or re-do policy** — dropped by D17. Both sides' fees, vetting, and ratings carry
+  the trust burden; problem reports handle disagreement. A guarantee of the outcome is a principal's
+  obligation and contradicts the agent position (D12)
 - Provider-set pricing or negotiation
 - Subscriptions or provider membership tiers
 - Referral or loyalty programmes
@@ -545,11 +520,11 @@ Fired for analytics and the audit log. These are the only events. Do not invent 
 request_posted;        // { userId, requestId, serviceId, zoneId, price }
 application_submitted; // { userId, requestId, providerId }
 provider_chosen;       // { userId, requestId, providerId }
-unlock_paid;           // { providerId, requestId, amount }
-request_funded;        // { userId, requestId, amount, commission }
-funds_released;        // { requestId, providerId, amount, trigger: 'confirmed' | 'auto' | 'dispute' }
-dispute_opened;        // { userId, requestId }
-payout_requested;      // { providerId, amount }
+commission_paid;       // { userId, requestId, amount }
+provider_fee_paid;     // { providerId, requestId, amount }
+fee_refunded;          // { requestId, kind: 'commission' | 'provider_fee', amount, trigger: 'no_provider' | 'customer_cancelled' | 'admin' }
+job_completed;         // { requestId, providerId, trigger: 'confirmed' | 'auto' }
+problem_reported;      // { userId, requestId }
 ```
 
 ---
@@ -558,9 +533,9 @@ payout_requested;      // { providerId, amount }
 
 **Customer** — a household decision-maker, usually on a phone, arriving from a WhatsApp link. Wants a fixed transparent price, a trustworthy provider, and no haggling.
 
-**Provider** — a cleaning professional working across a few districts. Not highly technical. Wants relevant nearby jobs, clear earnings, and to pay only for work actually won.
+**Provider** — a cleaning professional working across a few districts. Not highly technical. Wants relevant nearby jobs, a clear history, and to pay only for work actually won.
 
-**Admin** — the operator replacing manual WhatsApp coordination. Wants central control over pricing and fees, provider approval, dispute resolution, and visibility of revenue.
+**Admin** — the operator replacing manual WhatsApp coordination. Wants central control over pricing and fees, provider approval, handling problem reports, and visibility of revenue.
 
 ---
 
@@ -568,14 +543,13 @@ payout_requested;      // { providerId, amount }
 
 - A customer can post a request and see a price in under 2 minutes
 - A provider sees a matching request and can apply in under 1 minute
-- A provider can never see customer contact or street address before the unlock fee is paid — proven by an RLS test, not by inspection
-- The unlock fee is charged exactly once per selection, even under retries
-- Held funds are released, refunded, or split **exactly once** in every path, including a dispute racing auto-release
-- `held = released + refunded + remaining` holds across all escrows at all times
-- No provider balance can go negative under concurrent operations
+- Neither side can see the other's contact details before both fees are paid — proven by an RLS test, not by inspection
+- Each fee is charged exactly once per selection, even under retries
+- A fee is refunded at most once in every path, including a cancellation racing a pay window expiry
+- A customer who paid never pays the commission twice for one request, however many picks fail
 - The ledger reconciles against the PSP settlement report with zero unexplained drift
 - Every screen is correct in RTL Arabic
-- The platform holds no user funds at any point
+- The platform never holds job money at any point
 
 ---
 
@@ -601,7 +575,7 @@ Category  →  has Questions  →  Customer answers  →  Formula reads answers 
 | Modifier effects | Fixed amount, per-unit amount, or multiplier |
 | Addons | Add, edit, price |
 | Zones | Add, edit, zone price multiplier |
-| Fees | Commission %, unlock fee, hold period, unlock window, applicant cap |
+| Fees | Commission %, provider fee (fixed or %), payment, pay and confirm windows, applicant cap |
 
 ### Example — a "Home Cleaning" category
 
@@ -623,11 +597,11 @@ Formula: base price, `+ per-unit` on `rooms`, `+ per-unit` on `bathrooms`, `× m
 
 # ⚠️ v3 CORRECTIONS — SUPERSEDES EARLIER SECTIONS
 
-> These corrections **override** §3, §4, §6 and §17 above wherever they conflict. Read this before implementing anything.
+> §21 and §22 were rewritten in v7 (D87 to D95) and agree with §3, §4 and §6 above. Read them before implementing anything.
 
 ## 21. Corrected transaction order (IMPORTANT)
 
-The customer pays **before** the provider pays the unlock fee. Earlier text had this reversed.
+v7, 2026-10-30 (D87 to D92): this replaces the escrow order. The example is a 7000 job at 10% commission.
 
 ```
 1.  Customer posts request (fixed price computed server-side from answers)
@@ -636,42 +610,41 @@ The customer pays **before** the provider pays the unlock fee. Earlier text had 
     → 📧 CUSTOMER IS NOTIFIED of each application (in-app + email)
 4.  Customer reviews applicants and CHOOSES ONE
     → 📧 CHOSEN PROVIDER IS NOTIFIED (in-app + email)
-5.  ⭐ CUSTOMER PAYS THE FULL PRICE
-    → commission to platform, remainder HELD in escrow at the PSP
-6.  ⭐ CHOSEN PROVIDER PAYS THE FIXED UNLOCK FEE
-    → only now are the customer's full details revealed
+5.  ⭐ CUSTOMER PAYS THE COMMISSION ONLINE (700)
+    → to the platform, on the hosted card page
+6.  ⭐ CHOSEN PROVIDER PAYS THE PROVIDER FEE ONLINE, within the pay window
+    → to the platform, on the hosted card page
+    → only now does each side see the other's contact details
 7.  Provider starts on the agreed start date → IN_PROGRESS
-8.  Provider marks complete on/near the completion date
-9.  Customer confirms, or auto-release after the hold period, or disputes
-10. Funds released to the provider's earnings
-11. Optional rating (never gates payment)
+8.  Provider marks done on/near the completion date
+9.  ⭐ CUSTOMER PAYS THE PROVIDER THE CASH DUE (6300), IN PERSON
+    → outside the platform. The platform records nothing about it and is not responsible for it
+10. Customer confirms, or the confirm window closes the job. No money depends on this
+11. Optional rating (never gates anything)
 ```
 
-**Why this order:** the provider only risks the unlock fee once the customer's money is already secured. It also stops a customer choosing a provider and then vanishing.
+**Why this order:** the customer goes first because their commission is safe until the reveal: it carries to the next pick, and it is refunded if no provider ever pays. The provider then pays only for a customer who has already paid. It also stops a customer choosing a provider and then vanishing.
 
 ### Corrected request state machine
 
 ```
-OPEN → SELECTED → FUNDED → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION → RELEASED
+OPEN → SELECTED → COMMISSION_PAID → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION → COMPLETED
 ```
 
 | State | Meaning |
 | --- | --- |
 | `OPEN` | Posted; providers may apply |
-| `SELECTED` | Customer chose a provider; **awaiting customer payment** |
-| `FUNDED` | Customer paid; commission taken, remainder held; **awaiting provider unlock** |
-| `UNLOCKED` | Provider paid the fee; **customer details revealed**; both may contact |
+| `SELECTED` | Customer chose a provider; **awaiting the commission** |
+| `COMMISSION_PAID` | Customer paid the commission; **awaiting the provider fee** |
+| `UNLOCKED` | Provider paid the fee; **contact details revealed both ways** |
 | `IN_PROGRESS` | Provider started |
-| `AWAITING_CONFIRMATION` | Provider marked complete; release deadline running |
-| `RELEASED` | Funds moved to the provider |
+| `AWAITING_CONFIRMATION` | Provider marked done; confirm window running |
+| `COMPLETED` | Customer confirmed, or the confirm window passed |
+| `CANCELLED` | Cancelled; fees per §36 |
 
-Branches:
-- `SELECTED → OPEN` — customer does not pay within the payment window; applicants restored
-- `FUNDED → OPEN` — **provider fails to pay the unlock fee within the unlock window. Funds STAY HELD; the customer picks another applicant without paying again**
-- `FUNDED/UNLOCKED → CANCELLED` → refund per policy
-- **`UNLOCKED | IN_PROGRESS | AWAITING_CONFIRMATION → DISPUTED → RELEASED | REFUNDED | PARTIALLY_RELEASED`** — widened by G1 so a customer can act on a provider who unlocked and then stopped
+Branches are in §4, and every cancellation outcome is in §36.
 
-> **Edge case that must be handled:** money is held from `FUNDED` onward. If no provider ever unlocks and the request is cancelled or expires, the held amount is **refunded to the customer in full**, and the platform's commission is reversed with a compensating ledger entry.
+> **Edge case that must be handled:** the commission is paid from `COMMISSION_PAID` onward. If no provider ever pays their fee and the request is cancelled or runs out of applicants, the commission is **refunded to the customer in full** with a compensating ledger entry.
 
 ## 22. Application status lifecycle
 
@@ -680,16 +653,16 @@ Branches:
 | Status | Meaning | Set when |
 | --- | --- | --- |
 | `APPLIED` | Waiting for the customer to choose | Provider applies |
-| `SELECTED` | Chosen — waiting for the customer to pay | Customer chooses |
-| `AWAITING_UNLOCK` | Customer paid — **provider must pay the unlock fee** | Request becomes `FUNDED` |
+| `SELECTED` | Chosen — waiting for the customer to pay the commission | Customer chooses |
+| `AWAITING_FEE` | Customer paid — **provider must pay the provider fee** | Request becomes `COMMISSION_PAID` |
 | `UNLOCKED` | Fee paid, details revealed | Provider pays |
 | `STARTED` | Work underway | Provider starts |
-| `COMPLETED` | Provider marked complete | Provider completes |
-| `RELEASED` | Provider paid | Funds released |
+| `COMPLETED` | Provider marked done | Provider marks done |
+| `CONFIRMED` | Job closed | Customer confirms, or the confirm window passes |
 | `RATED` | Customer left a rating | Rating submitted |
 | `NOT_SELECTED` | Another provider was chosen | Customer chooses someone else |
-| `WITHDRAWN` | Provider withdrew | Provider action, only while `APPLIED` |
-| `EXPIRED` | Unlock window passed without payment | Unlock expiry job |
+| `WITHDRAWN` | Provider withdrew | Provider action, before paying the fee |
+| `EXPIRED` | Pay window passed without payment | Pay window expiry job |
 | `CANCELLED` | Request cancelled | Cancellation |
 
 ## 23. Request dates
@@ -703,7 +676,7 @@ Every request carries explicit start and completion dates — not one vague time
 | `actual_started_at` | Set when the provider starts |
 | `actual_completed_at` | Set when the provider marks complete |
 
-Rules: `scheduled_start_at` must be in the future at posting; `scheduled_end_at` after `scheduled_start_at`; the release deadline is computed from `actual_completed_at`, not the scheduled date; providers see the scheduled dates in short details (they need them to decide whether to apply).
+Rules: `scheduled_start_at` must be in the future at posting; `scheduled_end_at` after `scheduled_start_at`; the confirm deadline is computed from `actual_completed_at`, not the scheduled date; providers see the scheduled dates in short details (they need them to decide whether to apply).
 
 ## 24. Notifications matrix
 
@@ -713,23 +686,23 @@ Every notification goes to **both the in-app notification centre and email**. Wh
 | --- | --- | --- | --- | --- |
 | 1 | New request matches your zones | Provider | ✅ | ✅ |
 | 2 | **A provider applied to your request** | **Customer** | ✅ | ✅ |
-| 3 | **You were chosen — awaiting customer payment** | **Provider** | ✅ | ✅ |
-| 4 | Payment received — provider must unlock | Customer | ✅ | ✅ |
-| 5 | **Customer paid — pay the unlock fee to see details** | **Provider** | ✅ | ✅ |
-| 6 | Unlock window closing soon | Provider | ✅ | ✅ |
-| 7 | Provider unlocked — here are their contact details | Customer | ✅ | ✅ |
-| 8 | Details unlocked — here is the customer's contact | Provider | ✅ | ✅ |
+| 3 | **You were chosen — awaiting the customer's payment** | **Provider** | ✅ | ✅ |
+| 4 | Commission received — waiting for the provider | Customer | ✅ | ✅ |
+| 5 | **Customer paid — pay your fee to see the contact details** | **Provider** | ✅ | ✅ |
+| 6 | Pay window closing soon | Provider | ✅ | ✅ |
+| 7 | Both paid — here are the provider's contact details | Customer | ✅ | ✅ |
+| 8 | Both paid — here is the customer's contact | Provider | ✅ | ✅ |
 | 9 | Work started | Customer | ✅ | ✅ |
-| 10 | Work marked complete — please confirm | Customer | ✅ | ✅ |
-| 11 | Auto-release approaching | Customer | ✅ | ✅ |
-| 12 | Funds released to your earnings | Provider | ✅ | ✅ |
+| 10 | Work marked done — please confirm | Customer | ✅ | ✅ |
+| 11 | Job closes by itself soon | Customer | ✅ | ✅ |
+| 12 | Job completed | Provider | ✅ | ✅ |
 | 13 | Please rate your provider | Customer | ✅ | ✅ |
 | 14 | You received a rating | Provider | ✅ | ✅ |
-| 15 | Dispute opened | Provider + Admin | ✅ | ✅ |
-| 16 | Dispute resolved | Both | ✅ | ✅ |
+| 15 | Problem reported | Admin + the reporter | ✅ | ✅ |
+| 16 | Your report was handled | The reporter | ✅ | ✅ |
 | 17 | Request cancelled | Affected party | ✅ | ✅ |
 | 18 | Your account was approved / rejected | Provider | ✅ | ✅ |
-| 19 | Payout sent | Provider | ✅ | ✅ |
+| 19 | Fee refunded | The payer | ✅ | ✅ |
 
 **In-app notification centre:** bell icon in the navbar with an unread count, a dropdown of recent items, and a full `/notifications` page. Each item links to the relevant request. Marked read on click.
 
@@ -741,7 +714,7 @@ Every notification goes to **both the in-app notification centre and email**. Wh
 2. Uploads required documents
 3. Status `PENDING` — **cannot apply to any request**
 4. Admin reviews and approves or rejects (with a reason)
-5. `APPROVED` → can apply; PSP sub-merchant onboarding runs
+5. `APPROVED` → can apply
 
 ### Profile fields
 
@@ -761,7 +734,7 @@ Every notification goes to **both the in-app notification centre and email**. Wh
 | `jobs_completed` | ✅ | |
 | `member_since` | ✅ | |
 | `verified_badge` | ✅ | True when approved |
-| `phone`, `email` | ⛔ **Only after unlock** | Gated by RLS |
+| `phone`, `email` | ⛔ **Only after both have paid** | Gated by RLS |
 | Documents | ⛔ Admin only | Never customer-visible |
 
 ### Required documents
@@ -772,11 +745,10 @@ Every notification goes to **both the in-app notification centre and email**. Wh
 | Selfie holding ID (liveness) | ✅ |
 | Skill certificate | Optional |
 | Criminal record certificate | Configurable by admin |
-| IBAN / bank details | ✅ before payout (via PSP) |
 
 Documents live in a **private** bucket, are readable only by the owning provider and admins, and are served via short-lived signed URLs. Each has `status` (`pending`/`approved`/`rejected`) and a rejection reason.
 
-> **What the customer sees when choosing:** display name, photo, bio, years of experience, skills, rating, jobs completed, verified badge, and the application message. **Never** phone, email, or full address before unlock.
+> **What the customer sees when choosing:** display name, photo, bio, years of experience, skills, rating, jobs completed, verified badge, and the application message. **Never** phone, email, or full address before the reveal.
 
 ---
 
@@ -800,7 +772,7 @@ The business already has trusted providers and ~500 customers. That reputation e
 | --- | --- | --- |
 | `legacy_jobs_completed` | Jobs done before the platform | Admin-imported. **Never merged** into platform counts |
 | `legacy_note` | Provenance, e.g. "migrated from WhatsApp, Jan 2026" | Required on import |
-| `jobs_completed` | Jobs completed **on the platform** | **Derived** from released requests. Never editable |
+| `jobs_completed` | Jobs completed **on the platform** | **Derived** from completed requests. Never editable |
 | `rating_avg` | Platform rating | **Derived** from ratings. Never editable |
 | `is_founding_provider` | Verified pre-platform history | Admin-granted, audit-logged |
 
@@ -822,7 +794,7 @@ Naive averages break at low volume: one 5.0 would outrank fifty 4.8s.
 - **Recency weighting** so old reputation doesn't shield current decline.
 - **Always show the count** beside the average.
 - **Dimension ratings**, not one blended star: punctuality, quality of work, professionalism, value.
-- **Only a released (paid and completed) request can be rated.** This is a genuine advantage over open review sites — say so publicly.
+- **Only a completed request can be rated.** This is a genuine advantage over open review sites — say so publicly.
 - Ratings are **immutable** once submitted. An admin may **hide** one with a recorded reason (audited); nobody may edit the number.
 
 ## 29. Provider quality metrics (derived, never editable)
@@ -834,8 +806,8 @@ Shown on the profile so customers can judge without chatting:
 | Completion rate | completed ÷ unlocked |
 | On-time rate | actual start ≤ scheduled start |
 | Cancellation rate | provider-caused cancellations ÷ unlocked |
-| Dispute rate | disputes ÷ completed |
-| Repeat-customer rate | customers with more than one released request |
+| Report rate | problem reports against the provider ÷ completed |
+| Repeat-customer rate | customers with more than one completed request |
 | Avg. response time | application submitted − request posted |
 | Unlock follow-through | unlocked ÷ selected — **a leakage signal** |
 
@@ -854,7 +826,7 @@ APPLIED → DOCUMENTS_SUBMITTED → DOCUMENTS_VERIFIED → BACKGROUND_CHECKED
 ## 31. Quality floor (the claim stays true only if people are removed)
 
 - Minimum rating threshold → automatic warning → suspension.
-- Dispute rate and cancellation rate monitored **separately** from rating.
+- Report rate and cancellation rate monitored **separately** from rating.
 - Documents have expiry dates; re-verification is required.
 - Admin can suspend with a reason; suspended providers cannot apply.
 
@@ -872,42 +844,37 @@ Contact-info scanning applies to every free-text answer, as before.
 
 Rating-based selection creates a rich-get-richer loop that starves new supply. Mitigate with: a `NEW — vetted` badge, a temporary visibility boost for a provider's first few requests, and the probation period.
 
-## 34. Trust mechanism — escrow, not a guarantee
+## 34. Trust mechanism: both sides commit, no guarantee
 
-> ⚠️ **Changed 2026-08-17 (D17).** This section previously promised a *satisfaction guarantee and
-> re-do policy*. **That is dropped.** Combined with server-side pricing and controlled matching, a
-> guarantee of the outcome is the standard checklist for being treated as the **principal** in a
-> transaction — which directly contradicts D12 (we act as an agent) and would put VAT on the full job
-> price rather than on our fees. See G21.
+> ⚠️ **Changed 2026-08-17 (D17), rewritten 2026-10-30 (D87, D92).** The satisfaction guarantee stays
+> dropped: combined with server-side pricing and controlled matching, a guarantee of the outcome is the
+> standard checklist for being treated as the **principal** in a transaction, which contradicts D12 (we
+> act as an agent). Escrow is gone too.
 
-The customer cannot verify quality before choosing. Three things carry that risk, and none of them is
+The customer cannot verify quality before choosing. Four things carry that risk, and none of them is
 a promise about the work itself:
 
-1. **Escrow.** Money is not released until the customer confirms or the hold window passes. This is
-   the strongest mechanism in the product and it is real, not a claim. **Market it plainly: "You
-   don't pay until the job is done."** That statement is factually true and carries no principal risk.
+1. **Both sides pay.** A customer and a provider who have each paid are serious, and the customer pays
+   the provider only after the job is done. **Market it plainly: "Pay the provider in cash after the
+   job is done."** That statement is factually true and carries no principal risk.
 2. **Vetting.** Every provider is ID-verified and background-checked through the funnel in §30, and
    the platform computes a real acceptance rate. Any public quality claim derives from that figure
    (§26) — never from an unsubstantiated superlative.
-3. **Ratings.** Only a released request can be rated (§28), which is a genuine advantage over open
+3. **Ratings.** Only a completed request can be rated (§28), which is a genuine advantage over open
    review sites and is worth saying so.
+4. **Reports and the agreement statement** (D92). Either side can report a problem to admin, and users
+   accept that the platform may take legal action if one of the two parties does something wrong.
 
-### Disputes are not a guarantee — keep the distinction
-
-Dropping the guarantee does **not** leave customers unprotected. A customer may still open a dispute
-(now reachable from `UNLOCKED`, `IN_PROGRESS`, and `AWAITING_CONFIRMATION` — see §4), and an admin
-resolves it as full release, partial release, or refund.
-
-The difference is precise and matters legally:
+### Reports are not a guarantee — keep the distinction
 
 | | |
 | --- | --- |
 | **A guarantee** | We promise the work will be satisfactory, and we make it right — by re-performing or procuring a replacement. That is a **principal's** obligation |
-| **A dispute process** | We hold the money, and if the parties disagree we decide where it goes. That is an **intermediary's** function |
+| **A problem report** | We look at what happened, act on the account (warn, suspend), and may refund our own fee. That is an **intermediary's** function |
 
-We do the second. Never write copy — in the product, the T&C, or marketing — that promises the first.
-Any goodwill payment made outside a dispute outcome comes from **our commission**, never from the job
-price, and is recorded as such.
+We do the second. Never write copy — in the product, the T&C, or marketing — that promises the first,
+or that promises the platform will collect the cash for anyone. Any goodwill payment comes from **our
+own fees** and is recorded as such.
 
 > **Trade accepted:** this is a weaker customer proposition than a guarantee. It is the price of the
 > agent position (D12), which keeps the job price off our books and shrinks e-invoicing to our own
@@ -916,73 +883,59 @@ price, and is recorded as such.
 
 ## 35. Admin capabilities and limits (summary)
 
-**Admin CAN:** import legacy job counts (flagged), issue rating-invitation links, grant Founding Provider, edit bio/skills/experience with a provenance flag, verify/reject documents with reasons, move providers through the vetting funnel, suspend with a reason, hide a rating with a recorded reason, configure thresholds and guarantee policy.
+**Admin CAN:** import legacy job counts (flagged), issue rating-invitation links, grant Founding Provider, edit bio/skills/experience with a provenance flag, verify/reject documents with reasons, move providers through the vetting funnel, suspend with a reason, hide a rating with a recorded reason, refund a fee by hand with a recorded reason, configure thresholds and guarantee policy.
 
 **Admin CANNOT:** set or edit `rating_avg` or `jobs_completed` (derived), submit a rating on behalf of a customer, delete a rating, merge legacy counts into platform counts, or make any of the above changes without an audit-log entry.
 
 ---
 
-# v6 — CANCELLATION POLICY
+# v6 — CANCELLATION POLICY (rewritten for the cash model, D87, D90)
 
-> Closes gap G7. Earlier documents said only *"refund per policy"* and never wrote the policy.
-> Cancellation is not an edge case — after completion it is the most common outcome in any services
-> marketplace, and it is the one users complain about publicly. All thresholds live in
+> Closes gap G7. Cancellation is not an edge case — after completion it is the most common outcome in
+> any services marketplace, and it is the one users complain about publicly. All thresholds live in
 > `platform_settings`; the values below are seed defaults (D13).
 
 ## 36. Who may cancel, when, and what happens
 
-`T` = hours until `scheduled_start_at` at the moment of cancellation. Cutoff default: **24h**.
-
-| # | State | Who cancels | Held funds | Commission | Unlock fee | Counts against |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | `OPEN` | Customer | none held | — | — | nobody |
-| 2 | `SELECTED` | Customer | none held | — | not yet charged | nobody |
-| 3 | `SELECTED` | Provider withdraws | none held | — | not yet charged | provider cancellation rate |
-| 4 | `FUNDED` (no unlock yet) | Customer | **full refund** | reversed | not yet charged | nobody |
-| 5 | `FUNDED` | Unlock window expires | **stays held** — request returns to `OPEN` | untouched | — | provider (unlock follow-through) |
-| 6 | `FUNDED` | 3rd re-selection fails (G2) | **full refund** | reversed | — | nobody |
-| 7 | `UNLOCKED` / `IN_PROGRESS`, `T ≥ 24h` | Customer | **full refund** | reversed | **refunded** to provider | nobody |
-| 8 | `UNLOCKED` / `IN_PROGRESS`, `T < 24h` | Customer | refund **minus late-cancellation fee** | reversed | **refunded** | customer late-cancel rate |
-| 9 | `UNLOCKED` / `IN_PROGRESS` | Provider | **full refund** | reversed | **not refunded** | provider cancellation rate |
-| 10 | `UNLOCKED` / `IN_PROGRESS` | Provider no-show (deadline expired, G1) | **full refund** | reversed | **not refunded** | provider cancellation + no-show rate |
-| 11 | any funded state | Admin (dispute or ops) | per resolution: full / partial / refund | reversed proportionally | admin decides, with reason | per admin attribution |
-| 12 | `AWAITING_CONFIRMATION` onward | — | ⛔ **not cancellable** — this is a dispute, not a cancellation | | | |
-
-**Late-cancellation fee** (row 8): default **0** at launch. The column exists so the mechanism is
-built and can be switched on without a migration. When non-zero it is paid to the provider as
-compensation for a held slot, and posted as its own ledger leg — never netted.
+| # | State | Who or what | Commission | Provider fee | Counts against |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `OPEN` | Customer cancels | not paid | not paid | nobody |
+| 2 | `SELECTED` | Customer cancels | not paid | not paid | nobody |
+| 3 | `SELECTED` | Provider withdraws | not paid | not paid | provider cancellation rate |
+| 4 | `SELECTED` | Payment window expires | not paid: back to `OPEN` | not paid | nobody |
+| 5 | `COMMISSION_PAID` | Customer cancels | **refunded automatically** | not paid | nobody |
+| 6 | `COMMISSION_PAID` | Pay window expires, or provider withdraws | **stays paid**, carries to the next pick | not paid | provider (fee follow-through) |
+| 7 | `COMMISSION_PAID` | 3rd failed pick, or no applicant left (G2) | **refunded automatically** | not paid | nobody |
+| 8 | `UNLOCKED` / `IN_PROGRESS` | Customer cancels | no automatic refund | no automatic refund | customer late-cancel rate |
+| 9 | `UNLOCKED` / `IN_PROGRESS` | Provider cancels | no automatic refund | no automatic refund | provider cancellation rate |
+| 10 | `UNLOCKED` / `IN_PROGRESS` | Provider no-show (deadline flag, G1) | no automatic refund; admin may refund | no automatic refund | provider cancellation + no-show rate |
+| 11 | any paid state | Admin | by hand, with a recorded reason | by hand, with a recorded reason | per admin attribution |
+| 12 | `AWAITING_CONFIRMATION` onward | — | ⛔ **not cancellable** — this is a report, not a cancellation | | |
 
 ### The rules behind the table
 
-1. **The unlock fee is refunded on any customer-initiated cancellation before the work starts**
-   (rows 1–8), and **never when the provider caused the cancellation** (rows 9, 10). That split is the
-   whole point: refunding a provider who induced a cancellation would make customer contact details
-   free, which is the abuse path G4 identified.
-   **A late customer cancellation is compensated by the late-cancellation fee, not by keeping the
-   unlock fee.** Two separate mechanisms — one prices the PII, the other prices the lost slot.
-   Conflating them punishes the provider for the customer's timing.
-2. **Commission follows the money.** Any refund of held funds reverses the commission with a
-   compensating ledger entry. Never edit the original posting.
-3. **The PSP's processing fee is not recovered** on a refund — the platform absorbs it (D13). It is
+1. **A fee buys the introduction.** Until the reveal nothing was delivered, so the commission goes back
+   (rows 5, 7) or carries over (row 6). After the reveal the introduction happened, so neither fee
+   comes back by itself (rows 8 to 10).
+2. **Admin can always correct a case by hand**, with a recorded reason (row 11): for example a provider
+   no-show. That is a decision about one case, not a rule, and it is audited.
+3. **Every refund is a compensating ledger entry.** Never edit the original posting.
+4. **The PSP's processing fee is not recovered** on a refund — the platform absorbs it (D13). It is
    posted to `expense:psp_fees` regardless of outcome.
-4. **Every cancellation is attributed** to customer, provider, or platform, and feeds
+5. **Every cancellation is attributed** to customer, provider, or platform, and feeds
    `provider_metrics` / customer-side counters. An unattributed cancellation is a bug — the metrics
    in §29 depend on it.
-5. **Cancellation is not dispute.** Once the provider marks the work complete, the path is
-   `AWAITING_CONFIRMATION → DISPUTED`, resolved by an admin. Row 12 exists to stop anyone adding a
-   cancel button there.
-6. **Every path still terminates in exactly one of released / refunded / partially released.** The
-   invariant from `architecture.md` §21 is unchanged; this table enumerates the refund branches it
-   always implied.
+6. **Cancellation is not a report.** Once the provider marks the work done, the path is a problem
+   report handled by admin. Row 12 exists to stop anyone adding a cancel button there.
+7. **The cash is never part of this table.** Whatever happens, the platform moves no job money.
 
 ### Implementation notes
 
-- One Server Action, `cancelRequest`, resolves `(actor, state, T)` → an outcome from this table. **The
+- One Server Action, `cancelRequest`, resolves `(actor, state)` → an outcome from this table. **The
   table is data, not branching logic scattered across handlers** — the same reasoning as pricing
   modifiers.
 - The outcome is computed **server-side**; the client never sends a refund amount.
 - Refunds go through the outbox like every other PSP effect (`architecture.md` §27).
-- The confirmation dialog states the exact refund amount and any fee **before** the customer confirms
+- The confirmation dialog states the exact refund, or that there is none, **before** the user confirms
   (`ui-rules.md` §5).
-- Tests: one per row, plus a property test asserting `held = released + refunded + remaining` after
-  randomised cancellation sequences.
+- Tests: one per row, plus a property test that a fee is refunded at most once in any sequence.

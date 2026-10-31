@@ -37,3 +37,6 @@ Thumbs.db
 
 # Personal agent overrides (team-wide config in .claude/settings.json IS committed)
 .claude/settings.local.json
+
+# Sentry Config File
+.env.sentry-build-plugin

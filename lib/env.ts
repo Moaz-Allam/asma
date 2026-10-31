@@ -2,6 +2,8 @@ import 'server-only';
 
 import { z } from 'zod';
 
+import { isPostHogProjectKey, parseEuSentryDsn } from '@/lib/deployment';
+
 /**
  * Environment validation. Fails fast and loudly at server boot (instrumentation.ts).
  *
@@ -9,15 +11,20 @@ import { z } from 'zod';
  * app does not boot, rather than failing at first use in production.
  *
  * ⚠️ SCOPE — this schema covers only what the CURRENTLY BUILT features consume.
- * `.env.example` lists more (IYZICO_*, PAYTABS_*, SMS_API_KEY, EMAIL_API_KEY, the
- * feature flags…) because it documents the whole system. Those are deliberately
- * NOT validated yet: requiring a PSP key before the PSP adapter exists would stop
- * the app booting for a feature nobody can call.
+ * `.env.example` lists more (IYZICO_*, PAYTABS_*, SMS_API_KEY, EMAIL_API_KEY…)
+ * because it documents the whole system. Those are deliberately NOT validated yet:
+ * requiring a PSP key before the PSP adapter exists would stop the app booting for
+ * a feature nobody can call.
  *
  * **Each feature adds its own keys here as it lands** — 15 (PSP), 25
- * (notifications), 42 (flags). Adding the key to `.env.example` without adding it
- * here means it is silently optional, which is exactly the failure §12 forbids.
- * Keep the two files in step.
+ * (notifications). Adding the key to `.env.example` without adding it here means
+ * it is silently optional, which is exactly the failure §12 forbids. Keep the two
+ * files in step. The money flags are not variables at all: they are
+ * `platform_settings` rows per region, read live by `lib/flags` (D70).
+ *
+ * Which keys a DEPLOYMENT must have is decided in `lib/deployment.ts` (D71), checked
+ * at build in `next.config.ts` and at boot in `instrumentation.ts`. This schema only
+ * refuses a malformed value when one is present.
  */
 
 const REMOVED_BY_D14 = ['APP_REGION', 'APP_CURRENCY', 'PSP_PROVIDER'] as const;
@@ -55,6 +62,29 @@ const EnvSchema = z.object({
     .refine((u) => u.includes('pgbouncer=true'), {
       message: 'must set pgbouncer=true so prepared statements are disabled',
     })
+    .optional(),
+
+  // ── Deployment (lib/deployment.ts, spec 0004 AC-9) ────────────────────────
+  // Marks a local production build or `next start` (CI, e2e). Exactly `1`, or unset. Any other value
+  // would silently count as a deployment, so a typo such as `true` is refused here by name.
+  APP_LOCAL_ONLY: z.literal('1', 'must be exactly 1, or unset').optional(),
+
+  // ── Error reporting (lib/observability, spec 0004 AC-1, D62) ──────────────
+  // Public by design (it ships to the browser). Optional here, so `npm run dev` runs without Sentry;
+  // a deployment requires it (lib/deployment.ts). When present it must be the EU ingest DSN.
+  NEXT_PUBLIC_SENTRY_DSN: z
+    .string()
+    .refine((dsn) => parseEuSentryDsn(dsn) !== null, {
+      message: 'must be an EU Sentry DSN, https://<key>@o<org>.ingest.de.sentry.io/<project>',
+    })
+    .optional(),
+
+  // ── Analytics (lib/analytics, spec 0004 AC-6) ─────────────────────────────
+  // Public by design. Optional here, required on a deployment. Only a project key (phc_): a personal
+  // API key (phx_) would ship full account access to every browser.
+  NEXT_PUBLIC_POSTHOG_KEY: z
+    .string()
+    .refine(isPostHogProjectKey, { message: 'must be a PostHog project key (phc_…), never a personal key' })
     .optional(),
 });
 
@@ -106,4 +136,18 @@ let cached: Env | undefined;
 export function getEnv(): Env {
   cached ??= parseEnv();
   return cached;
+}
+
+/**
+ * The Sentry DSN, for server code outside the Sentry door: the /api/e and /api/csp routes (D83).
+ * Only the doors, lib/env.ts, lib/deployment.ts and next.config.ts may name the variable itself
+ * (spec 0004 AC-8, lint enforced), so everyone else asks here.
+ */
+export function sentryDsn(): string | undefined {
+  return getEnv().NEXT_PUBLIC_SENTRY_DSN;
+}
+
+/** The PostHog project key, for the /api/a route (D83). Same rule as `sentryDsn()`. */
+export function posthogKey(): string | undefined {
+  return getEnv().NEXT_PUBLIC_POSTHOG_KEY;
 }

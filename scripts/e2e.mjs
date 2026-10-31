@@ -5,7 +5,8 @@
  * 1. Gets LOCAL Supabase values from `supabase status` (starting the local stack if needed).
  * 2. Builds the app with those values passed as process variables. Process variables beat env files,
  *    and every other variable named in .env.example is set to empty, so nothing from a developer's
- *    cloud env file can reach an e2e build. Analytics and error reporting stay off.
+ *    cloud env file can reach an e2e build. Analytics and error reporting run with dummy keys, and the
+ *    journeys stub both telemetry paths in the browser (e2e/fixtures.ts), so nothing leaves the machine.
  * 3. Runs Playwright (390px, ar + tr + en). Extra arguments pass through: `-- --project=ar`.
  *
  * Flags: --reuse-build   skip the build when the last one was made by this wrapper.
@@ -42,7 +43,7 @@ function localSupabase() {
   if (process.env.E2E_NO_DB === '1') {
     // Shape-valid local values for suites that never reach the database. Never cloud values.
     return {
-      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
+      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54421',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: 'e2e-no-db-anon',
       SUPABASE_SERVICE_ROLE_KEY: 'e2e-no-db-service',
     };
@@ -88,6 +89,11 @@ const env = {
   APP_SUPPORTED_LOCALES: 'ar,tr,en',
   FEATURE_STORED_BALANCE_WALLET: 'false',
   NEXT_TELEMETRY_DISABLED: '1',
+  // A local production build and `next start`, never a deployment (lib/deployment.ts, spec 0004 AC-9).
+  APP_LOCAL_ONLY: '1',
+  // Shape valid telemetry keys, so both SDKs run; the journeys stub /api/e and /api/a in the browser.
+  NEXT_PUBLIC_SENTRY_DSN: 'https://e2e00000000000000000000000000000@o0.ingest.de.sentry.io/0',
+  NEXT_PUBLIC_POSTHOG_KEY: 'phc_e2e0000000000000000000000000000',
   ...localSupabase(),
 };
 
