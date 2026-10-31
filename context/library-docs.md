@@ -85,16 +85,14 @@ Versions are recorded in `progress-tracker.md` once pinned. Always check the off
 
 > **Never import a PSP SDK in feature code.** Everything goes through the adapter in `lib/psp/` (see `architecture.md` §5).
 
-### The model both providers give us
-Customer pays → **funds are held by the PSP**, not by us → we call an API to release to the provider (sub-merchant) or refund → PSP settles.
+### The model (D87, D93)
+The gateway only takes the platform's own two fees. The job price is cash, outside the platform. There is no hold, no release and no payout, so no marketplace product is needed.
 
-### iyzico (Turkey) — Marketplace / Pazaryeri product
-- Sub-merchant onboarding returns a key that we store on `providers.psp_submerchant_id`.
-- Payment is sent with per-item sub-merchant identifiers and the amount destined for the provider; our commission is the remainder.
-- Funds sit in a protected pool until **we approve the transfer via API** — this is our escrow release. iyzico does not approve on our behalf, and there is no dashboard button; it must be done in code.
-- Cancel/refund available while held.
-- There is a **settlement/blockage delay** after approval — surface honest "when you'll be paid" copy to providers.
-- Buyers and sellers must **accept iyzico's marketplace agreements once**, digitally — this must exist in our signup flows.
+### iyzico (Turkey): standard checkout
+- A hosted card page into the platform's own merchant account, per payment. No saved cards at launch.
+- A payment counts only from a verified callback or a server to server lookup, never the browser redirect (rule 3).
+- Refunds go through the API, from the relay. The card fee on a refunded payment is not recovered (D13).
+- Still to confirm: the tracker's PSP table (S1, S2), including whether the existing account allows standard checkout and which iyzico agreements users must accept.
 
 ### PayTabs (Saudi Arabia)
 

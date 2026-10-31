@@ -1,5 +1,10 @@
 # Open questions, gaps, and unexamined assumptions
 
+> ⛔ **The money model changed on 2026-10-30 (D87 to D95): no escrow.** The job price is cash from customer
+> to provider; the gateway only takes the platform's two fees. Anything below about escrow, hold, release,
+> payouts, sub-merchants, provider balances or disputes is history. `project-overview.md` and the decision
+> log win.
+
 > **Archive since 2026-10-17 (playbook adoption).** The resolutions below are recorded; **live open
 > questions are the Q rows in `progress-tracker.md` §4**, and open business items are its B rows. Read
 > this file only for the reasoning behind a past resolution. The two items still open here map to

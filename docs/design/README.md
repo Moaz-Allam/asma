@@ -145,17 +145,57 @@ owner where its design comes from (`/architect`); this table is the default answ
 | `a5` | Phone: dashboard and dispute decision (partial release hidden until P1, D54) | `/admin` | 16, 14 |
 | `a6` | SMS and email admin alerts | templates | 13 |
 
+## Screens to re-export for the cash model (S24, D95)
+
+The export of 2026-10-24 still draws the escrow model. Until the new export lands, the screens below
+are references for layout only, and their money copy is wrong. Positions 09, 10 and 11 build their
+database and server layers meanwhile; their UI waits for this.
+
+**The brief to give Claude Design:** the platform never holds the job price. After choosing a provider
+the customer pays a commission online (part of the price: on ₺7,000 at 10%, ₺700 online and ₺6,300 in
+cash). The chosen provider then pays a fee online. Only when both have paid does each see the other's
+contact details. The customer pays the provider the rest in cash, in person, after the service. The
+platform is not responsible for the cash. There is no escrow, no held amount, no release, no wallet, no
+withdrawal and no dispute. A short reminder line with a link to the agreement statement sits above every
+payment button, and sign up has a required tick for it.
+
+| Screen | What must change |
+| --- | --- |
+| `s1` | Promises and how it works: pay the provider in cash after the job. Remove anything saying the money is held safely |
+| `s2`, `s11`, `p1` | Add the required agreement tick at sign up. `p1`: remove «طلبات مسبقة الدفع!», customers no longer prepay the job; "what you will pay" is the provider fee |
+| `s4`, `s5` | The price card shows the split: job price, commission online after choosing, cash to the provider after the service |
+| `s6` | Choosing a provider says the commission is due next |
+| `s7` | Pay the **commission** only: job price, commission now, cash due later, reminder line. Remove "held by the PSP" and "no cash on delivery" |
+| `s9` | Confirm the job is done; no release, no held amount strip, no auto release countdown. A confirm window replaces it. Rating stays. The dispute entry becomes **report a problem**. Repeat request stays |
+| `s10` | Tabs follow the new states (`project-overview.md` §21) |
+| `s14` | Cancel: before the reveal the commission comes back; after it nothing comes back by itself (§36) |
+| `s15` | After the reveal: both paid, provider's contact, the cash due as a reminder, timeline with the new states |
+| `s17`, `p17` | Payment errors name the commission or the provider fee |
+| `s18`, `p18` | Phone versions follow their pages. `p18`: the wallet becomes the history |
+| `s19`, `p19`, `a6` | SMS and email follow the new notification list (§24) |
+| `p6` | Dashboard: "pay your fee" as an action. Remove the earnings tile |
+| `p8`, `p10` | Show the provider fee and the cash to collect. Remove net of commission at release |
+| `p9` | Wallet becomes a read only **jobs and fees history**: jobs taken, fees paid, the cash each job was worth. No balance, no withdrawal |
+| `p11` | Pay the **provider fee** within the window, with the fee, the cash to collect and the reminder line |
+| `p12` | The confirmed job shows the cash to collect; start and done. No release wording |
+| `p13` | What each step costs, per §36 |
+| `app-01` | Dashboard: fee revenue instead of held amounts |
+| `app-02` | Requests table uses the new states |
+| `app-04`, `a5` | Disputes queue becomes a **problem report queue**: warn, suspend, refund a fee by hand |
+| `app-07` | Settings: commission percent, provider fee (fixed or percent), the three windows |
+| `app-08` | Reports show commission and provider fee revenue |
+| `app-09` | Leakage watchlist: many unlocks and few completions |
+| `a3` | Admin refund of a fee by hand with a recorded reason. No split of held money |
+
 ## Excluded from the references
 
 | Pattern | Why |
 | --- | --- |
 | Every photo and avatar in the export (`img/`, `cs/`) | Borrowed from competitors and real users (Q12). Use stand-ins until owned, licensed or generated images exist |
 | Riyadh addresses, Saudi phone format (05x), «مدى», Apple Pay and bank transfer among payment methods, the admin region switch «السعودية · ₺», the settings note "Saudi only" | The designer chose Saudi mock data while the region was undecided; v1 is Turkey (D57): Turkish data, `+90`, the iyzico card form (other methods wait for PSP facts, B3) |
-| Screens saying the commission is deducted «عند تحرير المبلغ» (`s7`, `p1`, `p8`, `p12`) | Wrong: the commission is taken when the customer pays; the provider receives the net at release (D53) |
-| The partial release option (`s9` copy, `a5`) | Launch resolves disputes as full release or full refund (D54); partial is P1 |
 | The four-box sign-in code (`s2`, `p1`) | Supabase Auth codes are 6 to 10 digits: six boxes (D55) |
 | Raw keys as labels in the pricing editor (`app-06`: `has_pets`, `property_type`) | Labels come from the catalogue in the user's locale; the key may show as small secondary text |
-| The figures in the mockups (prices, the 15% commission, the ₺250 unlock fee) | Illustration only. Real values come from `platform_settings` and the pricing engine (B5); never copy a number from a screen |
+| The figures in the mockups (prices, the 15% commission, the ₺250 fee) | Illustration only. Real values come from `platform_settings` and the pricing engine (B5); never copy a number from a screen |
 | The mock browser bar (`aldebyani.com/...`) and the design notes around the frames (labels, English annotations) | Presentation of the design, not UI |
 | The case study's "future plans" (native apps, notification centre) | Not v1 scope by themselves; the notification centre is position 18 (P2) |
 | The `_ds` "Modernist" system | Unrelated default design system of the design tool; never used by any screen |

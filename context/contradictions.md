@@ -1,5 +1,10 @@
 # Known contradictions in the context docs
 
+> ⛔ **The money model changed on 2026-10-30 (D87 to D95): no escrow.** The job price is cash from customer
+> to provider; the gateway only takes the platform's two fees. Anything below about escrow, hold, release,
+> payouts, sub-merchants, provider balances or disputes is history. `project-overview.md` and the decision
+> log win.
+
 > **Note, 2026-10-17:** `CLAUDE.md` is now a one line pointer to `AGENTS.md`, which holds the routing
 > table and rules summary, and the precedence order is the playbook's eight levels (`AGENTS.md`,
 > `project-overview.md` §0). Mentions of `CLAUDE.md` below are part of the historical record.

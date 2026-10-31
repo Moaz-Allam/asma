@@ -95,22 +95,20 @@ Domain components. Path: `components/features/<domain>/`.
 
 | Component | Purpose | Design ref | Status | RTL | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `PaymentPanel` | Pay; held by the PSP | s7 | 📋 planned | — | Redirect ≠ proof of payment; v1 is the iyzico card form only (D57; the design's «مدى», Apple Pay and bank transfer wait for PSP facts, B3) |
-| `UnlockFeePanel` | Chosen provider pays the unlock fee | p11 | 📋 planned | — | ⚠️ Idempotent; confirm dialog with amount; `CountdownCard` |
-| `HeldAmountStrip` | «₺… محفوظة لدى مزود خدمة الدفع» + confirm + auto-release note | s9 | 📋 planned | — | Never says the platform holds money |
-| `EarningsSummary` | Pending / available / paid out | p9, p18 | 📋 planned | — | ⚠️ **Read-only mirror of PSP balances. No top-up UI** |
-| `LedgerList` | Provider transaction history with filters | p9 | 📋 planned | — | Append-only, read-only |
+| `PaymentPanel` | Customer pays the commission: the split and the agreement reminder | s7 (re-export, S24) | 📋 planned | — | Redirect ≠ proof of payment; v1 is the iyzico card page only (D57, D93) |
+| `ProviderFeePanel` | Chosen provider pays the provider fee; shows the cash to collect | p11 (re-export, S24) | 📋 planned | — | ⚠️ Idempotent; confirm dialog with amount; `CountdownCard` |
+| `FeeHistoryList` | Provider's jobs, fees paid and the cash each job was worth, with filters | p9 (re-export, S24) | 📋 planned | — | Read only. No balance, no withdrawal, no top up (D91) |
 | `PayoutRequestForm` | Request a payout of the available balance via the PSP | p9 | 📋 planned | — | Confirm dialog with amount |
 
-### Work, completion, disputes, ratings
+### Work, completion, reports, ratings
 
 | Component | Purpose | Design ref | Status | RTL | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `JobPanel` | Won job after unlock: customer details, start and finish | p12 | 📋 planned | — | PII only after the unlock |
-| `CompletionPanel` | Provider marks complete / customer confirms | s9, p12 | 📋 planned | — | Shows auto-release deadline |
-| `DisputeForm` | Raise a dispute before the deadline | s9 (modal) | 📋 planned | — | Only within the window; copy promises full release or refund at launch (D54) |
-| `DisputeCallout` | Inverse panel «هناك خلاف على العمل؟» with the open-dispute button | s9 | 📋 planned | — | |
-| `RatingForm` | Optional rating per dimension after release | s9, s16 | 📋 planned | — | ⚠️ **Must not gate payment** |
+| `CompletionPanel` | Provider marks complete / customer confirms | s9, p12 | 📋 planned | — | Shows the confirm deadline |
+| `ReportForm` | Report a problem to admin | s9 (re-export, S24) | 📋 planned | — | After the reveal; promises nothing about the cash (D92) |
+| `ReportCallout` | Inverse panel with the report button | s9 (re-export, S24) | 📋 planned | — | |
+| `RatingForm` | Optional rating per dimension after completion | s9, s16 | 📋 planned | — | ⚠️ **Must not gate anything** |
 
 ### Provider onboarding
 
@@ -146,9 +144,9 @@ Domain components. Path: `components/features/<domain>/`.
 | `PlatformSettingsForm` | Fees, commission, windows | app-07 | 📋 planned | — | |
 | `ProviderApprovalQueue` | Review + approve/reject | app-03, a1 | 📋 planned | — | Audit-logged |
 | `ProviderFile` | Lifecycle, derived metrics, documents, actions | a1, a2 | 📋 planned | — | |
-| `DisputeQueue` | Resolve: full release or full refund at launch; partial in P1 (D54) | app-04, a5 | 📋 planned | — | Audit-logged; hide the design's partial option until P1 |
+| `ReportQueue` | Problem reports: warn, suspend, refund a fee by hand | app-04, a5 (re-export, S24) | 📋 planned | — | Audit-logged (D92) |
 | `AdminCancelRefund` | Attribution, outcome, ledger preview | a3 | 📋 planned | — | |
-| `LeakageMonitor` | The leakage watchlist: providers with many unlocks and few releases | app-09 | 📋 planned | — | In the brief (`project-overview.md`, admin; feature note 26); no route in §12 yet |
+| `LeakageMonitor` | The leakage watchlist: providers with many unlocks and few completions | app-09 | 📋 planned | — | In the brief (`project-overview.md`, admin; feature note 26); no route in §12 yet |
 | `ReportsDashboard` | Requests, revenue, performance | app-08 | 📋 planned | — | |
 
 ---

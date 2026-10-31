@@ -76,10 +76,12 @@ try {
       // Injected because these are the facts most likely to be wrong in training data or a stale memory
       // of this project, and each one silently produces incorrect code rather than an error.
       '\n\nStanding facts:\n' +
-      '  • Lifecycle: OPEN → SELECTED → FUNDED → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION → RELEASED.\n' +
-      '    The customer pays BEFORE the provider unlocks.\n' +
+      '  • No escrow (D87): the job price is cash, customer to provider, after the service. The gateway only\n' +
+      "    takes the platform's two fees: the customer's commission and the provider fee.\n" +
+      '  • Lifecycle: OPEN → SELECTED → COMMISSION_PAID → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION → COMPLETED.\n' +
+      '    The customer pays first; contact details open both ways only when BOTH have paid.\n' +
       '  • Money path is DB transaction → outbox_events → relay worker → PSP. Never an inline PSP call.\n' +
-      '  • Launch 2026-11-28, Turkey only, on iyzico Marketplace. KSA stays in the schema, switched off.\n' +
+      '  • Launch 2026-11-20, Turkey only, on standard iyzico checkout. KSA stays in the schema, switched off.\n' +
       '  • Three locales — ar (RTL), tr, en. Direction is derived from the locale at runtime. Regions live in\n' +
       '    a `region` COLUMN read from the owning row, never an env var; one account belongs to one region.\n' +
       '  • Never case-fold an identifier under a Turkish locale: "I".toLocaleLowerCase("tr") is "ı".\n' +

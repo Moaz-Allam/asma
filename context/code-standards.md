@@ -2,6 +2,11 @@
 
 > Binding rules for how code is written in this project. When these conflict with a habit or a tutorial, these win.
 
+> ⛔ **The money model changed on 2026-10-30 (D87 to D95): no escrow.** The job price is cash from customer
+> to provider; the gateway only takes the platform's two fees. Anything below about escrow, hold, release,
+> payouts, sub-merchants, provider balances or disputes is history. `project-overview.md` and the decision
+> log win.
+
 ---
 
 ## 1. TypeScript
@@ -10,9 +15,8 @@
 - No non-null assertions (`!`) on values that cross a boundary (input, DB row, API response). Validate instead.
 - Prefer `type` for shapes, `enum`-like union literals for closed sets:
   ```ts
-  export type RequestStatus = 'OPEN' | 'SELECTED' | 'UNLOCKED' | 'FUNDED'
-    | 'IN_PROGRESS' | 'AWAITING_CONFIRMATION' | 'RELEASED'
-    | 'DISPUTED' | 'REFUNDED' | 'PARTIALLY_RELEASED' | 'CANCELLED';
+  export type RequestStatus = 'OPEN' | 'SELECTED' | 'COMMISSION_PAID' | 'UNLOCKED'
+    | 'IN_PROGRESS' | 'AWAITING_CONFIRMATION' | 'COMPLETED' | 'CANCELLED';
   ```
 - Database types are **generated** from Supabase, never hand-written. Regenerate after every migration.
 - Exported functions get explicit return types.

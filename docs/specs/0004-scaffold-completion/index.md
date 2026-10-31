@@ -2,6 +2,11 @@
 
 **Date**: 2026-10-28
 **Status**: Accepted (confirmed by the owner 2026-10-28, after a cross check on a second model)
+**Amended**: 2026-10-29 after the reviews, by decisions that win over this text: D82 (Sentry sensitive
+fields are a narrow list), D83 (`/api/e`, `/api/a/*` and `/api/csp` are our own Route Handlers, not
+rewrites or `tunnelRoute`; CSP reports go to `/api/csp`), D84 (the alert fingerprint carries the
+environment), D85 (URL parameters are an allow list). 2026-10-30: the money flags change in position 07
+(D87, D95).
 
 ## Summary
 

@@ -180,6 +180,7 @@ const config = [
       '.claude/**',
       '.agents/**',
       'tests/stubs/**',
+      'supabase/.temp/**',
       'coverage/**',
       'playwright-report/**',
       'test-results/**',

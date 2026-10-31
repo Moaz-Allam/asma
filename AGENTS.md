@@ -9,12 +9,13 @@ deprecation notices.
 v3, 2026-10-17, rewritten as the entrypoint when the project adopted `docs/engineering-approach.md`.
 
 **Aldebyani** (slogan: **Aldebyani Home Care**; repo codename `asma`; D40) is a home services marketplace: a customer posts a request, providers apply free, the customer
-picks one and **pays first** into escrow held by a licensed PSP, then the **chosen provider pays an
-unlock fee** to see the customer's details, the work happens, and the funds are released. Revenue is
-the unlock fee plus commission. **We never hold funds.** Three locales (`ar` RTL, `tr`, `en`), two
+picks one and **pays the commission online**, then the **chosen provider pays a fee online**, and only
+then does each see the other's contact details. The work happens, and the customer pays the provider
+**in cash, in person**, after the service. Revenue is the commission plus the provider fee. **We never
+hold or move job money**: the gateway only takes those two fees (D87). Three locales (`ar` RTL, `tr`, `en`), two
 regions (TR, KSA) in one deployment, separated by a `region` column.
 
-Launch **2026-11-28, Turkey only** (iyzico Marketplace; replanned 2026-10-28, D65). KSA stays in the schema, switched off until a
+Launch **2026-11-20, Turkey only** (standard iyzico checkout, D93; date D94). KSA stays in the schema, switched off until a
 Saudi PSP is chosen. Priority (owner confirmed, D42): **correct money and private data > the core
 journey working end to end in all three locales > design polish > extra features.**
 
@@ -26,7 +27,7 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 - 2026-08-18 · **00 scaffold** ✅ (specs 0001, 0003): Next 16, three locales, `proxy.ts`, env schema,
   Supabase clients, `regions` + `platform_settings` with RLS and pgTAP. CI green. Cloud projects exist
   since 2026-10-18 (Vercel `aldebyani`; Supabase org `aldebyani`, project `lrejqpcgsugjiijuakoq`,
-  eu-central-1); no migration pushed yet; the remaining account steps are in R1.
+  eu-central-1).
 - 2026-10-17 · **Playbook bootstrap** done: docs layout, harness, review agents, quality tooling.
   Verified locally (verify, build, e2e 6/6). Build plan v3 confirmed (D41). Merged (PR #17).
 - 2026-10-25 · **Design handoff imported** (PR #18; S13, B4 closed, D48–D61): `docs/design/` (source,
@@ -34,9 +35,12 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   in `app/globals.css` with the first UI position.
 - 2026-10-28 · **Replanned** (D65): launch 2026-11-28, same scope; EU data regions (D62). Next:
   `/architect` 00b, G0 by 2026-10-30.
-- 2026-10-28 · **00b built** (spec 0004, D74–D78) on `feat/00b-scaffold-completion`: Sentry and PostHog
-  doors, nonce CSP, `/api/health`, flags, alerts; migration applied to the cloud. Open: preview proof,
-  alert rules, dashboard settings, G0.
+- 2026-10-29 · **00b built and reviewed** (spec 0004, D74–D86) on `feat/00b-scaffold-completion`, PR #20:
+  Sentry and PostHog doors, own telemetry relays, nonce CSP, `/api/health`, flags, alerts; CI green,
+  migrations in the cloud. Open: the owner's preview check and Sentry settings, then merge → G0.
+- 2026-10-30 · **Money model changed to cash, no escrow** (D87 to D95). Launch moves up to 2026-11-20
+  (D94). Older text about escrow, hold, release, payouts, sub-merchants or disputes is history; where a
+  context doc still says so, `project-overview.md` and the decision log win.
 
 ## Stack (pinned exactly)
 
@@ -66,7 +70,7 @@ download from Sentry's CDN) and `core-js` 3.51.0 (a donation banner, through `po
 | Types | `@types/node` 26.2.0 · `@types/react` 19.2.18 · `@types/react-dom` 19.2.4 | |
 
 **Services** (accounts are owner steps; no SDK is installed until its position's spec says so):
-Supabase (org `aldebyani`, eu-central-1; Free until launch, then Pro, D63) · iyzico Marketplace (TR) ·
+Supabase (org `aldebyani`, eu-central-1; Free until launch, then Pro, D63) · standard iyzico checkout (TR) ·
 Resend Pro (REST over `fetch`) · Sentry free (EU) · PostHog free (EU Cloud) · Cloudflare (DNS, Turnstile) · Vercel Hobby while building, Pro
 from gate G3 (Hobby forbids commercial use) · an uptime monitor (Q3) · GitHub Actions.
 
@@ -123,26 +127,29 @@ earlier `v3`/`v4` section in the same file. Not settled by this order: **stop an
 Canonical text: `context/project-overview.md` §5 (it wins if this summary differs).
 
 1. Price, commission, and fees are computed on the server. The client sends answers, never a price.
-2. Customer PII is visible only when a `paid` row exists in `unlock_fees` for that `(request, provider)`
-   (`FUNDED` is not enough), and no provider ever reads another provider's data. RLS, never React.
+2. Contact details are visible only when both fees are `paid` for that `(request, provider)`: the
+   customer's commission and the chosen provider's fee (`COMMISSION_PAID` is not enough). No provider
+   ever reads another provider's data. RLS, never React.
 3. No external call in a request path: DB transaction → `outbox_events` → relay → PSP. The relay is the
    only mutating caller of `lib/psp`. Money state changes only on verified PSP facts, never a redirect.
 4. Money is integer minor units. No float, no client side money arithmetic, one rounding step.
 5. `ledger_entries` and `ratings` are append only (`UPDATE`/`DELETE` revoked). Corrections are new postings.
 6. Every money operation is idempotent, atomic, and balanced. Deterministic keys from domain ids, a
-   replay returns the stored response, balances never go negative, held funds leave exactly once,
-   and commission is its own ledger leg.
+   replay returns the stored response, a fee is charged at most once and refunded at most once.
 7. RLS enabled + policy + negative test in the same migration and commit as the table.
 8. Never execute an admin authored string (`eval`, `new Function`). Formulas are structured rows.
-9. The platform never holds user funds. No top up, no stored balance; `FEATURE_STORED_BALANCE_WALLET` OFF.
+9. The platform never holds or moves job money. The job price is cash from customer to provider, outside
+   the platform; the gateway takes only the two fees. No top up, no stored balance;
+   `FEATURE_STORED_BALANCE_WALLET` OFF.
 10. Three locales, two regions, by construction: direction from the locale, logical properties,
     semantic tokens, no hardcoded strings, region from the owning row, no Turkish case folding of ids.
 11. `proxy.ts`, never `middleware.ts`. `requireRole()` runs inside every Server Action and Route Handler.
 
-**Lifecycle:** `OPEN → SELECTED → FUNDED → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION → RELEASED`.
-`FUNDED → OPEN` when the provider misses the unlock window: funds stay held, the customer re-selects
-without paying again (max 3, then full refund). Every path out of `FUNDED` ends in exactly one of
-released, refunded, partially released.
+**Lifecycle:** `OPEN → SELECTED → COMMISSION_PAID → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION →
+COMPLETED`. `COMMISSION_PAID → OPEN` when the chosen provider misses the pay window: the commission stays
+paid and the customer re-picks without paying again (max 3 failed picks, then a refund). A customer who
+cancels before the reveal gets the commission back. After the reveal no fee is refunded automatically;
+admin may refund by hand with a recorded reason. The cash is never part of any of this.
 
 **Scope rule:** anything not in the brief is asked about before it is built, and logged as an override.
 
@@ -161,8 +168,8 @@ released, refunded, partially released.
   owner applies migrations to the cloud → merge → `/sync` → tracker updated.
 - **Stop and ask** when: something is not in the brief; a rule would bend; documents disagree past the
   precedence order; a decision has no spec; a value has no named source; money, auth, or personal data
-  is touched where the spec is silent; holding funds or a top up is implied; PII would show before
-  unlock or across providers; an RLS policy would be weakened; a money operation cannot be idempotent
+  is touched where the spec is silent; taking job money or a top up is implied; contact details would
+  show before both have paid, or across providers; an RLS policy would be weakened; a money operation cannot be idempotent
   or atomic; the PSP lacks an assumed capability; legal, tax, KYC, or e-invoicing is implicated; the
   same problem survives one corrective attempt (stop patching, run `/debug` from the reproduction).
 - **High risk paths, say so out loud:** `lib/money/**`, `lib/psp/**`, `lib/pricing/**`,
@@ -304,8 +311,8 @@ overrides):
 
 **Cloud accounts (rechecked 2026-10-28, R1):** the Vercel project `aldebyani` and the Supabase org
 `aldebyani` exist, and so do the Sentry org and project `aldebyani` and the PostHog EU project `aldebyani`. The Supabase CLI
-is linked to `lrejqpcgsugjiijuakoq` but still logged in to another account: log in with the `aldebyani`
-account before any push. The old ref `syrhavojjpabwwcaezee` is retired.
+is linked to `lrejqpcgsugjiijuakoq`; when a push answers 403 on its login role, log in again with the
+`aldebyani` account and relink. The old ref `syrhavojjpabwwcaezee` is retired.
 
 Before any write: list the projects and confirm the target with the owner. Connectors attached to the
 account for other work (shop, forms, docs, automations and contacts, visualize, scheduled tasks) are

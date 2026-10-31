@@ -8,6 +8,67 @@ ship ("Position NN, spec NNNN: …"), so the next position inherits a precedent.
 
 ---
 
+## v7, 2026-10-30: the cash model (D87 to D95). This section overrides everything below
+
+The escrow model is gone. The job price is cash from customer to provider, outside the platform; the
+gateway only takes the platform's own two fees. **Read this before any section below that mentions
+escrow, hold, release, payouts, sub-merchants, provider balances, or disputes.** Those passages are
+history until the position that touches them rewrites them. Business rules: `project-overview.md` §5,
+§6, §21, §36.
+
+**What stays:** the outbox write path (§27: DB transaction → `outbox_events` → relay → PSP), verified
+callbacks only, idempotency with stored replay (§31), the append only ledger and its database
+enforcement (§28), the pricing pipeline (§19), RLS performance rules (§32), single doors (§42), `region`
+on every domain table, the PSP behind an adapter (D1).
+
+**What is gone:** `escrows`, `provider_balances`, payout and withdrawal tables,
+`providers.psp_submerchant_id` and sub-merchant onboarding, the approval (release) call, the hold and
+auto release jobs, the `held = released + refunded + remaining` invariant, the saga for held funds
+(§36), and the states `FUNDED`, `RELEASED`, `DISPUTED`, `REFUNDED`, `PARTIALLY_RELEASED`.
+
+**Lifecycle:**
+
+```
+OPEN → SELECTED → COMMISSION_PAID → UNLOCKED → IN_PROGRESS → AWAITING_CONFIRMATION → COMPLETED
+```
+
+Terminal: `COMPLETED`, `CANCELLED`. Guards and branches are in `project-overview.md` §4 and §36; the
+transitions stay in database functions, as §7 and §21 describe for the old states.
+
+**The amounts,** all integer minor units, computed once on the server with the one rounding step and
+stored on the request (rule 4):
+
+| Column | Value |
+| --- | --- |
+| `fixed_price` | From the pricing pipeline (§19), unchanged |
+| `commission_amount` | `fixed_price` × the region's commission percent |
+| `cash_due` | `fixed_price` less `commission_amount`. Shown to both sides; nothing confirms it was paid |
+
+The provider fee is computed the same way, from the region's settings: a fixed amount, or a percent of
+`fixed_price` (D88).
+
+**Money data, named by position 07's spec:**
+
+- One row per fee: kind (`commission` or `provider_fee`), `(request, provider)`, amount, status
+  (`pending`, `paid`, `refunded`), PSP references. Unique per `(request, kind)` for the commission,
+  which survives a re-pick, and per `(request, provider, kind)` for the provider fee.
+- A small chart of accounts: PSP clearing, commission revenue, provider fee revenue, PSP fees expense.
+  A refund is a compensating posting, never an edit.
+- Settings per region in `platform_settings`: commission percent, provider fee mode and value, payment,
+  pay and confirm windows. Position 07's migration replaces 00b's `funding_enabled`, `unlock_enabled`,
+  `payouts_enabled`, `auto_release_enabled` and `hold_hours` (D95).
+
+**The reveal (rule 2):** RLS on the PII tables requires both fee rows `paid` for that
+`(request, provider)`, and the reveal is mutual. Status alone is never enough.
+
+**PSP adapter (D93):** start a hosted checkout, verify a callback, look a payment up, refund a payment.
+No sub-merchant, approval or payout methods. Position 08's spec fixes the signatures. §5 and §17 below
+describe the old adapter.
+
+**Terms acceptance (D92):** one row per acceptance: user, terms version, locale, time. Position 01.
+
+---
+
 ## 1. Stack
 
 | Layer | Choice | Notes |
