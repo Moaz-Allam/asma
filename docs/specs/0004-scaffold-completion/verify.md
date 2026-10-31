@@ -15,6 +15,14 @@ then delivered (ALDEBYANI-6, a `$pageview` with `app_env` `local`). The e2e suit
 bytes through the relay's parser. A stub proves the SDK, never the handler, so the steps below that
 name a relay stay manual on purpose.
 
+**On production after the merge (2026-10-31, `b0d54d7`):** `/api/health` 200 with the merge SHA and
+`fra1`, the 5 second memo held, every relay refusal as designed, `/ar`, `/tr`, `/en` with the right `lang`
+and `dir`, all security headers. A real visit: `/api/a/e/` 200 and a `$pageview` filed under `production`
+with the token, email and fragment gone, `$geoip_disable` true, no `$ip`; `/api/e` 200 and ALDEBYANI-7
+(`production`, release the merge SHA, scrubbed, no user, replay attached); stable Chrome's own Reporting
+API upload reached `/api/csp` (204) and became a `csp` event in ALDEBYANI-8 with the sensitive parameters
+gone; the `report-uri` form also landed. No cookie, no storage. Test issues resolved.
+
 ## UI / manual
 
 - [ ] Open the preview at `/ar`, `/tr`, `/en` → each renders in its language, `dir` is `rtl` for `ar`
@@ -37,9 +45,10 @@ name a relay stay manual on purpose.
 - [ ] A browser error reaches Sentry through `/api/e` (POST, 200), and the issue carries no visitor
       IP and no geo; in PostHog and Sentry no request shows the visitor's cookie or referer (the
       handlers forward the content type only) → AC-2, AC-3, D83
-- [ ] Trigger a CSP violation on a preview URL carrying `?token=x&email=a@b.co` (for example a
-      blocked inline script from the console) → one security event in Sentry whose document URL has
-      no query, filed under `preview` → AC-3, AC-13, D83
+- [ ] Trigger a CSP violation on a preview URL carrying `?token=x&email=a@b.co` (for example a blocked
+      image from another origin; `'strict-dynamic'` lets a running script add inline ones), in stable
+      Chrome over https (`context/library-docs.md`) → one security event in Sentry whose document URL
+      keeps only allowed parameters, filed under `preview` → AC-3, AC-13, D83
 - [ ] Switch language with the switcher → one `locale_changed` with `from_locale` the old locale and
       `to_locale` the new one, then the next `$pageview` → AC-7 (switcher source)
 - [ ] After a visit, DevTools shows no cookie except `NEXT_LOCALE`, and `localStorage` and

@@ -259,6 +259,30 @@ Earlier docs demanded RLS tests without naming a tool. **The answer is pgTAP**, 
 
 Fixed-fixture tests miss edge cases. For invariants (`held = released + refunded + remaining`, `debits = credits`, balance projections), use property-based testing: describe the invariant, generate many valid datasets, and let the framework shrink to the smallest failing case. Use it for aggregation invariants and RLS regressions; keep pgTAP for specific policy assertions.
 
+## Telemetry relays: what real traffic sends (checked 2026-10-31)
+
+Found by running the relays against the real services. A stub in the browser proves the SDK, never the
+handler, so a relay needs one real call before it counts as proved.
+
+- **posthog-js 1.418:** a capture is `POST /e/` with no query string, a gzip body, `Content-Type:
+  text/plain`, and the events as `{ api_key, batch, sent_at }`. It falls back to `?compression=base64`.
+  Recognise gzip by its first two bytes, never by a parameter.
+- **CSP reports in Chrome:** with both `report-uri` and `report-to` in the policy, Chrome uses only
+  `report-to`. That is the Reporting API: `application/reports+json`, an array of `{ age, type:
+  "csp-violation", url, user_agent, body }` with camelCase keys (`documentURL`, `blockedURL`). A browser
+  without `report-to` uses `report-uri`: `application/csp-report`, `{ "csp-report": { … } }` with kebab
+  case keys.
+- **The Reporting API needs https.** On `http://localhost` Chrome reports nothing at all. Stable Chrome
+  uploads within seconds over https, headless on a throwaway profile too (`channel: 'chrome'`).
+  Playwright's `chromium_headless_shell` and the desktop app's built in browser did not upload in 100
+  seconds, so neither can prove this path.
+- **Sentry's `/security/` endpoint** answers `200` with an empty body to every form, so the answer proves
+  nothing: look for the event. Both forms become `csp` events. Reports from a `localhost` document never
+  appeared, most likely Sentry's default CSP source list.
+- **`'strict-dynamic'` in Chromium** lets a running script add an inline `<script>` through
+  `createElement` with no violation. That is its trust model, not a hole in the policy. For a test
+  violation, load an image from another origin.
+
 ## Next.js — v5 corrections
 
 - **`proxy.ts`, not `middleware.ts`.** The old convention is deprecated in Next 16 and a leftover file is silently ignored. Codemod: `npx @next/codemod@canary middleware-to-proxy .`

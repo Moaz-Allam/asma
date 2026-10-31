@@ -37,7 +37,7 @@ when it slips; cut early, not late.
 | # | Position (one capability, end to end) | Old | Brief | P | Spec | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | 00 | Scaffold: Next 16, three locales, `proxy.ts`, env schema, Supabase clients, `regions` + `platform_settings`, pgTAP, CI | 01, 45 | §1, D14 | P0 | [0001](../docs/specs/0001-project-setup.md), [0003](../docs/specs/0003-multi-region-foundation.md) | ✅ 2026-08-18 |
-| 00b | Scaffold completion: Sentry (PII off, own tunnel), PostHog (typed events, scrubber), health endpoint, alert helper, security headers + CSP, `isDeployment()` fail closed, Vercel preview deploys, KSA switched off | 41, 42 (part) | playbook §5.3, §16 | P0 | [0004](../docs/specs/0004-scaffold-completion/index.md) | 🟡 in review: built, three reviews done and fixed (D82 to D86), CI green, migrations in the cloud, PR #20 open. Open: owner's preview check of the relays and Sentry settings, then merge → G0. Code in `lib/observability/`, `lib/analytics/`, `lib/security/`, `lib/flags/`, `lib/health/`, `lib/deployment.ts` |
+| 00b | Scaffold completion: Sentry (PII off, own tunnel), PostHog (typed events, scrubber), health endpoint, alert helper, security headers + CSP, `isDeployment()` fail closed, Vercel preview deploys, KSA switched off | 41, 42 (part) | playbook §5.3, §16 | P0 | [0004](../docs/specs/0004-scaffold-completion/index.md) | ✅ 2026-10-31 (PR #20, `b0d54d7`). Code in `lib/observability/`, `lib/analytics/`, `lib/security/`, `lib/flags/`, `lib/health/`, `lib/deployment.ts` |
 | 01 | Sign in and roles: region step (TR only), OTP behind `lib/auth/otp-channel` (channel: phone SMS, 6 digit code, D55; provider S20), Turnstile + rate limits before send, `profiles` (D16 dial code check), role set server side, **agreement statement tick stored with terms version and date (D92)**, `requireUser` / `requireRole`, route groups and app shell, `audit_log`, action guard meta test | 02, 04 | §2, §11–13, G27 | P0 | — | ☐ |
 | 02 | Provider onboarding and approval: profile (individual or company, D9), documents in a private bucket (signed URLs), admin approve or reject (audited). No sub-merchant step and no IBAN (D87) | 30, 50, 34 (part) | §25, G17 | P0 | — | ☐ |
 | 03 | Catalog and pricing engine: categories, services, addons, zones, questions (localised jsonb), structured formulas and modifiers (no eval), minimal admin CRUD, `lib/pricing` server only, price ceiling, tamper test | 05–07b, 46 | §20, arch §19 | P0 | — | ☐ |
@@ -68,7 +68,7 @@ when it slips; cut early, not late.
 
 | Gate | After | Checks |
 | --- | --- | --- |
-| G0 | 00b | Every scaffold acceptance criterion on a clean clone; CI green on all three jobs (checks, database, e2e); a Vercel preview URL serves the placeholder in `ar`, `tr`, `en` |
+| G0 ✅ 2026-10-31 | 00b | Every scaffold acceptance criterion on a clean clone; CI green on all three jobs (checks, database, e2e); a Vercel preview URL serves the placeholder in `ar`, `tr`, `en` |
 | G1 | 11 | The journey (post → apply → choose → commission → provider fee → reveal → done → confirmed) works on a phone in all three locales against the iyzico sandbox; property, race, idempotency, and invariant tests green; Sentry live; uptime alert live; independent security review (`security-reviewer` + `/check review` on a different model) with no open Critical or Major |
 | G2 | 14 | Expiry, cancellation, fee refund, and report tests pass; second independent review |
 | G3 | 21 | Launch criteria with real data (catalog from B5/B6, legal texts and the agreement statement from B2/B9/B10); production wiped of test data and migrations reapplied; staging created; Vercel Pro; admin two step login; plan limits rechecked (Supabase, Resend, Sentry, PostHog); iyzico live keys; uptime and alerts verified end to end |
@@ -88,7 +88,7 @@ the security review, backups. 17, 16 and 15 ship in the first week after launch,
 
 | Track | Owner steps | Blocks | Needed by |
 | --- | --- | --- | --- |
-| Close 00b | Preview check of the relays, Sentry settings (D82 keys, inbound filters, onboarding run) | G0 | 2026-10-31 |
+| Close 00b | Preview check of the relays, Sentry settings (D82 keys, inbound filters, onboarding run) | G0 | ✅ 2026-10-31 |
 | Design handoff and tokens | S13 (B4) | UI layer from 01 | ✅ 2026-10-25 |
 | Sign in | S20 SMS provider for Turkey, S9 Turnstile, S22 Supabase Auth CAPTCHA and SMS limits | 01 sign in | 2026-11-01 |
 | iyzico sandbox | S1 (standard checkout on the existing account, callback, refund) | 08–12 | 2026-11-03 |
@@ -114,7 +114,7 @@ as through code.
 
 | Day | Date | Target | Owner that day |
 | --- | --- | --- | --- |
-| Sat | 10-31 | 00b → **G0**, `/architect` 01 | Preview check, Sentry settings, S20, S9, S22 |
+| Sat | 10-31 | 00b → **G0** ✅, `/architect` 01 | S20, S9, S22 |
 | Sun | 11-01 | 01 sign in (1 of 2) | S21 translator |
 | Mon | 11-02 | 01 sign in (2 of 2) | **S1 iyzico sandbox** |
 | Tue | 11-03 | 02 provider onboarding | S17 first category |

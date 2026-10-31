@@ -5,9 +5,9 @@ at the start of every session, update at the end. If it is not written here, the
 not know it.
 
 **Last updated:** 2026-10-31
-**Phase:** Bootstrap done · design imported (PR #18) · position 00 ✅ · 00b in review (PR #20)
-**Status:** 🟡 00b green in CI with the review fixes, all migrations in the cloud; money model changed to cash (D87 to D96: no escrow); launch 2026-11-20 (D94)
-**Next:** CI green on the relay fix → merge PR #20 → check the relays on production → G0 → `/architect` 01
+**Phase:** Bootstrap done · design imported (PR #18) · position 00 ✅ · 00b ✅ (PR #20) · gate G0 ✅
+**Status:** 🟢 G0 closed 2026-10-31: 00b merged and proved on production; money model changed to cash (D87 to D96: no escrow); launch 2026-11-20 (D94)
+**Next:** `/architect` 01 (sign in and roles); owner: S20, S9, S22
 
 ---
 
@@ -170,9 +170,25 @@ Dated bullets, newest at the bottom.
   and parses the DSN out of each real envelope. Proved locally against the real services: `/api/e` 200,
   issue ALDEBYANI-6 with the address scrubbed and no user (resolved); `/api/a/e/` 200, the `$pageview` in
   PostHog with the token and fragment gone, `$geoip_disable` true, no `$ip`. Lesson: a stub hides the
-  handler, so a relay needs one real call before it counts as proved. Still unexplained: why the
-  owner's visit reached neither service; production is checked directly after the merge. The test error
-  from localhost was accepted, so Sentry's localhost inbound filter looks off.
+  handler, so a relay needs one real call before it counts as proved.
+- **2026-10-31** · **00b merged and proved on production.** PR #20 squash merged as `b0d54d7` after CI went
+  green on the relay fix; CI green on `master` too. On `aldebyani.vercel.app`: `/api/health` 200 with the
+  merge SHA and `fra1`, every relay refusal as designed, `/ar`, `/tr`, `/en` with the right `lang` and
+  `dir`, all security headers. Real browsers: `/api/a/e/` 200 and the `$pageview` under `production` with
+  the token, email and fragment gone; `/api/e` 200 and ALDEBYANI-7 (`production`, release the merge SHA,
+  scrubbed, no user, replay attached); stable Chrome's own Reporting API upload reached `/api/csp` and
+  became a `csp` event in ALDEBYANI-8 with the sensitive parameters gone, and the `report-uri` form landed
+  too. Both test issues resolved. Facts found on the way are in `context/library-docs.md` (Telemetry
+  relays), including why neither the built in browser nor Playwright's headless shell can prove a CSP
+  upload. The 400 explains why the owner's preview visit left nothing in PostHog. Why it left no span in
+  Sentry stays unknown (previews sample every trace), but production now proves that path, so nothing
+  depends on the answer. The fix commit itself had no reviewer pass: it is small, and verify, CI and the
+  real traffic covered it. One setting left for the owner: a test error from localhost was accepted on
+  2026-10-31, so Sentry's localhost inbound filter looks off (S7).
+- **2026-10-31** · **Gate G0 closed.** A fresh clone of `master` at `b0d54d7` from GitHub: `npm ci`,
+  `npm run verify` (guard 63/63, 463 unit tests), `E2E_NO_DB=1 npm run test:e2e` 24 passed and 6 single
+  locale skips. CI green on `checks`, `database` and `e2e` on the merge. The owner checked the preview;
+  `ar`, `tr` and `en` were then rechecked on production.
 
 ---
 
@@ -194,7 +210,7 @@ Dated bullets, newest at the bottom.
 | B10 | **Legally authoritative language** for T&C and provider agreements | T&C copy, provider signup, G3 | None; owner track S16 | ⏳ open |
 | B7 | **Public quality claim wording**, backed by a computed rate or verifiable criterion | Public copy, 19 | Ship no claim until decided | ⏳ open |
 | B8 | **Legacy provider job counts and past customer list** for the reputation migration | 19 (Q9) | Not in P0 | ⏳ open |
-| R1 | **Cloud accounts partly connected** (rechecked 2026-10-28). Exist: Vercel project `aldebyani` (S3 ✅), Supabase org `aldebyani` with project `lrejqpcgsugjiijuakoq` (eu-central-1, linked; it replaces the old unverified ref `syrhavojjpabwwcaezee`), Sentry org and project `aldebyani` (EU). Missing: the Sentry auth token for source maps (S7); the PostHog EU project and the connector's sign in to it (S8); the Supabase CLI login to the `aldebyani` account (it still sees only `alqafila`); the project MCP's env vars (D64) | Any cloud push, G0 | Before any push, `npx supabase projects list` must show `lrejqpcgsugjiijuakoq` as linked. Each connector is used only for the `aldebyani` org or project; `Jawla`, `jawla-i1` and `alqafila` are other work and off limits | ⏳ open. 2026-10-28 evening: the CLI had fallen back to another account; the owner logged in again and relinked (`projects list` shows `lrejqpcgsugjiijuakoq` linked). The Vercel connector still gets 403 on the team scope `moaz-allam-4163s-projects` after two approved links; the Vercel CLI here is logged in to the owner (`moaz-allam-4163`) and is the working path for read only checks. 2026-10-30: `supabase db push` answered 403 on its login role until the owner logged in again and relinked; the push then worked |
+| R1 | **Cloud accounts partly connected** (rechecked 2026-10-28). Exist: Vercel project `aldebyani` (S3 ✅), Supabase org `aldebyani` with project `lrejqpcgsugjiijuakoq` (eu-central-1, linked; it replaces the old unverified ref `syrhavojjpabwwcaezee`), Sentry org and project `aldebyani` (EU). Missing: the Sentry auth token for source maps (S7); the PostHog EU project and the connector's sign in to it (S8); the Supabase CLI login to the `aldebyani` account (it still sees only `alqafila`); the project MCP's env vars (D64) | Any cloud push, G0 | Before any push, `npx supabase projects list` must show `lrejqpcgsugjiijuakoq` as linked. Each connector is used only for the `aldebyani` org or project; `Jawla`, `jawla-i1` and `alqafila` are other work and off limits | ✅ resolved 2026-10-31: everything listed as missing now exists and worked through 00b; the two cautions below stay in `AGENTS.md`. 2026-10-28 evening: the CLI had fallen back to another account; the owner logged in again and relinked (`projects list` shows `lrejqpcgsugjiijuakoq` linked). The Vercel connector still gets 403 on the team scope `moaz-allam-4163s-projects` after two approved links; the Vercel CLI here is logged in to the owner (`moaz-allam-4163`) and is the working path for read only checks. 2026-10-30: `supabase db push` answered 403 on its login role until the owner logged in again and relinked; the push then worked |
 | R2 | **Deadline.** Replanned 2026-10-30 (D94): launch 2026-11-20, 15 P0 positions from 2026-10-31, **no buffer day left**: 00b ran a day past its G0 target and used the one this date allowed. The owner steps in `build-plan.md` (parallel tracks) are on the critical path, S1, S24 and S16 most of all | Launch date | Cut list decided in advance (`build-plan.md`); replan honestly at each gate | ⏳ watching |
 | R3 | **Free plan limits.** Vercel Hobby forbids commercial use; Sentry and PostHog free quotas | G3 | Test data only before G3; Vercel Pro at G3 (D25); Sentry and PostHog quotas checked against launch volume 2026-10-29 (D81), recheck at G3 | ⏳ planned |
 | R4 | **Shared pre launch database.** Previews and production share the one Supabase project until G3 (D37) | G3 | Test data only; G3 wipes it, reapplies migrations, creates a staging project | ⏳ deliberate |
@@ -377,7 +393,7 @@ them.
 | S4 | **Domain and DNS.** Buy the domain (Cloudflare Registrar sells at cost; it does not sell `.com.tr` or `.sa`) → DNS in Cloudflare → add it to Vercel with DNS only (grey cloud) records → tell me the name | Wires `appOrigin()`, Resend, Turnstile hostnames | S5, S9, G3 | ☐ |
 | S5 | **Resend and Supabase SMTP.** Resend → Domains → add the sending domain → add its SPF, DKIM, DMARC records in Cloudflare → verify → create a sending only API key → Vercel env and `.env.local` as `EMAIL_API_KEY` → turn off open and click tracking. Supabase → Authentication → SMTP settings → Resend SMTP (`smtp.resend.com`, port 465, user `resend`, password: an API key) with a `no-reply@` sender. Supabase's built in email only reaches project team members | Email OTP (Q4), position 13 | 01, 13 | ☐ |
 | S6 | **Create the Supabase project, then connect the right accounts (R1).** supabase.com → New project `aldebyani` in your own org, Free plan until launch then Pro (D63), region `eu-central-1` (D62) → `npx supabase login` with that account (unset any `SUPABASE_ACCESS_TOKEN` that points at another account) → `npx supabase link --project-ref <new ref>` → `npx supabase projects list` must show it as linked. For the MCP: a **scoped** personal access token limited to that project; set `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` in your shell profile. Reconnect the claude.ai Supabase connector to that org. **Same rule for every service:** connect the account that owns the Aldebyani project (Vercel team S3, Sentry org S7, PostHog project S8) before anything uses it | Verifies each link read only; updates `AGENTS.md` and the tracker with the new refs | Any cloud push, previews (G0) | ⏳ partly done 2026-10-28: project created 2026-10-18 in org `aldebyani` (eu-central-1, Free until launch, D63; default name, renaming is optional) and linked (`lrejqpcgsugjiijuakoq`). CLI logged in to that account, `.env.local` updated (S19), the project MCP served from the owner's local `.mcp.json` (D64), the position 00 migration pushed (2026-10-28). Still to do: the Supabase values in Vercel (both scopes) |
-| S7 | **Sentry.** sentry.io → organisation (EU region, D62) → project `aldebyani`, platform Next.js → keep the DSN ready → create an org auth token for source maps (Vercel env only) → tell me the org and project slugs | 00b wires it | 00b, G1 | ⏳ mostly done 2026-10-28: org `aldebyani` on the EU region (`de.sentry.io`); project `aldebyani` (Next.js) created by the agent at the owner's request, DSN on `ingest.de.sentry.io`. Still to do: the org auth token for source maps (Vercel env only; Vercel's Sentry integration may already have added it, 00b task 7 checks the names). Verified locally 2026-10-28 (`ALDEBYANI-1`) |
+| S7 | **Sentry.** sentry.io → organisation (EU region, D62) → project `aldebyani`, platform Next.js → keep the DSN ready → create an org auth token for source maps (Vercel env only) → tell me the org and project slugs | 00b wires it | 00b, G1 | ✅ 2026-10-31, one setting left: org `aldebyani` on the EU region (`de.sentry.io`); project `aldebyani` (Next.js) created by the agent at the owner's request, DSN on `ingest.de.sentry.io`; source maps upload on every deployment build, onboarding run, D82 keys and filters done by the owner. Left: Project Settings → Inbound Filters → "Filter out events coming from localhost" looks off, a test error from localhost was accepted on 2026-10-31 |
 | S8 | **PostHog.** Sign up (EU Cloud, D62) → project `aldebyani` → keep the project API key and host ready → session replay: mask all inputs on; autocapture off for now → sign the claude.ai PostHog connector in with that EU account (one connector URL; PostHog routes by account) | 00b wires it | 00b | ✅ 2026-10-28: org `Aldebyani`, project `aldebyani` (id 323846) on EU Cloud, settings per D68; the connector is signed in to it. The project key goes into Vercel with 00b task 10 (as `NEXT_PUBLIC_POSTHOG_KEY`) |
 | S9 | **Turnstile.** Cloudflare → Turnstile → Add widget → hostnames: your domain and `localhost` → Managed mode → keep the site key and secret ready | 01 wires it | 01 | ☐ |
 | S10 | **Uptime monitor** (Q3): an HTTP monitor on `/api/health` of the production URL, every 5 minutes or faster, alerting your phone and email | Verifies at G1 | G1 | ☐ |
@@ -411,9 +427,9 @@ them.
 | 7 Deny and ask rules, bash guard with its test, format hook | ✅ 2026-10-17 |
 | 8 `slice-reviewer` and `security-reviewer` | ✅ 2026-10-17 |
 | 9 Tooling gap scan for the stack | ✅ 2026-10-17 (D26–D29) |
-| 10 Scaffold spec | ✅ 0001, 0003 (before the playbook) · ☐ 00b |
-| 11 Position 00 build | ✅ 00 · ☐ 00b |
-| 12 Gate G0 on a clean clone | ◐ clean clone green 2026-10-29 (verify, 338 unit tests, e2e); closes when the review fixes are green in CI and the owner's Sentry settings are in |
+| 10 Scaffold spec | ✅ 0001, 0003 (before the playbook) · ✅ 0004 (00b) |
+| 11 Position 00 build | ✅ 00 · ✅ 00b 2026-10-31 |
+| 12 Gate G0 on a clean clone | ✅ 2026-10-31: fresh clone of `b0d54d7` (verify, 463 unit tests, e2e), CI green on all three jobs, production proved |
 | 13 UI docs and design reference mapping | ✅ docs exist · ✅ mapping 2026-10-25 (`docs/design/README.md`) |
 | 14 Per position loop from 01 | ☐ |
 | 15 Independent security review planned before the first money milestone | ✅ G1 in `build-plan.md` |
@@ -442,13 +458,13 @@ KSA facts are deferred with the KSA launch (D22).
 
 | Suite | Status | Last run | Notes |
 | --- | --- | --- | --- |
-| Guard suite (`npm run guardrails`) | 🟢 | 2026-10-29 | 63/63, including false positive, Edit and MultiEdit cases |
-| Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-29 | Lint includes the single door rules, the telemetry doors and the ways around them (51 proofs, D86) |
+| Guard suite (`npm run guardrails`) | 🟢 | 2026-10-31 | 63/63, including false positive, Edit and MultiEdit cases |
+| Typecheck, lint, `lint:rtl`, format check | 🟢 | 2026-10-31 | Lint includes the single door rules, the telemetry doors and the ways around them (51 proofs, D86) |
 | Unit (Vitest 5) | 🟢 | 2026-10-31 | 463 tests in 22 files (scrubber, relays, SDK options, deployment gate, CSP, proxy, health, flags, doors, analytics, global error), about 5s |
-| Build (`next build`) | 🟢 local · 🔴 first preview | 2026-10-28 | Locale pages are dynamic (nonce CSP); the first Vercel preview stopped at the build gate as designed: `NEXT_PUBLIC_POSTHOG_KEY` missing |
-| pgTAP (`supabase test db`) | 🟢 local | 2026-10-29 | 51/51 on the local stack (ports 544xx, D76): RLS on tables, partitioned tables and views, the grant pins, non admin flag writes refused, the default privileges (`04`) |
+| Build (`next build`) | 🟢 local · 🟢 Vercel | 2026-10-31 | Locale pages are dynamic (nonce CSP); production `b0d54d7` built in `fra1` |
+| pgTAP (`supabase test db`) | 🟢 local · 🟢 CI | 2026-10-31 | 51/51 on the local stack (ports 544xx, D76): RLS on tables, partitioned tables and views, the grant pins, non admin flag writes refused, the default privileges (`04`) |
 | End to end (Playwright, 390px, ar/tr/en) | 🟢 local | 2026-10-31 | 24 passed, 6 single locale skips: smoke, CSP and headers, both SDKs against stubs, storage, scrubbed payloads, health, prerender manifest (`E2E_NO_DB=1`) |
-| Secret scan (gitleaks 8.30.1) | ⏳ | — | First run in CI after the push |
+| Secret scan (gitleaks 8.30.1) | 🟢 CI | 2026-10-31 | Runs in the `checks` job on every push; two fake test values acknowledged in `.gitleaksignore` |
 | Money: property, race, idempotency, invariant | 🔴 | — | Required before position 09 |
 
 ---

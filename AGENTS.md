@@ -35,12 +35,13 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   in `app/globals.css` with the first UI position.
 - 2026-10-28 · **Replanned** (D65): launch 2026-11-28, same scope; EU data regions (D62). Next:
   `/architect` 00b, G0 by 2026-10-30.
-- 2026-10-29 · **00b built and reviewed** (spec 0004, D74–D86) on `feat/00b-scaffold-completion`, PR #20:
-  Sentry and PostHog doors, own telemetry relays, nonce CSP, `/api/health`, flags, alerts; CI green,
-  migrations in the cloud. Open: the owner's preview check and Sentry settings, then merge → G0.
+- 2026-10-29 · **00b built and reviewed** (spec 0004, D74–D86), PR #20: Sentry and PostHog doors, own
+  telemetry relays, nonce CSP, `/api/health`, flags, alerts; migrations in the cloud.
 - 2026-10-30 · **Money model changed to cash, no escrow** (D87 to D95). Launch moves up to 2026-11-20
   (D94). Older text about escrow, hold, release, payouts, sub-merchants or disputes is history; where a
   context doc still says so, `project-overview.md` and the decision log win.
+- 2026-10-31 · **00b merged, G0 closed** (`b0d54d7`): clean clone and CI green, all three relays proved
+  on production with real browsers. Next: `/architect` 01.
 
 ## Stack (pinned exactly)
 
