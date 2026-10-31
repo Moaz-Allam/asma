@@ -89,6 +89,7 @@ colour names a component may use.
 | `border-light` | primary 50 | Dividers inside white cards |
 | `input` | ink 500 | Field borders (2px). **D59:** ink 500 (4.34:1) instead of the design's `#DFE7F3` (1.25:1), so fields meet WCAG AA; cards keep their light borders |
 | `ring` | primary 900 | Focus outline (2px). With `ring-halo` (primary 200, 5px) as the soft glow the design shows |
+| `track` | primary 250 | Toggle track, off (`s12`) |
 | `text-primary` | primary 900 | Headings and main text. **Navy is the text colour of this design** |
 | `text-secondary` | ink 600 | Descriptions, labels, meta |
 | `text-muted` | ink 500 | Large or non-essential text only |
@@ -352,6 +353,7 @@ classes in Tailwind 4.3.3).
   --color-input: var(--ramp-ink-500);
   --color-ring: var(--ramp-primary-900);
   --color-ring-halo: var(--ramp-primary-200);
+  --color-track: var(--ramp-primary-250);
   --color-text-primary: var(--ramp-primary-900);
   --color-text-secondary: var(--ramp-ink-600);
   --color-text-muted: var(--ramp-ink-500);
@@ -424,9 +426,7 @@ never keep its values).
 > D60) allows colour values in `globals.css` **only in `--ramp-*` declarations**, checked line by line
 > and declaration by declaration; every other token must reference a ramp, and colours inside comments
 > are ignored. An Edit must carry the whole declaration (`--ramp-name: value;`): a bare value has no
-> name to check. The old `/* placeholder */` lines (neutral `oklch(L 0 0)` greys only) stay allowed
-> until this block replaces them: delete that escape from the guard in the same change, and never mark
-> a real value `placeholder` to get past the rule.
+> name to check. The old `/* placeholder */` escape was deleted when this block landed (position 01).
 
 ---
 

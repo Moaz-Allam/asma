@@ -82,7 +82,7 @@ describe the old adapter.
 | Hosting | **Vercel** (web) + **Supabase Cloud** (backend) | Hobby while building, Pro from G3 (D25). Functions pinned to one region near the database (Q6) |
 | Payments | **PSP adapter**: iyzico Marketplace (TR, D23). KSA PSP chosen later (Q7) | See §5. Never call a PSP SDK directly from feature code |
 | Email | **Resend** over plain `fetch`, one door (`lib/email/`) | Position 13. Supabase Auth SMTP also goes through Resend (S5) |
-| Bot check | **Cloudflare Turnstile** | Before OTP send and request posting (position 01) |
+| Bot check | **Cloudflare Turnstile** | Before OTP send, checked inside Supabase Auth (position 01, D98). Request posting is decided in 04 |
 | Errors, analytics | **Sentry**, **PostHog** | Position 00b; §37. Personal data never leaves (scrubbers) |
 
 **Do not add a dependency** without pinning its exact version in the `AGENTS.md` stack table and
@@ -831,13 +831,27 @@ Projection only. Updated in the same transaction as the ledger.
 
 ## 15. Authentication
 
-- OTP via `lib/auth/otp-channel.ts` — phone by default, email interchangeable.
-- Role lives in `app_metadata`, set server-side only. A client can never change its own role.
-- `requireUser()` and `requireRole(role)` in `lib/auth/session.ts` are used at the top of every Server Action and protected page.
-- Rate limits on OTP request and verify: per phone, per IP, per device, plus a bot challenge.
-- **`proxy.ts`** (not `middleware.ts` — see §34) redirects unauthenticated traffic away from
-  `/requests`, `/provider`, `/admin`. This is **routing/UX only, never a security boundary**;
-  `requireRole()` runs independently inside every Server Action and Route Handler.
+**Position 01 (spec 0005, D97 to D104) overrides this section where they differ.**
+
+- Sending and checking the code run from the browser straight to Supabase Auth, through
+  `lib/auth/otp-channel.ts` (D98). Auth is public anyway, so what holds lives inside it: Turnstile (Auth is
+  the only checker, a token works once), the limits of S22, Twilio Verify's own limits, and the
+  `before_user_created` hook `check_new_user`, which refuses anything but a mobile number of an active
+  region before any SMS. No account holds a password: the `no_password` trigger on `auth.users` keeps
+  `encrypted_password` empty (D104).
+- Role and region live in `profiles` and in `app_metadata`, written once, in one transaction, by
+  `complete_onboarding` from the verified `auth.users` row. A client can never change either. The first
+  admin is set by `promote_to_admin` in the SQL editor.
+- `lib/auth/session.ts`: `getSessionUser`, `requireUser`, `requireRole`, `guardPage`. Identity is `getUser()`,
+  never `getSession()` (lint). Every page calls `guardPage`; every Server Action goes through `guardedAction`
+  in `lib/auth/action.ts`, which refuses with a return value, never a throw.
+- `/{locale}/continue` is a Route Handler, because only a handler can set the locale cookie on a redirect.
+  It sends a relative `Location`, so no Host header is trusted.
+- **`proxy.ts`** (not `middleware.ts` — see §34) refreshes the session through `lib/db/proxy.ts` and sends
+  a GET with no session away from `/requests`, `/provider`, `/admin`, `/account`, `/continue`, `/onboarding`.
+  This is **routing/UX only, never a security boundary**: a Server Action POST always passes through, and
+  an Auth outage passes through to the page guard.
+- No Zod in browser code: on load it probes with `Function("")`, which the nonce CSP refuses.
 
 ---
 
@@ -1453,7 +1467,7 @@ Flags for: `funding_enabled`, `unlock_enabled`, `payouts_enabled`, `auto_release
 
 ## 39. Retention, partitioning, and PII deletion
 
-- **Partition** `ledger_entries`, `notifications`, `audit_log`, `outbox_events` by time.
+- **Partition** `ledger_entries`, `notifications`, `audit_log`, `outbox_events` by time. `audit_log` starts as a plain table (D102): partition it when it grows.
 - **Financial records are retained long-term** (align with local statutory requirements; 7 years is the common norm).
 - **PII deletion requests** (KVKK/GDPR) are satisfied by **anonymising personal identifiers while retaining financial rows** — document this resolution; never delete ledger history.
 - Archive completed `outbox_events` after a retention window.
@@ -1549,7 +1563,8 @@ secret or a fake adapter is a boot error. Email is the one exception that degrad
 | Service role client | `lib/db/admin.ts` | Read `SUPABASE_SERVICE_ROLE_KEY`; bypass RLS (webhooks and cron only) | Lint rule active |
 | Supabase clients | `lib/db/` | Import `@supabase/supabase-js` and `@supabase/ssr` | Lint rule active |
 | Email | `lib/email/` | Call Resend; read the email API key | Rule added in 13 |
-| Bot check | `lib/turnstile/` | Call siteverify; read the Turnstile secret | Rule added in 01 |
+| Bot check | none yet | No door and no secret until the first own siteverify caller (D98): Supabase Auth is the only checker. Position 04 decides whether request posting needs one | — |
+| Auth | `lib/auth/` | Call `supabase.auth`. One exemption: `lib/db/proxy.ts`, for the session refresh. `getSession()` is banned everywhere | Lint rule active (spec 0005 AC-25) |
 | Errors, analytics | `lib/observability/`, `lib/analytics/` | Import the Sentry and PostHog SDKs; hold the scrubbers | Rules added in 00b |
 
 **Enforcement, lowest layer first:** ESLint `no-restricted-imports` and `no-restricted-syntax` in

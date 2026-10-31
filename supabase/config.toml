@@ -199,15 +199,16 @@ password_requirements = ""
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
 email_sent = 2
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
-sms_sent = 30
+# Raised for local runs: every local call shares 127.0.0.1. Cloud values are owner step S22 (spec 0005).
+sms_sent = 10000
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
 anonymous_users = 30
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
 token_refresh = 150
 # Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).
-sign_in_sign_ups = 30
+sign_in_sign_ups = 10000
 # Number of OTP / Magic link verifications that can be made in a 5 minute interval per IP address.
-token_verifications = 30
+token_verifications = 10000
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.
 web3 = 30
 
@@ -218,8 +219,8 @@ web3 = 30
 # secret = ""
 
 [auth.email]
-# Allow/disallow new user signups via email to your project.
-enable_signup = true
+# Allow/disallow new user signups via email to your project. Phone only (D55, spec 0005 AC-24).
+enable_signup = false
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
@@ -257,17 +258,49 @@ otp_expiry = 3600
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
-enable_signup = false
+enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
-enable_confirmations = false
+enable_confirmations = true
 # Template for sending OTP to users
 template = "Your code is {{ .Code }}"
-# Controls the minimum amount of time that must pass before sending another sms otp.
-max_frequency = "5s"
+# Controls the minimum amount of time that must pass before sending another sms otp. 1s so a retry
+# never hits the window; the real 60 second limit is proved on a preview (S22, verify.md).
+max_frequency = "1s"
 
-# Use pre-defined map of phone number to OTP for testing.
-# [auth.sms.test_otp]
-# 4152127777 = "123456"
+# Fixed test numbers and codes, local only. `supabase config push` is blocked by the bash guard so they
+# can never reach the cloud (spec 0005 AC-25). The wrapper resets the database before e2e, because no
+# role may delete an account, and each test in each project has its own number (e2e/numbers.ts).
+# 90555 + a project digit (1 ar, 2 tr, 3 en) + 000 + a test number. 905559... are for trying things by hand.
+[auth.sms.test_otp]
+905551000001 = "123456"
+905551000002 = "123456"
+905551000003 = "123456"
+905551000004 = "123456"
+905551000005 = "123456"
+905551000006 = "123456"
+905551000007 = "123456"
+905551000008 = "123456"
+905552000001 = "123456"
+905552000002 = "123456"
+905552000003 = "123456"
+905552000004 = "123456"
+905552000005 = "123456"
+905552000006 = "123456"
+905552000007 = "123456"
+905552000008 = "123456"
+905553000001 = "123456"
+905553000002 = "123456"
+905553000003 = "123456"
+905553000004 = "123456"
+905553000005 = "123456"
+905553000006 = "123456"
+905553000007 = "123456"
+905553000008 = "123456"
+905559000001 = "123456"
+905559000002 = "123456"
+905559000003 = "123456"
+905559000004 = "123456"
+905559000005 = "123456"
 
 # Configure logged in session timeouts.
 # [auth.sessions]
@@ -277,9 +310,9 @@ max_frequency = "5s"
 # inactivity_timeout = "8h"
 
 # This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
-# [auth.hook.before_user_created]
-# enabled = true
-# uri = "pg-functions://postgres/auth/before-user-created-hook"
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/check_new_user"
 
 # This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
 # [auth.hook.custom_access_token]
@@ -287,12 +320,13 @@ max_frequency = "5s"
 # uri = "pg-functions://<database>/<schema>/<hook_name>"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
+# Local dummies: only the test numbers above are used, CI holds no secret, and the cloud project uses
+# twilio_verify, set in the dashboard (S20, S22). Never put a real credential here.
 [auth.sms.twilio]
-enabled = false
-account_sid = ""
-message_service_sid = ""
-# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
-auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+enabled = true
+account_sid = "local-dummy-account"
+message_service_sid = "local-dummy-service"
+auth_token = "local-dummy-token"
 
 # Multi-factor-authentication is available to Supabase Pro plan.
 [auth.mfa]

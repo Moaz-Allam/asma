@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "asma-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/e2e.mjs", "--reuse-build", "--serve"],
+      "port": 3100
     }
   ]
 }

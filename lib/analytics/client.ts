@@ -77,11 +77,22 @@ export function initAnalytics(): void {
   });
 }
 
-/** Sends one allow listed event with its typed properties (AC-7). */
-export function track<E extends AnalyticsEvent>(event: E, properties: AnalyticsEvents[E]): void {
+/**
+ * Sends one allow listed event with its typed properties (AC-7). `leaving`: a full page load follows, so
+ * the event goes now, as a beacon that outlives the page, instead of waiting for the next batch.
+ */
+export function track<E extends AnalyticsEvent>(
+  event: E,
+  properties: AnalyticsEvents[E],
+  options?: { leaving: boolean },
+): void {
   if (!started) return;
   try {
-    posthog.capture(event, properties);
+    posthog.capture(
+      event,
+      properties,
+      options?.leaving ? { send_instantly: true, transport: 'sendBeacon' } : undefined,
+    );
   } catch (error) {
     // Analytics never breaks the page; the console says why an event was lost.
     console.warn('[analytics] event not captured', error instanceof Error ? error.message : 'unknown');

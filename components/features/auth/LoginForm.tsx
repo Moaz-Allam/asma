@@ -1,0 +1,256 @@
+'use client';
+
+import { useLocale, useTranslations } from 'next-intl';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type FormEvent } from 'react';
+
+import { BotCheck } from '@/components/features/auth/BotCheck';
+import { CodeField } from '@/components/features/auth/CodeField';
+import { PhoneField } from '@/components/features/auth/PhoneField';
+import { Button } from '@/components/ui/button';
+import { track } from '@/lib/analytics/client';
+import type { AnalyticsEvents } from '@/lib/analytics/events';
+import type { CheckError, SendError } from '@/lib/auth/auth-errors';
+import { CODE_LENGTH, RESEND_SECONDS } from '@/lib/auth/limits';
+import {
+  clearLoginStep,
+  parseLoginStep,
+  rawLoginStep,
+  saveLoginStep,
+  type LoginStep,
+} from '@/lib/auth/login-step';
+import { checkCode, sendCode } from '@/lib/auth/otp-channel';
+import { getPathname } from '@/lib/i18n/navigation';
+import { reportClientError } from '@/lib/observability/client';
+import { normalizeForRegions, type PhoneRejection } from '@/lib/region/phone';
+
+/**
+ * Sign in, two steps on one page (spec 0005 AC-1, AC-2, AC-4, AC-5, AC-6). New and returning numbers see
+ * the same form, so nothing reveals whether a number has an account. The phone stays in client state,
+ * never the URL. After a code, `/continue` decides where to land, with a full page load so the server
+ * reads the new session.
+ */
+
+type FormError = PhoneRejection | SendError | CheckError | null;
+
+type Limit = AnalyticsEvents['code_limited']['limit'];
+
+function isLimit(error: SendError | CheckError): error is Limit {
+  return error.startsWith('limit_');
+}
+
+function noteFailure(error: SendError | CheckError, report: boolean) {
+  if (isLimit(error)) track('code_limited', { limit: error });
+  // By stable code only: the raw message can hold the phone number (AC-22).
+  if (report) reportClientError(new Error(`auth_${error}`));
+}
+
+const noSubscription = () => () => undefined;
+
+/** The saved step, after hydration: the server has no sessionStorage, so it renders the phone step. */
+function useSavedStep(): LoginStep | null {
+  const raw = useSyncExternalStore(noSubscription, rawLoginStep, () => null);
+  return useMemo(() => parseLoginStep(raw), [raw]);
+}
+
+function formatWait(seconds: number): string {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+type Props = {
+  dialCodes: readonly string[];
+  siteKey: string | undefined;
+  nonce: string | undefined;
+  next: string | null;
+  asProvider: boolean;
+};
+
+export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider }: Props) {
+  const t = useTranslations('Login');
+  const locale = useLocale();
+  const dialCode = dialCodes[0] ?? '';
+
+  const saved = useSavedStep();
+  const [sent, setSent] = useState<LoginStep | null>(null);
+  const [chosenStep, setChosenStep] = useState<'phone' | 'code' | null>(null);
+  const live = sent ?? saved;
+  const step = chosenStep ?? (live ? 'code' : 'phone');
+  const phone = live?.phone ?? '';
+  const sentAt = live?.sentAt ?? 0;
+
+  const [code, setCode] = useState('');
+  const [token, setToken] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<FormError>(null);
+  const [now, setNow] = useState(0);
+
+  const onToken = useCallback((value: string | null) => setToken(value), []);
+
+  useEffect(() => {
+    if (step !== 'code') return;
+    const tick = () => setNow(Date.now());
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [step]);
+
+  const elapsed = Math.max(0, Math.floor((now - sentAt) / 1000));
+  const waitSeconds = Math.max(0, RESEND_SECONDS - elapsed);
+
+  async function send(target: string) {
+    if (!token) return;
+    setBusy(true);
+    setError(null);
+    const result = await sendCode(target, token);
+    // A token works once, whatever the answer was.
+    setAttempt((count) => count + 1);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error);
+      noteFailure(result.error, result.report);
+      return;
+    }
+    const time = Date.now();
+    track('code_requested', {});
+    saveLoginStep({ phone: target, sentAt: time });
+    setSent({ phone: target, sentAt: time });
+    setCode('');
+    setChosenStep('code');
+  }
+
+  function onSubmitPhone(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const typed = new FormData(event.currentTarget).get('phone');
+    const normalized = normalizeForRegions(typeof typed === 'string' ? typed : '', dialCodes);
+    if (!normalized.ok) {
+      setError(normalized.reason);
+      track('phone_rejected', { reason: normalized.reason });
+      return;
+    }
+    void send(normalized.phone);
+  }
+
+  async function verify(value: string) {
+    if (value.length !== CODE_LENGTH || busy) return;
+    setBusy(true);
+    setError(null);
+    const result = await checkCode(phone, value);
+    if (!result.ok) {
+      setBusy(false);
+      setCode('');
+      setError(result.error);
+      noteFailure(result.error, result.report);
+      return;
+    }
+    track('code_verified', {}, { leaving: true });
+    clearLoginStep();
+    const query = { ...(next ? { next } : {}), ...(asProvider ? { as: 'provider' } : {}) };
+    window.location.assign(getPathname({ href: { pathname: '/continue', query }, locale }));
+  }
+
+  function onSubmitCode(event: FormEvent) {
+    event.preventDefault();
+    void verify(code);
+  }
+
+  function changeNumber() {
+    setError(null);
+    setChosenStep('phone');
+  }
+
+  function backToCode() {
+    setError(null);
+    setChosenStep('code');
+  }
+
+  const message = error ? t(`errors.${error}`, { dialCode }) : null;
+  const errorNote = message ? (
+    <p id="login-error" role="alert" className="rounded-row bg-error-light px-4 py-3 text-body-s text-error">
+      {message}
+    </p>
+  ) : null;
+
+  return (
+    <div className="flex flex-col gap-5">
+      {step === 'phone' ? (
+        <form onSubmit={onSubmitPhone} noValidate className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="font-display text-title text-text-primary">{t('title')}</h1>
+            <p className="text-body text-text-secondary">{t('intro')}</p>
+          </div>
+          <PhoneField
+            id="login-phone"
+            label={t('phoneLabel')}
+            placeholder={t('phonePlaceholder')}
+            dialCode={dialCode}
+            error={error !== null}
+            errorId="login-error"
+            onChange={() => setError(null)}
+          />
+          {errorNote}
+          <Button type="submit" size="block" disabled={busy || !token}>
+            {busy ? t('sending') : t('send')}
+          </Button>
+          {live ? (
+            <Button variant="link" size="text" className="self-start" onClick={backToCode}>
+              {t('haveCode')}
+            </Button>
+          ) : null}
+        </form>
+      ) : (
+        <form onSubmit={onSubmitCode} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="font-display text-title text-text-primary">{t('codeTitle')}</h1>
+            <p className="text-body text-text-secondary">
+              {t.rich('codeSent', {
+                number: phone,
+                phone: (chunks) => (
+                  <bdi dir="ltr" className="font-bold">
+                    {chunks}
+                  </bdi>
+                ),
+              })}
+            </p>
+            <Button variant="link" size="text" className="self-start" onClick={changeNumber}>
+              {t('changeNumber')}
+            </Button>
+          </div>
+          <CodeField
+            label={t('codeLabel')}
+            value={code}
+            invalid={error === 'wrong_or_expired' || error === 'limit_checks'}
+            disabled={busy}
+            onChange={(value) => {
+              setCode(value);
+              setError(null);
+            }}
+            onComplete={(value) => void verify(value)}
+          />
+          {errorNote}
+          <Button type="submit" size="block" disabled={busy || code.length !== CODE_LENGTH}>
+            {busy ? t('verifying') : t('verify')}
+          </Button>
+          {waitSeconds > 0 ? (
+            <p className="text-body-s text-text-secondary">
+              {t.rich('resendIn', {
+                time: formatWait(waitSeconds),
+                wait: (chunks) => <bdi dir="ltr">{chunks}</bdi>,
+              })}
+            </p>
+          ) : (
+            <Button
+              variant="link"
+              size="text"
+              className="self-start"
+              disabled={busy || !token}
+              onClick={() => void send(phone)}
+            >
+              {t('resend')}
+            </Button>
+          )}
+        </form>
+      )}
+      <BotCheck siteKey={siteKey} nonce={nonce} locale={locale} attempt={attempt} onToken={onToken} />
+    </div>
+  );
+}

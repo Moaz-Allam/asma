@@ -11,7 +11,7 @@ import { isPostHogProjectKey, parseEuSentryDsn } from '@/lib/deployment';
  * app does not boot, rather than failing at first use in production.
  *
  * ⚠️ SCOPE — this schema covers only what the CURRENTLY BUILT features consume.
- * `.env.example` lists more (IYZICO_*, PAYTABS_*, SMS_API_KEY, EMAIL_API_KEY…)
+ * `.env.example` lists more (IYZICO_*, PAYTABS_*, EMAIL_API_KEY…)
  * because it documents the whole system. Those are deliberately NOT validated yet:
  * requiring a PSP key before the PSP adapter exists would stop the app booting for
  * a feature nobody can call.
@@ -86,6 +86,11 @@ const EnvSchema = z.object({
     .string()
     .refine(isPostHogProjectKey, { message: 'must be a PostHog project key (phc_…), never a personal key' })
     .optional(),
+
+  // ── Bot check (spec 0005 AC-4, D98) ───────────────────────────────────────
+  // Public by design. Optional here, required on a deployment. There is no secret to validate: Supabase
+  // Auth is the only caller of siteverify, so the app holds none.
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

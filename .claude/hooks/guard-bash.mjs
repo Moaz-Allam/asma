@@ -222,6 +222,12 @@ const RULES = [
       "A local reset (`npx supabase db reset` without `--linked`). Cloud changes go through migrations, on the owner's request.",
   },
   {
+    id: 'supabase-config-push',
+    test: (seg, ws) => ws[0] === 'supabase' && ws.includes('config') && ws.includes('push'),
+    why: 'config.toml holds fixed test codes and local Auth limits, which must never reach the cloud project (spec 0005 AC-25).',
+    instead: 'Cloud Auth settings change in the dashboard: owner step S22.',
+  },
+  {
     id: 'prod-deploy',
     test: (seg, ws) => {
       if (ws[0] !== 'vercel') return false;

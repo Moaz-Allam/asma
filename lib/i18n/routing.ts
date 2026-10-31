@@ -18,12 +18,16 @@ import { DEFAULT_LOCALE, LOCALES } from './direction';
  * Accept-Language, then `defaultLocale`. `defaultLocale` below is that last-resort
  * fallback, not a statement about which market matters.
  */
+/** next-intl's cookie, written by hand only in /continue (spec 0005 AC-10). */
+export const LOCALE_COOKIE = 'NEXT_LOCALE';
+export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
 export const routing = defineRouting({
   locales: LOCALES,
   defaultLocale: DEFAULT_LOCALE,
   localePrefix: 'always',
   localeCookie: {
     // Long-lived: a returning visitor should land in the language they chose.
-    maxAge: 60 * 60 * 24 * 365,
+    maxAge: LOCALE_COOKIE_MAX_AGE,
   },
 });

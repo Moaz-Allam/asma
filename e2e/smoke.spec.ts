@@ -26,9 +26,6 @@ test('the landing page renders in its locale, with the right direction, and fits
 
   const scan = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    // Colours are placeholders until the brand tokens land (B4, owner step S13). Contrast is checked
-    // against the real token table then; remove this line in the same change that records them.
-    .disableRules(['color-contrast'])
     .analyze();
   expect(scan.violations).toEqual([]);
 });

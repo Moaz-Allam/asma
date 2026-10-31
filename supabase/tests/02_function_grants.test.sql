@@ -20,6 +20,7 @@ CREATE TEMP TABLE allowed_public (signature text PRIMARY KEY);
 CREATE TEMP TABLE allowed_anon (signature text PRIMARY KEY);
 -- INSERT INTO allowed_anon VALUES ('public.example(uuid)');  -- position NN, spec NNNN: why
 INSERT INTO allowed_anon VALUES ('public.health_ping()');  -- position 00b, spec 0004: health endpoint database ping
+INSERT INTO allowed_anon VALUES ('public.public_region_info()');  -- position 01, spec 0005: the login page reads the active regions
 
 -- Functions in the exposed schema that we wrote (members of an extension are not ours).
 -- The signature is built by hand: `regprocedure::text` drops the schema whenever it is on the

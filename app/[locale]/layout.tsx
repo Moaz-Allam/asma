@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { fontVariables } from '@/lib/fonts';
 import { dirFor } from '@/lib/i18n/direction';
 import { routing } from '@/lib/i18n/routing';
 
@@ -48,7 +49,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     // Rule 10: both attributes derived from the locale. `dirFor` is the single
     // place direction is decided — never hardcode either value.
-    <html lang={locale} dir={dirFor(locale)}>
+    <html lang={locale} dir={dirFor(locale)} className={fontVariables}>
       <body>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>

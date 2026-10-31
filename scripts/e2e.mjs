@@ -2,7 +2,8 @@
 /**
  * `npm run test:e2e` — the end to end wrapper (code-standards.md §10, playbook §13.5).
  *
- * 1. Gets LOCAL Supabase values from `supabase status` (starting the local stack if needed).
+ * 1. Gets LOCAL Supabase values from `supabase status` (starting the local stack if needed), then resets
+ *    the database: no role may delete an account, so each run starts empty (spec 0005 AC-24).
  * 2. Builds the app with those values passed as process variables. Process variables beat env files,
  *    and every other variable named in .env.example is set to empty, so nothing from a developer's
  *    cloud env file can reach an e2e build. Analytics and error reporting run with dummy keys, and the
@@ -10,6 +11,9 @@
  * 3. Runs Playwright (390px, ar + tr + en). Extra arguments pass through: `-- --project=ar`.
  *
  * Flags: --reuse-build   skip the build when the last one was made by this wrapper.
+ *        --serve         serve that same build instead of running Playwright, with no database reset:
+ *                        the real app on the local stack with Cloudflare's test key, for trying it by
+ *                        hand (`asma-local` in .claude/launch.json). `npm run dev` talks to the cloud.
  * Env:   E2E_NO_DB=1     do not touch the local database (only for suites that never read it).
  *        E2E_PORT        port for `next start` (default 3100).
  *
@@ -25,7 +29,8 @@ import { join } from 'node:path';
 const root = process.cwd();
 const args = process.argv.slice(2);
 const reuse = args.includes('--reuse-build');
-const passThrough = args.filter((a) => a !== '--reuse-build');
+const serve = args.includes('--serve');
+const passThrough = args.filter((a) => a !== '--reuse-build' && a !== '--serve');
 const MARKER = join(root, '.next', 'e2e-build.json');
 
 function run(cmd, cmdArgs, env, capture = false) {
@@ -51,7 +56,17 @@ function localSupabase() {
   let status = run('npx', ['supabase', 'status', '-o', 'json'], process.env, true);
   if (status.status !== 0) {
     console.log('e2e: local Supabase is not running; starting it (needs Docker)…');
-    const start = run('npx', ['supabase', 'start'], process.env);
+    // Only what the journeys use: Auth, the API gateway, PostgREST and the database.
+    const start = run(
+      'npx',
+      [
+        'supabase',
+        'start',
+        '-x',
+        'realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor',
+      ],
+      process.env,
+    );
     if (start.status !== 0) {
       console.error(
         'e2e: could not start local Supabase. Start Docker, or set E2E_NO_DB=1 for DB free suites.',
@@ -59,6 +74,10 @@ function localSupabase() {
       process.exit(1);
     }
     status = run('npx', ['supabase', 'status', '-o', 'json'], process.env, true);
+  }
+  if (!serve && run('npx', ['supabase', 'db', 'reset'], process.env).status !== 0) {
+    console.error('e2e: could not reset the local database.');
+    process.exit(1);
   }
   const json = JSON.parse(status.stdout.slice(status.stdout.indexOf('{')));
   const url = json.API_URL;
@@ -94,6 +113,8 @@ const env = {
   // Shape valid telemetry keys, so both SDKs run; the journeys stub /api/e and /api/a in the browser.
   NEXT_PUBLIC_SENTRY_DSN: 'https://e2e00000000000000000000000000000@o0.ingest.de.sentry.io/0',
   NEXT_PUBLIC_POSTHOG_KEY: 'phc_e2e0000000000000000000000000000',
+  // Cloudflare's always pass test key. The journeys stub the script anyway (e2e/fixtures.ts).
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
   ...localSupabase(),
 };
 
@@ -122,6 +143,11 @@ if (reusable) {
     MARKER,
     JSON.stringify({ buildId: buildId(), builtAt: new Date().toISOString(), by: 'scripts/e2e.mjs' }),
   );
+}
+
+if (serve) {
+  const server = run('npx', ['next', 'start', '--port', process.env.E2E_PORT ?? '3100'], env);
+  process.exit(server.status ?? 1);
 }
 
 const test = run('npx', ['playwright', 'test', ...passThrough], env);

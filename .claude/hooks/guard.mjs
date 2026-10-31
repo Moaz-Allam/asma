@@ -191,17 +191,10 @@ const RULES = [
       // Concrete colours belong ONLY in --ramp-* declarations, the palette block (ui-tokens.md §2,
       // §13). Every other token references the ramps. Checked line by line AND declaration by
       // declaration, so a ramp cannot carry a second declaration past the rule, on its line or across
-      // the joined fragments of a MultiEdit. Comments are prose and are blanked (newlines kept),
-      // except an exact placeholder marker.
-      // Pre-B4 escape, to delete with the placeholders when the tokens land: one custom property
-      // holding a neutral oklch(L 0 0), alone on its line, ending in the comment `/* placeholder */`.
-      const MARKER = /^\/\*\s*placeholder\b[^*\n]*\*\/$/i;
-      const PLACEHOLDER =
-        /^\s*--[\w-]+\s*:\s*oklch\(\s*[\d.]+%?\s+0\s+0\s*\)\s*;\s*\/\*\s*placeholder\b[^*\n]*\*\/\s*$/i;
+      // the joined fragments of a MultiEdit. Comments are prose and are blanked (newlines kept).
       const offenders = text
-        .replace(/\/\*[\s\S]*?\*\//g, (c) => (MARKER.test(c) ? c : c.replace(/[^\n]/g, ' ')))
+        .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
         .split(/\r?\n/)
-        .filter((line) => !PLACEHOLDER.test(line))
         .flatMap((line) => line.split(/[;{}]/))
         .filter((d) => /#[0-9a-fA-F]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|oklch|lab|lch)\(/.test(d))
         .filter((d) => !/^\s*--ramp-[\w-]+\s*:/.test(d));
@@ -214,8 +207,7 @@ const RULES = [
       'declarations in the palette block of globals.css; every other token references them (var(--ramp-*)). An ' +
       'Edit must carry the whole declaration (--ramp-name: value;): a bare value has no name to check. This fires ' +
       'most often right after `npx shadcn init`, which writes its own generated palette into globals.css: map its ' +
-      'names to ours (ui-tokens.md §3) and delete its values. Never mark a real value `placeholder` to get past it; ' +
-      'that escape only covers the neutral pre-B4 greys until the tokens land.',
+      'names to ours (ui-tokens.md §3) and delete its values.',
   },
   {
     id: 'raw-tailwind-palette',

@@ -120,6 +120,14 @@ const REQUIREMENTS: readonly Requirement[] = [
     expected: 'a PostHog project key, phc_… (never a personal API key, phx_…)',
     valid: isPostHogProjectKey,
   },
+  // Spec 0005: the bot check on /login. Without it nobody can sign in.
+  {
+    name: 'NEXT_PUBLIC_TURNSTILE_SITE_KEY',
+    phases: ['build', 'runtime'],
+    vercelOnly: false,
+    expected: 'a Turnstile site key, from the Cloudflare widget (owner step S9)',
+    valid: (value) => value.trim() !== '',
+  },
 ];
 
 /** A PostHog project key (`phc_…`), public by design. A personal API key (`phx_…`) must never ship. */

@@ -5,7 +5,25 @@ import { gunzipSync } from 'node:zlib';
  * Every journey runs with both telemetry SDKs on (dummy keys from scripts/e2e.mjs) and both telemetry
  * paths stubbed in the browser, so nothing ever leaves the origin (spec 0004 AC-2, AC-6). The fixture
  * records what reached each stub, every request to another origin, and every CSP violation.
+ *
+ * Two origins are expected since spec 0005 (AC-24). The browser talks to the local Supabase Auth directly
+ * (D98), and Cloudflare's script is stubbed here, so no journey depends on Cloudflare. The stub answers
+ * with a fresh token after every render and reset, as the real widget does.
  */
+
+const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+const SUPABASE_ORIGIN = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54421';
+
+const TURNSTILE_STUB = `(() => {
+  let callback = () => undefined;
+  let count = 0;
+  const issue = () => setTimeout(() => callback('e2e-token-' + (count += 1)));
+  window.turnstile = {
+    render(element, options) { callback = options.callback; issue(); return 'e2e-widget'; },
+    reset() { issue(); },
+    remove() {},
+  };
+})();`;
 
 declare global {
   interface Window {
@@ -68,9 +86,8 @@ export const test = base.extend<{ telemetry: Telemetry }>({
 
       page.on('request', (request) => {
         const url = request.url();
-        if (!url.startsWith(origin) && !url.startsWith('blob:') && !url.startsWith('data:')) {
-          telemetry.offOrigin.push(url);
-        }
+        const expected = [origin, SUPABASE_ORIGIN, TURNSTILE_ORIGIN, 'blob:', 'data:'];
+        if (!expected.some((start) => url.startsWith(start))) telemetry.offOrigin.push(url);
       });
       await page.addInitScript(() => {
         // posthog-js drops every event from what looks like a bot (right in production): navigator.webdriver
@@ -83,6 +100,9 @@ export const test = base.extend<{ telemetry: Telemetry }>({
           window.__cspViolations?.push(`${event.violatedDirective} ${event.blockedURI}`);
         });
       });
+      await page.route(`${TURNSTILE_ORIGIN}/**`, (route) =>
+        route.fulfill({ status: 200, contentType: 'text/javascript', body: TURNSTILE_STUB }),
+      );
       await page.route(
         (url) => url.pathname === '/api/e',
         async (route) => {
@@ -110,4 +130,5 @@ export const test = base.extend<{ telemetry: Telemetry }>({
   ],
 });
 
+export { TURNSTILE_STUB };
 export { expect } from '@playwright/test';

@@ -30,11 +30,20 @@ through tokens (pills, 2px borders, the radius scale) before registering it.
 
 | Component | Path | Status | RTL | Used by |
 | --- | --- | --- | --- | --- |
-| _(none yet)_ | `components/ui/` | — | — | — |
+| Button | `components/ui/button.tsx` | ✅ variants primary, secondary, white, destructive, link; sizes sm, md, lg, block, text (`ui-rules.md` §18) | ✅ | everywhere |
+| Input | `components/ui/input.tsx` | ✅ 61px field, `read-only` tint (§19) | ✅ | `PhoneField`, onboarding, account |
+| Label | `components/ui/label.tsx` | ✅ | ✅ | forms |
+| Checkbox | `components/ui/checkbox.tsx` | ✅ 24px | ✅ | onboarding |
+| InputOTP | `components/ui/input-otp.tsx` | ✅ boxes shrink to fit 360px, always LTR | ✅ | `CodeField` |
+| Switch | `components/ui/switch.tsx` | ✅ restyled, used from part 2 | ⚠️ needs RTL check | account (part 2) |
+| Accordion | `components/ui/accordion.tsx` | ✅ restyled, used from part 2 | ⚠️ needs RTL check | landing FAQ (part 2) |
+| Sheet | `components/ui/sheet.tsx` | ✅ sides `start`, `end`, `bottom`; `closeLabel` required, used from part 2 | ⚠️ needs RTL check | landing menu (part 2) |
 
-**Likely needed** (add on demand): Button, Input, Label, Textarea, RadioGroup (for choice chips),
-Checkbox, Switch, Form, Badge, Dialog, AlertDialog, Sheet, DropdownMenu, Popover, Tooltip, Tabs, Table,
-Skeleton, Sonner, Avatar, Separator, InputOTP, Pagination.
+Added at shadcn CLI 4.21.5 with a hand written `components.json`, because `init` writes its own palette. No
+animation classes: the design adds no motion, and `tw-animate-css` is not installed.
+
+**Likely needed** (add on demand): Textarea, RadioGroup (for choice chips), Form, Badge, Dialog,
+AlertDialog, DropdownMenu, Popover, Tooltip, Tabs, Table, Skeleton, Sonner, Avatar, Separator, Pagination.
 
 ---
 
@@ -49,18 +58,18 @@ Cross-feature building blocks. Path: `components/shared/`.
 | `Chip` | Static info chip and the verified chip | Pill 12px 700, `bg-surface-secondary` or `bg-accent-light` («موثّق») | s6, p10 | 📋 planned | — |
 | `ChoiceChips` | Single choice as a row of pills (property type, rooms, slots) | Radio group; 50px pills, 14px 700, `py-3 px-5`; selected `bg-accent text-accent-foreground`, else `bg-surface-secondary` | s4, s18, p4, app-06 | 📋 planned | — |
 | `Stepper` | Flow progress in the header | Current step navy pill 13px 600 `py-2 px-4`; others `text-text-secondary`, «›» separators (mirror) | s4, s5, s7 | 📋 planned | — |
-| `PageHeader` | Page title + explanation + optional actions | h1 44px Alexandria 900 (-0.04em) + 13–15px `text-text-secondary` | every page | 📋 planned | — |
+| `PageHeader` | Page title + explanation + optional actions | h1 44px Alexandria 900 (-0.04em) + 13–15px `text-text-secondary` | every page | ✅ done (`components/shared/PageHeader.tsx`, no actions slot yet) | ✅ |
 | `Panel` | The four card kinds of `ui-rules.md` §15 | tinted · emphasis · inverse · white, by `variant` | everywhere | 📋 planned | — |
-| `EmptyState` | Big lead + title + next action | Lead in Alexandria 900, one sentence, one or two pills | s17, p17, a4 | 📋 planned | — |
+| `EmptyState` | Big lead + title + next action | Lead in Alexandria 900, one sentence, one or two pills | s17, p17, a4 | ✅ done | ✅ |
 | `ErrorState` | Plain-language error + retry; says what stayed safe | Same shape as `EmptyState` | s17, p17, a4 | 📋 planned | — |
 | `LoadingSkeleton` | Layout-matching skeleton | Tinted blocks in the card shapes | — | 📋 planned | — |
 | `ConfirmDialog` | Destructive or money action; states consequence + amount | White dialog `rounded-panel shadow-overlay`, the amount in `MoneyDisplay`, block pills | s9 (dispute), p8, p9 | 📋 planned | — |
 | `DeadlineDisplay` | Absolute time + relative hint, from server time | Inline text; the countdown card for live windows | s9, p11 | 📋 planned | — |
 | `CountdownCard` | A running window in big digits | `19:24:08` Alexandria 900 ~72px in an emphasis panel, the deadline under it | p11 | 📋 planned | — |
 | `FormField` | Label + control + inline error | Label 13px Cairo 600 `text-text-secondary` above; field per `ui-rules.md` §19 | s4, p2 | 📋 planned | — |
-| `InitialAvatar` | A person without a photo | Circle, initial in Alexandria 700, `bg-accent-light` (40px nav, 56px cards) | s6, s7, s9 | 📋 planned | — |
+| `InitialAvatar` | A person without a photo | Circle, initial in Alexandria 700, `bg-accent-light` (40px nav, 56px cards) | s6, s7, s9 | ✅ done, 40px; first grapheme through `lib/account/initial.ts` | ✅ |
 | `RatingStars` | Choose 1–5 per dimension | Five 44px circles `bg-accent-muted` with ★, selected `bg-accent` | s9, s16 | 📋 planned | — |
-| `PhoneField` / `CodeField` | Phone sign-in and the one-time code (D55) | Phone field with the region prefix (`+90` in v1); code as **six** digit boxes (the design draws four), resend countdown | s2, p1 | 📋 planned | — |
+| `PhoneField` / `CodeField` | Phone sign-in and the one-time code (D55) | Phone field with the region prefix (`+90` in v1); code as **six** digit boxes (the design draws four), resend countdown | s2, p1 | ✅ done (`components/features/auth/`); `BotCheck` and `LoginForm` beside them, `Function` free | ✅ |
 | `ToggleRow` | Add-on with price, notification channel | Wide `rounded-field` row, label at start, price or switch at end | s4, s12 | 📋 planned | — |
 
 ---
@@ -159,11 +168,13 @@ Domain components. Path: `components/features/<domain>/`.
 | `ErrorBoundary` | `app/[locale]/error.tsx` | Route error boundary; reports an error without a digest to Sentry, never renders it | s17 | ✅ done · ⚠️ restyle to the design |
 | `GlobalError` | `app/global-error.tsx` | Last resort for a crash outside the locale layout: own `<html>`, locale from the path (`localeOfPath`), `Error` copy from each catalogue | s17 | ✅ done · ⚠️ restyle to the design |
 | `RootLayout` | `app/[locale]/layout.tsx` | `lang={locale}` + `dir={dirFor(locale)}`, **derived, never hardcoded**; providers; `setRequestLocale` | — | ✅ done (fonts per `ui-rules.md` §12 still to load) |
-| `LocaleSwitcher` | `components/layout/LocaleSwitcher.tsx` | ar / tr / en; persists to cookie | s12 | ✅ done · ⚠️ restyle to the design |
-| `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, nav, bell, avatar; signed-out pills | s1, s3, s6 | 📋 planned |
+| `LocaleSwitcher` | `components/layout/LocaleSwitcher.tsx` | ar / tr / en as a pill group; persists to the cookie, and to `profiles.locale` with `signedIn` | s12 | ✅ done |
+| `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, `NavLinks`, avatar; signed-out pills. No bell before 18 | s1, s3, s6 | ✅ done |
 | `FlowHeader` | `components/layout/FlowHeader.tsx` | Wordmark, `Stepper`, cancel or back | s4, s5, s7 | 📋 planned |
-| `BottomTabBar` | `components/layout/BottomTabBar.tsx` | Phone: three tabs, fixed | s18, p18 | 📋 planned |
-| `CustomerLayout` | `app/[locale]/(customer)/layout.tsx` | Customer header + phone tab bar | s3 | 📋 planned |
+| `BottomTabBar` | `components/layout/BottomTabBar.tsx` | Phone: three tabs, fixed, from `lib/navigation/menus.ts` | s18, p18 | ✅ done |
+| `AppShell` | `components/layout/AppShell.tsx` | `SiteHeader`, content, `BottomTabBar` for every signed in group. Draws only: `guardPage` is the check | s3, s12 | ✅ done |
+| `NavLinks` | `components/layout/NavLinks.tsx` | Desktop role menu with `aria-current` | s3 | ✅ done |
+| `CustomerLayout` | `app/[locale]/(customer)/layout.tsx` | `AppShell`, `noindex` | s3 | ✅ done |
 | `ProviderLayout` | `app/[locale]/(provider)/layout.tsx` | Provider header with the account state chip | p6 | 📋 planned |
 | `AdminLayout` | `app/[locale]/(admin)/layout.tsx` | `AdminRail` + top bar (search, region switch) | app-01 | 📋 planned |
 
@@ -242,20 +253,20 @@ one. Guards in order: `hasLocale` → `notFound()`, then `setRequestLocale(local
 
 ### LocaleSwitcher
 **Path:** components/layout/LocaleSwitcher.tsx
-**Used by:** app/[locale]/page.tsx (will move into the navbar at feature 04)
+**Used by:** the landing page, `/login`, `/account` (with `signedIn`)
 **RTL checked:** ✅
 
 ```
-Container: flex items-center gap-2
-Button:    rounded-md px-2 py-1 text-sm font-medium transition-colors
-Active:    bg-accent-muted text-accent
-Inactive:  text-text-secondary hover:bg-surface-secondary
+Container: flex w-fit items-center gap-1 rounded-full bg-surface-secondary p-1
+Button:    rounded-full px-3.5 py-2 text-btn-sm transition-colors
+Active:    bg-accent text-accent-foreground
+Inactive:  text-text-primary hover:bg-accent-muted
 ```
 
 Notes: language names come from `Intl.DisplayNames` at runtime, **never hardcoded** — a
 literal Arabic or Turkish string in a component is copy that cannot be translated, and
 the guard hook rejects it. Colour is not the only signal: `aria-current` carries the
-active state too (`ui-rules.md` §8). ⚠️ Restyle: the design shows language as choice chips (s12).
+active state too (`ui-rules.md` §8). Restyled to the design in position 01, as the pill group of s12 ().
 
 ### NotFound
 **Path:** app/[locale]/not-found.tsx

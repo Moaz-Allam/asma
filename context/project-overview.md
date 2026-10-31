@@ -346,13 +346,13 @@ Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)        
 ### Landing
 
 - Hero, how it works, service categories, footer
-- Logged-in users → redirect to their role home
+- Logged-in users → redirect to their role home (through `/continue`, which also moves the URL to the language on their profile)
 - Logged-out users → CTA to `/login`
 
 ### Onboarding
 
-- User signs in via OTP (phone by default)
-- Role chosen at first sign-up: customer or provider
+- User signs in with a phone and a 6 digit SMS code. There are no passwords on any account (D104)
+- Role chosen at first sign-up: customer or provider. One phone holds one role, for good (D99)
 - **Required tick:** the user accepts the terms and the agreement statement (D92). Stored with the terms version and date
 - Provider → redirected to `/provider/profile` to complete registration; cannot apply to requests until admin-approved
 - Customer → redirected to `/requests/new`
@@ -525,6 +525,16 @@ provider_fee_paid;     // { providerId, requestId, amount }
 fee_refunded;          // { requestId, kind: 'commission' | 'provider_fee', amount, trigger: 'no_provider' | 'customer_cancelled' | 'admin' }
 job_completed;         // { requestId, providerId, trigger: 'confirmed' | 'auto' }
 problem_reported;      // { userId, requestId }
+```
+
+Sign in, analytics only (spec 0005 AC-22, `lib/analytics/events.ts`). No phone, code, name or id, ever:
+
+```typescript
+code_requested;        // {}
+code_verified;         // {}
+code_limited;          // { limit: 'limit_phone' | 'limit_ip' | 'limit_sms_cap' | 'limit_sends' | 'limit_checks' }
+phone_rejected;        // { reason: 'not_mobile' | 'too_short' | 'other_country' }
+onboarding_completed;  // { role: 'customer' | 'provider' }
 ```
 
 ---

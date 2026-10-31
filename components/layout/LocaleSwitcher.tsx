@@ -1,20 +1,26 @@
 'use client';
 
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useTransition } from 'react';
 
+import { updateLocale } from '@/actions/account';
 import { track } from '@/lib/analytics/client';
 import { LOCALES, isLocale, type Locale } from '@/lib/i18n/direction';
 import { usePathname, useRouter } from '@/lib/i18n/navigation';
+import { cn } from '@/lib/utils';
 
 /**
- * Language switcher. See context/i18n.md §4.
+ * Language switcher. See context/i18n.md §4, spec 0005 AC-19.
  *
  * Each language is labelled in its OWN script via `Intl.DisplayNames` rather than
  * hardcoded — a literal Arabic or Turkish string in a component is copy that
  * cannot be translated, and the guard hook rejects it.
+ *
+ * `signedIn` saves the choice to `profiles.locale` too, which wins after the next sign in. A visitor
+ * has only the cookie.
  */
-export function LocaleSwitcher() {
+export function LocaleSwitcher({ signedIn = false }: { signedIn?: boolean }) {
+  const t = useTranslations('Nav');
   const active = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -28,11 +34,17 @@ export function LocaleSwitcher() {
     // `routing` defines no `pathnames`, so the plain form is correct AND fully
     // typed — no cast. (The casted variant in the docs is only for the
     // `pathnames` case.) next-intl's cookie keeps the choice sticky.
-    startTransition(() => router.replace(pathname, { locale: next }));
+    startTransition(async () => {
+      if (signedIn) await updateLocale({ locale: next });
+      router.replace(pathname, { locale: next });
+    });
   }
 
   return (
-    <nav aria-label="Language" className="flex items-center gap-2">
+    <nav
+      aria-label={t('language')}
+      className="flex w-fit items-center gap-1 rounded-full bg-surface-secondary p-1"
+    >
       {LOCALES.map((locale) => {
         const label = new Intl.DisplayNames([locale], { type: 'language' }).of(locale) ?? locale;
         const isActive = locale === active;
@@ -44,11 +56,11 @@ export function LocaleSwitcher() {
             disabled={isPending}
             aria-current={isActive ? 'true' : undefined}
             onClick={() => onSelect(locale)}
-            className={[
-              'rounded-md px-2 py-1 text-sm font-medium transition-colors',
+            className={cn(
+              'rounded-full px-3.5 py-2 text-btn-sm transition-colors',
               // Colour is never the only signal — aria-current carries it too.
-              isActive ? 'bg-accent-muted text-accent' : 'text-text-secondary hover:bg-surface-secondary',
-            ].join(' ')}
+              isActive ? 'bg-accent text-accent-foreground' : 'text-text-primary hover:bg-accent-muted',
+            )}
           >
             {label}
           </button>

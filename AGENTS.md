@@ -41,7 +41,9 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   (D94). Older text about escrow, hold, release, payouts, sub-merchants or disputes is history; where a
   context doc still says so, `project-overview.md` and the decision log win.
 - 2026-10-31 · **00b merged, G0 closed** (`b0d54d7`): clean clone and CI green, all three relays proved
-  on production with real browsers. Next: `/architect` 01.
+  on production with real browsers.
+- 2026-10-31 · **01 part 1 built** (spec 0005) on `feat/01-sign-in`, not committed: verify, pgTAP and e2e
+  green on the local stack. Next: the owner's migration push and S20, S9, S22 for the real calls.
 
 ## Stack (pinned exactly)
 
@@ -62,7 +64,8 @@ download from Sentry's CDN) and `core-js` 3.51.0 (a donation banner, through `po
 | Errors, traces, logs | `@sentry/nextjs` 10.75.2 (brings `@sentry/cli` 2.58.6) | Spec 0004 AC-20: the lowest version with Turbopack source map upload and Sentry Logs with `beforeSendLog`, raised to the first one clear of the critical tunnel advisory GHSA-mchm-gjx6-7h55 (every 10.x below 10.75.2). Released 2026-09-22. Owner choice 2026-10-28. Imported only in `lib/observability/` |
 | Analytics | `posthog-js` 1.418.11 | Spec 0004 AC-20: the lowest version with every option we set plus the fixes for a relative `api_host` proxy (scripts added several times) and the cookieless id leak. Released 2026-08-24. Owner choice 2026-10-28. Imported only in `lib/analytics/` |
 | Validation | `zod` 4.6.7 | Below 4.6.6, oversized constrained collections can exhaust memory (advisory, D66) |
-| Styling | `tailwindcss` + `@tailwindcss/postcss` 4.3.3 · shadcn/ui CLI deferred | B4 resolved 2026-10-25 (D48). shadcn init writes its own palette: run it only after the tokens land in `app/globals.css` (`ui-tokens.md` §13), and map its names to ours |
+| Styling | `tailwindcss` + `@tailwindcss/postcss` 4.3.3 | B4 resolved 2026-10-25 (D48). Tokens in `app/globals.css`, fonts in `lib/fonts.ts` |
+| UI primitives | `radix-ui` 1.8.1 · `input-otp` 1.5.0 · `class-variance-authority` 0.7.1 · `clsx` 2.1.1 · `tailwind-merge` 3.7.0 · `lucide-react` 1.59.0 · shadcn CLI 4.21.5 (through `npx`, never installed) | Spec 0005 AC-18, D105. Never `shadcn init`: it writes its own palette. `components.json` is by hand; read what `add` writes. None has an install script |
 | Lint | `eslint` 9.39.5 · `eslint-config-next` 16.4.3 · `typescript-eslint` 8.67.0 | ESLint 10 crashes eslint-config-next's react plugin; held at 9 (dependabot ignores ≥10) |
 | Format, pre commit | `prettier` 3.9.9 · `husky` 9.1.7 · `lint-staged` 17.6.0 | Owner pinned |
 | Unit tests | `vitest` 5.0.5 · `fast-check` 4.10.2 | Owner pinned vitest (5.0.5 for an advisory in `@vitest/mocker`, D66); fast-check for money property tests |
@@ -86,7 +89,8 @@ from gate G3 (Hobby forbids commercial use) · an uptime monitor (Q3) · GitHub 
 | `npm run lint:rtl` | Fails on physical direction classes (`ml-`, `text-left`, …) with replacements |
 | `npm run format` / `npm run format:check` | Prettier write / check (Markdown excluded) |
 | `npm test` | Vitest: unit, lint rule, and harness tests |
-| `npm run test:e2e` | Playwright through `scripts/e2e.mjs`: local Supabase, 390px, `ar` + `tr` + `en` |
+| `npm run test:e2e` | Playwright through `scripts/e2e.mjs`: resets the local database, 390px, `ar` + `tr` + `en`. `node scripts/e2e.mjs --reuse-build --serve` serves that build on the local stack (`asma-local`) |
+| `npm run launch:gate` | Run at G3, not in CI: fails while a `[tr]` or `[draft]` marker remains (D100) |
 | `npm run guardrails` | Regression suite for the write guard |
 | `npm run db:test` | pgTAP (`supabase test db`). Needs Docker locally; always runs in CI |
 | `npm run db:types` | Generate `lib/db/database.types.ts` from the local database |
@@ -194,6 +198,7 @@ other module may be named that way.
 | System | Door | Notes |
 | --- | --- | --- |
 | Supabase | `lib/db/` | The service role client (`lib/db/admin.ts`) for webhooks, jobs and the relay only; `createAnonClient()` for machine endpoints; the `Db` type for callers |
+| Auth | `lib/auth/` | Only it calls `supabase.auth`, with one exemption, `lib/db/proxy.ts`, for the session refresh. `getSession()` is banned everywhere. Pages call `guardPage`, Server Actions `guardedAction` |
 | PSP | `lib/psp/` | Only the outbox relay calls it (rule 3) |
 | Sentry | `lib/observability/` | `next.config.ts` may import only `withSentryConfig` from `@sentry/nextjs/config`. Server: `initServer`, `captureRequestError`, `log`, `raiseAlert`; browser: `initClient`, `reportClientError`, `routerTransitionStart`; routes: `createEnvelopeForwarder` (`/api/e`), `createCspReportForwarder` (`/api/csp`) in `forward.ts` (D83). One scrubber (`scrub.ts`) for every signal, CSP reports included |
 | PostHog | `lib/analytics/` | `initAnalytics`, `track`, `trackPageview`; events typed in `events.ts`, filtered again in `filter.ts`; route: `createPostHogForwarder` (`/api/a/*`) in `forward.ts`, its body parser in `capture-body.ts` (no `server-only`, so e2e runs real SDK bytes through it) (D83) |
@@ -222,7 +227,7 @@ right inventory and the decision log; record declines with the reason.
 | `hooks/guard-bash.mjs` | PreToolUse `Bash\|PowerShell`: exit 2 blocks secret file access, broad deletes, force push, history rewrites, data wipes, linked resets, prod deploys. Test: `tests/harness/guard-bash.test.ts` |
 | `hooks/format-on-write.mjs` | PostToolUse `Edit\|Write`: Prettier on code files, best effort, never blocks |
 | `agents/slice-reviewer.md`, `agents/security-reviewer.md` | Read only, fixed output format, run before merge (security: at gates and on money, auth, PII, storage) |
-| `launch.json` | `asma-dev`: `npm run dev` on port 3000, for previews in the built in browser |
+| `launch.json` | `asma-dev`: `npm run dev` on port 3000 (cloud Supabase, from `.env.local`). `asma-local`: the last e2e build on port 3100, on the local stack |
 
 The bash guard scans the whole command, so a commit message mentioning a blocked phrase is blocked:
 write long messages to a file and use `git commit -F <file>`. Never weaken a guard to make your own
@@ -287,6 +292,13 @@ overrides):
   level, not vendored, updates itself (D73). Checked 2026-10-28 at plugin version 1.4.0. Spec 0004 wins
   wherever it differs: no wizard, no edge config, no `dataCollection` object (it flips unset categories to
   permissive), `sendDefaultPii` off, `lib/observability/` is the only importer.
+- `shadcn` (`.claude/skills/shadcn/`): `shadcn-ui/ui` @ `24a1642`, MIT, vendored 2026-10-31 (D103). Not byte for
+  byte: the live `npx shadcn@latest` injection and the allowed tools are removed, and the CLI is pinned.
+  `ui-tokens.md` and `ui-rules.md` win; base is Radix.
+- `optimise-seo` (`.claude/skills/optimise-seo/`, frontmatter name `seo`): `mblode/agent-skills` @ `2294de5`, path
+  `skills/seo/`, MIT, vendored 2026-10-31 (D103). For part 2 of 01. Spec 0005 wins.
+- `twilio-verify-send-otp` (`.claude/skills/twilio-verify-send-otp/`): `twilio/ai` @ `803790a`, MIT, public beta,
+  vendored 2026-10-31 (D103). Facts only: Supabase Auth calls Twilio, so no SDK and no credential here.
 - caveman (user level plugin): chat only. Never applied to code, commits, or docs.
 
 **Declined:**

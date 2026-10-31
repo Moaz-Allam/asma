@@ -46,7 +46,7 @@ describe('buildCsp (AC-13)', () => {
       'font-src': "'self'",
       'connect-src': "'self' https://ref.supabase.co wss://ref.supabase.co",
       'worker-src': "'self' blob:",
-      'frame-src': "'none'",
+      'frame-src': 'https://challenges.cloudflare.com',
       'frame-ancestors': "'none'",
       'object-src': "'none'",
       'base-uri': "'self'",

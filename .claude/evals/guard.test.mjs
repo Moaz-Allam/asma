@@ -193,6 +193,12 @@ const CASES = [
     content: '@theme {\n  --color-accent: #0f3a73; /* placeholder */\n}',
   },
   {
+    name: 'globals.css: the placeholder escape is gone, so a neutral grey is refused like any colour',
+    expect: 'brand-value-in-globals',
+    path: 'app/globals.css',
+    content: '@theme {\n  --color-surface: oklch(1 0 0); /* placeholder */\n}',
+  },
+  {
     name: 'globals.css: the ::placeholder selector is not the escape',
     expect: 'brand-value-in-globals',
     path: 'app/globals.css',
@@ -292,12 +298,6 @@ const CASES = [
       "import 'server-only';\n" +
       '// Never use ml-4 or #101828 or eval() here.\n' +
       '/* bg-gray-100 is banned */\nexport const x = 1;',
-  },
-  {
-    name: 'globals.css: the pre-B4 neutral placeholders stay allowed until the tokens land',
-    expect: null,
-    path: 'app/globals.css',
-    content: '@theme {\n  --color-surface: oklch(1 0 0); /* placeholder */\n  --radius-md: 8px;\n}',
   },
   {
     name: 'globals.css: several ramps on one line, each its own declaration',

@@ -22,6 +22,9 @@ export const REPORT_GROUP = 'csp-endpoint';
 /** Our own report handler (app/api/csp, D83). */
 export const CSP_REPORT_PATH = '/api/csp';
 
+/** Where the Turnstile script and widget live (spec 0005 AC-23). */
+export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+
 function supabaseSources(supabaseUrl: string): string[] {
   try {
     const url = new URL(supabaseUrl);
@@ -47,7 +50,8 @@ export function buildCsp(nonce: string, { dev, supabaseUrl, reportUri }: CspOpti
     ['connect-src', ["'self'", ...supabaseSources(supabaseUrl)]],
     // Sentry Replay compresses in a worker started from a blob.
     ['worker-src', ["'self'", 'blob:']],
-    ['frame-src', ["'none'"]],
+    // The Turnstile widget is an iframe (spec 0005 AC-23). Its script carries the page nonce.
+    ['frame-src', [TURNSTILE_ORIGIN]],
     ['frame-ancestors', ["'none'"]],
     ['object-src', ["'none'"]],
     ['base-uri', ["'self'"]],
