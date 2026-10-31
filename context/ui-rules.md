@@ -204,7 +204,9 @@ Money and status screens additionally need a **stale/refreshing** indication aft
   or licensed images exist, use the design's own placeholder (diagonal stripes, `bg-surface-secondary`)
   or a tinted panel with a line icon; avatars are initials on `bg-accent-light`.
 - **Never copy a number from a mockup** (prices, commission, provider fee): real values come from
-  `platform_settings` and the pricing engine.
+  `platform_settings` and the pricing engine. **Owner override (D101):** the landing page's prices,
+  categories and sample cards show the values drawn in `s1`, from `lib/landing/samples.ts`, until the catalog
+  replaces them, held back by the launch gate.
 - Never copy the mock browser bar or the annotations around the frames.
 - Region specific details follow the row's region, never the mockup. The design's mock region is
   Saudi Arabia (Riyadh districts, «مدى», 05x phones, «السعودية · ₺»); v1 builds Turkey (D57): Turkish
@@ -256,8 +258,9 @@ const wordmark = Archivo_Black({ subsets: ["latin", "latin-ext"], weight: "400",
 
 - **Desktop header**: the wordmark ("Aldebyani", Archivo Black 22px) at the start; nav links in Cairo
   15px 600 `text-text-primary`; at the end, the bell (a 40px circle `bg-surface-secondary` with a count
-  badge) and the account avatar (initial on `bg-accent-light`). Signed out: sign in and "register as a
-  provider" as secondary pills, «انشر طلبك» as the primary pill.
+  badge, **from position 18**) and the account avatar (initial on `bg-accent-light`). Signed out: sign in and
+  "register as a provider" as secondary pills, «انشر طلبك» as the primary pill; the phone keeps sign in only
+  until the hamburger sheet of part 2. The menu lists **only pages that exist** (`lib/navigation/menus.ts`).
 - **Flow headers** (request form, payment): the wordmark, then a stepper (the current step a navy pill
   13px Cairo 600 `py-2 px-4`, the others plain `text-text-secondary` separated by «›»), then a cancel or
   back link at the end.

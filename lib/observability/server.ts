@@ -1,6 +1,11 @@
 import 'server-only';
 
-import { captureRequestError as sentryCaptureRequestError, flush, init } from '@sentry/nextjs';
+import {
+  captureException,
+  captureRequestError as sentryCaptureRequestError,
+  flush,
+  init,
+} from '@sentry/nextjs';
 import type { Instrumentation } from 'next';
 import { after } from 'next/server';
 
@@ -87,6 +92,19 @@ function allowedHeaders(
     if (value !== undefined && ALLOWED_REQUEST_HEADERS.includes(name.toLowerCase())) out[name] = value;
   }
   return out;
+}
+
+/**
+ * An error a Server Action caught and turned into a stable code (spec 0005). Thrown errors reach Sentry
+ * through `onRequestError`; a caught one would otherwise vanish. Scrubbed in `beforeSend` like the rest.
+ */
+export function reportServerError(where: string, error: unknown): void {
+  try {
+    captureException(error, { tags: { where } });
+    flushSoon();
+  } catch {
+    // Never let reporting an error raise another one.
+  }
 }
 
 /**

@@ -1,6 +1,7 @@
 import createIntlProxy from 'next-intl/middleware';
-import { NextRequest, type NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
+import { refreshSession } from '@/lib/db/proxy';
 import { getEnv } from '@/lib/env';
 import { routing } from '@/lib/i18n/routing';
 import { buildCsp, cspReportUri, reportingEndpoints } from '@/lib/security/csp';
@@ -17,14 +18,32 @@ import { buildCsp, cspReportUri, reportingEndpoints } from '@/lib/security/csp';
  *    Handler, independently. There are no "already protected by proxy" shortcuts.
  *    Next.js itself now recommends against relying on this layer for auth.
  *
- * Two jobs: negotiate the locale and redirect accordingly, and give every page response an enforced
- * Content Security Policy with a fresh nonce (spec 0004 AC-13). The nonce reaches Next through the
+ * Three jobs: negotiate the locale and redirect accordingly, give every page response an enforced
+ * Content Security Policy with a fresh nonce (spec 0004 AC-13), and keep the session fresh, sending a
+ * GET page request with no session to the login (spec 0005 AC-11). The nonce reaches Next through the
  * request headers (Next reads it from the request's policy and stamps its own scripts with it), and the
- * same policy goes on the response. Feature 02 adds an unauthenticated-user redirect here for UX — and
- * the real check in the actions themselves.
+ * same policy goes on the response, whichever response that turns out to be. The real checks are
+ * `guardPage` in every page and `guardedAction` in every action. A Server Action POST always passes
+ * through here, so it answers `unauthorized` itself.
  */
 
 const intlProxy = createIntlProxy(routing);
+
+// A locale, then one of the sections only a signed in user may open. The rest of the path is free.
+const PRIVATE_PAGE = new RegExp(
+  `^/(${routing.locales.join('|')})(/(?:requests|provider|admin|account|continue|onboarding)(?:/.*)?)$`,
+);
+
+/** Where a GET with no session goes, or null when the page is public or the locale is still to come. */
+function loginRedirect(request: NextRequest): URL | null {
+  if (request.method !== 'GET') return null;
+  const match = PRIVATE_PAGE.exec(request.nextUrl.pathname);
+  if (!match) return null;
+  const [, locale, path] = match;
+  const url = new URL(`/${locale}/login`, request.url);
+  url.searchParams.set('next', `${path}${request.nextUrl.search}`);
+  return url;
+}
 
 /**
  * The Supabase origin for connect-src. Never throws (AC-13): a broken environment already stops the
@@ -38,7 +57,10 @@ function supabaseUrl(): string {
   }
 }
 
-export function proxy(request: NextRequest): NextResponse {
+export async function proxy(request: NextRequest): Promise<NextResponse> {
+  // First, so the render below sees refreshed cookies in the headers copied from this request.
+  const session = await refreshSession(request);
+
   // A random one time token per request, base64 as CSP nonces are written.
   const nonce = btoa(crypto.randomUUID());
   const reportUri = cspReportUri(request.nextUrl.origin);
@@ -51,10 +73,15 @@ export function proxy(request: NextRequest): NextResponse {
   const headers = new Headers(request.headers);
   headers.set('x-nonce', nonce);
   headers.set('content-security-policy', csp);
+  const login = session.state === 'signed_out' ? loginRedirect(request) : null;
   // next-intl forwards these request headers to the page. Only the URL, method and headers are carried
   // over: the body stays with the original request.
-  const response = intlProxy(new NextRequest(request.url, { headers, method: request.method }));
+  const response = login
+    ? NextResponse.redirect(login)
+    : intlProxy(new NextRequest(request.url, { headers, method: request.method }));
 
+  for (const { name, value, options } of session.cookies) response.cookies.set(name, value, options);
+  for (const [name, value] of Object.entries(session.headers)) response.headers.set(name, value);
   response.headers.set('Content-Security-Policy', csp);
   response.headers.set('Reporting-Endpoints', reportingEndpoints(reportUri));
   return response;

@@ -18,6 +18,7 @@ const RELAY = ['**/relay/**', '**/outbox/**', '**/*relay*.ts'];
 const SERVICE_ROLE_USERS = ['lib/db/**', 'app/api/webhooks/**', 'lib/jobs/**', ...RELAY];
 const OBSERVABILITY_DOOR = ['lib/observability/**'];
 const ANALYTICS_DOOR = ['lib/analytics/**'];
+const AUTH_DOOR = ['lib/auth/**'];
 const TESTS = ['tests/**', 'e2e/**', '**/*.test.ts', '**/*.spec.ts'];
 
 const sentryMessage =
@@ -160,13 +161,32 @@ const ENV_ACCESS = [
   },
 ];
 
-/** no-restricted-syntax for one door: its secrets, its modules by import() or require(), env access. */
-function restrictedSyntax({ exempt = [], modules = {}, envAccess = false } = {}) {
+// Spec 0005 AC-25: only lib/auth/ touches `supabase.auth`, and lib/db/proxy.ts for the session refresh.
+// Everyone else calls a named lib/auth function. Matched on the property, so a renamed client is caught.
+const authMessage =
+  'Only lib/auth/ calls supabase.auth (spec 0005 AC-25). Call a named lib/auth function instead.';
+const AUTH_DOOR_SELECTORS = [
+  { selector: "MemberExpression[property.name='auth']", message: authMessage },
+  { selector: "ObjectPattern > Property[key.name='auth']", message: authMessage },
+];
+// getSession() reads the cookie without asking the Auth server, so it proves nothing on the server, and
+// no code here has a reason to call it (spec 0005 AC-25). Banned in every door.
+const getSessionMessage = 'Never getSession(): identity comes from getUser() in lib/auth (spec 0005 AC-12).';
+const NO_GET_SESSION = [
+  { selector: "MemberExpression[property.name='getSession']", message: getSessionMessage },
+  { selector: "ObjectPattern > Property[key.name='getSession']", message: getSessionMessage },
+  { selector: "Literal[value='getSession']", message: getSessionMessage },
+];
+
+/** no-restricted-syntax for one door: its secrets, its modules by import() or require(), env access, Auth. */
+function restrictedSyntax({ exempt = [], modules = {}, envAccess = false, auth = false } = {}) {
   return [
     'error',
     ...secretSelectors(exempt),
     ...restrictedModules(modules),
     ...(envAccess ? [] : ENV_ACCESS),
+    ...(auth ? [] : AUTH_DOOR_SELECTORS),
+    ...NO_GET_SESSION,
   ];
 }
 
@@ -239,6 +259,14 @@ const config = [
         exempt: ['SUPABASE_SERVICE_ROLE_KEY'],
         modules: { supabase: true, admin: true },
       }),
+    },
+  },
+  // ── Auth door (spec 0005 AC-25). lib/db/proxy.ts is the one exemption: the session refresh lives there. ──
+  { files: AUTH_DOOR, rules: { 'no-restricted-syntax': restrictedSyntax({ auth: true }) } },
+  {
+    files: ['lib/db/proxy.ts'],
+    rules: {
+      'no-restricted-syntax': restrictedSyntax({ modules: { supabase: true, admin: true }, auth: true }),
     },
   },
   // ── Telemetry doors (spec 0004 AC-8). ──

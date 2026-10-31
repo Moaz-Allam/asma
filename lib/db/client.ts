@@ -1,7 +1,8 @@
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
-import { z } from 'zod';
+
+import { authCookieOptions } from './cookies';
 
 /**
  * Browser Supabase client. Client Components only.
@@ -17,23 +18,19 @@ import { z } from 'zod';
 // `process.env` in the browser is exactly that: Next inlines these at build time,
 // and a missing one yields `undefined`, which would construct a broken client and
 // fail later with an opaque network error instead of here with a clear one.
-const BrowserEnvSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-});
-
+//
+// No Zod in the browser: on load it probes with `Function("")`, which the nonce CSP refuses, so every
+// page would report a violation (spec 0005 AC-23). A plain check says the same thing here.
 export function createSupabaseBrowser() {
-  const parsed = BrowserEnvSchema.safeParse({
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  });
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!parsed.success) {
+  if (!url || !URL.canParse(url) || !anonKey) {
     throw new Error(
       'Supabase browser client is misconfigured: NEXT_PUBLIC_SUPABASE_URL and ' +
         'NEXT_PUBLIC_SUPABASE_ANON_KEY must both be set at build time. See .env.example.',
     );
   }
 
-  return createBrowserClient(parsed.data.NEXT_PUBLIC_SUPABASE_URL, parsed.data.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  return createBrowserClient(url, anonKey, { cookieOptions: authCookieOptions() });
 }

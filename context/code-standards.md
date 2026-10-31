@@ -360,7 +360,8 @@ export async function payUnlockFee(input: unknown) {
   **stable code** listed in the message catalogues, never display text (D39)
 - **Never throw from a Server Action** — always return the error
 - Always `revalidatePath` after mutations that affect page data
-- Always validate, then authenticate, then authorise the **object** (does this user own this row?)
+- Every Server Action goes through `guardedAction` in `lib/auth/action.ts` (spec 0005 AC-12): **authenticate first**, so the guard meta test holds on any input, then validate, then authorise the **object** (does this user own this row?). It holds the try and catch, and a handler answers with `fail('code')`
+- A submit button stays disabled until hydration (`useHydrated`): a form handled in JavaScript and submitted earlier is a native GET, with its fields in the URL
 
 ---
 
@@ -426,8 +427,7 @@ All env vars defined in `.env.local` for development, validated at startup. Neve
 | `PAYTABS_PROFILE_ID` / `PAYTABS_SERVER_KEY` | KSA, deferred (D22, Q7) | **Yes** |
 | `PAYTABS_WEBHOOK_SECRET` | KSA, deferred (D22, Q7) | **Yes** |
 | `PAYTABS_BASE_URL` | KSA, deferred (D22, Q7) | No |
-| `OTP_CHANNEL` | `lib/auth/otp-channel.ts` | No (`phone` \| `email`) |
-| `SMS_API_KEY` | `lib/auth/otp-channel.ts` | **Yes** |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | `/login` (`BotCheck`) | No (public; required on a deployment). The Turnstile secret and Twilio values live only in the Supabase dashboard (D98) |
 | `WHATSAPP_API_KEY` | notifications | **Yes** |
 | `EMAIL_API_KEY` | notifications | **Yes** |
 | `APP_DEFAULT_LOCALE` | `lib/i18n` | No (`ar` \| `tr` \| `en`) |
@@ -636,7 +636,9 @@ merge, and the reviewer agents refuse the "done".
 | ESLint single door rules | `eslint.config.mjs` | One door per risky system (`architecture.md` §42); each rule has a proof in `tests/lint/eslint-rules.test.ts` |
 | `lint:rtl` | `scripts/check-logical-classes.mjs` | Fails on physical direction classes with the logical replacement; its own test in `tests/scripts/` |
 | Meta pgTAP tests | `supabase/tests/00_*`, `02_*` | Every table has RLS; no function is executable by `PUBLIC` or `anon` unless listed; every `SECURITY DEFINER` function pins `search_path` |
-| Action guard meta test | added by position 01 | Imports every Server Action module and proves each refuses an anonymous caller |
+| Action guard meta test | `tests/action-guard.test.ts` | Finds every Server Action and Route Handler on disk and proves each refuses an anonymous caller; exactly four machine endpoints are exempt |
+| Launch gate | `scripts/launch-gate.mjs`, `npm run launch:gate` | Run at G3, not in CI: fails while a `[tr]` or `[draft]` marker remains (D100) |
+| Security advisors | CI `database` job | `supabase db advisors --local --type security --fail-on warn` (spec 0005 AC-25) |
 | gitleaks | CI `checks` job | Secret scan of the full history on every push and PR |
 | CI | `.github/workflows/ci.yml` | Three jobs: `checks` (guards, typecheck, lint, `lint:rtl`, format check, unit, build), `database` (pgTAP on a clean local stack), `e2e` (Playwright at 390px in three locales) |
 

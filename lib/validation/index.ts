@@ -17,9 +17,9 @@ export const RegionSchema = z.enum(REGIONS);
 export const IdSchema = z.uuid();
 
 /**
- * E.164. The dialling-code-matches-region rule (D16) is enforced where the region
- * is known — see `phoneMatchesRegion` in lib/region — because this schema alone
- * cannot see which account is being created.
+ * E.164. The mobile-of-this-region rule (D16) is enforced where the region is known
+ * — see `phoneRegion` in lib/region/phone — because this schema alone cannot see
+ * which account is being created.
  */
 export const PhoneSchema = z
   .string()

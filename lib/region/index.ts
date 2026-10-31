@@ -60,16 +60,6 @@ export function currencyFor(region: Region): Currency {
 }
 
 /**
- * D16 — the phone's dialling code must match the account's region. This is what
- * makes "one account per region" workable under phone-based OTP, where one number
- * maps to one identity: the same person in both markets genuinely holds a
- * different number in each. No override at launch.
- */
-export function phoneMatchesRegion(phone: string, region: Region): boolean {
-  return phone.replace(/[\s-]/g, '').startsWith(REGION_CONFIG[region].dialCode);
-}
-
-/**
  * Guard against the pre-D14 model creeping back. Any code reaching for an
  * environment variable to decide region is reading a constant that does not
  * exist, and would silently mis-scope every query.

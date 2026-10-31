@@ -148,6 +148,7 @@ jobs:
           APP_LOCAL_ONLY: '1'
           NEXT_PUBLIC_SENTRY_DSN: https://ci000000000000000000000000000000@o0.ingest.de.sentry.io/0
           NEXT_PUBLIC_POSTHOG_KEY: phc_ci00000000000000000000000000000
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
           APP_DEFAULT_LOCALE: ar
           APP_SUPPORTED_LOCALES: ar,tr,en
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54421
@@ -169,6 +170,9 @@ jobs:
       - run: supabase db start
       - name: pgTAP suite
         run: supabase test db
+      # Spec 0005 AC-25: a security finding fails the build, in the same words the cloud project gets.
+      - name: Security advisors
+        run: supabase db advisors --local --type security --fail-on warn
 
   e2e:
     name: e2e
@@ -184,11 +188,6 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: End to end at 390px in ar, tr, en
         run: npm run test:e2e
-        env:
-          # The scaffold journeys never read the database. The first position whose
-          # journey does (01, sign in) removes this line so the wrapper starts the
-          # local stack.
-          E2E_NO_DB: '1'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

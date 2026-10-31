@@ -5,6 +5,8 @@ import { cookies } from 'next/headers';
 
 import { getEnv } from '@/lib/env';
 
+import { authCookieOptions } from './cookies';
+
 /**
  * Session-scoped server client. Server Components, Server Actions, Route Handlers.
  *
@@ -15,6 +17,7 @@ export async function createSupabaseServer() {
   const cookieStore = await cookies();
 
   return createServerClient(getEnv().NEXT_PUBLIC_SUPABASE_URL, getEnv().NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    cookieOptions: authCookieOptions(),
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (list) => {

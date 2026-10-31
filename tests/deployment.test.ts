@@ -131,6 +131,7 @@ describe('the PostHog key (task 10): a project key on build and boot', () => {
     NEXT_PUBLIC_SENTRY_DSN: DSN,
     SENTRY_AUTH_TOKEN: 'sntrys_x',
     NEXT_PUBLIC_POSTHOG_KEY: 'phc_exampleprojectkey',
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: '0x4AAAAAAAexample',
   };
 
   it('a complete deployment lacks nothing, at build or at boot', () => {

@@ -259,6 +259,40 @@ Earlier docs demanded RLS tests without naming a tool. **The answer is pgTAP**, 
 
 Fixed-fixture tests miss edge cases. For invariants (`held = released + refunded + remaining`, `debits = credits`, balance projections), use property-based testing: describe the invariant, generate many valid datasets, and let the framework shrink to the smallest failing case. Use it for aggregation invariants and RLS regressions; keep pgTAP for specific policy assertions.
 
+## Supabase Auth, Turnstile, Twilio Verify: what real calls return (checked 2026-10-31)
+
+From the local Auth server (CLI 2.114.0), by real calls; `tests/auth-errors.test.ts` quotes them. Twilio
+Verify's own limits and the per IP limit need the cloud project: `docs/specs/0005-sign-in/verify.md`.
+
+- **The `before_user_created` hook fires on `/otp`** for a new number, before any SMS. A refusal answers
+  `400` with `error_code: "unknown"` and our own message (`phone_not_supported`), so match the message.
+- **Two limits share one code.** The per phone window and the hourly cap are both `429`
+  `over_sms_send_rate_limit`; the text tells them apart: `For security purposes, you can only request this
+  after N seconds.` against `SMS rate limit exceeded`.
+- **A test number with a fixed code skips the SMS path,** so it never hits the hourly cap, and the local
+  server applies no per IP limit (`over_request_rate_limit` needs the cloud).
+- A wrong code, an expired code and an unknown phone all answer `403` `otp_expired`.
+- A provider failure is `422` `sms_send_failed`, with the provider's error page in the text.
+- `signup` with an email answers `400` `email_provider_disabled`.
+- **A phone and password sign up works on the API** when phone sign up is on: `200`, no session, a code goes
+  out. Without the `no_password` trigger, the victim's code would confirm the attacker's password. With it,
+  a password sign in after the code answers `400` `invalid_credentials`.
+- `signOut()` ends every device by default: pass `{ scope: 'local' }`.
+- `getClaims()` refreshes an expired session and verifies the token: locally with asymmetric keys, through
+  `getUser` with a symmetric one. It returns errors rather than throwing, unless the fetch itself fails.
+- `request.url` in a Route Handler under `next start` says `localhost` whatever the browser used. Build a
+  redirect from it and the cookies stay behind on `127.0.0.1`. Send a relative `Location`.
+- **Zod 4 on load runs `Function("")`** to see whether it can compile (`allowsEval`), inside a try. Under the
+  nonce CSP that is a `script-src eval` violation on every page that imports it. Keep Zod out of browser
+  code, or set `z.config({ jitless: true })` first.
+- **Turnstile with `'strict-dynamic'`:** the script with the page nonce plus `frame-src
+  https://challenges.cloudflare.com` is all it needs. Proved with the test key in Chromium and stable Chrome.
+- `tailwind-merge` must be told our `--text-*` scale, or `text-body` counts as a colour and removes
+  `text-text-primary` beside it (`lib/utils.ts`).
+- **`shadcn add`** with a hand written `components.json`, at CLI 4.21.5, generated `import { cn } from "cn"` and
+  installed the `cn` package (published days earlier), and did not install `clsx`, `tailwind-merge`,
+  `class-variance-authority` or `lucide-react`. Read what it wrote before trusting it.
+
 ## Telemetry relays: what real traffic sends (checked 2026-10-31)
 
 Found by running the relays against the real services. A stub in the browser proves the SDK, never the

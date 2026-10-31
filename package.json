@@ -21,6 +21,7 @@
     "guardrails": "node .claude/evals/guard.test.mjs",
     "db:test": "supabase test db",
     "db:types": "supabase gen types typescript --local > lib/db/database.types.ts",
+    "launch:gate": "node scripts/launch-gate.mjs",
     "verify": "npm run guardrails && npm run typecheck && npm run lint && npm run lint:rtl && npm run format:check && npm run test",
     "prepare": "husky"
   },
@@ -28,12 +29,18 @@
     "@sentry/nextjs": "10.75.2",
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.3",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "input-otp": "1.5.0",
+    "lucide-react": "1.59.0",
     "next": "16.4.3",
     "next-intl": "4.13.7",
     "posthog-js": "1.418.11",
+    "radix-ui": "1.8.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "0.0.1",
+    "tailwind-merge": "3.7.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
