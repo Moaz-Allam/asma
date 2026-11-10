@@ -138,7 +138,19 @@
       "mcp__bc92d493-0163-413d-922c-f3c2489e918f__update_firewall_config",
       "mcp__bc92d493-0163-413d-922c-f3c2489e918f__pause_project",
       "mcp__bc92d493-0163-413d-922c-f3c2489e918f__unpause_project",
-      "mcp__25d90970-2d11-4551-9f98-0d5bb907c433__update_issue"
+      "mcp__25d90970-2d11-4551-9f98-0d5bb907c433__update_issue",
+      "mcp__claude_design__write_files",
+      "mcp__claude_design__delete_files",
+      "mcp__claude_design__copy_files",
+      "mcp__claude_design__create_project",
+      "mcp__claude_design__create_support_js",
+      "mcp__claude_design__finalize_plan",
+      "mcp__claude_design__put_conversation",
+      "mcp__claude_design__ack_comments",
+      "mcp__claude_design__add_member",
+      "mcp__claude_design__remove_member",
+      "mcp__claude_design__update_member_role",
+      "mcp__claude_design__update_sharing"
     ]
   }
 }
