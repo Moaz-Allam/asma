@@ -44,7 +44,7 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   on production with real browsers.
 - 2026-10-31 · **01 part 1 merged** (PR #22, `09a7501`). Its real calls (AC-26) and reviews are still owed.
 - 2026-11-01 · **01 part 2 built** on `feat/01b-landing-seo-account`, committed 2026-11-10 and not pushed: landing page, SEO,
-  full account. Its migration must reach the cloud before it merges.
+  full account. Its migration is already in the cloud (checked 2026-11-10).
 
 ## Stack (pinned exactly)
 

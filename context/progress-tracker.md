@@ -7,7 +7,7 @@ not know it.
 **Last updated:** 2026-11-10
 **Phase:** Bootstrap done · design imported (PR #18) · position 00 ✅ · 00b ✅ (PR #20) · gate G0 ✅
 **Status:** 🟢 G0 closed 2026-10-31: 00b merged and proved on production; money model changed to cash (D87 to D96: no escrow); launch 2026-11-20 (D94)
-**Next:** 01 part 2 built and committed (2026-11-10) on `feat/01b-landing-seo-account`, not pushed. Owner: push `20261101090000_account_notifications` **before** it merges (the account read needs its columns), approve the landing copy, finish S20 and S22 for the real calls of part 1. Then `/develop` 02 (spec 0006 accepted, amended 2026-11-02), then `/develop` 03 (spec 0007 accepted)
+**Next:** 01 part 2 built and committed (2026-11-10) on `feat/01b-landing-seo-account`, not pushed. Its migration `20261101090000_account_notifications` is already in the cloud (checked 2026-11-10). Owner: approve the landing copy, finish S20 and S22 for the real calls of part 1. Then `/develop` 02 (spec 0006 accepted, amended 2026-11-02), then `/develop` 03 (spec 0007 accepted)
 
 ---
 
@@ -242,8 +242,8 @@ Dated bullets, newest at the bottom.
   where questions and addons belong, and `s4` agrees with `architecture.md`; a first draft let `quote_price` show customers rules that did not fire. About a day and a
   half against the owner's pace of one a day (R2). Both specs sit on the current branch, not committed.
 - **2026-11-10** · **01 part 2 and specs 0006 and 0007 committed** on `feat/01b-landing-seo-account`: three commits, nothing pushed, `.mcp.json` left out (D64).
-  Found: the Free cloud project `lrejqpcgsugjiijuakoq` had paused after more than a week idle (D63). The owner restored it, and at the last check it still read
-  `RESTORING`, with an empty migration list that is not trusted until the project is active: recheck it before the push of `20261101090000_account_notifications`.
+  Found: the Free cloud project `lrejqpcgsugjiijuakoq` had paused after more than a week idle (D63). The owner restored it. It now reads `ACTIVE_HEALTHY` and lists
+  all five migrations, `20261101090000_account_notifications` among them, so part 2's migration is already in the cloud (a read during the restore showed an empty list).
   Nothing has merged since 2026-10-31, so the plan's days for 02 (11-03) and 03 (11-04, 11-05) have passed. 14 P0 positions remain against launch 2026-11-20 (R2).
   `origin/docs/spec-0006` holds the first version of 0006 and has no pull request; the amended one rides with part 2.
 
