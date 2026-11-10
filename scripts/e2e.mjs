@@ -14,6 +14,8 @@
  *        --serve         serve that same build instead of running Playwright, with no database reset:
  *                        the real app on the local stack with Cloudflare's test key, for trying it by
  *                        hand (`asma-local` in .claude/launch.json). `npm run dev` talks to the cloud.
+ *        --indexable     build and serve as production with a site address, so the indexing switch is on
+ *                        (spec 0005 AC-30, AC-31), for Lighthouse (`asma-indexable`). Never reused by a test run.
  * Env:   E2E_NO_DB=1     do not touch the local database (only for suites that never read it).
  *        E2E_PORT        port for `next start` (default 3100).
  *
@@ -29,8 +31,9 @@ import { join } from 'node:path';
 const root = process.cwd();
 const args = process.argv.slice(2);
 const reuse = args.includes('--reuse-build');
-const serve = args.includes('--serve');
-const passThrough = args.filter((a) => a !== '--reuse-build' && a !== '--serve');
+const indexable = args.includes('--indexable');
+const serve = args.includes('--serve') || indexable;
+const passThrough = args.filter((a) => !['--reuse-build', '--serve', '--indexable'].includes(a));
 const MARKER = join(root, '.next', 'e2e-build.json');
 
 function run(cmd, cmdArgs, env, capture = false) {
@@ -116,6 +119,7 @@ const env = {
   // Cloudflare's always pass test key. The journeys stub the script anyway (e2e/fixtures.ts).
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
   ...localSupabase(),
+  ...(indexable ? { APP_SITE_URL: 'https://aldebyani.example', VERCEL_ENV: 'production' } : {}),
 };
 
 function buildId() {
@@ -133,16 +137,18 @@ function lastE2eBuildId() {
   }
 }
 const current = buildId();
-const reusable = reuse && current !== null && current === lastE2eBuildId();
+const reusable = reuse && !indexable && current !== null && current === lastE2eBuildId();
 if (reusable) {
   console.log('e2e: reusing the last e2e build.');
 } else {
   const build = run('npx', ['next', 'build'], env);
   if (build.status !== 0) process.exit(build.status ?? 1);
-  writeFileSync(
-    MARKER,
-    JSON.stringify({ buildId: buildId(), builtAt: new Date().toISOString(), by: 'scripts/e2e.mjs' }),
-  );
+  if (!indexable) {
+    writeFileSync(
+      MARKER,
+      JSON.stringify({ buildId: buildId(), builtAt: new Date().toISOString(), by: 'scripts/e2e.mjs' }),
+    );
+  }
 }
 
 if (serve) {

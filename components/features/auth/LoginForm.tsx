@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type F
 import { BotCheck } from '@/components/features/auth/BotCheck';
 import { CodeField } from '@/components/features/auth/CodeField';
 import { PhoneField } from '@/components/features/auth/PhoneField';
+import { SupportLink } from '@/components/shared/SupportLink';
 import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics/client';
 import type { AnalyticsEvents } from '@/lib/analytics/events';
@@ -62,9 +63,10 @@ type Props = {
   nonce: string | undefined;
   next: string | null;
   asProvider: boolean;
+  supportWhatsapp: string | null | undefined;
 };
 
-export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider }: Props) {
+export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, supportWhatsapp }: Props) {
   const t = useTranslations('Login');
   const locale = useLocale();
   const dialCode = dialCodes[0] ?? '';
@@ -164,20 +166,28 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider }: Props
   }
 
   const message = error ? t(`errors.${error}`, { dialCode }) : null;
+  // A help line after a failed code or a limit (AC-34). Not for a mistyped number: the message fixes that.
+  const needsHelp = error === 'wrong_or_expired' || (error !== null && error.startsWith('limit_'));
   const errorNote = message ? (
-    <p id="login-error" role="alert" className="rounded-row bg-error-light px-4 py-3 text-body-s text-error">
-      {message}
-    </p>
+    <div id="login-error" role="alert" className="flex flex-col gap-1 rounded-row bg-error-light px-4 py-3">
+      <p className="text-body-s text-error">{message}</p>
+      {needsHelp ? (
+        <SupportLink
+          whatsapp={supportWhatsapp}
+          label={t('help')}
+          className="text-body-s font-semibold text-error underline underline-offset-4"
+        />
+      ) : null}
+    </div>
   ) : null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-1 flex-col gap-4">
       {step === 'phone' ? (
-        <form onSubmit={onSubmitPhone} noValidate className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <h1 className="font-display text-title text-text-primary">{t('title')}</h1>
-            <p className="text-body text-text-secondary">{t('intro')}</p>
-          </div>
+        <form onSubmit={onSubmitPhone} noValidate className="flex flex-1 flex-col gap-4">
+          <h1 className="font-display text-title-s text-text-primary">{t('title')}</h1>
+          <p className="text-label leading-relaxed font-medium text-text-primary">{t('intro')}</p>
+          <div className="flex-1" />
           <PhoneField
             id="login-phone"
             label={t('phoneLabel')}
@@ -198,23 +208,17 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider }: Props
           ) : null}
         </form>
       ) : (
-        <form onSubmit={onSubmitCode} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <h1 className="font-display text-title text-text-primary">{t('codeTitle')}</h1>
-            <p className="text-body text-text-secondary">
-              {t.rich('codeSent', {
-                number: phone,
-                phone: (chunks) => (
-                  <bdi dir="ltr" className="font-bold">
-                    {chunks}
-                  </bdi>
-                ),
-              })}
-            </p>
-            <Button variant="link" size="text" className="self-start" onClick={changeNumber}>
+        <form onSubmit={onSubmitCode} className="flex flex-1 flex-col gap-4">
+          <h1 className="font-display text-title-s text-text-primary">{t('codeTitle')}</h1>
+          <p className="text-label leading-relaxed font-medium text-text-primary">
+            {t.rich('codeSent', {
+              number: phone,
+              phone: (chunks) => <bdi dir="ltr">{chunks}</bdi>,
+            })}{' '}
+            <button type="button" className="underline underline-offset-4" onClick={changeNumber}>
               {t('changeNumber')}
-            </Button>
-          </div>
+            </button>
+          </p>
           <CodeField
             label={t('codeLabel')}
             value={code}
@@ -227,11 +231,12 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider }: Props
             onComplete={(value) => void verify(value)}
           />
           {errorNote}
+          <div className="flex-1" />
           <Button type="submit" size="block" disabled={busy || code.length !== CODE_LENGTH}>
             {busy ? t('verifying') : t('verify')}
           </Button>
           {waitSeconds > 0 ? (
-            <p className="text-body-s text-text-secondary">
+            <p className="text-meta font-normal text-text-primary">
               {t.rich('resendIn', {
                 time: formatWait(waitSeconds),
                 wait: (chunks) => <bdi dir="ltr">{chunks}</bdi>,

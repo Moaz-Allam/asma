@@ -12,30 +12,53 @@ import { LocaleSchema } from '@/lib/validation';
 
 export const FullNameSchema = z.string().trim().min(2).max(100);
 
+/**
+ * The contact email, or null. Lowercased with plain `toLowerCase`, never a Turkish locale (rule 10): an
+ * identifier that folded to a dotless ı would never match again. An empty field removes the address.
+ */
+export const ContactEmailSchema = z.preprocess(
+  (value) => (typeof value === 'string' ? value.trim().toLowerCase() : value),
+  z.union([z.literal('').transform(() => null), z.null(), z.email().max(254)]),
+);
+
 const ProfileSchema = z.object({
   full_name: z.string(),
   phone: z.string(),
   locale: LocaleSchema,
+  email: z.string().nullable(),
+  email_confirmed_at: z.string().nullable(),
 });
 
-export type Profile = { fullName: string; phone: string; locale: z.infer<typeof LocaleSchema> };
+export type Profile = {
+  fullName: string;
+  phone: string;
+  locale: z.infer<typeof LocaleSchema>;
+  email: string | null;
+  emailConfirmed: boolean;
+};
 
 export async function getProfile(userId: string): Promise<Profile | null> {
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from('profiles')
-    .select('full_name, phone, locale')
+    .select('full_name, phone, locale, email, email_confirmed_at')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
   const row = ProfileSchema.parse(data);
-  return { fullName: row.full_name, phone: row.phone, locale: row.locale };
+  return {
+    fullName: row.full_name,
+    phone: row.phone,
+    locale: row.locale,
+    email: row.email,
+    emailConfirmed: row.email_confirmed_at !== null,
+  };
 }
 
 export async function updateProfile(
   userId: string,
-  changes: { full_name?: string; locale?: Profile['locale'] },
+  changes: { full_name?: string; locale?: Profile['locale']; email?: string | null },
 ): Promise<void> {
   const supabase = await createSupabaseServer();
   const { error } = await supabase.from('profiles').update(changes).eq('id', userId);

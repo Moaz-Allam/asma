@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDownIcon } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
 import { Accordion as AccordionPrimitive } from 'radix-ui';
 import type { ComponentProps } from 'react';
 
@@ -14,7 +14,11 @@ function AccordionItem({ className, ...props }: ComponentProps<typeof AccordionP
   return (
     <AccordionPrimitive.Item
       data-slot="accordion-item"
-      className={cn('border-b-2 border-border last:border-b-0', className)}
+      className={cn(
+        'overflow-hidden rounded-card border-2 border-border bg-surface',
+        'data-[state=open]:border-surface-secondary data-[state=open]:bg-surface-secondary',
+        className,
+      )}
       {...props}
     />
   );
@@ -30,14 +34,16 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          'flex flex-1 items-start justify-between gap-4 py-4 text-start text-label text-text-primary',
-          'disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180',
+          'group flex flex-1 items-center gap-4 px-5 py-5 text-start text-question text-text-primary lg:px-6.5 lg:py-6',
+          'disabled:pointer-events-none disabled:opacity-50',
           className,
         )}
         {...props}
       >
-        {children}
-        <ChevronDownIcon className="pointer-events-none size-4 shrink-0 translate-y-0.5 text-text-secondary transition-transform" />
+        <span className="flex-1">{children}</span>
+        <span className="flex size-9.5 shrink-0 items-center justify-center rounded-full bg-surface-secondary transition-transform duration-200 group-data-[state=open]:rotate-45 group-data-[state=open]:bg-accent-muted">
+          <PlusIcon aria-hidden className="size-5" strokeWidth={2.5} />
+        </span>
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   );
@@ -49,12 +55,14 @@ function AccordionContent({
   ...props
 }: ComponentProps<typeof AccordionPrimitive.Content>) {
   return (
+    // forceMount keeps a closed answer in the server HTML, for search (spec 0005 AC-29); CSS hides it.
     <AccordionPrimitive.Content
       data-slot="accordion-content"
-      className="overflow-hidden text-body-s text-text-secondary"
+      forceMount
+      className="overflow-hidden text-answer text-text-body data-[state=closed]:hidden"
       {...props}
     >
-      <div className={cn('pb-4', className)}>{children}</div>
+      <div className={cn('max-w-88ch px-5 pb-5 lg:px-6.5 lg:pb-6.5', className)}>{children}</div>
     </AccordionPrimitive.Content>
   );
 }

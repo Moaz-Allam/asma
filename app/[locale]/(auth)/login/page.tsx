@@ -1,8 +1,8 @@
-import { DoorClosed } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { headers } from 'next/headers';
 
 import { LoginForm } from '@/components/features/auth/LoginForm';
+import { LandingPhoto } from '@/components/features/landing/LandingPhoto';
 import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
 import { safeNext } from '@/lib/auth/roles';
 import { getSessionUser } from '@/lib/auth/session';
@@ -33,9 +33,10 @@ export default async function LoginPage({ params, searchParams }: Props) {
   const nonce = (await headers()).get('x-nonce') ?? undefined;
 
   return (
-    <div className="grid gap-3.5 lg:grid-cols-2">
-      <section className="flex flex-col gap-5 rounded-panel bg-accent-light px-6.5 py-8">
-        <Link href="/" className="font-wordmark text-wordmark text-text-primary">
+    <div className="mx-auto grid max-w-4xl gap-4 lg:grid-cols-login">
+      <LandingPhoto slot="hallway" sizes="40vw" className="hidden rounded-card lg:block" />
+      <section className="flex min-h-120 flex-col gap-4 rounded-card bg-accent-light px-6.5 py-8 lg:px-7.5">
+        <Link href="/" dir="ltr" className="font-wordmark text-wordmark-sm text-text-primary">
           Aldebyani
         </Link>
         {regions.length > 0 ? (
@@ -45,6 +46,7 @@ export default async function LoginPage({ params, searchParams }: Props) {
             nonce={nonce}
             next={safe}
             asProvider={asProvider}
+            supportWhatsapp={regions[0]?.supportWhatsapp}
           />
         ) : (
           <p role="alert" className="rounded-row bg-error-light px-4 py-3 text-body-s text-error">
@@ -53,14 +55,6 @@ export default async function LoginPage({ params, searchParams }: Props) {
         )}
         <LocaleSwitcher />
       </section>
-      <div
-        aria-hidden
-        className="hidden items-center justify-center rounded-panel bg-surface-secondary lg:flex"
-      >
-        <span className="flex size-56 items-center justify-center rounded-full bg-accent-muted text-text-primary">
-          <DoorClosed className="size-28" strokeWidth={1.5} />
-        </span>
-      </div>
     </div>
   );
 }

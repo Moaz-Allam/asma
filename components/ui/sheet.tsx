@@ -36,7 +36,7 @@ function SheetContent({
   closeLabel,
   ...props
 }: ComponentProps<typeof SheetPrimitive.Content> & {
-  side?: 'start' | 'end' | 'bottom';
+  side?: 'start' | 'end' | 'top' | 'bottom';
   closeLabel: string;
 }) {
   return (
@@ -48,6 +48,7 @@ function SheetContent({
           'fixed z-40 flex flex-col gap-4 bg-surface shadow-overlay',
           side === 'end' && 'inset-y-0 end-0 h-full w-3/4 border-s-2 border-border sm:max-w-sm',
           side === 'start' && 'inset-y-0 start-0 h-full w-3/4 border-e-2 border-border sm:max-w-sm',
+          side === 'top' && 'inset-x-0 top-0 max-h-svh overflow-y-auto rounded-b-panel',
           side === 'bottom' && 'inset-x-0 bottom-0 h-auto rounded-t-panel border-t-2 border-border',
           className,
         )}

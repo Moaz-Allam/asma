@@ -49,7 +49,7 @@ async function finishOnboarding(page: Page, name = 'Ayşe Yılmaz') {
 
 async function signOut(page: Page, locale: string) {
   await page.goto(`/${locale}/account`);
-  await page.locator('section button').click();
+  await page.locator('section button[data-slot="button"]').click();
   await expect(page).toHaveURL(new RegExp(`/${locale}$`));
 }
 
@@ -242,6 +242,39 @@ test('the account page saves the name, and the language follows the profile', as
   await other.goto(`/${target}/account`);
   await expect(other).toHaveURL(new RegExp(`/${target}/account$`));
   await fresh.close();
+});
+
+test('the account page holds the email and the notice switches', async ({ page }, testInfo) => {
+  const locale = testInfo.project.name;
+  await signIn(page, locale, testPhone(locale, 'notices'), `/${locale}/login?as=provider`);
+  await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding\\?as=provider$`));
+  await finishOnboarding(page, 'Mehmet Demir');
+  await expect(page).toHaveURL(new RegExp(`/${locale}/provider/profile$`));
+
+  await page.goto(`/${locale}/account`);
+  await axe(page);
+
+  // An address that is not one is refused, and a good one is saved, lowercased, and never confirmed.
+  await page.locator('#account-email').fill('not an email');
+  await sendButton(page).click();
+  await expect(page.locator('main [role="alert"]')).toBeVisible();
+  await page.locator('#account-email').fill('Mehmet@Example.COM');
+  await sendButton(page).click();
+  await expect(page.locator('main [role="status"]')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('#account-email')).toHaveValue('mehmet@example.com');
+
+  // A provider has four rows with a switch less the customer's one: requests, work, ratings.
+  const switches = page.getByRole('switch');
+  await expect(switches).toHaveCount(3);
+  await expect(switches.first()).toHaveAttribute('data-state', 'checked');
+  await switches.first().click();
+  await expect(switches.first()).toHaveAttribute('data-state', 'unchecked');
+  await expect(switches.first()).toBeEnabled();
+  await page.reload();
+  await expect(page.getByRole('switch').first()).toHaveAttribute('data-state', 'unchecked');
+
+  await expect(page.locator('main a[href$="/provider/profile"]')).toBeVisible();
 });
 
 test('a widget that cannot load shows a retry, and nothing can be sent', async ({ page }, testInfo) => {

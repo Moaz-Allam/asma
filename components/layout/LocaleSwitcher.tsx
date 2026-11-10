@@ -43,7 +43,7 @@ export function LocaleSwitcher({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <nav
       aria-label={t('language')}
-      className="flex w-fit items-center gap-1 rounded-full bg-surface-secondary p-1"
+      className="flex w-fit items-center gap-1.5 rounded-full bg-surface-secondary p-1.25"
     >
       {LOCALES.map((locale) => {
         const label = new Intl.DisplayNames([locale], { type: 'language' }).of(locale) ?? locale;
@@ -57,7 +57,7 @@ export function LocaleSwitcher({ signedIn = false }: { signedIn?: boolean }) {
             aria-current={isActive ? 'true' : undefined}
             onClick={() => onSelect(locale)}
             className={cn(
-              'rounded-full px-3.5 py-2 text-btn-sm transition-colors',
+              'rounded-full px-5 py-2.5 text-btn-sm transition-colors',
               // Colour is never the only signal — aria-current carries it too.
               isActive ? 'bg-accent text-accent-foreground' : 'text-text-primary hover:bg-accent-muted',
             )}

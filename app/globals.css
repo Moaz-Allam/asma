@@ -48,10 +48,13 @@
   --color-ring: var(--ramp-primary-900);
   --color-ring-halo: var(--ramp-primary-200);
   --color-track: var(--ramp-primary-250);
+  --color-control: var(--ramp-primary-300);
   --color-text-primary: var(--ramp-primary-900);
   --color-text-secondary: var(--ramp-ink-600);
   --color-text-muted: var(--ramp-ink-500);
   --color-text-strong: var(--ramp-ink-900);
+  --color-text-body: var(--ramp-ink-800);
+  --color-text-lede: var(--ramp-ink-700);
   --color-text-inverse: var(--ramp-white);
   --color-link: var(--ramp-primary-700);
   --color-accent: var(--ramp-primary-900);
@@ -95,18 +98,68 @@
   --text-display-l--line-height: 1.24;
   --text-display-l--letter-spacing: -0.045em;
   --text-display-l--font-weight: 900;
+  --text-close: 58px;
+  --text-close--line-height: 1.24;
+  --text-close--letter-spacing: -0.045em;
+  --text-close--font-weight: 900;
+  --text-quick: 56px;
+  --text-quick--line-height: 1.24;
+  --text-quick--letter-spacing: -0.05em;
+  --text-quick--font-weight: 900;
+  --text-band: 52px;
+  --text-band--line-height: 1.24;
+  --text-band--letter-spacing: -0.045em;
+  --text-band--font-weight: 900;
+  --text-heading: 48px;
+  --text-heading--line-height: 1.24;
+  --text-heading--letter-spacing: -0.04em;
+  --text-heading--font-weight: 900;
+  --text-band-s: 46px;
+  --text-band-s--line-height: 1.24;
+  --text-band-s--letter-spacing: -0.045em;
+  --text-band-s--font-weight: 900;
   --text-title: 44px;
   --text-title--line-height: 1.24;
   --text-title--letter-spacing: -0.04em;
   --text-title--font-weight: 900;
+  --text-title-s: 38px;
+  --text-title-s--line-height: 1.24;
+  --text-title-s--letter-spacing: -0.02em;
+  --text-title-s--font-weight: 900;
+  --text-amount: 38px;
+  --text-amount--line-height: 1.15;
+  --text-amount--font-weight: 900;
+  --text-amount-s: 30px;
+  --text-amount-s--line-height: 1.05;
+  --text-amount-s--font-weight: 900;
   --text-section: 28px;
   --text-section--line-height: 1.24;
   --text-section--letter-spacing: -0.02em;
   --text-section--font-weight: 900;
+  --text-digit: 26px;
+  --text-digit--line-height: 1;
+  --text-digit--font-weight: 900;
+  --text-step: 25px;
+  --text-step--line-height: 1.24;
+  --text-step--letter-spacing: -0.02em;
+  --text-step--font-weight: 800;
+  --text-tile: 24px;
+  --text-tile--line-height: 1.15;
+  --text-tile--font-weight: 900;
   --text-card: 22px;
   --text-card--line-height: 1.24;
   --text-card--letter-spacing: -0.02em;
   --text-card--font-weight: 800;
+  --text-subhead: 20px;
+  --text-subhead--line-height: 1.24;
+  --text-subhead--letter-spacing: -0.02em;
+  --text-subhead--font-weight: 800;
+  --text-question: 18px;
+  --text-question--line-height: 1.5;
+  --text-question--font-weight: 700;
+  --text-sample: 17px;
+  --text-sample--line-height: 1.4;
+  --text-sample--font-weight: 700;
   --text-group: 15px;
   --text-group--line-height: 1.24;
   --text-group--letter-spacing: -0.02em;
@@ -114,9 +167,15 @@
   --text-body-l: 16px;
   --text-body-l--line-height: 1.65;
   --text-body-l--font-weight: 500;
+  --text-lead: 16px;
+  --text-lead--line-height: 1.75;
+  --text-lead--font-weight: 500;
   --text-body: 15px;
   --text-body--line-height: 1.7;
   --text-body--font-weight: 500;
+  --text-answer: 15px;
+  --text-answer--line-height: 1.9;
+  --text-answer--font-weight: 400;
   --text-body-s: 13px;
   --text-body-s--line-height: 1.7;
   --text-body-s--font-weight: 500;
@@ -134,17 +193,26 @@
   --text-eyebrow--letter-spacing: 0.06em;
   --text-eyebrow--font-weight: 700;
   --text-btn-sm: 13px;
-  --text-btn-sm--line-height: 1;
+  --text-btn-sm--line-height: 1.875;
   --text-btn-sm--font-weight: 700;
+  --text-btn-nav: 14px;
+  --text-btn-nav--line-height: 1.875;
+  --text-btn-nav--font-weight: 700;
   --text-btn: 15px;
-  --text-btn--line-height: 1;
+  --text-btn--line-height: 1.875;
   --text-btn--font-weight: 700;
+  --text-btn-band: 16px;
+  --text-btn-band--line-height: 1.875;
+  --text-btn-band--font-weight: 700;
   --text-btn-lg: 17px;
-  --text-btn-lg--line-height: 1;
+  --text-btn-lg--line-height: 1.875;
   --text-btn-lg--font-weight: 700;
   --text-nav: 15px;
   --text-nav--line-height: 1.3;
   --text-nav--font-weight: 600;
+  --text-wordmark-lg: 24px;
+  --text-wordmark-lg--line-height: 1.4;
+  --text-wordmark-lg--letter-spacing: -0.01em;
   --text-wordmark: 22px;
   --text-wordmark--line-height: 1.4;
   --text-wordmark--letter-spacing: -0.01em;
@@ -162,6 +230,41 @@
   --radius-sm: 12px;
   --radius-xs: 6px;
 
+  --container-32ch: 32ch;
+  --container-36ch: 36ch;
+  --container-40ch: 40ch;
+  --container-42ch: 42ch;
+  --container-52ch: 52ch;
+  --container-60ch: 60ch;
+  --container-88ch: 88ch;
+
+  --grid-template-columns-hero: 1fr 1.15fr;
+  --grid-template-columns-band: 1fr 1.05fr;
+  --grid-template-columns-quick: 0.95fr 1.05fr;
+  --grid-template-columns-login: 1fr 1.1fr;
+  --grid-template-columns-account: 1.5fr 1fr;
+
+  --animate-tiles-up: tiles-up 26s linear infinite;
+  --animate-tiles-down: tiles-down 26s linear infinite;
+
+  /* The landing page's moving tiles (`s1`). Each list is doubled, so -50% lands on its own start. */
+  @keyframes tiles-up {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-50%);
+    }
+  }
+  @keyframes tiles-down {
+    from {
+      transform: translateY(-50%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
   --shadow-overlay: 0 20px 50px var(--ramp-shadow);
 }
 
@@ -175,6 +278,21 @@
     @apply outline-2 outline-offset-2 outline-ring;
     box-shadow: 0 0 0 5px var(--ramp-primary-200);
   }
+}
+
+@utility animation-paused {
+  animation-play-state: paused;
+}
+
+/* The tiles fade out at both ends of their panel (`s1`). */
+@utility mask-tiles {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    var(--ramp-primary-900) 9%,
+    var(--ramp-primary-900) 91%,
+    transparent 100%
+  );
 }
 
 @media (prefers-reduced-motion: reduce) {

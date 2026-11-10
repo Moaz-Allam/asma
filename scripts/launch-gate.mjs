@@ -3,8 +3,9 @@
  * `npm run launch:gate` — holds temporary content back from real users (spec 0005 AC-25, D100).
  *
  * Run at gate G3, not in CI: while we build, the temporary content is expected. Fails while any Turkish
- * string still awaits the translator (`[tr] `, D58) or any legal text is still a draft (`[draft] `).
- * Part 2 of position 01 adds the landing samples and the site address.
+ * string still awaits the translator (`[tr] `, D58), any legal text is still a draft (`[draft] `), the
+ * landing page still shows sample data or borrowed photos (D109), or the real site address is not set
+ * (spec 0005 AC-35). Run it with production's `APP_SITE_URL` in the environment.
  */
 
 import { readFileSync } from 'node:fs';
@@ -41,6 +42,19 @@ function main() {
     console.error(`launch:gate: ${keys.length} string(s) still marked ${marker}:`);
     for (const key of keys.slice(0, 10)) console.error(`  ${key}`);
     if (keys.length > 10) console.error(`  and ${keys.length - 10} more`);
+  }
+  const samples = readFileSync(join(process.cwd(), 'lib', 'landing', 'samples.ts'), 'utf8');
+  if (/SAMPLE_DATA = true/.test(samples)) {
+    failed = true;
+    console.error('launch:gate: lib/landing/samples.ts still says SAMPLE_DATA = true.');
+  }
+  if (/BORROWED_PHOTOS = true/.test(samples)) {
+    failed = true;
+    console.error('launch:gate: public/landing/ still holds borrowed photos (BORROWED_PHOTOS = true, D109).');
+  }
+  if (!process.env.APP_SITE_URL) {
+    failed = true;
+    console.error('launch:gate: APP_SITE_URL is empty, so production cannot be indexed.');
   }
   if (failed) process.exit(1);
   console.log('launch:gate: no temporary content left.');

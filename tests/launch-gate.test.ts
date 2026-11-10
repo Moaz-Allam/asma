@@ -16,13 +16,29 @@ import tr from '@/messages/tr.json';
 
 const SCRIPT = join(process.cwd(), 'scripts', 'launch-gate.mjs');
 
-function gate(messages: Record<string, unknown>) {
+function gate(
+  messages: Record<string, unknown>,
+  {
+    samples = false,
+    photos = false,
+    siteUrl = 'https://aldebyani.com',
+  }: { samples?: boolean; photos?: boolean; siteUrl?: string } = {},
+) {
   const root = mkdtempSync(join(tmpdir(), 'launch-gate-'));
   mkdirSync(join(root, 'messages'));
+  mkdirSync(join(root, 'lib', 'landing'), { recursive: true });
   for (const locale of ['ar', 'tr', 'en']) {
     writeFileSync(join(root, 'messages', `${locale}.json`), JSON.stringify(messages));
   }
-  return spawnSync(process.execPath, [SCRIPT], { cwd: root, encoding: 'utf8' });
+  writeFileSync(
+    join(root, 'lib', 'landing', 'samples.ts'),
+    `export const SAMPLE_DATA = ${samples};\nexport const BORROWED_PHOTOS = ${photos};\n`,
+  );
+  return spawnSync(process.execPath, [SCRIPT], {
+    cwd: root,
+    encoding: 'utf8',
+    env: { ...process.env, APP_SITE_URL: siteUrl },
+  });
 }
 
 type Tree = { [key: string]: string | Tree };
@@ -46,6 +62,24 @@ describe('the launch gate', () => {
 
   it('fails while a legal text is a draft', () => {
     expect(gate({ a: '[draft] Terms' }).status).toBe(1);
+  });
+
+  it('fails while the landing page shows sample data', () => {
+    const run = gate({ a: 'Merhaba' }, { samples: true });
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('SAMPLE_DATA');
+  });
+
+  it('fails while the landing page shows borrowed photos', () => {
+    const run = gate({ a: 'Merhaba' }, { photos: true });
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('BORROWED_PHOTOS');
+  });
+
+  it('fails while production has no site address', () => {
+    const run = gate({ a: 'Merhaba' }, { siteUrl: '' });
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('APP_SITE_URL');
   });
 
   it('fails on the real catalogues today, which is why it is not in CI', () => {

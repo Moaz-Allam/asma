@@ -21,7 +21,7 @@ function InputOTP({
 }
 
 function InputOTPGroup({ className, ...props }: ComponentProps<'div'>) {
-  return <div data-slot="input-otp-group" className={cn('flex w-full gap-1.5', className)} {...props} />;
+  return <div data-slot="input-otp-group" className={cn('flex w-full gap-2.5', className)} {...props} />;
 }
 
 /** One digit box, in Alexandria as drawn in `s2`. The boxes shrink to fit a 360px phone. */
@@ -34,8 +34,8 @@ function InputOTPSlot({ index, className, ...props }: ComponentProps<'div'> & { 
       data-slot="input-otp-slot"
       data-active={isActive}
       className={cn(
-        'relative flex aspect-square max-w-14 min-w-0 flex-1 items-center justify-center rounded-field border-2 border-input bg-surface font-display text-section text-text-primary transition-colors',
-        'aria-invalid:border-error data-[active=true]:z-10 data-[active=true]:border-accent data-[active=true]:ring-2 data-[active=true]:ring-ring-halo',
+        'relative flex h-16 min-w-0 flex-1 items-center justify-center rounded-field border-2 border-input bg-surface font-display text-digit text-text-primary transition-colors',
+        'aria-invalid:border-error data-[active=true]:z-10 data-[active=true]:border-3 data-[active=true]:border-link',
         className,
       )}
       {...props}

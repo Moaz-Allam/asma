@@ -35,9 +35,9 @@ through tokens (pills, 2px borders, the radius scale) before registering it.
 | Label | `components/ui/label.tsx` | ✅ | ✅ | forms |
 | Checkbox | `components/ui/checkbox.tsx` | ✅ 24px | ✅ | onboarding |
 | InputOTP | `components/ui/input-otp.tsx` | ✅ boxes shrink to fit 360px, always LTR | ✅ | `CodeField` |
-| Switch | `components/ui/switch.tsx` | ✅ restyled, used from part 2 | ⚠️ needs RTL check | account (part 2) |
-| Accordion | `components/ui/accordion.tsx` | ✅ restyled, used from part 2 | ⚠️ needs RTL check | landing FAQ (part 2) |
-| Sheet | `components/ui/sheet.tsx` | ✅ sides `start`, `end`, `bottom`; `closeLabel` required, used from part 2 | ⚠️ needs RTL check | landing menu (part 2) |
+| Switch | `components/ui/switch.tsx` | ✅ the thumb is written to move the other way in RTL | ⚠️ needs RTL check | `NotificationTable` |
+| Accordion | `components/ui/accordion.tsx` | ✅ content stays mounted and CSS hides it, so answers are in the server HTML (AC-29) | ✅ | landing FAQ |
+| Sheet | `components/ui/sheet.tsx` | ✅ sides `start`, `end`, `top`, `bottom`; `closeLabel` required | ⚠️ needs RTL check | `PublicMenu` |
 
 Added at shadcn CLI 4.21.5 with a hand written `components.json`, because `init` writes its own palette. No
 animation classes: the design adds no motion, and `tw-animate-css` is not installed.
@@ -53,7 +53,7 @@ Cross-feature building blocks. Path: `components/shared/`.
 
 | Component | Purpose | Spec (from the design) | Design ref | Status | RTL |
 | --- | --- | --- | --- | --- | --- |
-| `MoneyDisplay` | Money from server minor units + currency. **Never computes.** LTR-isolated, tabular figures | **`font-display`** always (Cairo has no `₺`); sizes: inline, row, XL 72px / L 66px with a smaller currency sign | s4, s7, p8, p9 | 📋 planned | — |
+| `MoneyDisplay` | Money from server minor units + currency. **Never computes.** LTR-isolated, tabular figures | **`font-display`** always (Cairo has no `₺`); sizes: inline, row, XL 72px / L 66px with a smaller currency sign | s4, s7, p8, p9 | ✅ done (`components/shared/MoneyDisplay.tsx`, `lib/format/money.ts`) | ✅ |
 | `StatusChip` | Request and provider status from the canonical state machines. One definition, reused (was `StatusBadge`) | Pill 12px Cairo 700 `py-1.5 px-3`, colours from `ui-tokens.md` §4 only («ملغى» on `success-light`, «مرفوض» on `error-light`, D59) | s10, s15, p6, app-02, app-03 | 📋 planned | — |
 | `Chip` | Static info chip and the verified chip | Pill 12px 700, `bg-surface-secondary` or `bg-accent-light` («موثّق») | s6, p10 | 📋 planned | — |
 | `ChoiceChips` | Single choice as a row of pills (property type, rooms, slots) | Radio group; 50px pills, 14px 700, `py-3 px-5`; selected `bg-accent text-accent-foreground`, else `bg-surface-secondary` | s4, s18, p4, app-06 | 📋 planned | — |
@@ -172,6 +172,11 @@ Domain components. Path: `components/features/<domain>/`.
 | `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, `NavLinks`, avatar; signed-out pills. No bell before 18 | s1, s3, s6 | ✅ done |
 | `FlowHeader` | `components/layout/FlowHeader.tsx` | Wordmark, `Stepper`, cancel or back | s4, s5, s7 | 📋 planned |
 | `BottomTabBar` | `components/layout/BottomTabBar.tsx` | Phone: three tabs, fixed, from `lib/navigation/menus.ts` | s18, p18 | ✅ done |
+| `SiteFooter` | `components/layout/SiteFooter.tsx` | Copyright, legal links, join link, support link, language | s1 | ✅ done |
+| `PublicMenu` | `components/layout/PublicMenu.tsx` | The two bar menu on every width, a `Sheet` from the top: anchors, both calls and the language, stacked | s1 | ✅ done |
+| `LandingPhoto` | `components/features/landing/LandingPhoto.tsx` | One photo slot, a file in `public/landing/` under the design's name. Borrowed photos until owned ones exist (D109, Q12) | s1, s2 | ✅ done |
+| `SectionHead` | `components/features/landing/SectionHead.tsx` | Landing section title with its outlined link | s1 | ✅ done |
+| `CategoryRail` | `components/features/landing/CategoryRail.tsx` | The category row and its two arrows | s1 | ✅ done |
 | `AppShell` | `components/layout/AppShell.tsx` | `SiteHeader`, content, `BottomTabBar` for every signed in group. Draws only: `guardPage` is the check | s3, s12 | ✅ done |
 | `NavLinks` | `components/layout/NavLinks.tsx` | Desktop role menu with `aria-current` | s3 | ✅ done |
 | `CustomerLayout` | `app/[locale]/(customer)/layout.tsx` | `AppShell`, `noindex` | s3 | ✅ done |

@@ -1,5 +1,9 @@
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
+import { CLIENT_LANDING_KEYS, CLIENT_NAMESPACES, clientMessages } from '@/lib/i18n/client-messages';
 import { DEFAULT_LOCALE, LOCALES, dirFor, isLocale } from '@/lib/i18n/direction';
 import { routing } from '@/lib/i18n/routing';
 
@@ -44,5 +48,41 @@ describe('message catalogues (Rule 10 — no raw key ever reaches a customer)', 
       const missing = [...all].filter((k) => !set.has(k));
       expect(missing, `messages/${locale}.json is missing: ${missing.join(', ')}`).toEqual([]);
     }
+  });
+});
+
+describe('the messages a page sends to the browser (spec 0005 AC-31)', () => {
+  function clientFiles(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return clientFiles(path);
+      if (!path.endsWith('.tsx')) return [];
+      return readFileSync(path, 'utf8').startsWith("'use client'") ? [path] : [];
+    });
+  }
+
+  it('holds every namespace a Client Component reads', () => {
+    const files = [...clientFiles('app'), ...clientFiles('components')];
+    expect(files.length).toBeGreaterThan(0);
+    for (const file of files) {
+      const text = readFileSync(file, 'utf8');
+      for (const [, namespace] of text.matchAll(/useTranslations\('([A-Za-z]+)/g)) {
+        if (namespace === 'Landing') continue;
+        expect(CLIENT_NAMESPACES as readonly string[], file).toContain(namespace);
+      }
+    }
+  });
+
+  it('keeps only the landing keys the phone menu uses', () => {
+    const menu = readFileSync('components/layout/PublicMenu.tsx', 'utf8');
+    const used = [...menu.matchAll(/tLanding\('([A-Za-z]+)'\)/g)].map((match) => match[1]);
+    expect(new Set(used)).toEqual(new Set(CLIENT_LANDING_KEYS));
+  });
+
+  it('leaves the long copy on the server', async () => {
+    const messages = (await import('../messages/en.json')).default;
+    const picked = clientMessages(messages);
+    expect(Object.keys(picked).sort()).toEqual([...CLIENT_NAMESPACES, 'Landing'].sort());
+    expect(Object.keys(picked.Landing ?? {})).toEqual([...CLIENT_LANDING_KEYS]);
   });
 });

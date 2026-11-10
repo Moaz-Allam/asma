@@ -12,6 +12,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["scripts/e2e.mjs", "--reuse-build", "--serve"],
       "port": 3100
+    },
+    {
+      "name": "asma-indexable",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/e2e.mjs", "--indexable"],
+      "port": 3100
     }
   ]
 }

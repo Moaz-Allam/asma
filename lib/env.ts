@@ -91,6 +91,16 @@ const EnvSchema = z.object({
   // Public by design. Optional here, required on a deployment. There is no secret to validate: Supabase
   // Auth is the only caller of siteverify, so the app holds none.
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
+
+  // ── The public address (spec 0005 AC-30, lib/seo) ─────────────────────────
+  // Empty until the real domain exists (S4). Setting it on production is what turns indexing on, so a
+  // wrong shape is refused rather than published in every canonical link.
+  APP_SITE_URL: z
+    .url()
+    .refine((url) => url.startsWith('https://') && !url.endsWith('/'), {
+      message: 'must be https, with no trailing slash',
+    })
+    .optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

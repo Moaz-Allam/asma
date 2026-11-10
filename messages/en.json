@@ -4,11 +4,128 @@
     "tagline": "Home services, priced up front."
   },
   "Landing": {
-    "title": "Aldebyani Home Care",
-    "heading": "Home services, priced up front.",
-    "body": "Post what you need, choose a provider, and pay them in cash after the job.",
     "cta": "Post your request",
-    "ctaProvider": "Register as a provider"
+    "ctaProvider": "Register as a provider",
+    "heroLine1": "Leave it",
+    "heroLine2": "to us.",
+    "heroBody": "Describe your home, see the price and post your request for free. Providers apply and you choose, at a fixed price.",
+    "heroCta": "See your price for free",
+    "promise1": "A fixed price before you post",
+    "promise2": "You pay nothing until you choose a provider",
+    "promise3": "The rest goes in cash after the job",
+    "promise4": "Ratings come from completed jobs only",
+    "howTitle": "How it works",
+    "step1Title": "Post your request",
+    "step1Body": "Answer a few questions and get a fixed price. Posting is free.",
+    "step1Sample": "3 rooms + hall",
+    "step1Action": "See the price",
+    "step2Title": "Choose an offer",
+    "step2Body": "Providers apply, and you choose by rating and experience.",
+    "step2Sample": "4 offers arrived",
+    "step2Action": "Compare offers",
+    "step3Title": "Pay the commission",
+    "step3Body": "Pay the commission online. When the provider pays their fee too, you both see each other's contact details.",
+    "step3Sample": "Job price",
+    "step3Action": "Pay the commission",
+    "step4Title": "Pay in cash, then confirm",
+    "step4Body": "After the job, pay the rest to the provider in cash, then confirm it is done.",
+    "step4SampleName": "Ahmed Said",
+    "step4SampleMeta": "4.8 ★ · Verified",
+    "step4Action": "Confirm completion",
+    "pricesTitle": "Prices",
+    "pricesAll": "Full price list",
+    "price": {
+      "oneRoom": "1 room + hall",
+      "twoRooms": "2 rooms + hall",
+      "threeRooms": "3 rooms + hall",
+      "fourRooms": "4 rooms + hall",
+      "hours3": "About 3 hours",
+      "hours4": "About 4 hours",
+      "hours7": "About 7 hours",
+      "mostRequested": "Most requested"
+    },
+    "addonsLabel": "Add-ons:",
+    "addon": {
+      "windows": "Windows",
+      "ironing": "Ironing and tidying",
+      "oven": "Oven and fridge",
+      "deep": "Deep cleaning"
+    },
+    "pricesNote": "In Turkish lira. The platform sets the price, with no haggling.",
+    "categoriesTitle": "Categories",
+    "categoriesAll": "See all",
+    "categoriesPrevious": "Previous categories",
+    "categoriesNext": "Next categories",
+    "category": {
+      "home": "Home cleaning",
+      "deep": "Deep cleaning",
+      "windows": "Windows and balconies",
+      "carpets": "Carpets and furniture",
+      "other": "Other categories"
+    },
+    "categoriesNote": "We start with home cleaning, and more services are coming.",
+    "offersTitle": "Need a home service?",
+    "offersBody": "Checked providers apply to your request. You choose who suits you, and the price stays fixed.",
+    "offersCta": "Post your request for free",
+    "trustTitle": "How your request stays fair",
+    "trustBody": "Three rules hold during every request.",
+    "trust1Title": "Contact details open only when both have paid",
+    "trust1Body": "You pay the commission, the provider pays their fee, then you both see each other's details.",
+    "trust2Title": "Every provider is checked",
+    "trust2Body": "ID and criminal record, then admin approval before they can apply.",
+    "trust3Title": "Ratings come from completed jobs only",
+    "trust3Body": "Only someone who hired the provider and finished the job can rate.",
+    "trustCard1Label": "Job finished",
+    "trustCard1Value": "Awaiting your confirmation",
+    "trustCard1Note": "2 minutes ago",
+    "trustCard2Label": "Paid to the provider",
+    "trustCard2Value": "In cash",
+    "trustCard2Note": "After the job is done",
+    "quickTitle": "In under a minute",
+    "quickBody": "Answer the service questions and know the price before you post.",
+    "quickStep1": "Describe what you need",
+    "quickStep2": "See the fixed price, set by the platform, not the provider",
+    "quickStep3": "Compare offers and choose your provider",
+    "service": {
+      "regular": "Regular cleaning",
+      "deep": "Deep cleaning",
+      "windows": "Windows and balconies",
+      "ironing": "Ironing and tidying",
+      "oven": "Oven and fridge",
+      "carpets": "Carpet and furniture washing",
+      "ac": "Air conditioner cleaning",
+      "moveOut": "Cleaning before moving"
+    },
+    "serviceNote": {
+      "regular": "Mopping, sweeping and bathrooms",
+      "deep": "After building work or before an event",
+      "windows": "Inside and outside",
+      "ironing": "Add it to any request",
+      "oven": "Removes grease and build up",
+      "carpets": "Steam washing",
+      "ac": "Filters and indoor units",
+      "moveOut": "A fully empty home"
+    },
+    "faq": {
+      "title": "Common questions",
+      "priceQ": "Who sets the price?",
+      "priceA": "The platform sets it from your answers to the service questions. You see it before you post and it does not change after. Providers apply at the listed price, with no price offers and no haggling.",
+      "payQ": "When do I pay?",
+      "payA": "Posting is free and you pay nothing when you post. After you compare offers and choose one provider, you pay the commission online. It is part of the price. You pay the rest to the provider in cash after the job.",
+      "dataQ": "Who sees my details?",
+      "dataA": "Providers see only the district, the date and the price. Your name, number and full address stay hidden. They open to the chosen provider, and theirs to you, only after you pay the commission and the provider pays their fee.",
+      "contactQ": "Can I contact a provider before choosing?",
+      "contactA": "There is no chat before you choose. You compare by ratings, the provider's message and their answers. Those messages are checked automatically, and any number, email or link is refused.",
+      "unhappyQ": "What if I am not happy with the job?",
+      "unhappyA": "You can report a problem. The admin reviews it, can warn or suspend the provider, and can refund a fee by hand. The cash is between you and the provider, and the platform does not collect it for anyone.",
+      "cancelQ": "Can I cancel?",
+      "cancelA": "Yes. Before you pay there is nothing to pay. If you cancel after paying the commission and before contact details open, the commission is refunded. After they open there is no automatic refund, and the admin may refund a fee by hand.",
+      "providerQ": "How do I register as a provider?",
+      "providerA": "Sign up with your mobile number, then complete your profile and documents: ID, a live photo and your criminal record. You cannot apply until the admin approves you. Applying is free, and you pay a fee only on a request where you are chosen."
+    },
+    "closingLine1": "Pay the provider",
+    "closingLine2": "when the job is done.",
+    "closingBody": "We connect you with a provider and take only our fees. The commission is part of the price, paid online. The rest goes in cash after the job."
   },
   "Nav": {
     "main": "Main menu",
@@ -20,7 +137,13 @@
     "dashboard": "Dashboard",
     "profile": "Profile",
     "account": "Account",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "categories": "Categories",
+    "prices": "Prices",
+    "how": "How it works",
+    "faq": "Questions"
   },
   "Login": {
     "title": "Welcome",
@@ -55,7 +178,8 @@
       "network": "We could not reach the server. Nothing changed. Check your connection and try again.",
       "wrong_or_expired": "This code is wrong or has expired. Check it, or ask for a new code."
     },
-    "botRetry": "Try again"
+    "botRetry": "Try again",
+    "help": "Need help? Message us on WhatsApp"
   },
   "Onboarding": {
     "title": "How will you use Aldebyani?",
@@ -85,7 +209,8 @@
       "phone_not_eligible": "We cannot open an account for this number.",
       "phone_taken": "This number already belongs to an account.",
       "action_failed": "Something went wrong. Nothing changed. Please try again."
-    }
+    },
+    "help": "Need help? Message us on WhatsApp"
   },
   "Account": {
     "title": "My account",
@@ -105,8 +230,31 @@
       "validation_failed": "Check your name and try again.",
       "action_failed": "Something went wrong. Nothing changed. Please try again.",
       "unauthorized": "Your session ended. Sign in again.",
-      "forbidden": "Your session ended. Sign in again."
-    }
+      "forbidden": "Your session ended. Sign in again.",
+      "email": "Enter a valid email address, or leave it empty."
+    },
+    "emailLabel": "Email (optional)",
+    "emailNote": "For notices only, never for signing in.",
+    "emailNotConfirmed": "Not confirmed yet, so nothing is sent to it.",
+    "noticesTitle": "Notifications",
+    "noticesIntro": "Choose what reaches your email. Money and deadline notices are always on.",
+    "noticeColumn": "Notice",
+    "emailColumn": "Email",
+    "alwaysOn": "Always on",
+    "notices": {
+      "newRequests": "New requests",
+      "newOffers": "New offers",
+      "workUpdates": "Work updates",
+      "ratings": "Ratings",
+      "payments": "Payments and deadlines",
+      "contactDetails": "Contact details",
+      "confirmJob": "Confirm the job",
+      "problemReports": "Problem reports",
+      "cancellations": "Cancellations and refunds",
+      "accountApproval": "Account approval"
+    },
+    "providerLinkTitle": "Your profile and services",
+    "providerLink": "Open"
   },
   "Legal": {
     "termsTitle": "Terms",
@@ -141,5 +289,19 @@
     "generic": "Something went wrong. Please try again.",
     "backHome": "Back to home",
     "retry": "Try again"
+  },
+  "Footer": {
+    "label": "Footer",
+    "copyright": "© {year} Aldebyani",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "joinProvider": "Join as a provider",
+    "support": "Support"
+  },
+  "Seo": {
+    "title": "Aldebyani Home Care | Home cleaning at a fixed price",
+    "description": "Post your home cleaning request for free, see a fixed price and choose a provider. Pay the commission online and the rest in cash after the job.",
+    "imageAlt": "Aldebyani Home Care, home services at a fixed price",
+    "serviceName": "Home cleaning"
   }
 }
