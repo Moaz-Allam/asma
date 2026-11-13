@@ -143,7 +143,8 @@
     "categories": "[tr] Categories",
     "prices": "[tr] Prices",
     "how": "[tr] How it works",
-    "faq": "[tr] Questions"
+    "faq": "[tr] Questions",
+    "providers": "[tr] Providers"
   },
   "Login": {
     "title": "[tr] Welcome",
@@ -231,7 +232,8 @@
       "action_failed": "[tr] Something went wrong. Nothing changed. Please try again.",
       "unauthorized": "[tr] Your session ended. Sign in again.",
       "forbidden": "[tr] Your session ended. Sign in again.",
-      "email": "[tr] Enter a valid email address, or leave it empty."
+      "email": "[tr] Enter a valid email address, or leave it empty.",
+      "provider_suspended": "[tr] Your account is suspended, so your name cannot change. Contact support."
     },
     "emailLabel": "[tr] Email (optional)",
     "emailNote": "[tr] For notices only, never for signing in.",
@@ -254,7 +256,12 @@
       "accountApproval": "[tr] Account approval"
     },
     "providerLinkTitle": "[tr] Your profile and services",
-    "providerLink": "[tr] Open"
+    "providerLink": "[tr] Open",
+    "savedBackToReview": "[tr] Saved. Your file went back to review, and new applications wait until admin approves it.",
+    "renameTitle": "[tr] Change your name?",
+    "renameBody": "[tr] Your name must match your ID. Changing it sends your file back to review, and you cannot apply to new requests until admin approves it again.",
+    "renameConfirm": "[tr] Change and send for review",
+    "renameCancel": "[tr] Keep my name"
   },
   "Legal": {
     "termsTitle": "[tr] Terms",
@@ -303,5 +310,339 @@
     "description": "[tr] Post your home cleaning request for free, see a fixed price and choose a provider. Pay the commission online and the rest in cash after the job.",
     "imageAlt": "[tr] Aldebyani Home Care, home services at a fixed price",
     "serviceName": "[tr] Home cleaning"
+  },
+  "Provider": {
+    "standing": {
+      "draft": "[tr] Incomplete",
+      "pending": "[tr] Under review",
+      "approved": "[tr] Approved",
+      "rejected": "[tr] Rejected",
+      "suspended": "[tr] Suspended",
+      "document_expired": "[tr] Document expired"
+    },
+    "steps": {
+      "label": "[tr] Your file",
+      "profile": "[tr] Professional profile",
+      "documents": "[tr] Verification"
+    },
+    "gate": "[tr] You cannot see or apply to requests until you finish these steps and admin approves your file.",
+    "gateChip": "[tr] Required",
+    "progress": {
+      "title": "[tr] FILE PROGRESS",
+      "phone": "[tr] Phone number",
+      "profile": "[tr] Profile and photo",
+      "id": "[tr] ID, both sides",
+      "selfie": "[tr] Selfie with your ID",
+      "criminal_record": "[tr] Criminal record",
+      "done": "[tr] Done",
+      "missing": "[tr] Missing",
+      "rejected": "[tr] Needs a new file"
+    },
+    "home": {
+      "error": {
+        "title": "[tr] We could not load your file",
+        "body": "[tr] Nothing was changed. Reload the page, or try again in a minute."
+      },
+      "draft": {
+        "title": "[tr] Finish your file",
+        "body": "[tr] Two short steps: your profile, then your ID papers. Admin reviews them by hand.",
+        "next": "[tr] Start with your profile. It takes a few minutes on your phone.",
+        "action": "[tr] Continue my file"
+      },
+      "pending": {
+        "title": "[tr] Your file is under review",
+        "body": "[tr] Admin checks your ID, your selfie and your criminal record by hand, usually within two working days. Open this page to see the decision.",
+        "next": "[tr] Nothing to do now. If admin asks for a new document, it shows here."
+      },
+      "rejected": {
+        "title": "[tr] Your file needs changes",
+        "body": "[tr] Admin could not approve your file yet. Each document below says why. Replace it and send your file again.",
+        "next": "[tr] Replace what admin marked, then send your file for review again.",
+        "fileNoteLabel": "[tr] Admin's note"
+      },
+      "suspended": {
+        "title": "[tr] Your account is suspended",
+        "body": "[tr] You cannot apply to new requests or change your file while your account is suspended. You can still sign in and read your file.",
+        "next": "[tr] Contact support if you think this is a mistake.",
+        "reasonLabel": "[tr] Reason"
+      },
+      "document_expired": {
+        "title": "[tr] A document has expired",
+        "body": "[tr] You cannot apply to new requests until you replace it. Your file then goes back to review.",
+        "next": "[tr] Upload a valid copy of each expired document."
+      },
+      "docState": {
+        "pending": "[tr] Waiting for review",
+        "approved": "[tr] Checked"
+      },
+      "nextTitle": "[tr] NEXT STEP",
+      "toDocuments": "[tr] Go to my documents"
+    },
+    "view": {
+      "photoAlt": "[tr] Your profile photo",
+      "idVerified": "[tr] ID verified",
+      "securityChecked": "[tr] Security checked",
+      "memberSince": "[tr] Member since {year}",
+      "summary": "[tr] {years} years of experience · {languages}",
+      "edit": "[tr] Edit",
+      "statusTitle": "[tr] ACCOUNT STATUS",
+      "statusApproved": "[tr] Approved: you can apply",
+      "statusExpired": "[tr] A document has expired: you cannot apply until you replace it",
+      "statusSuspended": "[tr] Suspended: you cannot apply",
+      "idValid": "[tr] ID valid until {date}",
+      "recordValid": "[tr] Criminal record valid until {date}",
+      "replaceNote": "[tr] Replacing any document sends your file back to review, and new applications stop until admin approves it.",
+      "documentsLink": "[tr] My documents"
+    },
+    "reviewReason": {
+      "first_submission": "[tr] First submission",
+      "resubmitted": "[tr] Resubmitted",
+      "document_replaced": "[tr] Document replaced",
+      "name_changed": "[tr] Name changed",
+      "company_changed": "[tr] Company details changed"
+    },
+    "loading": "[tr] Loading…"
+  },
+  "ProviderForm": {
+    "title": "[tr] Your professional profile",
+    "intro": "[tr] This is what customers see when they compare offers. Do not write a phone number, an email or social accounts: the system refuses them.",
+    "editTitle": "[tr] Edit your profile",
+    "editIntro": "[tr] Bio, years and languages save at once. Changing the company details sends your file back to review.",
+    "nameLabel": "[tr] Full name",
+    "nameNote": "[tr] It must match your ID.",
+    "nameLink": "[tr] Change it in your account",
+    "privacyNote": "[tr] Customers never see your documents. They see only that you are verified, and never your full name or number before they choose you and both fees are paid.",
+    "entityLegend": "[tr] You work as",
+    "entity": {
+      "individual": "[tr] An individual",
+      "company": "[tr] A company"
+    },
+    "legalNameLabel": "[tr] Company legal name",
+    "taxNumberLabel": "[tr] Tax number",
+    "taxNumberNote": "[tr] {digits} digits. Never your national ID number.",
+    "yearsLabel": "[tr] Years of experience",
+    "bioLabel": "[tr] About you (customers see this)",
+    "bioHint": "[tr] Your experience, what you bring, what you are good at.",
+    "bioChecked": "[tr] Checked: no contact details",
+    "bioCount": "[tr] {count} / {max} characters",
+    "languagesLegend": "[tr] Languages you speak",
+    "languages": {
+      "tr": "[tr] Turkish",
+      "ar": "[tr] Arabic",
+      "en": "[tr] English"
+    },
+    "photoTitle": "[tr] Profile photo",
+    "photoNote": "[tr] A clear photo of your face on a plain background. It is not used for verification.",
+    "photoAlt": "[tr] Your profile photo",
+    "photoEmpty": "[tr] Photo",
+    "photoUpload": "[tr] Upload a photo",
+    "photoReplace": "[tr] Replace photo",
+    "uploading": "[tr] Uploading…",
+    "save": "[tr] Save and continue",
+    "saving": "[tr] Saving…",
+    "cancelEdit": "[tr] Cancel",
+    "cancel": "[tr] Cancel",
+    "confirmCompanyTitle": "[tr] Send your file back to review?",
+    "confirmCompanyBody": "[tr] Changing the company details sends your file back to review. You cannot apply to new requests until admin approves it again.",
+    "confirmCompany": "[tr] Save and send for review",
+    "confirmReplaceTitle": "[tr] Replace this file?",
+    "confirmReplaceBody": "[tr] Replacing a document or your photo sends your file back to review. You cannot apply to new requests until admin approves it again.",
+    "confirmReplace": "[tr] Replace and send for review",
+    "confirmAddTitle": "[tr] Add this file?",
+    "confirmAddBody": "[tr] Adding a document sends your file back to review. You cannot apply to new requests until admin approves it again.",
+    "confirmAdd": "[tr] Add and send for review",
+    "errors": {
+      "entity": "[tr] Choose individual or company.",
+      "legalName": "[tr] Enter the legal name, 2 to 200 characters.",
+      "taxNumber": "[tr] Enter a tax number of exactly {digits} digits.",
+      "years": "[tr] Enter a whole number from 0 to 60.",
+      "bio": "[tr] Write 30 to 600 characters about your work.",
+      "languages": "[tr] Choose at least one language."
+    }
+  },
+  "ProviderDocs": {
+    "title": "[tr] Verify your identity",
+    "intro": "[tr] Admin checks each document by hand. None of them is ever shown to customers.",
+    "introAfter": "[tr] Your documents. Replacing one sends your file back to review.",
+    "reviewNote": "[tr] Review starts when you send your file. It usually takes two working days.",
+    "consent": "[draft] [tr] I agree that the platform stores my ID, my selfie and my criminal record to verify me, that only admins can see them, and that each view is recorded.",
+    "readOnly": "[tr] Your account is suspended. You can see your documents but not change them.",
+    "acceptsImage": "[tr] JPEG or PNG · up to 10 MB",
+    "acceptsAny": "[tr] JPEG, PNG or PDF · up to 10 MB",
+    "optional": "[tr] Optional",
+    "state": {
+      "none": "[tr] Not started",
+      "uploading": "[tr] Uploading…",
+      "pending": "[tr] Uploaded",
+      "approved": "[tr] Approved",
+      "rejected": "[tr] Rejected"
+    },
+    "upload": "[tr] Upload {what}",
+    "replace": "[tr] Replace {what}",
+    "uploading": "[tr] Uploading…",
+    "validUntil": "[tr] Valid until {date}",
+    "id": {
+      "title": "[tr] ID card or residence permit",
+      "note": "[tr] Both sides, all four corners in the photo, nothing covered.",
+      "id_front": "[tr] Front side",
+      "id_back": "[tr] Back side"
+    },
+    "selfie": {
+      "title": "[tr] Selfie holding your ID",
+      "note": "[tr] Hold your ID next to your face in good light. On a phone the camera opens."
+    },
+    "criminal_record": {
+      "title": "[tr] Criminal record",
+      "note": "[tr] A certificate no older than six months. A PDF or a clear photo."
+    },
+    "skill_certificate": {
+      "title": "[tr] Skill certificate",
+      "note": "[tr] Any course or trade certificate you have. It is never shown as verified."
+    },
+    "submit": "[tr] Send for review",
+    "submitting": "[tr] Sending…",
+    "submitNote": "[tr] You can still replace a document while admin reviews your file.",
+    "missing": {
+      "profile": "[tr] Your profile",
+      "consent": "[tr] The documents consent",
+      "profile_photo": "[tr] Profile photo",
+      "id_front": "[tr] ID front side",
+      "id_back": "[tr] ID back side",
+      "selfie": "[tr] Selfie with your ID",
+      "criminal_record": "[tr] Criminal record",
+      "skill_certificate": "[tr] Skill certificate"
+    }
+  },
+  "ProviderErrors": {
+    "validation_failed": "[tr] Check the fields and try again.",
+    "contact_info_in_bio": "[tr] Remove the phone number, email, link or social account from your bio. Numbers that look like a phone are refused too.",
+    "provider_suspended": "[tr] Your account is suspended, so this cannot change.",
+    "file_missing": "[tr] We could not find the file. Upload it again.",
+    "file_type_refused": "[tr] This file type is not accepted here. Use what the card says.",
+    "file_too_large": "[tr] The file is too large. Use one under 10 MB.",
+    "image_unreadable": "[tr] We could not open this photo. Use another photo.",
+    "upload_refused": "[tr] The upload was refused. Reload the page and try again, or contact support.",
+    "network": "[tr] The connection dropped. Nothing changed. Try again.",
+    "file_incomplete": "[tr] Some parts are still missing:",
+    "forbidden": "[tr] Your session ended. Sign in again.",
+    "unauthorized": "[tr] Your session ended. Sign in again.",
+    "action_failed": "[tr] Something went wrong. Nothing changed. Please try again."
+  },
+  "Rejection": {
+    "document_unclear": "[tr] The document is not clear",
+    "selfie_mismatch": "[tr] The selfie does not match the ID",
+    "criminal_record_invalid": "[tr] The criminal record is not valid",
+    "document_expired": "[tr] The document has expired",
+    "name_mismatch": "[tr] The name does not match",
+    "photo_not_suitable": "[tr] The photo is not suitable"
+  },
+  "Admin": {
+    "queue": {
+      "title": "[tr] Provider approvals",
+      "intro": "[tr] Check each document by hand, then approve or reject.",
+      "tabsLabel": "[tr] Status",
+      "tabs": {
+        "pending": "[tr] Under review",
+        "approved": "[tr] Approved",
+        "rejected": "[tr] Rejected",
+        "suspended": "[tr] Suspended"
+      },
+      "sortLabel": "[tr] Sort",
+      "sort": {
+        "oldest": "[tr] Oldest first",
+        "newest": "[tr] Newest first"
+      },
+      "empty": {
+        "pending": "[tr] No files to review",
+        "approved": "[tr] No approved providers",
+        "rejected": "[tr] No rejected files",
+        "suspended": "[tr] No suspended providers"
+      },
+      "emptyBody": "[tr] New files show here as soon as they arrive.",
+      "submitted": "[tr] Sent {date}",
+      "decided": "[tr] Decided {date}",
+      "pagesLabel": "[tr] Pages",
+      "prev": "[tr] Previous",
+      "next": "[tr] Next",
+      "page": "[tr] Page {page} of {pages}"
+    }
+  },
+  "AdminReview": {
+    "railBadge": "[tr] Admin",
+    "pendingCount": "[tr] {count} files under review",
+    "back": "[tr] Back to the queue",
+    "phone": "[tr] Phone",
+    "region": "[tr] Region",
+    "regions": {
+      "TR": "[tr] Turkey",
+      "KSA": "[tr] Saudi Arabia"
+    },
+    "years": "[tr] Years of experience",
+    "languages": "[tr] Languages",
+    "entity": "[tr] Works as",
+    "legalName": "[tr] Legal name",
+    "taxNumber": "[tr] Tax number",
+    "joined": "[tr] Joined",
+    "submittedAt": "[tr] Sent for review",
+    "decidedAt": "[tr] Last decision",
+    "approvedAt": "[tr] First approved",
+    "approvedName": "[tr] Approved as: {name}",
+    "bio": "[tr] Bio",
+    "suspensionReason": "[tr] Suspension reason",
+    "documents": "[tr] Documents: check each one by hand",
+    "noDocuments": "[tr] No documents uploaded yet.",
+    "idTitle": "[tr] ID card or residence permit",
+    "optional": "[tr] Optional",
+    "show": "[tr] Show {what}",
+    "openPdf": "[tr] Open the PDF",
+    "imageAlt": "[tr] {what}, as uploaded",
+    "validUntil": "[tr] Valid until",
+    "validUntilShown": "[tr] Valid until {date}",
+    "match": "[tr] Mark as matching",
+    "matchHint": "[tr] Show the file first.",
+    "rejectReason": "[tr] Reason to reject (the provider sees it)",
+    "note": "[tr] Note (optional)",
+    "reject": "[tr] Reject this document",
+    "reviewed": "[tr] {done} of {total} required documents reviewed",
+    "fileNote": "[tr] Note on the file (the provider sees it)",
+    "fileChip": "[tr] Reason for the file (optional)",
+    "approve": "[tr] Approve the file",
+    "rejectFile": "[tr] Reject the file",
+    "approveHint": "[tr] Approve opens when every required document, the photo included, is matched and in date.",
+    "actions": "[tr] ACTIONS",
+    "suspend": "[tr] Suspend the account",
+    "suspendTitle": "[tr] Suspend this provider?",
+    "suspendBody": "[tr] A suspended provider cannot apply to new requests. They see the reason you write, as written.",
+    "suspendReason": "[tr] Reason (required, the provider sees it)",
+    "suspendConfirm": "[tr] Suspend",
+    "lift": "[tr] Lift the suspension",
+    "liftTitle": "[tr] Lift the suspension?",
+    "liftBody": "[tr] The provider goes back to approved. The reason is kept in the audit log.",
+    "liftConfirm": "[tr] Lift",
+    "cancel": "[tr] Cancel",
+    "docStatus": {
+      "pending": "[tr] Not reviewed",
+      "approved": "[tr] Matching",
+      "rejected": "[tr] Rejected"
+    },
+    "errors": {
+      "forbidden": "[tr] You no longer have admin access.",
+      "unauthorized": "[tr] Your session ended. Sign in again.",
+      "not_found": "[tr] This provider or document no longer exists.",
+      "validation_failed": "[tr] Check the fields and try again.",
+      "not_under_review": "[tr] This file is no longer under review. The page was refreshed.",
+      "stale_document": "[tr] This file was replaced. The page was refreshed: show it again.",
+      "view_required": "[tr] Show the file before you mark it.",
+      "valid_until_required": "[tr] Enter the valid until date.",
+      "valid_until_invalid": "[tr] The date must be after today and at most 15 years ahead, and only the ID and the record take one.",
+      "reason_required": "[tr] Choose a reason, or write a note on the file.",
+      "documents_not_reviewed": "[tr] Every required document must be matched and in date first.",
+      "stale_profile": "[tr] The provider changed their profile. The page was refreshed: check it again.",
+      "file_missing": "[tr] A file is missing from storage. It cannot be shown or approved.",
+      "not_approved": "[tr] Only an approved provider can be suspended.",
+      "not_suspended": "[tr] This provider is not suspended.",
+      "reason_short": "[tr] Write a reason of 5 to 500 characters.",
+      "action_failed": "[tr] Something went wrong. Nothing changed. Please try again."
+    }
   }
 }

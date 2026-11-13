@@ -270,7 +270,7 @@ max_frequency = "1s"
 # Fixed test numbers and codes, local only. `supabase config push` is blocked by the bash guard so they
 # can never reach the cloud (spec 0005 AC-25). The wrapper resets the database before e2e, because no
 # role may delete an account, and each test in each project has its own number (e2e/numbers.ts).
-# 90555 + a project digit (1 ar, 2 tr, 3 en) + 000 + a test number. 905559... are for trying things by hand.
+# 90555 + a project digit (1 ar, 2 tr, 3 en) + 0000 + a two digit test number (01 is 000001). 905559... are for trying things by hand.
 [auth.sms.test_otp]
 905551000001 = "123456"
 905551000002 = "123456"
@@ -299,6 +299,22 @@ max_frequency = "1s"
 905553000007 = "123456"
 905553000008 = "123456"
 905553000009 = "123456"
+# Position 02 (spec 0006): the last part is two digits from 10 on (e2e/numbers.ts).
+905551000010 = "123456"
+905551000011 = "123456"
+905551000012 = "123456"
+905551000013 = "123456"
+905551000014 = "123456"
+905552000010 = "123456"
+905552000011 = "123456"
+905552000012 = "123456"
+905552000013 = "123456"
+905552000014 = "123456"
+905553000010 = "123456"
+905553000011 = "123456"
+905553000012 = "123456"
+905553000013 = "123456"
+905553000014 = "123456"
 905559000001 = "123456"
 905559000002 = "123456"
 905559000003 = "123456"

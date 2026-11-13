@@ -4,7 +4,10 @@ import type { Role } from '@/lib/auth/roles';
 
 /** The role menu: only pages that exist (D99). A later position adds its own row with its page. */
 
-export type MenuItem = { key: 'requests' | 'newRequest' | 'dashboard' | 'profile' | 'account'; href: string };
+export type MenuItem = {
+  key: 'requests' | 'newRequest' | 'dashboard' | 'profile' | 'account' | 'providers';
+  href: string;
+};
 
 const MENUS: Readonly<Record<Role, readonly MenuItem[]>> = {
   customer: [
@@ -17,8 +20,10 @@ const MENUS: Readonly<Record<Role, readonly MenuItem[]>> = {
     { key: 'profile', href: '/provider/profile' },
     { key: 'account', href: '/account' },
   ],
+  // Spec 0006 AC-13: built pages only. Later positions add their rows.
   admin: [
     { key: 'dashboard', href: '/admin' },
+    { key: 'providers', href: '/admin/providers' },
     { key: 'account', href: '/account' },
   ],
 };

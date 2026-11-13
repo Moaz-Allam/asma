@@ -11,6 +11,10 @@ import { TEST_CODE, WRONG_CODE, testPhone } from './numbers';
  */
 
 async function axe(page: Page) {
+  // A button fades from disabled when the page hydrates; scan the settled page, not a frame of the fade.
+  await page.evaluate(() =>
+    Promise.allSettled(document.getAnimations().map((animation) => animation.finished)),
+  );
   const scan = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
@@ -98,6 +102,8 @@ test('a provider link preselects the role, and one phone keeps one role', async 
 
   await finishOnboarding(page, 'Mehmet Demir');
   await expect(page).toHaveURL(new RegExp(`/${locale}/provider/profile$`));
+  // Step 1 of spec 0006 is a form: scan once it has hydrated and its Save button is live.
+  await expect(page.locator('form button[type="submit"]')).toBeEnabled();
   await axe(page);
 
   await page.goto(`/${locale}/requests`);

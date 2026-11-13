@@ -304,9 +304,24 @@ function redactPath(path: string): string {
 // `scheme://` and the authority of an absolute URL: everything up to the path, query or fragment.
 const SCHEME_AND_AUTHORITY = /^([a-z][a-z0-9+.-]*:\/\/)([^/?#]*)/i;
 
+// A Storage object route: `/storage/v1/object/`, any route words (`sign`, `public`, `authenticated`,
+// `upload/sign`, `info`, `list`), then the bucket. Everything after the bucket is an object name, which
+// holds a provider id and a document type (spec 0006 AC-24), so it goes.
+const ROUTE_WORD = '(?:sign|public|authenticated|upload|info|list|render|image)';
+const STORAGE_OBJECT = new RegExp(
+  `^(.*?\\/storage\\/v1\\/object\\/(?:${ROUTE_WORD}\\/)*(?!${ROUTE_WORD}(?:\\/|$))[^/]+)\\/.*$`,
+  's',
+);
+
+/** Cuts a Storage object URL after its bucket; any other path is returned as it was. */
+function cutStoragePath(path: string): string {
+  const match = STORAGE_OBJECT.exec(path);
+  return match ? (match[1] ?? path) : path;
+}
+
 /**
  * Keeps only the allowed parameters (D85), drops every fragment and any credentials, and redacts
- * emails and IPs in the path. The host stays as it is: it is our server, even when it is an IP address
+ * emails and IPs in the path. A Storage object URL is cut after its bucket, with no parameter. The host stays as it is: it is our server, even when it is an IP address
  * (local, e2e). Absolute or relative. `&` and `;` both separate parameters.
  */
 export function scrubUrl(url: string): string {
@@ -317,7 +332,13 @@ export function scrubUrl(url: string): string {
   const origin = authority ? `${scheme}${hostPart.slice(hostPart.lastIndexOf('@') + 1)}` : '';
   const rest = withoutFragment.slice(prefix.length);
   const q = rest.indexOf('?');
-  const path = origin + redactPath(q === -1 ? rest : rest.slice(0, q));
+  const rawPath = q === -1 ? rest : rest.slice(0, q);
+  const storagePath = cutStoragePath(rawPath);
+  // A Storage URL keeps no parameter at all: a signed link's token is its key.
+  if (storagePath !== rawPath || /\/storage\/v1\/object\//.test(rawPath)) {
+    return origin + redactPath(storagePath);
+  }
+  const path = origin + redactPath(rawPath);
   if (q === -1) return path;
   const kept = rest
     .slice(q + 1)

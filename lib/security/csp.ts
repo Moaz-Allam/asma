@@ -25,6 +25,15 @@ export const CSP_REPORT_PATH = '/api/csp';
 /** Where the Turnstile script and widget live (spec 0005 AC-23). */
 export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
 
+/** The Supabase origin alone, for signed Storage links in `<img>` (spec 0006 AC-25). */
+function supabaseOrigin(supabaseUrl: string): string[] {
+  try {
+    return [new URL(supabaseUrl).origin];
+  } catch {
+    return [];
+  }
+}
+
 function supabaseSources(supabaseUrl: string): string[] {
   try {
     const url = new URL(supabaseUrl);
@@ -43,7 +52,9 @@ export function buildCsp(nonce: string, { dev, supabaseUrl, reportUri }: CspOpti
     ['script-src', ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", ...(dev ? ["'unsafe-eval'"] : [])]],
     // Style attributes need 'unsafe-inline', and a nonce here would cancel it, so there is none.
     ['style-src', ["'self'", "'unsafe-inline'"]],
-    ['img-src', ["'self'", 'blob:', 'data:']],
+    // A photo or a document shown from a signed Storage link (spec 0006 AC-25): the Supabase origin, never
+    // ours, so a file can never run on our origin. Nothing else changes.
+    ['img-src', ["'self'", 'blob:', 'data:', ...supabaseOrigin(supabaseUrl)]],
     // next/font serves the fonts from our own origin.
     ['font-src', ["'self'"]],
     // Sentry's tunnel and PostHog's relay are same origin (/api/e, /api/a).

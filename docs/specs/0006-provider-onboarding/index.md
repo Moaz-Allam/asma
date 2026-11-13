@@ -420,11 +420,11 @@ Document: `pending` to `approved` or `rejected` by admin, and back and forth whi
 | --- | --- | --- | --- | --- | --- |
 | `saveProviderProfile` in `actions/provider.ts` | Server Action | entity fields, `bio`, `years`, `languages` | `backToReview` | `['provider']` | `validation_failed`, `contact_info_in_bio`, `provider_suspended` |
 | `acceptDocsConsent` | Server Action | none | ok | `['provider']` | `provider_suspended` |
-| `uploadProviderFile` in `lib/storage/client.ts` | Browser to Storage | `type`, `File` | `path` | session | `file_too_large`, `file_type_refused`, `upload_refused`, `network` |
-| `registerDocument` | Server Action | `type`, `path` | document row | `['provider']` | `file_missing`, `file_type_refused`, `provider_suspended` |
-| `submitProviderFile` | Server Action | none | `status`, `missing` | `['provider']` | `file_incomplete`, `file_missing`, `provider_suspended` |
+| `uploadProviderFile` in `lib/storage/client.ts` | Browser to Storage | `type`, `File` | `path` | session | `file_too_large`, `file_type_refused`, `image_unreadable`, `upload_refused`, `network` |
+| `registerDocument` | Server Action | `type`, `path` | document row | `['provider']` | `file_missing`, `file_type_refused`, `file_too_large`, `provider_suspended` |
+| `submitProviderFile` | Server Action | none | `status`, `incomplete` (`code` and every type needing work: missing, rejected, objects missing) | `['provider']` | `file_incomplete`, `file_missing`, `provider_suspended` |
 | `reviewDocuments` in `actions/admin-providers.ts` | Server Action | `providerId`, `ids`, `objectIds`, `verdict`, `code`, `note`, `validUntil` | ok | `['admin']` | `not_under_review`, `stale_document`, `view_required`, `valid_until_required`, `valid_until_invalid`, `reason_required` |
-| `decideProvider` | Server Action | `providerId`, `decision`, `seenUpdatedAt`, `code`, `note` | `status` | `['admin']` | `not_under_review`, `documents_not_reviewed`, `reason_required`, `stale_profile`, `file_missing` |
+| `decideProvider` | Server Action | `providerId`, `decision`, `seenUpdatedAt`, `code`, `note` | `status`, `replayed` | `['admin']` | `not_found`, `not_under_review`, `documents_not_reviewed`, `reason_required`, `stale_profile`, `file_missing` (approve only) |
 | `suspendProvider`, `reinstateProvider` | Server Action | `providerId`, `reason` | `status` | `['admin']` | `not_approved`, `not_suspended`, `validation_failed` |
 | `showDocument` | Server Action | `documentId`, `objectId` | signed link | `['admin']` | `stale_document`, `file_missing` |
 | `updateAccount` (exists) | Server Action | `fullName` | `done`, `backToReview` | any role | adds `provider_suspended` |
@@ -577,6 +577,28 @@ new door) and a position section that overrides `providers` and `provider_docume
 `ui-registry.md`; `ui-tokens.md` §4 (the three new chips); `docs/design/README.md` (`p4` moves to 05, `p7` and `a1` lose the bank rows); `library-docs.md`
 (Storage facts, including the real error responses and `storage.protect_delete()`); `build-plan.md` (row 02 links this spec, row 05 gains `p4`); the
 tracker's decision log, risks and owner steps.
+
+## Review fixes (2026-11-11)
+
+From the three reviews of 2026-11-11, in migration `20261111120000_provider_onboarding_review_fixes` (D127 to D129). Where
+this list and an AC above differ, this list wins.
+
+- **AC-12, AC-23 (D127):** `provider.company_changed` keeps `tax_number_last4`, never the full tax number, in old and new.
+- **AC-16 (D128), accepted risk:** the 60 seconds is the lifetime our action asks for. Storage takes `expiresIn` from whoever
+  signs, so an admin token holding a fresh view row could sign a longer link. Accepted by the owner; revisit before G3.
+  After 55 seconds a shown PDF swaps its link back for Show, which writes one more view row.
+- **AC-22:** a trigger on `storage.objects` runs `provider_store_allowed` at the real insert for the `authenticated` and
+  `service_role` roles, because a signed upload URL is checked when it is made and written later as `service_role`, past RLS.
+- **AC-14, AC-15:** every admin function answers `not_found` for a draft provider, a direct RPC call included, and `forbidden`
+  on the admin's own `providers` row. `provider_can_apply` also needs `profiles.role = 'provider'`.
+- **AC-21:** the admin policies of positions 00 and 01 read `is_admin()` too; no policy reads `app_metadata`. `decided_by` and
+  `reviewed_by` are outside the column grants, for providers and admins alike (`audit_log` names who decided).
+- **AC-6:** only a version starting `provider-docs-` counts as the documents consent.
+- **AC-18:** `file_missing` blocks approve only; a lost required object is a reason to reject. A replay answers
+  `replayed: true`, and `provider_decided` fires only when it is false.
+- **AC-12:** any file added while approved asks first in a `ConfirmDialog`, a first upload of a missing card too.
+- **AC-5, AC-13, AC-15, AC-20:** a card's chip says uploading during an upload; the phone tab bar carries the pending count;
+  the admin file shows the region by name, valid until dates formatted, and the chip from `provider_standing()`.
 
 ## Consequences
 

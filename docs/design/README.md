@@ -106,12 +106,12 @@ owner where its design comes from (`/architect`); this table is the default answ
 | Screen | What | Page | Position |
 | --- | --- | --- | --- |
 | `p1` | Provider sign-up: phone OTP, «طلبات مسبقة الدفع!», what you will pay | provider sign-up | 01, 02 |
-| `p2` | Complete the profile, step 1 of 3, the approval gate stated up front | `/provider/profile` | 02 |
-| `p3` | Verification: ID, liveness selfie, criminal record; three upload states | `/provider/profile` | 02 |
-| `p4` | Services, districts, availability | `/provider/profile` | 02 |
+| `p2` | Complete the profile, step 1 of 2 (`p4` moved to 05, D111), the approval gate stated up front; no past work photos | `/provider/profile` | 02 |
+| `p3` | Verification: ID, selfie, criminal record, optional certificate; upload states; no ID number shown | `/provider/profile/documents` | 02 |
+| `p4` | Services, districts, availability (moved from 02, D111) | `/provider/profile` | 05 |
 | `p5` | Under review: requests visible but locked | `/provider` | 02 |
 | `p6` | Work dashboard: one list of what needs action, most urgent first | `/provider` | 05, 10, 11 |
-| `p7` | My profile, with the customer-facing preview | `/provider/profile` | 02, 19 |
+| `p7` | My profile, with the customer-facing preview (02 builds photo, name, chips, status card; no bank card, D87) | `/provider/profile` | 02, 19 |
 | `p8` | Apply on a request: free, no price field, live message scanning | `/provider/feed/[id]` | 05 |
 | `p9` | Wallet: balances, withdrawal, ledger filters | `/provider/earnings` | 15 |
 | `p10` | Available requests, short details only | `/provider/feed` | 05 |
@@ -138,7 +138,7 @@ owner where its design comes from (`/architect`); this table is the default answ
 | `app-07` | Settings: fees, commission, windows | `/admin/settings` | 03, 16 |
 | `app-08` | Reports | `/admin/reports` | 16 |
 | `app-09` | Leakage watchlist: providers with many unlocks and few releases | in the brief (admin), no route in §12 yet | 16, 19 |
-| `a1` | Provider file: lifecycle, derived metrics (read only), documents, admin actions | `/admin/providers/[id]` | 02, 19 |
+| `a1` | Provider file: lifecycle, derived metrics (read only), documents, admin actions (02 builds the documents and decide, suspend, lift; no bank row, D87) | `/admin/providers/[id]` | 02, 19 |
 | `a2` | Provider actions: suspend, rating invitation, legacy import | `/admin/providers/[id]` | 02, 19 |
 | `a3` | Admin cancel or refund: attribution, outcome, ledger preview | `/admin/requests/[id]` | 12, 16 |
 | `a4` | Errors and empty states: 404, empty queue, PSP reconciliation error | various | each owning position |

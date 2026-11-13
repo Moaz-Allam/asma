@@ -54,19 +54,19 @@ Cross-feature building blocks. Path: `components/shared/`.
 | Component | Purpose | Spec (from the design) | Design ref | Status | RTL |
 | --- | --- | --- | --- | --- | --- |
 | `MoneyDisplay` | Money from server minor units + currency. **Never computes.** LTR-isolated, tabular figures | **`font-display`** always (Cairo has no `₺`); sizes: inline, row, XL 72px / L 66px with a smaller currency sign | s4, s7, p8, p9 | ✅ done (`components/shared/MoneyDisplay.tsx`, `lib/format/money.ts`) | ✅ |
-| `StatusChip` | Request and provider status from the canonical state machines. One definition, reused (was `StatusBadge`) | Pill 12px Cairo 700 `py-1.5 px-3`, colours from `ui-tokens.md` §4 only («ملغى» on `success-light`, «مرفوض» on `error-light`, D59) | s10, s15, p6, app-02, app-03 | 📋 planned | — |
+| `StatusChip` | Request and provider status from the canonical state machines. One definition, reused (was `StatusBadge`) | Pill 12px Cairo 700 `py-1.5 px-3`, colours from `ui-tokens.md` §4 only («ملغى» on `success-light`, «مرفوض» on `error-light`, D59) | s10, s15, p6, app-02, app-03 | ✅ built (02, §9) | — |
 | `Chip` | Static info chip and the verified chip | Pill 12px 700, `bg-surface-secondary` or `bg-accent-light` («موثّق») | s6, p10 | 📋 planned | — |
-| `ChoiceChips` | Single choice as a row of pills (property type, rooms, slots) | Radio group; 50px pills, 14px 700, `py-3 px-5`; selected `bg-accent text-accent-foreground`, else `bg-surface-secondary` | s4, s18, p4, app-06 | 📋 planned | — |
-| `Stepper` | Flow progress in the header | Current step navy pill 13px 600 `py-2 px-4`; others `text-text-secondary`, «›» separators (mirror) | s4, s5, s7 | 📋 planned | — |
+| `ChoiceChips` | Single choice as a row of pills (property type, rooms, slots) | Radio group; 50px pills, 14px 700, `py-3 px-5`; selected `bg-accent text-accent-foreground`, else `bg-surface-secondary` | s4, s18, p4, app-06 | ✅ built (02, §9) | — |
+| `Stepper` | Flow progress in the header | Current step navy pill 13px 600 `py-2 px-4`; others `text-text-secondary`, «›» separators (mirror) | s4, s5, s7 | ✅ built (02, §9) | — |
 | `PageHeader` | Page title + explanation + optional actions | h1 44px Alexandria 900 (-0.04em) + 13–15px `text-text-secondary` | every page | ✅ done (`components/shared/PageHeader.tsx`, no actions slot yet) | ✅ |
 | `Panel` | The four card kinds of `ui-rules.md` §15 | tinted · emphasis · inverse · white, by `variant` | everywhere | 📋 planned | — |
 | `EmptyState` | Big lead + title + next action | Lead in Alexandria 900, one sentence, one or two pills | s17, p17, a4 | ✅ done | ✅ |
-| `ErrorState` | Plain-language error + retry; says what stayed safe | Same shape as `EmptyState` | s17, p17, a4 | 📋 planned | — |
+| `ErrorState` | Plain-language error + retry; says what stayed safe | Same shape as `EmptyState` | s17, p17, a4 | ✅ built (02, §9) | — |
 | `LoadingSkeleton` | Layout-matching skeleton | Tinted blocks in the card shapes | — | 📋 planned | — |
-| `ConfirmDialog` | Destructive or money action; states consequence + amount | White dialog `rounded-panel shadow-overlay`, the amount in `MoneyDisplay`, block pills | s9 (dispute), p8, p9 | 📋 planned | — |
+| `ConfirmDialog` | Destructive or money action; states consequence + amount | White dialog `rounded-panel shadow-overlay`, the amount in `MoneyDisplay`, block pills | s9 (dispute), p8, p9 | ✅ built (02, §9) | — |
 | `DeadlineDisplay` | Absolute time + relative hint, from server time | Inline text; the countdown card for live windows | s9, p11 | 📋 planned | — |
 | `CountdownCard` | A running window in big digits | `19:24:08` Alexandria 900 ~72px in an emphasis panel, the deadline under it | p11 | 📋 planned | — |
-| `FormField` | Label + control + inline error | Label 13px Cairo 600 `text-text-secondary` above; field per `ui-rules.md` §19 | s4, p2 | 📋 planned | — |
+| `FormField` | Label + control + inline error | Label 13px Cairo 600 `text-text-secondary` above; field per `ui-rules.md` §19 | s4, p2 | ✅ built (02, §9) | — |
 | `InitialAvatar` | A person without a photo | Circle, initial in Alexandria 700, `bg-accent-light` (40px nav, 56px cards) | s6, s7, s9 | ✅ done, 40px; first grapheme through `lib/account/initial.ts` | ✅ |
 | `RatingStars` | Choose 1–5 per dimension | Five 44px circles `bg-accent-muted` with ★, selected `bg-accent` | s9, s16 | 📋 planned | — |
 | `PhoneField` / `CodeField` | Phone sign-in and the one-time code (D55) | Phone field with the region prefix (`+90` in v1); code as **six** digit boxes (the design draws four), resend countdown | s2, p1 | ✅ done (`components/features/auth/`); `BotCheck` and `LoginForm` beside them, `Function` free | ✅ |
@@ -125,10 +125,10 @@ Domain components. Path: `components/features/<domain>/`.
 | --- | --- | --- | --- | --- | --- |
 | `ProviderSignup` | Phone, then what the provider will pay and how it works | p1 | 📋 planned | — | Inverse hero panel «طلبات مسبقة الدفع!» |
 | `ProviderRegistrationForm` | Profile, step 1 of 3 | p2 | 📋 planned | — | |
-| `DocumentUpload` | ID, selfie, criminal record; three states | p3 | 📋 planned | — | Private bucket; signed URLs |
+| `DocumentUpload` | ID, selfie, criminal record; three states | p3 | ✅ built (02, §9) | — | Private bucket; signed URLs |
 | `ZoneSelector` | Districts (choice chips) | p4 | 📋 planned | — | |
 | `AvailabilityEditor` | Schedule | p4 | 📋 planned | — | |
-| `AccountStateBanner` | Under review, rejected, suspended, document expired | p5, p14 | 📋 planned | — | |
+| `AccountStateBanner` | Under review, rejected, suspended, document expired | p5, p14 | ✅ built (02, §9) | — | |
 
 ### Notifications
 
@@ -141,7 +141,7 @@ Domain components. Path: `components/features/<domain>/`.
 
 | Component | Purpose | Design ref | Status | RTL | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `AdminRail` | Navy rail with views and count badges | app-01 … app-09 | 📋 planned | — | White items, active on a light pill |
+| `AdminRail` | Navy rail with views and count badges | app-01 … app-09 | ✅ built (02, §9) | — | White items, active on a light pill |
 | `AdminTable` | Tables of the console | app-02, app-03, app-04 | 📋 planned | — | Header row `bg-surface-secondary`; stacked cards on phones |
 | `ActionQueue` | "Needs action" list on the dashboard | app-01, a5 | 📋 planned | — | |
 | `StatCard` | Counts and held amounts | app-01, app-08 | 📋 planned | — | Amounts via `MoneyDisplay` |
@@ -330,3 +330,81 @@ Muted:     text-sm text-text-muted
 Notes: logical properties only — no `ml-`/`pr-`/`left-`/`text-left` anywhere, so the
 layout flips with the locale for free. Every colour is a semantic token; every string
 comes from `messages/`. Placeholder content; the real landing is design screen `s1` (no position yet).
+
+## 9. Built in position 02 (spec 0006, 2026-11-10)
+
+RTL: every piece uses logical properties only (`lint:rtl` clean); a visual pass in `ar` is owed to
+`/check verify`, so each row says ⬜ until then. Frames read from the live Claude Design project (`p2`,
+`p3`, `p5`, `p7`, `p14`; `app-03`, `a1`, `a2`, `a4` from the admin export, which matches live).
+
+### StatusChip
+**Path:** components/shared/StatusChip.tsx · **Used by:** provider header, queue rows, document cards · **Design ref:** p5, app-03 · **RTL checked:** ⬜
+```
+Pill:     inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-chip whitespace-nowrap
+waiting:  bg-warning-light text-warning-foreground   (pending, approved: D59)
+negative: bg-error-light text-error-foreground       (rejected, suspended, document_expired)
+neutral:  bg-surface-secondary text-text-primary     (draft, not started)
+info:     bg-accent-light text-text-primary          (review reason, matching)
+```
+The label always names the state. `STANDING_TONE` in `components/features/provider/StandingChip.tsx` is the one standing mapping.
+
+### ChoiceChips · ToggleChips
+**Path:** components/shared/ChoiceChips.tsx, ToggleChips.tsx · **Used by:** step 1 (entity type, languages) · **Design ref:** p2 · **RTL checked:** ⬜
+```
+Pill:     inline-flex min-h-11 cursor-pointer items-center rounded-full px-5 py-3 text-btn-sm
+Selected: bg-accent text-accent-foreground   (ToggleChips adds a Check icon, so never colour alone)
+Else:     bg-surface-secondary text-text-primary
+Focus:    has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring
+```
+Real radio and checkbox inputs, `sr-only`, inside a `fieldset` with a `legend`.
+
+### Stepper
+**Path:** components/shared/Stepper.tsx · **Used by:** steps 1 and 2 · **Design ref:** p2, p3 · **RTL checked:** ⬜
+```
+Step:     inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 py-2 (text-body-s font-semibold)
+current:  bg-accent text-accent-foreground (aria-current="step") · done: bg-surface-secondary + Check · next: text-text-secondary
+Separator: › with rtl:-scale-x-100
+```
+
+### ConfirmDialog
+**Path:** components/shared/ConfirmDialog.tsx · **Used by:** replace on an approved file, company change, rename, suspend, lift · **Design ref:** a2 · **RTL checked:** ⬜
+```
+Overlay: fixed inset-0 z-40 bg-surface-inverse/40
+Content: fixed inset-x-4 top-1/2 z-50 mx-auto flex max-w-md -translate-y-1/2 flex-col gap-4 rounded-panel bg-surface p-6.5 shadow-overlay
+Title:   font-display text-title-s text-text-primary · Body: text-body-s text-text-secondary
+Buttons: Button lg (flex-1) + Button lg secondary
+```
+Radix Dialog from `radix-ui`; `children` holds a field (the suspension reason).
+
+### ErrorState · PageSkeleton · FormField · Textarea
+**Paths:** components/shared/ErrorState.tsx, PageSkeleton.tsx, FormField.tsx, components/ui/textarea.tsx · **RTL checked:** ⬜
+```
+ErrorState:  role=alert, EmptyState's shape on bg-error-light (rounded-card px-6.5 py-12 text-center)
+PageSkeleton: role=status, animate-pulse blocks bg-surface-secondary (rounded-row, rounded-panel)
+FormField:   Label above, control, note text-meta text-text-secondary, error text-meta text-error with id `${id}-error`
+Textarea:    Input's classes with min-h-24 py-4
+```
+
+### Provider onboarding (feature)
+**Paths:** components/features/provider/{OnboardingFrame,ProfileForm,DocumentsStep,FileProgress,StandingChip,AccountStateBanner,ProviderProfileView}.tsx, use-provider-upload.ts · **Used by:** /provider, /provider/profile, /provider/profile/documents · **Design ref:** p2, p3, p5, p7, p14 · **RTL checked:** ⬜
+```
+Frame grid:   grid items-start gap-3.5 lg:grid-cols-[1.5fr_1fr]; aside lg:sticky lg:top-4
+Gate line:    rounded-block bg-accent-light p-5 + chip rounded-full bg-accent px-4.5 py-2 text-chip text-accent-foreground
+Progress:     rounded-panel bg-surface-secondary p-6.5; bar h-3 rounded-full bg-track, fill bg-accent; role=progressbar
+Doc card:     rounded-block p-5 lg:p-6.5 border-2 (border-border; uploaded border-accent-light bg-surface-secondary; missing at submit border-error)
+Photo:        size-26 rounded-full overflow-hidden bg-surface-secondary, plain <img>
+Status panel: rounded-panel bg-accent-light p-6.5 lg:p-9, title font-display text-title
+```
+File inputs are `sr-only` with `tabIndex=-1` and an `aria-label`; a pill button opens them, so the keyboard reaches one control per file. Images show through a plain `<img>` (never `next/image`: its optimizer would fetch a signed link).
+
+### Admin console (feature)
+**Paths:** components/features/admin/{AdminShell,AdminRail,ProviderQueue,ProviderFileReview}.tsx · **Used by:** /admin, /admin/providers, /admin/providers/[id] · **Design ref:** app-03, a1, a2, a4 · **RTL checked:** ⬜
+```
+Rail:        hidden w-64 shrink-0 flex-col gap-8 bg-surface-inverse px-5 py-7 text-text-inverse lg:flex
+Rail item:   flex min-h-11 items-center gap-3 rounded-row px-4 py-3 text-nav; active bg-accent-light font-extrabold text-text-primary
+Count badge: min-w-7 rounded-full bg-surface px-2 py-0.5 text-chip text-text-primary
+Queue tabs:  inline-flex min-h-11 rounded-full px-5 py-3 text-btn-sm (active bg-accent text-accent-foreground)
+Queue row:   flex items-center gap-3.5 rounded-block border-2 p-4.5 (current border-accent)
+File:        rounded-panel border-2 border-border p-5.5 lg:p-7; facts dl grid sm:grid-cols-2
+```
+Below `lg` the header and `BottomTabBar` (dashboard, providers, account) replace the rail, and the queue is hidden on the file page.

@@ -45,6 +45,8 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 - 2026-10-31 · **01 part 1 merged** (PR #22, `09a7501`). Its real calls (AC-26) and reviews are still owed.
 - 2026-11-01 · **01 part 2 built** on `feat/01b-landing-seo-account`, committed 2026-11-10 and not pushed: landing page, SEO,
   full account. Its migration is already in the cloud (checked 2026-11-10).
+- 2026-11-10 · **02 built** (spec 0006) on `feat/02-provider-onboarding`, cut from 01 part 2, not committed: provider
+  onboarding, admin review, suspend. Its migration is already in the cloud (owner push 2026-11-10). Reviews and real calls owed.
 
 ## Stack (pinned exactly)
 
@@ -90,7 +92,7 @@ from gate G3 (Hobby forbids commercial use) · an uptime monitor (Q3) · GitHub 
 | `npm run lint:rtl` | Fails on physical direction classes (`ml-`, `text-left`, …) with replacements |
 | `npm run format` / `npm run format:check` | Prettier write / check (Markdown excluded) |
 | `npm test` | Vitest: unit, lint rule, and harness tests |
-| `npm run test:e2e` | Playwright through `scripts/e2e.mjs`: resets the local database, 390px, `ar` + `tr` + `en`. `node scripts/e2e.mjs --reuse-build --serve` serves that build on the local stack (`asma-local`); `--indexable` builds and serves with the indexing switch on (`asma-indexable`) |
+| `npm run test:e2e` | Playwright through `scripts/e2e.mjs`: resets the local database, 390px, `ar` + `tr` + `en`. `node scripts/e2e.mjs --reuse-build --serve` serves that build on the local stack (`asma-local`); `--indexable` builds and serves with the indexing switch on (`asma-indexable`). Needs local Storage: a stack started before 02 must be restarted (`npx supabase stop`), which also loads new test numbers. `E2E_PORT` moves the server off 3100 |
 | `npm run launch:gate` | Run at G3, not in CI: fails while a `[tr]` or `[draft]` marker remains (D100) |
 | `npm run guardrails` | Regression suite for the write guard |
 | `npm run db:test` | pgTAP (`supabase test db`). Needs Docker locally; always runs in CI |
@@ -200,6 +202,7 @@ other module may be named that way.
 | --- | --- | --- |
 | Supabase | `lib/db/` | The service role client (`lib/db/admin.ts`) for webhooks, jobs and the relay only; `createAnonClient()` for machine endpoints; the `Db` type for callers |
 | Auth | `lib/auth/` | Only it calls `supabase.auth`, with one exemption, `lib/db/proxy.ts`, for the session refresh. `getSession()` is banned everywhere. Pages call `guardPage`, Server Actions `guardedAction` |
+| Storage | `lib/storage/` | Only it calls `supabase.storage` (spec 0006 AC-26). `client.ts` checks first bytes, downscales and uploads; `server.ts` signs links and removes, always as the signed in user. Bucket names, limits and the 60 second link live in `buckets.ts` |
 | PSP | `lib/psp/` | Only the outbox relay calls it (rule 3) |
 | Sentry | `lib/observability/` | `next.config.ts` may import only `withSentryConfig` from `@sentry/nextjs/config`. Server: `initServer`, `captureRequestError`, `log`, `raiseAlert`; browser: `initClient`, `reportClientError`, `routerTransitionStart`; routes: `createEnvelopeForwarder` (`/api/e`), `createCspReportForwarder` (`/api/csp`) in `forward.ts` (D83). One scrubber (`scrub.ts`) for every signal, CSP reports included |
 | PostHog | `lib/analytics/` | `initAnalytics`, `track`, `trackPageview`; events typed in `events.ts`, filtered again in `filter.ts`; route: `createPostHogForwarder` (`/api/a/*`) in `forward.ts`, its body parser in `capture-body.ts` (no `server-only`, so e2e runs real SDK bytes through it) (D83) |

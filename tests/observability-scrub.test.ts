@@ -175,6 +175,45 @@ describe('scrubUrl: only utm_* and page stay (D85), every fragment goes', () => 
     expect(scrubUrl('https://x.test/u/ali%40example.com/edit')).toBe('https://x.test/u/[email]/edit');
   });
 
+  // Spec 0006 AC-24: an object name holds a provider id and a document type; a signed link holds a token.
+  it('cuts a Storage URL after its bucket, for every object route', () => {
+    const base = 'https://abc.supabase.co/storage/v1/object';
+    const name = '6f1c2d3e-0000-4000-8000-000000000001/id_front/9a8b7c6d-0000-4000-8000-000000000002.jpg';
+    expect(scrubUrl(`${base}/provider-documents/${name}`)).toBe(`${base}/provider-documents`);
+    expect(scrubUrl(`${base}/sign/provider-documents/${name}?token=eyJhbGciOi.x.y`)).toBe(
+      `${base}/sign/provider-documents`,
+    );
+    expect(scrubUrl(`${base}/authenticated/provider-photos/${name}`)).toBe(
+      `${base}/authenticated/provider-photos`,
+    );
+    expect(scrubUrl(`${base}/public/provider-photos/${name}`)).toBe(`${base}/public/provider-photos`);
+    expect(scrubUrl(`${base}/upload/sign/provider-documents/${name}?token=1`)).toBe(
+      `${base}/upload/sign/provider-documents`,
+    );
+    expect(scrubUrl(`${base}/info/provider-documents/${name}`)).toBe(`${base}/info/provider-documents`);
+    expect(scrubUrl(`${base}/list/provider-documents`)).toBe(`${base}/list/provider-documents`);
+    expect(scrubUrl(`${base}/sign/provider-documents`)).toBe(`${base}/sign/provider-documents`);
+    expect(scrubUrl(`${base}/move`)).toBe(`${base}/move`);
+  });
+
+  it('cuts a local Storage URL too, and one inside a message', () => {
+    expect(scrubUrl('http://127.0.0.1:54421/storage/v1/object/provider-photos/u/profile_photo/x.jpg')).toBe(
+      'http://127.0.0.1:54421/storage/v1/object/provider-photos',
+    );
+    expect(
+      redactMessage(
+        'Failed to load https://abc.supabase.co/storage/v1/object/sign/provider-documents/u/selfie/x.png?token=t',
+      ),
+    ).toBe('Failed to load https://abc.supabase.co/storage/v1/object/sign/provider-documents');
+  });
+
+  it('leaves a page path that only looks like storage alone', () => {
+    expect(scrubUrl('/tr/provider/profile/documents')).toBe('/tr/provider/profile/documents');
+    expect(scrubUrl('https://x.test/storage/v1/bucket/provider-documents')).toBe(
+      'https://x.test/storage/v1/bucket/provider-documents',
+    );
+  });
+
   it('drops every parameter that is not allow listed: names nobody thought of are safe too', () => {
     expect(
       scrubUrl(

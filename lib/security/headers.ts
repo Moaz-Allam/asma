@@ -14,6 +14,7 @@ export const SECURITY_HEADERS: ReadonlyArray<{ key: string; value: string }> = [
   // No framing at all; `frame-ancestors 'none'` in the CSP says the same to modern browsers.
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-  // Position 02 opens camera=(self) if the liveness selfie runs in the browser.
+  // camera=() stays (spec 0006 AC-25): the selfie card's `capture="user"` opens the system camera, which
+  // needs no getUserMedia, so no page of ours ever asks for the camera itself.
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
 ];

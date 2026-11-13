@@ -59,14 +59,15 @@ function localSupabase() {
   let status = run('npx', ['supabase', 'status', '-o', 'json'], process.env, true);
   if (status.status !== 0) {
     console.log('e2e: local Supabase is not running; starting it (needs Docker)…');
-    // Only what the journeys use: Auth, the API gateway, PostgREST and the database.
+    // Only what the journeys use: Auth, the API gateway, PostgREST, Storage (spec 0006 AC-28) and
+    // the database. A stack started before position 02 has no Storage: restart it.
     const start = run(
       'npx',
       [
         'supabase',
         'start',
         '-x',
-        'realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor',
+        'realtime,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor',
       ],
       process.env,
     );
@@ -83,6 +84,13 @@ function localSupabase() {
     process.exit(1);
   }
   const json = JSON.parse(status.stdout.slice(status.stdout.indexOf('{')));
+  // Spec 0006 AC-28: the journeys upload real files. A stack started before position 02 has no Storage.
+  if (!json.STORAGE_S3_URL) {
+    console.error(
+      'e2e: local Storage is not running. Restart the stack: `npx supabase stop`, then run again.',
+    );
+    process.exit(1);
+  }
   const url = json.API_URL;
   const anon = json.ANON_KEY ?? json.PUBLISHABLE_KEY;
   const service = json.SERVICE_ROLE_KEY ?? json.SECRET_KEY;

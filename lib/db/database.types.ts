@@ -1,0 +1,761 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  public: {
+    Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: number
+          new_value: Json | null
+          old_value: Json | null
+          region: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: never
+          new_value?: Json | null
+          old_value?: Json | null
+          region?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: never
+          new_value?: Json | null
+          old_value?: Json | null
+          region?: string | null
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          email_enabled: boolean
+          region: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          email_enabled: boolean
+          region: string
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          email_enabled?: boolean
+          region?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_settings: {
+        Row: {
+          key: string
+          region: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          region: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          region?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_settings_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          email_confirmed_at: string | null
+          full_name: string
+          id: string
+          locale: string
+          phone: string
+          region: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          email_confirmed_at?: string | null
+          full_name: string
+          id: string
+          locale: string
+          phone: string
+          region: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          email_confirmed_at?: string | null
+          full_name?: string
+          id?: string
+          locale?: string
+          phone?: string
+          region?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      provider_documents: {
+        Row: {
+          id: string
+          mime_type: string
+          object_id: string
+          provider_id: string
+          region: string
+          rejection_code: string | null
+          rejection_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          size_bytes: number
+          status: string
+          storage_path: string
+          type: string
+          uploaded_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          id?: string
+          mime_type: string
+          object_id: string
+          provider_id: string
+          region: string
+          rejection_code?: string | null
+          rejection_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          size_bytes: number
+          status?: string
+          storage_path: string
+          type: string
+          uploaded_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          id?: string
+          mime_type?: string
+          object_id?: string
+          provider_id?: string
+          region?: string
+          rejection_code?: string | null
+          rejection_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          size_bytes?: number
+          status?: string
+          storage_path?: string
+          type?: string
+          uploaded_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_documents_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_documents_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      provider_profiles: {
+        Row: {
+          bio: string
+          created_at: string
+          languages: string[]
+          provider_id: string
+          region: string
+          updated_at: string
+          years_experience: number
+        }
+        Insert: {
+          bio: string
+          created_at?: string
+          languages: string[]
+          provider_id: string
+          region: string
+          updated_at?: string
+          years_experience: number
+        }
+        Update: {
+          bio?: string
+          created_at?: string
+          languages?: string[]
+          provider_id?: string
+          region?: string
+          updated_at?: string
+          years_experience?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_profiles_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: true
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_profiles_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      providers: {
+        Row: {
+          approved_at: string | null
+          approved_name: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          entity_type: string | null
+          id: string
+          legal_name: string | null
+          region: string
+          rejection_code: string | null
+          rejection_note: string | null
+          review_reason: string | null
+          status: string
+          submitted_at: string | null
+          suspension_reason: string | null
+          tax_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_name?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          entity_type?: string | null
+          id: string
+          legal_name?: string | null
+          region: string
+          rejection_code?: string | null
+          rejection_note?: string | null
+          review_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          suspension_reason?: string | null
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_name?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          entity_type?: string | null
+          id?: string
+          legal_name?: string | null
+          region?: string
+          rejection_code?: string | null
+          rejection_note?: string | null
+          review_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          suspension_reason?: string | null
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "providers_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "providers_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      regions: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          currency: string
+          default_locale: string
+          dial_code: string
+          psp_provider: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          currency: string
+          default_locale: string
+          dial_code: string
+          psp_provider: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          currency?: string
+          default_locale?: string
+          dial_code?: string
+          psp_provider?: string
+        }
+        Relationships: []
+      }
+      terms_acceptances: {
+        Row: {
+          accepted_at: string
+          id: string
+          locale: string
+          region: string
+          terms_version: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          id?: string
+          locale: string
+          region: string
+          terms_version: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          id?: string
+          locale?: string
+          region?: string
+          terms_version?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terms_acceptances_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "terms_acceptances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      accept_provider_docs_consent: {
+        Args: { p_locale: string }
+        Returns: Json
+      }
+      admin_may_read: {
+        Args: { p_name: string; p_object_id: string }
+        Returns: boolean
+      }
+      check_new_user: { Args: { event: Json }; Returns: Json }
+      complete_onboarding: {
+        Args: {
+          p_accept_terms: boolean
+          p_full_name: string
+          p_locale: string
+          p_role: string
+        }
+        Returns: Json
+      }
+      contact_normalise: { Args: { p_text: string }; Returns: string }
+      decide_provider: {
+        Args: {
+          p_code: string
+          p_decision: string
+          p_note: string
+          p_provider_id: string
+          p_seen_updated_at: string
+        }
+        Returns: Json
+      }
+      has_contact_info: { Args: { p_text: string }; Returns: boolean }
+      health_ping: { Args: never; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
+      log_document_view: {
+        Args: { p_document_id: string; p_object_id: string }
+        Returns: Json
+      }
+      phone_region: { Args: { p_phone: string }; Returns: string }
+      promote_to_admin: { Args: { p_phone: string }; Returns: undefined }
+      provider_back_to_review: {
+        Args: {
+          p_provider: Database["public"]["Tables"]["providers"]["Row"]
+          p_reason: string
+        }
+        Returns: undefined
+      }
+      provider_caller: {
+        Args: never
+        Returns: {
+          approved_at: string | null
+          approved_name: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          entity_type: string | null
+          id: string
+          legal_name: string | null
+          region: string
+          rejection_code: string | null
+          rejection_note: string | null
+          review_reason: string | null
+          status: string
+          submitted_at: string | null
+          suspension_reason: string | null
+          tax_number: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "providers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      provider_can_apply: { Args: { p_provider_id: string }; Returns: boolean }
+      provider_docs_consent_version: {
+        Args: { p_region: string }
+        Returns: string
+      }
+      provider_document_object_exists: {
+        Args: {
+          p_document: Database["public"]["Tables"]["provider_documents"]["Row"]
+        }
+        Returns: boolean
+      }
+      provider_ext_mime: { Args: { p_name: string }; Returns: string }
+      provider_for_admin: {
+        Args: { p_provider_id: string }
+        Returns: {
+          approved_at: string | null
+          approved_name: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          entity_type: string | null
+          id: string
+          legal_name: string | null
+          region: string
+          rejection_code: string | null
+          rejection_note: string | null
+          review_reason: string | null
+          status: string
+          submitted_at: string | null
+          suspension_reason: string | null
+          tax_number: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "providers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      provider_has_docs_consent: {
+        Args: { p_region: string; p_user: string }
+        Returns: boolean
+      }
+      provider_may_store: {
+        Args: { p_bucket: string; p_name: string }
+        Returns: boolean
+      }
+      provider_object_type: {
+        Args: { p_bucket: string; p_name: string }
+        Returns: string
+      }
+      provider_required_types: { Args: { p_region: string }; Returns: string[] }
+      provider_standing: { Args: { p_provider_id: string }; Returns: string }
+      provider_type_bucket: { Args: { p_type: string }; Returns: string }
+      public_region_info: {
+        Args: never
+        Returns: {
+          code: string
+          dial_code: string
+          support_whatsapp: string
+        }[]
+      }
+      register_provider_document: {
+        Args: { p_path: string; p_type: string }
+        Returns: Json
+      }
+      reinstate_provider: { Args: { p_provider_id: string }; Returns: Json }
+      review_provider_documents: {
+        Args: {
+          p_code: string
+          p_ids: string[]
+          p_note: string
+          p_object_ids: string[]
+          p_provider_id: string
+          p_valid_until: string
+          p_verdict: string
+        }
+        Returns: Json
+      }
+      save_provider_profile: {
+        Args: {
+          p_bio: string
+          p_entity_type: string
+          p_languages: string[]
+          p_legal_name: string
+          p_tax_number: string
+          p_years: number
+        }
+        Returns: Json
+      }
+      submit_provider_file: { Args: never; Returns: Json }
+      suspend_provider: {
+        Args: { p_provider_id: string; p_reason: string }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {},
+  },
+} as const
+
