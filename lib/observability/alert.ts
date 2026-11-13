@@ -18,7 +18,11 @@ import type { Region } from '@/lib/region';
  */
 
 /** Every alert reason. 00b defines the first; each money position adds its own. */
-export type AlertReason = 'flag_read_failed';
+export type AlertReason =
+  | 'flag_read_failed'
+  // Spec 0007 AC-8, AC-24: a region's rounding unit or price multiple is missing or malformed, so every quote
+  // in that region refuses. The record is the service id that was being quoted.
+  | 'pricing_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

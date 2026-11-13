@@ -5,7 +5,7 @@ import type { Role } from '@/lib/auth/roles';
 /** The role menu: only pages that exist (D99). A later position adds its own row with its page. */
 
 export type MenuItem = {
-  key: 'requests' | 'newRequest' | 'dashboard' | 'profile' | 'account' | 'providers';
+  key: 'requests' | 'newRequest' | 'dashboard' | 'profile' | 'account' | 'providers' | 'catalog' | 'pricing';
   href: string;
 };
 
@@ -45,6 +45,23 @@ export function activeMenuKey(items: readonly MenuItem[], pathname: string): Men
   }
   return best?.key ?? null;
 }
+
+/**
+ * The console rail from `lg` (spec 0007 AC-16): every admin page that exists. The bottom bar keeps the three
+ * tabs of `menuFor('admin')`, so below `lg` the page `/admin` links to the rest (`ADMIN_LINKS`).
+ */
+export const ADMIN_RAIL: readonly MenuItem[] = [
+  { key: 'dashboard', href: '/admin' },
+  { key: 'providers', href: '/admin/providers' },
+  { key: 'catalog', href: '/admin/catalog' },
+  { key: 'pricing', href: '/admin/pricing' },
+  { key: 'account', href: '/account' },
+];
+
+/** The rail's pages the bottom bar has no tab for, linked from `/admin` below `lg`. */
+export const ADMIN_LINKS: readonly MenuItem[] = ADMIN_RAIL.filter(
+  (item) => !MENUS.admin.some((tab) => tab.key === item.key),
+);
 
 /** The sections of the landing page, in the header and the phone menu (spec 0005 AC-27). */
 export const PUBLIC_ANCHORS = [

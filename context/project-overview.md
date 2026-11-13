@@ -143,9 +143,12 @@ money instead of an error. Each rule names the layer that enforces it, lowest fi
 number everywhere ("rule 3"); `AGENTS.md` carries a one line summary and this text wins.
 
 1. **Price, commission, and fees are computed on the server.** The client sends answers, never a price.
-   `lib/pricing/` (server only) evaluates structured formula rows; the request stores
-   `pricing_snapshot`; a client supplied price is ignored. Enforced by the server action and a tamper
-   test. *Why:* §1, §20; a tampered price loses money on every job.
+   The job price is computed **inside Postgres** by `quote_price`, from structured formula rows and the
+   caller's answers; no function a customer or provider can run takes an amount (D121, spec 0007).
+   `lib/pricing/` (server only) is the app's thin door to it, and 04's `create_request` calls `quote_price`
+   in its own transaction, so no caller can hand a price in. The request stores `pricing_snapshot`.
+   Enforced by the function signatures, a pgTAP meta test on every function an API role can run, and a
+   tamper test with a real token. *Why:* §1, §20; a tampered price loses money on every job.
 2. **Contact details are visible only after both sides have paid, and no provider ever reads another
    provider's data.** RLS on the PII tables requires a `paid` commission and a `paid` provider fee for
    that `(request, provider)`; request status `COMMISSION_PAID` is **not** sufficient. The reveal is
@@ -609,7 +612,17 @@ Formula: base price, `+ per-unit` on `rooms`, `+ per-unit` on `bathrooms`, `× m
 - **Editing a formula never re-prices an existing request**
 - Text and textarea answers can **never** affect price
 - ⛔ **The formula is structured data, never an expression the admin writes. Nothing admin-authored is ever executed as code**
-- The price is always computed **server-side** from the answers; the client sends answers, never a price
+- The price is always computed **server-side** from the answers; the client sends answers, never a price.
+  Since spec 0007 (D121) that is inside Postgres: `quote_price`, with exact `numeric` and one rounding
+
+### What 03 leaves out (D123, the four cuts)
+
+- **Dates and times never price.** A date or time answer cannot move the price, so a weekend surcharge cannot be expressed yet; it
+  needs a new match type later.
+- **A service question adds, never overrides.** A question is asked for every service of its category or for one service, and one key
+  means one thing in a category.
+- **A service stays in its category.** To move one, admin makes a new service and turns the old one off.
+- **No customer form preview in admin.** The test panel on `/admin/pricing` prices sample answers; the customer form arrives with 04.
 
 ---
 

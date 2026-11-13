@@ -1512,6 +1512,33 @@ Flags for: `funding_enabled`, `unlock_enabled`, `payouts_enabled`, `auto_release
 - Stays in 19: the funnel stages of §30 beside `status`, the lifecycle bar, reminders before expiry, the
   acceptance rate, rescanning stored bios.
 
+## 39c. Catalog and pricing engine (position 03, spec 0007)
+
+**Overrides §4 and §19 where they differ** (D121, D123, D125). Migration `catalog_pricing`.
+
+- **Seven tables**, every row in one region, children tied to their parent's region by composite keys:
+  `service_categories`, `services` (hours 1 to 24), `addons` (on a service, minor units), `zones` (multiplier
+  0.50 to 2.00, no `city`), `questions` (on a category, or one service of it; `key` collate "C", unique in the
+  category with retired keys included), `pricing_formulas` (a version per publish, one `active` per service),
+  `pricing_modifiers` (ordered rows, no `active`). Text is localised JSON checked by `catalog_text_ok`; a
+  question's options and validation by `question_shape_ok`. Catalog rows start off and are never deleted.
+- **Writes.** Admin writes the five catalog tables directly, under RLS, on named columns only: no API role
+  updates a region, a parent id, or a question's key and type. `catalog_audit` records every change, the SQL
+  editor's included. `questions_guard` refuses `question_in_use`. Formulas are written only by
+  `publish_pricing_formula` (stale check, `for share` on the questions it reads, `no_changes`), and
+  `pricing_history_guard` refuses any change but `active` true to false, for every role.
+- **The engine is in Postgres** (replaces §19.3's TypeScript pipeline and §19.6's runtime Zod for answers):
+  `pricing_answer_errors` checks answers, `pricing_evaluate` is the pure interpreter (base, each modifier in
+  order, addons, zone, one half up rounding to `price_rounding_minor`, exact `numeric`), `pricing_compute`
+  loads and checks, `quote_price` is the only way a non admin reaches it, and `preview_pricing_formula`
+  prices a draft the same way. The price lies between one unit and `base_price × max_price_multiple`.
+  A missing setting refuses, never defaults.
+- **Doors.** `lib/pricing/` wraps the three functions (`quotePrice` alerts on `pricing_settings_invalid`,
+  logs `price_out_of_range`); `lib/catalog/` holds admin reads, writes, schemas and `localized()`;
+  `lib/money/parse.ts` turns typed text into minor units without a float.
+- **Not here:** the customer read path and `create_request` (04), commission and provider fee (07), the
+  region switch and the settings page (16), date driven pricing.
+
 ## 40. Updated invariants
 
 > **G25 — every global aggregate below is scoped `GROUP BY (region, currency)`. Never bare.**
