@@ -165,21 +165,31 @@ weight), so the design's sizes never need arbitrary values. Pair Alexandria role
 | Hero | `text-hero` | 76px | Alexandria 700 | 1.24 | -0.05em | Landing hero «خلّها علينا» (kashida stretched, as designed) |
 | Price XL | `text-price-xl` | 72px | Alexandria 900 | 1 | -0.05em | The fixed price on the request form (s4), the countdown card |
 | Price L | `text-price-l` | 66px | Alexandria 900 | 1 | -0.05em | Request value (p8) |
-| Display L | `text-display-l` | 48px | Alexandria 900 | 1.24 | -0.045em | Landing section titles (the design varies 46–52px) |
+| Display L | `text-display-l` | 48px | Alexandria 900 | 1.24 | -0.045em | Display titles outside the landing page |
+| Landing titles | `text-close` · `text-quick` · `text-band` · `text-heading` · `text-band-s` | 58 · 56 · 52 · 48 · 46px | Alexandria 900 | 1.24 | -0.045 · -0.05 · -0.045 · -0.04 · -0.045em | `s1`: closing, quick start, offers, prices with categories and FAQ, trust |
 | Page title (h1) | `text-title` | 44px | Alexandria 900 | 1.24 | -0.04em | Every page title |
+| Small title (h1) | `text-title-s` | 38px | Alexandria 900 | 1.24 | -0.02em | `s2` |
+| Amounts | `text-amount` · `text-amount-s` · `text-tile` | 38 · 30 · 24px | Alexandria 900 | 1.15 · 1.05 · 1.15 | 0 | `s1` price cards, sample card, trust cards |
 | Section (h2) | `text-section` | 28px | Alexandria 900 | 1.24 | -0.02em | Section headings |
+| Step title | `text-step` | 25px | Alexandria 800 | 1.24 | -0.02em | `s1` how it works |
+| Code digit | `text-digit` | 26px | Alexandria 900 | 1 | 0 | `s2` code boxes |
 | Card title (h3) | `text-card` | 22px | Alexandria 800 | 1.24 | -0.02em | Card and panel titles |
+| Subhead | `text-subhead` | 20px | Alexandria 800 | 1.24 | -0.02em | `s12` notices |
+| Question | `text-question` | 18px | Cairo 700 | 1.5 | 0 | FAQ question |
+| Sample | `text-sample` | 17px | Cairo 700 | 1.4 | 0 | Sample line in `s1` step cards |
 | Small title | `text-group` | 15px | Alexandria 800 | 1.24 | -0.02em | List group titles, card labels |
 | Body L | `text-body-l` | 16px | Cairo 500 | 1.65 | 0 | Hero and intro paragraphs |
+| Lead | `text-lead` | 16px | Cairo 500 | 1.75 | 0 | Landing band paragraphs |
+| Answer | `text-answer` | 15px | Cairo 400 | 1.9 | 0 | FAQ answer |
 | Body | `text-body` | 15px | Cairo 500 | 1.7 | 0 | Default body, field text |
 | Body S | `text-body-s` | 13px | Cairo 500 | 1.7 | 0 | Descriptions under titles, helper text, field labels (600) |
 | Label | `text-label` | 14px | Cairo 700 | 1.3 | 0 | List rows, strong inline text, choice chips |
 | Meta | `text-meta` | 12px | Cairo 500 | 1.5 | 0 | Timestamps, captions |
 | Chip | `text-chip` | 12px | Cairo 700 | 1.3 | 0 | Status and info chips, count badges |
 | Eyebrow | `text-eyebrow` | 12px | Cairo 700 | 1.3 | +0.06em | Small labels above values («السعر الثابت») |
-| Button sm · md · lg | `text-btn-sm` · `text-btn` · `text-btn-lg` | 13 · 15 · 17px | Cairo 700 | 1 | 0 | By button size (`ui-rules.md` §18; md 13–14px uses `text-btn-sm` or `text-label`) |
+| Button | `text-btn-sm` · `text-btn-nav` · `text-btn` · `text-btn-band` · `text-btn-lg` | 13 · 14 · 15 · 16 · 17px | Cairo 700 | 1.875 (Cairo's normal line height, which the design's pills use) | 0 | By button size (`ui-rules.md` §18; md 13–14px uses `text-btn-sm` or `text-label`) |
 | Nav link | `text-nav` | 15px | Cairo 600 | 1.3 | 0 | Header links, phone tabs |
-| Wordmark | `text-wordmark` | 22px (18px on phones: `text-wordmark-sm`) | Archivo Black | 1.4 | -0.01em | Navbar |
+| Wordmark | `text-wordmark` | 22px (24px on the landing page: `text-wordmark-lg`; 18px on phones: `text-wordmark-sm`) | Archivo Black | 1.4 | -0.01em | Navbar |
 
 Rules:
 
@@ -250,8 +260,9 @@ Never nest more than two radius levels; an inner radius is the outer one minus t
 | `base` | ~200ms | Dropdowns, tooltips |
 | `slow` | ~300ms | Dialogs, sheets |
 
-Ease-out for entrances, ease-in for exits. **Always respect `prefers-reduced-motion`.** The design is
-static; it adds no motion of its own.
+Ease-out for entrances, ease-in for exits. **Always respect `prefers-reduced-motion`.** The design has
+one motion of its own: the two columns of service tiles in `s1` loop in opposite directions over 26s
+(`animate-tiles-up`, `animate-tiles-down`) and pause on hover.
 
 ---
 
@@ -397,9 +408,10 @@ classes in Tailwind 4.3.3).
   --text-meta: 12px; --text-meta--line-height: 1.5; --text-meta--font-weight: 500;
   --text-chip: 12px; --text-chip--line-height: 1.3; --text-chip--font-weight: 700;
   --text-eyebrow: 12px; --text-eyebrow--line-height: 1.3; --text-eyebrow--letter-spacing: 0.06em; --text-eyebrow--font-weight: 700;
-  --text-btn-sm: 13px; --text-btn-sm--line-height: 1; --text-btn-sm--font-weight: 700;
-  --text-btn: 15px; --text-btn--line-height: 1; --text-btn--font-weight: 700;
-  --text-btn-lg: 17px; --text-btn-lg--line-height: 1; --text-btn-lg--font-weight: 700;
+  --text-btn-sm: 13px; --text-btn-sm--line-height: 1.875; --text-btn-sm--font-weight: 700;
+  --text-btn: 15px; --text-btn--line-height: 1.875; --text-btn--font-weight: 700;
+  --text-btn-lg: 17px; --text-btn-lg--line-height: 1.875; --text-btn-lg--font-weight: 700;
+  /* The landing, sign in and account sizes of the table above are in app/globals.css. */
   --text-nav: 15px; --text-nav--line-height: 1.3; --text-nav--font-weight: 600;
   --text-wordmark: 22px; --text-wordmark--line-height: 1.4; --text-wordmark--letter-spacing: -0.01em;
   --text-wordmark-sm: 18px; --text-wordmark-sm--line-height: 1.4; --text-wordmark-sm--letter-spacing: -0.01em;

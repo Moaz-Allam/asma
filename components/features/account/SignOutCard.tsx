@@ -21,9 +21,9 @@ export function SignOutCard() {
   }
 
   return (
-    <section className="flex items-center justify-between gap-4 rounded-card border-2 border-border bg-surface px-5 py-4">
-      <div className="flex flex-col">
-        <h2 className="text-label text-text-primary">{t('signOutTitle')}</h2>
+    <section className="flex items-center gap-3 rounded-card border-2 border-border bg-surface px-6 py-5">
+      <div className="flex flex-1 flex-col">
+        <h2 className="font-sans text-label font-semibold text-text-primary">{t('signOutTitle')}</h2>
         <p className="text-body-s text-text-secondary">{t('signOutNote')}</p>
       </div>
       <Button variant="secondary" disabled={isPending} onClick={onSignOut}>

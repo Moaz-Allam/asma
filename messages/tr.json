@@ -4,11 +4,128 @@
     "tagline": "Ev hizmetleri, fiyatı baştan belli."
   },
   "Landing": {
-    "title": "Aldebyani Home Care",
-    "heading": "Ev hizmetleri, fiyatı baştan belli.",
-    "body": "[tr] Post what you need, choose a provider, and pay them in cash after the job.",
     "cta": "[tr] Post your request",
-    "ctaProvider": "[tr] Register as a provider"
+    "ctaProvider": "[tr] Register as a provider",
+    "heroLine1": "[tr] Leave it",
+    "heroLine2": "[tr] to us.",
+    "heroBody": "[tr] Describe your home, see the price and post your request for free. Providers apply and you choose, at a fixed price.",
+    "heroCta": "[tr] See your price for free",
+    "promise1": "[tr] A fixed price before you post",
+    "promise2": "[tr] You pay nothing until you choose a provider",
+    "promise3": "[tr] The rest goes in cash after the job",
+    "promise4": "[tr] Ratings come from completed jobs only",
+    "howTitle": "[tr] How it works",
+    "step1Title": "[tr] Post your request",
+    "step1Body": "[tr] Answer a few questions and get a fixed price. Posting is free.",
+    "step1Sample": "[tr] 3 rooms + hall",
+    "step1Action": "[tr] See the price",
+    "step2Title": "[tr] Choose an offer",
+    "step2Body": "[tr] Providers apply, and you choose by rating and experience.",
+    "step2Sample": "[tr] 4 offers arrived",
+    "step2Action": "[tr] Compare offers",
+    "step3Title": "[tr] Pay the commission",
+    "step3Body": "[tr] Pay the commission online. When the provider pays their fee too, you both see each other's contact details.",
+    "step3Sample": "[tr] Job price",
+    "step3Action": "[tr] Pay the commission",
+    "step4Title": "[tr] Pay in cash, then confirm",
+    "step4Body": "[tr] After the job, pay the rest to the provider in cash, then confirm it is done.",
+    "step4SampleName": "[tr] Ahmed Said",
+    "step4SampleMeta": "[tr] 4.8 ★ · Verified",
+    "step4Action": "[tr] Confirm completion",
+    "pricesTitle": "[tr] Prices",
+    "pricesAll": "[tr] Full price list",
+    "price": {
+      "oneRoom": "[tr] 1 room + hall",
+      "twoRooms": "[tr] 2 rooms + hall",
+      "threeRooms": "[tr] 3 rooms + hall",
+      "fourRooms": "[tr] 4 rooms + hall",
+      "hours3": "[tr] About 3 hours",
+      "hours4": "[tr] About 4 hours",
+      "hours7": "[tr] About 7 hours",
+      "mostRequested": "[tr] Most requested"
+    },
+    "addonsLabel": "[tr] Add-ons:",
+    "addon": {
+      "windows": "[tr] Windows",
+      "ironing": "[tr] Ironing and tidying",
+      "oven": "[tr] Oven and fridge",
+      "deep": "[tr] Deep cleaning"
+    },
+    "pricesNote": "[tr] In Turkish lira. The platform sets the price, with no haggling.",
+    "categoriesTitle": "[tr] Categories",
+    "categoriesAll": "[tr] See all",
+    "categoriesPrevious": "[tr] Previous categories",
+    "categoriesNext": "[tr] Next categories",
+    "category": {
+      "home": "[tr] Home cleaning",
+      "deep": "[tr] Deep cleaning",
+      "windows": "[tr] Windows and balconies",
+      "carpets": "[tr] Carpets and furniture",
+      "other": "[tr] Other categories"
+    },
+    "categoriesNote": "[tr] We start with home cleaning, and more services are coming.",
+    "offersTitle": "[tr] Need a home service?",
+    "offersBody": "[tr] Checked providers apply to your request. You choose who suits you, and the price stays fixed.",
+    "offersCta": "[tr] Post your request for free",
+    "trustTitle": "[tr] How your request stays fair",
+    "trustBody": "[tr] Three rules hold during every request.",
+    "trust1Title": "[tr] Contact details open only when both have paid",
+    "trust1Body": "[tr] You pay the commission, the provider pays their fee, then you both see each other's details.",
+    "trust2Title": "[tr] Every provider is checked",
+    "trust2Body": "[tr] ID and criminal record, then admin approval before they can apply.",
+    "trust3Title": "[tr] Ratings come from completed jobs only",
+    "trust3Body": "[tr] Only someone who hired the provider and finished the job can rate.",
+    "trustCard1Label": "[tr] Job finished",
+    "trustCard1Value": "[tr] Awaiting your confirmation",
+    "trustCard1Note": "[tr] 2 minutes ago",
+    "trustCard2Label": "[tr] Paid to the provider",
+    "trustCard2Value": "[tr] In cash",
+    "trustCard2Note": "[tr] After the job is done",
+    "quickTitle": "[tr] In under a minute",
+    "quickBody": "[tr] Answer the service questions and know the price before you post.",
+    "quickStep1": "[tr] Describe what you need",
+    "quickStep2": "[tr] See the fixed price, set by the platform, not the provider",
+    "quickStep3": "[tr] Compare offers and choose your provider",
+    "service": {
+      "regular": "[tr] Regular cleaning",
+      "deep": "[tr] Deep cleaning",
+      "windows": "[tr] Windows and balconies",
+      "ironing": "[tr] Ironing and tidying",
+      "oven": "[tr] Oven and fridge",
+      "carpets": "[tr] Carpet and furniture washing",
+      "ac": "[tr] Air conditioner cleaning",
+      "moveOut": "[tr] Cleaning before moving"
+    },
+    "serviceNote": {
+      "regular": "[tr] Mopping, sweeping and bathrooms",
+      "deep": "[tr] After building work or before an event",
+      "windows": "[tr] Inside and outside",
+      "ironing": "[tr] Add it to any request",
+      "oven": "[tr] Removes grease and build up",
+      "carpets": "[tr] Steam washing",
+      "ac": "[tr] Filters and indoor units",
+      "moveOut": "[tr] A fully empty home"
+    },
+    "faq": {
+      "title": "[tr] Common questions",
+      "priceQ": "[tr] Who sets the price?",
+      "priceA": "[tr] The platform sets it from your answers to the service questions. You see it before you post and it does not change after. Providers apply at the listed price, with no price offers and no haggling.",
+      "payQ": "[tr] When do I pay?",
+      "payA": "[tr] Posting is free and you pay nothing when you post. After you compare offers and choose one provider, you pay the commission online. It is part of the price. You pay the rest to the provider in cash after the job.",
+      "dataQ": "[tr] Who sees my details?",
+      "dataA": "[tr] Providers see only the district, the date and the price. Your name, number and full address stay hidden. They open to the chosen provider, and theirs to you, only after you pay the commission and the provider pays their fee.",
+      "contactQ": "[tr] Can I contact a provider before choosing?",
+      "contactA": "[tr] There is no chat before you choose. You compare by ratings, the provider's message and their answers. Those messages are checked automatically, and any number, email or link is refused.",
+      "unhappyQ": "[tr] What if I am not happy with the job?",
+      "unhappyA": "[tr] You can report a problem. The admin reviews it, can warn or suspend the provider, and can refund a fee by hand. The cash is between you and the provider, and the platform does not collect it for anyone.",
+      "cancelQ": "[tr] Can I cancel?",
+      "cancelA": "[tr] Yes. Before you pay there is nothing to pay. If you cancel after paying the commission and before contact details open, the commission is refunded. After they open there is no automatic refund, and the admin may refund a fee by hand.",
+      "providerQ": "[tr] How do I register as a provider?",
+      "providerA": "[tr] Sign up with your mobile number, then complete your profile and documents: ID, a live photo and your criminal record. You cannot apply until the admin approves you. Applying is free, and you pay a fee only on a request where you are chosen."
+    },
+    "closingLine1": "[tr] Pay the provider",
+    "closingLine2": "[tr] when the job is done.",
+    "closingBody": "[tr] We connect you with a provider and take only our fees. The commission is part of the price, paid online. The rest goes in cash after the job."
   },
   "Nav": {
     "main": "[tr] Main menu",
@@ -20,7 +137,13 @@
     "dashboard": "[tr] Dashboard",
     "profile": "[tr] Profile",
     "account": "[tr] Account",
-    "signIn": "[tr] Sign in"
+    "signIn": "[tr] Sign in",
+    "openMenu": "[tr] Open menu",
+    "closeMenu": "[tr] Close menu",
+    "categories": "[tr] Categories",
+    "prices": "[tr] Prices",
+    "how": "[tr] How it works",
+    "faq": "[tr] Questions"
   },
   "Login": {
     "title": "[tr] Welcome",
@@ -55,7 +178,8 @@
       "network": "[tr] We could not reach the server. Nothing changed. Check your connection and try again.",
       "wrong_or_expired": "[tr] This code is wrong or has expired. Check it, or ask for a new code."
     },
-    "botRetry": "[tr] Try again"
+    "botRetry": "[tr] Try again",
+    "help": "[tr] Need help? Message us on WhatsApp"
   },
   "Onboarding": {
     "title": "[tr] How will you use Aldebyani?",
@@ -85,7 +209,8 @@
       "phone_not_eligible": "[tr] We cannot open an account for this number.",
       "phone_taken": "[tr] This number already belongs to an account.",
       "action_failed": "[tr] Something went wrong. Nothing changed. Please try again."
-    }
+    },
+    "help": "[tr] Need help? Message us on WhatsApp"
   },
   "Account": {
     "title": "[tr] My account",
@@ -105,8 +230,31 @@
       "validation_failed": "[tr] Check your name and try again.",
       "action_failed": "[tr] Something went wrong. Nothing changed. Please try again.",
       "unauthorized": "[tr] Your session ended. Sign in again.",
-      "forbidden": "[tr] Your session ended. Sign in again."
-    }
+      "forbidden": "[tr] Your session ended. Sign in again.",
+      "email": "[tr] Enter a valid email address, or leave it empty."
+    },
+    "emailLabel": "[tr] Email (optional)",
+    "emailNote": "[tr] For notices only, never for signing in.",
+    "emailNotConfirmed": "[tr] Not confirmed yet, so nothing is sent to it.",
+    "noticesTitle": "[tr] Notifications",
+    "noticesIntro": "[tr] Choose what reaches your email. Money and deadline notices are always on.",
+    "noticeColumn": "[tr] Notice",
+    "emailColumn": "[tr] Email",
+    "alwaysOn": "[tr] Always on",
+    "notices": {
+      "newRequests": "[tr] New requests",
+      "newOffers": "[tr] New offers",
+      "workUpdates": "[tr] Work updates",
+      "ratings": "[tr] Ratings",
+      "payments": "[tr] Payments and deadlines",
+      "contactDetails": "[tr] Contact details",
+      "confirmJob": "[tr] Confirm the job",
+      "problemReports": "[tr] Problem reports",
+      "cancellations": "[tr] Cancellations and refunds",
+      "accountApproval": "[tr] Account approval"
+    },
+    "providerLinkTitle": "[tr] Your profile and services",
+    "providerLink": "[tr] Open"
   },
   "Legal": {
     "termsTitle": "[tr] Terms",
@@ -141,5 +289,19 @@
     "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
     "backHome": "Ana sayfaya dön",
     "retry": "Tekrar dene"
+  },
+  "Footer": {
+    "label": "[tr] Footer",
+    "copyright": "[tr] © {year} Aldebyani",
+    "terms": "[tr] Terms",
+    "privacy": "[tr] Privacy",
+    "joinProvider": "[tr] Join as a provider",
+    "support": "[tr] Support"
+  },
+  "Seo": {
+    "title": "[tr] Aldebyani Home Care | Home cleaning at a fixed price",
+    "description": "[tr] Post your home cleaning request for free, see a fixed price and choose a provider. Pay the commission online and the rest in cash after the job.",
+    "imageAlt": "[tr] Aldebyani Home Care, home services at a fixed price",
+    "serviceName": "[tr] Home cleaning"
   }
 }

@@ -42,8 +42,9 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   context doc still says so, `project-overview.md` and the decision log win.
 - 2026-10-31 · **00b merged, G0 closed** (`b0d54d7`): clean clone and CI green, all three relays proved
   on production with real browsers.
-- 2026-10-31 · **01 part 1 built** (spec 0005) on `feat/01-sign-in`, not committed: verify, pgTAP and e2e
-  green on the local stack. Next: the owner's migration push and S20, S9, S22 for the real calls.
+- 2026-10-31 · **01 part 1 merged** (PR #22, `09a7501`). Its real calls (AC-26) and reviews are still owed.
+- 2026-11-01 · **01 part 2 built** on `feat/01b-landing-seo-account`, committed 2026-11-10 and not pushed: landing page, SEO,
+  full account. Its migration is already in the cloud (checked 2026-11-10).
 
 ## Stack (pinned exactly)
 
@@ -89,7 +90,7 @@ from gate G3 (Hobby forbids commercial use) · an uptime monitor (Q3) · GitHub 
 | `npm run lint:rtl` | Fails on physical direction classes (`ml-`, `text-left`, …) with replacements |
 | `npm run format` / `npm run format:check` | Prettier write / check (Markdown excluded) |
 | `npm test` | Vitest: unit, lint rule, and harness tests |
-| `npm run test:e2e` | Playwright through `scripts/e2e.mjs`: resets the local database, 390px, `ar` + `tr` + `en`. `node scripts/e2e.mjs --reuse-build --serve` serves that build on the local stack (`asma-local`) |
+| `npm run test:e2e` | Playwright through `scripts/e2e.mjs`: resets the local database, 390px, `ar` + `tr` + `en`. `node scripts/e2e.mjs --reuse-build --serve` serves that build on the local stack (`asma-local`); `--indexable` builds and serves with the indexing switch on (`asma-indexable`) |
 | `npm run launch:gate` | Run at G3, not in CI: fails while a `[tr]` or `[draft]` marker remains (D100) |
 | `npm run guardrails` | Regression suite for the write guard |
 | `npm run db:test` | pgTAP (`supabase test db`). Needs Docker locally; always runs in CI |
@@ -227,7 +228,7 @@ right inventory and the decision log; record declines with the reason.
 | `hooks/guard-bash.mjs` | PreToolUse `Bash\|PowerShell`: exit 2 blocks secret file access, broad deletes, force push, history rewrites, data wipes, linked resets, prod deploys. Test: `tests/harness/guard-bash.test.ts` |
 | `hooks/format-on-write.mjs` | PostToolUse `Edit\|Write`: Prettier on code files, best effort, never blocks |
 | `agents/slice-reviewer.md`, `agents/security-reviewer.md` | Read only, fixed output format, run before merge (security: at gates and on money, auth, PII, storage) |
-| `launch.json` | `asma-dev`: `npm run dev` on port 3000 (cloud Supabase, from `.env.local`). `asma-local`: the last e2e build on port 3100, on the local stack |
+| `launch.json` | `asma-dev`: `npm run dev` on port 3000 (cloud Supabase, from `.env.local`). `asma-local`: the last e2e build on port 3100, on the local stack. `asma-indexable`: a build with the indexing switch on, for Lighthouse |
 
 The bash guard scans the whole command, so a commit message mentioning a blocked phrase is blocked:
 write long messages to a file and use `git commit -F <file>`. Never weaken a guard to make your own
@@ -321,6 +322,7 @@ overrides):
 | Vercel (account connector) | Deploy status, build and runtime logs | Project, env, domain, deploy, and purchase tools ask gated; production comes from merges only. Since 2026-10-28 it answers 403 on the team scope `moaz-allam-4163s-projects` even after approved team access links; the Vercel CLI (`npx vercel@65.5.0 … --scope moaz-allam-4163s-projects`, logged in to the owner) is the working path, ask gated like the connector |
 | Sentry (account connector) | Errors in org and project `aldebyani` (EU, `de.sentry.io`) | `update_issue` ask gated; org `jawla-i1` and every other org are off limits |
 | PostHog (account connector) | Analytics for project `aldebyani` (id 323846, EU Cloud) | Signed in to org `Aldebyani` only (2026-10-28). Read only use; writes (such as project settings) only when the owner asks, as on 2026-10-28 for the D68 settings |
+| `sim` (local scope, `https://mcp.sim.ai/mcp`) | Read only critics on other vendors' models, on trial (D119, `docs/agents/sim-critics.md`) | `mcp__sim__call_write_operation` ask gated. Hosted in the US: code and specs only, **never customer data, a secret or a production value**. Never in `.mcp.json` |
 
 **Cloud accounts (rechecked 2026-10-28, R1):** the Vercel project `aldebyani` and the Supabase org
 `aldebyani` exist, and so do the Sentry org and project `aldebyani` and the PostHog EU project `aldebyani`. The Supabase CLI

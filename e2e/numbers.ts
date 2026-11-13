@@ -18,6 +18,7 @@ export const NUMBER = {
   account: 6,
   telemetry: 7,
   roles: 8,
+  notices: 9,
 } as const;
 
 /** The national number, as a person types it. */

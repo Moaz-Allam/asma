@@ -27,5 +27,13 @@ export function menuFor(role: Role): readonly MenuItem[] {
   return MENUS[role];
 }
 
+/** The sections of the landing page, in the header and the phone menu (spec 0005 AC-27). */
+export const PUBLIC_ANCHORS = [
+  { key: 'categories', hash: 'categories' },
+  { key: 'prices', hash: 'prices' },
+  { key: 'how', hash: 'how' },
+  { key: 'faq', hash: 'faq' },
+] as const;
+
 /** Every private page, always (spec 0005 AC-17). */
 export const PRIVATE_PAGE_METADATA: Metadata = { robots: { index: false, follow: false } };

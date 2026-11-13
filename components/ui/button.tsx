@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 /** Every button is a pill (ui-rules.md §18). One primary per view; a money action opens a dialog first. */
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full transition hover:-translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -14,13 +14,17 @@ const buttonVariants = cva(
         secondary: 'bg-surface-secondary text-text-primary hover:bg-accent-muted',
         white: 'bg-surface text-text-primary hover:bg-surface-secondary',
         destructive: 'bg-surface text-error hover:bg-error-light',
+        outline: 'border-2 border-accent bg-surface text-text-primary hover:bg-surface-secondary',
         link: 'text-link underline-offset-4 hover:underline',
       },
       size: {
         sm: 'px-4.5 py-2.5 text-btn-sm',
         md: 'px-5.5 py-3 text-btn-sm',
         lg: 'px-6.5 py-4 text-btn',
-        block: 'w-full px-6.5 py-5 text-btn-lg',
+        nav: 'px-5.5 py-3 text-btn-nav',
+        band: 'px-7.5 py-4.75 text-btn-band',
+        hero: 'px-7.5 py-5 text-btn-lg',
+        block: 'w-full px-6.5 py-4.5 text-btn-band',
         text: 'text-btn-sm',
       },
     },

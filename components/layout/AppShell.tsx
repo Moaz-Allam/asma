@@ -18,7 +18,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
   return (
     <>
       <SiteHeader user={role && profile ? { role, name: profile.fullName } : null} />
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 pt-6.5 pb-28 lg:px-8.5 lg:pb-8.5">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 pb-28 lg:px-8.5 lg:pb-8.5">
         {children}
       </main>
       {role ? <BottomTabBar items={menuFor(role)} /> : null}

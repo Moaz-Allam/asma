@@ -1,4 +1,4 @@
-import posthog, { type CaptureResult, type PostHogConfig } from 'posthog-js';
+import type { CaptureResult, PostHog, PostHogConfig } from 'posthog-js';
 
 import type { AnalyticsEvent, AnalyticsEvents } from '@/lib/analytics/events';
 import { filterAnalyticsEvent } from '@/lib/analytics/filter';
@@ -13,7 +13,8 @@ import { appEnvOf } from '@/lib/observability/shared';
  * Cookieless and anonymous: nothing is written to a cookie, localStorage or sessionStorage, nobody is
  * ever identified, and every optional feature is off by an explicit option, so a project setting can
  * never switch one on remotely. Every function does nothing without a key or under test, and swallows
- * its own failures.
+ * its own failures. The SDK itself loads after hydration, as its own chunk, so it costs the first render
+ * nothing (spec 0005 AC-31, R6). An event sent before that is lost, as it always was.
  */
 
 // Inlined by Next at build: the project key is public by design.
@@ -55,7 +56,8 @@ const CONFIG: Partial<PostHogConfig> = {
   debug: false,
 };
 
-let started = false;
+let sdk: PostHog | undefined;
+let loading = false;
 
 function inactive(): boolean {
   return !KEY || process.env.NODE_ENV === 'test';
@@ -63,17 +65,20 @@ function inactive(): boolean {
 
 /** Starts PostHog after hydration (AC-6), then sends the first pageview. */
 export function initAnalytics(): void {
-  if (started || inactive() || !KEY) return;
+  if (loading || sdk || inactive() || !KEY) return;
   const key = KEY;
+  loading = true;
   afterHydration(() => {
-    try {
-      posthog.init(key, CONFIG);
-      started = true;
-      trackPageview(window.location.href);
-    } catch (error) {
-      // Analytics never breaks the page; the console says why it is off.
-      console.warn('[analytics] PostHog did not start', error instanceof Error ? error.message : 'unknown');
-    }
+    import('posthog-js')
+      .then(({ default: posthog }) => {
+        posthog.init(key, CONFIG);
+        sdk = posthog;
+        trackPageview(window.location.href);
+      })
+      .catch((error: unknown) => {
+        // Analytics never breaks the page; the console says why it is off.
+        console.warn('[analytics] PostHog did not start', error instanceof Error ? error.message : 'unknown');
+      });
   });
 }
 
@@ -86,9 +91,9 @@ export function track<E extends AnalyticsEvent>(
   properties: AnalyticsEvents[E],
   options?: { leaving: boolean },
 ): void {
-  if (!started) return;
+  if (!sdk) return;
   try {
-    posthog.capture(
+    sdk.capture(
       event,
       properties,
       options?.leaving ? { send_instantly: true, transport: 'sendBeacon' } : undefined,
@@ -101,7 +106,7 @@ export function track<E extends AnalyticsEvent>(
 
 /** One `$pageview` per page, its URL scrubbed (AC-3). Called on start and on every route change. */
 export function trackPageview(href: string): void {
-  if (!started) return;
+  if (!sdk) return;
   try {
     const url = new URL(scrubUrl(href), window.location.origin);
     track('$pageview', { $current_url: url.href, $pathname: url.pathname });

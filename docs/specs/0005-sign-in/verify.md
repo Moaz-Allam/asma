@@ -90,16 +90,31 @@ script carries the nonce, a token arrives, the send button enables, and no CSP v
 
 ## Part 2
 
+Lighthouse on `/tr`, phone width, Chrome headless, a local build with `APP_SITE_URL` set (`asma-indexable`), five
+runs, 2026-11-01 → AC-31:
+
+| Category | Result | Target |
+| --- | --- | --- |
+| Performance | 73, 83, 85, 84, 88, median 84 | 80 |
+| Accessibility | 100 | 95 |
+| Best practices | 96 (the one miss: `/api/e` refusing the dummy DSN, local only) | 90 |
+| SEO | 92 | 95 |
+
+SEO misses on one audit, `canonical`: "Points to another hreflang location", because the page is served from
+`127.0.0.1` and the canonical names the configured domain. It cannot pass locally. Measure again on the real
+domain after S4.
+
 - [ ] The owner reads the landing copy on the preview in `ar` and `en` and approves it; no escrow wording,
       no quality claim → AC-27
-- [ ] Prices and categories match `s1` and render through `MoneyDisplay`; `npm run launch:gate` fails while
+- [x] Prices and categories match `s1` and render through `MoneyDisplay`; `npm run launch:gate` fails while
       `SAMPLE_DATA` is true → AC-28, AC-35
-- [ ] View source on `/tr`, `/ar`, `/en`: title, description, canonical, four `hreflang` links, Open Graph,
+- [x] View source on `/tr`, `/ar`, `/en`: title, description, canonical, four `hreflang` links, Open Graph,
       Twitter, four JSON-LD blocks, every FAQ answer present; no CSP violation → AC-29
 - [ ] Share the preview link in WhatsApp: the card shows the right image and text → AC-29
-- [ ] With `APP_SITE_URL` empty, and on any preview: `noindex`, `robots.txt` disallows all, the sitemap is
+- [x] With `APP_SITE_URL` empty, and on any preview: `noindex`, `robots.txt` disallows all, the sitemap is
       empty. With it set on a local production build: the opposite → AC-30
-- [ ] Lighthouse scores recorded here, on a build with `APP_SITE_URL` set → AC-31
-- [ ] Turn off each of the four topics, reload, see it held; locked rows have no switch → AC-32, AC-33
-- [ ] With no `support_whatsapp` row, the footer link and help line are absent; add a local row, and both
-      appear → AC-34
+- [x] Lighthouse scores recorded here, on a build with `APP_SITE_URL` set → AC-31 (SEO still to measure on the
+      real domain)
+- [x] Turn off a topic, reload, see it held; locked rows have no switch → AC-32, AC-33
+- [x] With no `support_whatsapp` row, the footer link is absent; add a local row, and it appears. The help line
+      is unit tested through `supportHref`, not seen in a browser → AC-34

@@ -428,6 +428,7 @@ All env vars defined in `.env.local` for development, validated at startup. Neve
 | `PAYTABS_WEBHOOK_SECRET` | KSA, deferred (D22, Q7) | **Yes** |
 | `PAYTABS_BASE_URL` | KSA, deferred (D22, Q7) | No |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | `/login` (`BotCheck`) | No (public; required on a deployment). The Turnstile secret and Twilio values live only in the Supabase dashboard (D98) |
+| `APP_SITE_URL` | `lib/seo/site.ts` | No. https, no trailing slash, empty until S4. Set on production, it turns indexing on (spec 0005 AC-30) |
 | `WHATSAPP_API_KEY` | notifications | **Yes** |
 | `EMAIL_API_KEY` | notifications | **Yes** |
 | `APP_DEFAULT_LOCALE` | `lib/i18n` | No (`ar` \| `tr` \| `en`) |

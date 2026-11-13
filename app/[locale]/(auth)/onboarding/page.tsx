@@ -3,7 +3,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { OnboardingForm } from '@/components/features/auth/OnboardingForm';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { getSessionUser } from '@/lib/auth/session';
-import { redirect } from '@/lib/i18n/navigation';
+import { Link, redirect } from '@/lib/i18n/navigation';
+import { getPublicRegions } from '@/lib/region/public';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -21,11 +22,18 @@ export default async function OnboardingPage({ params, searchParams }: Props) {
 
   const t = await getTranslations('Onboarding');
   const { as } = await searchParams;
+  const regions = await getPublicRegions();
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex max-w-220 flex-col gap-6">
+      <Link href="/" dir="ltr" className="self-start font-wordmark text-wordmark text-text-primary">
+        Aldebyani
+      </Link>
       <PageHeader title={t('title')} intro={t('intro')} />
-      <OnboardingForm preselect={as === 'provider' ? 'provider' : 'customer'} />
+      <OnboardingForm
+        preselect={as === 'provider' ? 'provider' : 'customer'}
+        supportWhatsapp={regions[0]?.supportWhatsapp}
+      />
     </div>
   );
 }
