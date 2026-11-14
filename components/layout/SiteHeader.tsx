@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import type { ReactNode } from 'react';
 
 import { NavLinks } from '@/components/layout/NavLinks';
 import { PublicMenu } from '@/components/layout/PublicMenu';
@@ -14,7 +15,16 @@ import { cn } from '@/lib/utils';
  * position 18. Signed out it shows the landing anchors and the sign in pills. The anchors fit in the row from
  * `xl`, the other two pills from `lg`; below that `PublicMenu` stacks them.
  */
-export async function SiteHeader({ user }: { user?: { role: Role; name: string } | null }) {
+export async function SiteHeader({
+  user,
+  badge,
+  railFromLg = false,
+}: {
+  user?: { role: Role; name: string } | null;
+  badge?: ReactNode;
+  /** Admin: from `lg` the navy rail holds the menu, so the header shows none there (spec 0006 AC-13). */
+  railFromLg?: boolean;
+}) {
   const t = await getTranslations('Nav');
   const tLanding = await getTranslations('Landing');
 
@@ -39,9 +49,8 @@ export async function SiteHeader({ user }: { user?: { role: Role; name: string }
 
       {user ? (
         <>
-          <div className="flex-1">
-            <NavLinks items={menuFor(user.role)} />
-          </div>
+          <div className="flex-1">{railFromLg ? null : <NavLinks items={menuFor(user.role)} />}</div>
+          {badge}
           <Link href="/account" aria-label={t('account')}>
             <InitialAvatar name={user.name} className="text-label font-extrabold" />
           </Link>

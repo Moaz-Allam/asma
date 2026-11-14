@@ -819,13 +819,29 @@ Projection only. Updated in the same transaction as the ledger.
 
 ## 14. Storage
 
+**Position 02 (spec 0006, D114, D116, D120) overrides this section where they differ.**
+
 | Bucket | Access | Contents |
 | --- | --- | --- |
-| `provider-documents` | **PRIVATE** | ID and skill documents. Signed URLs only, short TTL |
+| `provider-documents` | **PRIVATE**, 10 MB, JPEG, PNG, PDF | ID front and back, selfie, criminal record, skill certificate |
+| `provider-photos` | **PRIVATE**, 2 MB, JPEG | The profile photo, apart so position 06 can open photos without touching IDs |
 
-- No public buckets for any user upload.
-- MIME type and size validated server-side; never trust the client's declared type.
-- Only the owning provider and admins may generate a signed URL.
+- No public bucket, ever: pgTAP (`supabase/tests/08_storage.test.sql`) fails on a public bucket, on a policy
+  on `storage.objects` that names no bucket, and on one granted to `anon` or `public`. The same query runs
+  against the cloud before real calls.
+- Files go from the browser straight to Storage (`lib/storage/client.ts`), then `register_provider_document`
+  reads the object's id, size and type from `storage.objects`, never from the client.
+- **Override of "validate the bytes on the server":** a hostile client can skip any check of ours, and the
+  bucket checks only the declared type, so the real first bytes are checked in the browser for honest
+  mistakes and the database cross checks type, extension, size and folder. The worst result is a useless
+  file in the provider's own private folder, which admin rejects. Files are served from the Supabase
+  origin, never ours.
+- Upload: `provider_may_store()` (own folder from `auth.uid()`, right type and extension, not suspended,
+  the documents consent, under 20 counted objects). Read: the owner, or an admin with a `document.viewed`
+  row for that object id and path in the last 2 minutes (`admin_may_read()`). Delete: the owner, only an
+  object no row points to. No update policy. No service role in any request path.
+- Replacing a file deletes the old object at once (D114); a rejected or abandoned file stays until the job
+  in 21.
 
 ---
 
@@ -1472,6 +1488,30 @@ Flags for: `funding_enabled`, `unlock_enabled`, `payouts_enabled`, `auto_release
 - **PII deletion requests** (KVKK/GDPR) are satisfied by **anonymising personal identifiers while retaining financial rows** — document this resolution; never delete ledger history.
 - Archive completed `outbox_events` after a retention window.
 
+## 39b. Provider onboarding (position 02, spec 0006)
+
+**Overrides `providers` and `provider_documents` as written in §13, §20 and §23** (`provider_profiles` of
+§23 keeps only the columns below until positions 06 and 19 add theirs).
+
+- `providers` (one row per provider, `id` = `profiles.id`, created by the `provider_row` trigger): status
+  `draft`, `pending`, `approved`, `rejected`, `suspended`; entity type, legal name and tax number (10 digits
+  TR, 15 KSA, never a national ID); review reason; rejection code and note; suspension reason; submitted,
+  decided, first approved; `approved_name`; `updated_at` is the version `decide_provider` compares.
+  Customers never read it.
+- `provider_profiles`: bio (30 to 600, scanned by `has_contact_info()`), years, languages. The only table
+  a customer will read (06 adds that policy).
+- `provider_documents`: one row per provider and type, replaced in place; `object_id` is
+  `storage.objects.id`, compared by every view and verdict; `valid_until` for the ID and the record, set by
+  admin. The ID number is never stored.
+- No API role, `service_role` included, writes these tables; definer functions do, with their audit row.
+  Every admin policy decides admin through `public.is_admin()` from `profiles.role`, the tables of 00 and 01
+  included (migration `20261111120000`, D129 item 3 signed off by the owner 2026-11-14), so a demotion counts at
+  once; a pgTAP guard fails on any policy that reads `app_metadata`.
+- `provider_standing()` adds `document_expired`, a reading of `valid_until`, with no scheduled job.
+  `provider_can_apply()` is what position 05's insert policy calls.
+- Stays in 19: the funnel stages of §30 beside `status`, the lifecycle bar, reminders before expiry, the
+  acceptance rate, rescanning stored bios.
+
 ## 40. Updated invariants
 
 > **G25 — every global aggregate below is scoped `GROUP BY (region, currency)`. Never bare.**
@@ -1566,6 +1606,7 @@ secret or a fake adapter is a boot error. Email is the one exception that degrad
 | Bot check | none yet | No door and no secret until the first own siteverify caller (D98): Supabase Auth is the only checker. Position 04 decides whether request posting needs one | — |
 | Auth | `lib/auth/` | Call `supabase.auth`. One exemption: `lib/db/proxy.ts`, for the session refresh. `getSession()` is banned everywhere | Lint rule active (spec 0005 AC-25) |
 | Errors, analytics | `lib/observability/`, `lib/analytics/` | Import the Sentry and PostHog SDKs; hold the scrubbers | Rules added in 00b |
+| Storage | `lib/storage/` | Call `supabase.storage` (upload, signed links, remove). Holds the bucket names, limits, content types, `cacheControl: '0'` and the 60 second link | Lint rule active (spec 0006 AC-26) |
 
 **Enforcement, lowest layer first:** ESLint `no-restricted-imports` and `no-restricted-syntax` in
 `eslint.config.mjs` (secrets matched as identifier, string literal, and template text), each rule proven

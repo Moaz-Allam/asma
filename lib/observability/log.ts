@@ -15,7 +15,13 @@ import { isRegion, type Region } from '@/lib/region';
  */
 
 /** Every server log event. 00b defines the first; each position adds its own. */
-export type LogEvent = 'flag_read_failed';
+export type LogEvent =
+  | 'flag_read_failed'
+  // Spec 0006 AC-8: a replaced file could not be deleted; the row is right, and the next upload of that
+  // type tries again.
+  | 'document_sweep_failed'
+  // Spec 0006 AC-16: the document.viewed row could not be written, so no link was signed.
+  | 'document_view_audit_failed';
 
 /** The only ids a record may carry: internal ids, never personal data. */
 export type LogIds = {

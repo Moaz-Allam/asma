@@ -134,6 +134,18 @@ Provider verification chips (**D59**): «معتمد» (approved) and «قيد ا
 `bg-warning-light`, as designed; «مرفوض» (rejected) uses `bg-error-light`, so red always means a negative
 outcome. The design drew all three alike.
 
+Position 02 adds three provider standings (spec 0006 Feature design), on the same rule:
+
+| Standing | Label (ar) | Background |
+| --- | --- | --- |
+| `suspended` | موقوف | `bg-error-light` |
+| `document_expired` | انتهت صلاحية مستند | `bg-error-light` |
+| `draft` | غير مكتمل | `bg-surface-secondary` |
+
+`StatusChip` (`components/shared/StatusChip.tsx`) takes a tone; `STANDING_TONE` maps each standing. Document
+cards use the same tones: not started `bg-surface-secondary`, uploaded `bg-warning-light`, matching or
+approved `bg-accent-light`, rejected `bg-error-light`.
+
 ---
 
 ## 5. Typography

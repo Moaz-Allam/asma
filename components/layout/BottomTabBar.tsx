@@ -1,10 +1,10 @@
 'use client';
 
-import { CirclePlus, LayoutDashboard, List, UserRound, type LucideIcon } from 'lucide-react';
+import { CirclePlus, LayoutDashboard, List, UserRound, UsersRound, type LucideIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Link, usePathname } from '@/lib/i18n/navigation';
-import type { MenuItem } from '@/lib/navigation/menus';
+import { activeMenuKey, type MenuItem } from '@/lib/navigation/menus';
 import { cn } from '@/lib/utils';
 
 const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
@@ -13,12 +13,24 @@ const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
   dashboard: LayoutDashboard,
   profile: UserRound,
   account: UserRound,
+  providers: UsersRound,
 };
 
-/** Phones: fixed at the bottom, three tabs at most (ui-rules.md §13). */
-export function BottomTabBar({ items }: { items: readonly MenuItem[] }) {
+/**
+ * Phones: fixed at the bottom, three tabs at most (ui-rules.md §13). `counts` puts a badge on a tab, as the
+ * admin rail does for files under review (spec 0006 AC-13).
+ */
+export function BottomTabBar({
+  items,
+  counts = {},
+}: {
+  items: readonly MenuItem[];
+  counts?: Partial<Record<MenuItem['key'], number>>;
+}) {
   const t = useTranslations('Nav');
+  const tAdmin = useTranslations('AdminReview');
   const pathname = usePathname();
+  const activeKey = activeMenuKey(items, pathname);
 
   return (
     <nav
@@ -28,7 +40,7 @@ export function BottomTabBar({ items }: { items: readonly MenuItem[] }) {
       <ul className="flex">
         {items.map(({ key, href }) => {
           const Icon = ICONS[key];
-          const active = pathname === href;
+          const active = key === activeKey;
           return (
             <li key={key} className="flex-1">
               <Link
@@ -39,7 +51,17 @@ export function BottomTabBar({ items }: { items: readonly MenuItem[] }) {
                   active && 'font-bold text-text-primary',
                 )}
               >
-                <Icon aria-hidden className="size-5" />
+                <span className="relative">
+                  <Icon aria-hidden className="size-5" />
+                  {key === 'providers' && (counts[key] ?? 0) > 0 ? (
+                    <span
+                      className="absolute -end-3 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-surface-inverse px-1.5 text-chip text-text-inverse"
+                      aria-label={tAdmin('pendingCount', { count: counts[key] ?? 0 })}
+                    >
+                      {counts[key]}
+                    </span>
+                  ) : null}
+                </span>
                 {t(key)}
               </Link>
             </li>

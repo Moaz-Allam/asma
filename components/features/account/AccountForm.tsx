@@ -5,6 +5,7 @@ import { useState, useTransition, type FormEvent, type ReactNode } from 'react';
 
 import { updateAccount, updateEmail } from '@/actions/account';
 import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,35 +20,55 @@ export function AccountForm({
   phone,
   email,
   emailConfirmed,
+  warnBeforeRename = false,
   children,
 }: {
   fullName: string;
   phone: string;
   email: string | null;
   emailConfirmed: boolean;
+  /** An approved provider: a rename returns the file to review, so ask first (spec 0006 AC-12). */
+  warnBeforeRename?: boolean;
   children: ReactNode;
 }) {
   const t = useTranslations('Account');
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [backToReview, setBackToReview] = useState(false);
+  const [confirm, setConfirm] = useState<FormData | null>(null);
   const [isPending, startTransition] = useTransition();
   const hydrated = useHydrated();
+
+  function save(form: FormData) {
+    const typed = form.get('fullName');
+    const name = typeof typed === 'string' ? typed : '';
+    setConfirm(null);
+    startTransition(async () => {
+      try {
+        const account = await updateAccount({ fullName: name });
+        if (!account.success) return setError(account.error);
+        // Set before the email step: if that step fails, the name was still saved and the file is in review.
+        setBackToReview(account.data.backToReview);
+        const contact = await updateEmail({ email: form.get('email') });
+        if (contact.success) setSaved(true);
+        else setError(contact.error === 'validation_failed' ? 'email' : contact.error);
+      } catch {
+        setError('action_failed');
+      }
+    });
+  }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaved(false);
+    setBackToReview(false);
     const form = new FormData(event.currentTarget);
     const typed = form.get('fullName');
     const name = typeof typed === 'string' ? typed : '';
     if (name.trim().length < 2) return setError('name');
     setError(null);
-    startTransition(async () => {
-      const account = await updateAccount({ fullName: name });
-      if (!account.success) return setError(account.error);
-      const contact = await updateEmail({ email: form.get('email') });
-      if (contact.success) setSaved(true);
-      else setError(contact.error === 'validation_failed' ? 'email' : contact.error);
-    });
+    if (warnBeforeRename && name.trim() !== fullName.trim()) return setConfirm(form);
+    save(form);
   }
 
   return (
@@ -101,15 +122,26 @@ export function AccountForm({
           {t(`errors.${error}`)}
         </p>
       ) : null}
-      {saved ? (
+      {saved || backToReview ? (
         <p role="status" className="text-body-s text-text-secondary">
-          {t('saved')}
+          {backToReview ? t('savedBackToReview') : t('saved')}
         </p>
       ) : null}
 
       <Button type="submit" size="lg" disabled={isPending || !hydrated} className="self-start px-7">
         {isPending ? t('saving') : t('save')}
       </Button>
+
+      <ConfirmDialog
+        open={confirm !== null}
+        onOpenChange={(open) => (open ? undefined : setConfirm(null))}
+        title={t('renameTitle')}
+        body={t('renameBody')}
+        confirmLabel={t('renameConfirm')}
+        cancelLabel={t('renameCancel')}
+        onConfirm={() => (confirm ? save(confirm) : undefined)}
+        busy={isPending}
+      />
     </form>
   );
 }

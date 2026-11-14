@@ -27,15 +27,18 @@ const SDK_PROPS = {
 };
 
 describe('the allow list (AC-7)', () => {
-  it('names exactly the 00b events and the sign in events of spec 0005', () => {
+  it('names exactly the 00b events, the sign in events of spec 0005 and the onboarding events of spec 0006', () => {
     expect([...ANALYTICS_EVENTS].sort()).toEqual([
       '$pageview',
       'code_limited',
       'code_requested',
       'code_verified',
+      'document_upload_failed',
       'locale_changed',
       'onboarding_completed',
       'phone_rejected',
+      'provider_decided',
+      'provider_file_submitted',
     ]);
   });
 

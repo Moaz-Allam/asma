@@ -178,14 +178,31 @@ const NO_GET_SESSION = [
   { selector: "Literal[value='getSession']", message: getSessionMessage },
 ];
 
-/** no-restricted-syntax for one door: its secrets, its modules by import() or require(), env access, Auth. */
-function restrictedSyntax({ exempt = [], modules = {}, envAccess = false, auth = false } = {}) {
+// Spec 0006 AC-26: only lib/storage/ calls `.storage` (uploads, signed links, removes), so every file
+// rule (paths, limits, content types, cache control, link lifetime) lives in one place. Matched on the
+// property, so a renamed client is caught, and on a destructure.
+const storageMessage =
+  'Only lib/storage/ calls supabase.storage (spec 0006 AC-26). Call uploadProviderFile, signedLink or removeOld.';
+const STORAGE_DOOR_SELECTORS = [
+  { selector: "MemberExpression[property.name='storage']", message: storageMessage },
+  { selector: "ObjectPattern > Property[key.name='storage']", message: storageMessage },
+];
+
+/** no-restricted-syntax for one door: its secrets, its modules by import() or require(), env access, Auth, Storage. */
+function restrictedSyntax({
+  exempt = [],
+  modules = {},
+  envAccess = false,
+  auth = false,
+  storage = false,
+} = {}) {
   return [
     'error',
     ...secretSelectors(exempt),
     ...restrictedModules(modules),
     ...(envAccess ? [] : ENV_ACCESS),
     ...(auth ? [] : AUTH_DOOR_SELECTORS),
+    ...(storage ? [] : STORAGE_DOOR_SELECTORS),
     ...NO_GET_SESSION,
   ];
 }
@@ -269,6 +286,8 @@ const config = [
       'no-restricted-syntax': restrictedSyntax({ modules: { supabase: true, admin: true }, auth: true }),
     },
   },
+  // ── Storage door (spec 0006 AC-26). ──
+  { files: ['lib/storage/**'], rules: { 'no-restricted-syntax': restrictedSyntax({ storage: true }) } },
   // ── Telemetry doors (spec 0004 AC-8). ──
   {
     files: OBSERVABILITY_DOOR,

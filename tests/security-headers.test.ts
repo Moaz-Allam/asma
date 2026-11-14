@@ -42,7 +42,8 @@ describe('buildCsp (AC-13)', () => {
       'default-src': "'self'",
       'script-src': "'self' 'nonce-bm9uY2U=' 'strict-dynamic'",
       'style-src': "'self' 'unsafe-inline'",
-      'img-src': "'self' blob: data:",
+      // Spec 0006 AC-25: signed Storage links to a photo or a document, from the Supabase origin only.
+      'img-src': "'self' blob: data: https://ref.supabase.co",
       'font-src': "'self'",
       'connect-src': "'self' https://ref.supabase.co wss://ref.supabase.co",
       'worker-src': "'self' blob:",
@@ -65,6 +66,7 @@ describe('buildCsp (AC-13)', () => {
   it('takes http and ws from a local Supabase URL', () => {
     const local = directives(buildCsp('n', { dev: false, supabaseUrl: 'http://127.0.0.1:54421' }));
     expect(local['connect-src']).toBe("'self' http://127.0.0.1:54421 ws://127.0.0.1:54421");
+    expect(local['img-src']).toBe("'self' blob: data: http://127.0.0.1:54421");
   });
 
   it('never upgrades insecure requests (local and e2e run on http)', () => {
@@ -78,6 +80,9 @@ describe('buildCsp (AC-13)', () => {
     expect(noReport['script-src']).toBe("'self' 'nonce-n' 'strict-dynamic'");
     expect(() => buildCsp('n', { dev: false, supabaseUrl: 'not a url' })).not.toThrow();
     expect(directives(buildCsp('n', { dev: false, supabaseUrl: 'not a url' }))['connect-src']).toBe("'self'");
+    expect(directives(buildCsp('n', { dev: false, supabaseUrl: 'not a url' }))['img-src']).toBe(
+      "'self' blob: data:",
+    );
   });
 });
 

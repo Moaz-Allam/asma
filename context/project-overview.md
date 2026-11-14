@@ -354,7 +354,7 @@ Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)        
 - User signs in with a phone and a 6 digit SMS code. There are no passwords on any account (D104)
 - Role chosen at first sign-up: customer or provider. One phone holds one role, for good (D99)
 - **Required tick:** the user accepts the terms and the agreement statement (D92). Stored with the terms version and date
-- Provider → redirected to `/provider/profile` to complete registration; cannot apply to requests until admin-approved
+- Provider → redirected to `/provider/profile` to complete registration (two steps: profile, then documents at `/provider/profile/documents`; services and districts come in 05, D111); cannot apply to requests until admin-approved
 - Customer → redirected to `/requests/new`
 
 ### Customer — post a request
@@ -535,6 +535,14 @@ code_verified;         // {}
 code_limited;          // { limit: 'limit_phone' | 'limit_ip' | 'limit_sms_cap' | 'limit_sends' | 'limit_checks' }
 phone_rejected;        // { reason: 'not_mobile' | 'too_short' | 'other_country' }
 onboarding_completed;  // { role: 'customer' | 'provider' }
+```
+
+Provider onboarding, analytics only (spec 0006 AC-24). No name, phone, bio, tax number, file name or link:
+
+```typescript
+provider_file_submitted; // {}
+provider_decided;        // { decision: 'approved' | 'rejected' }
+document_upload_failed;  // { reason: 'too_large' | 'wrong_type' | 'refused' | 'network' }
 ```
 
 ---
@@ -718,13 +726,20 @@ Every notification goes to **both the in-app notification centre and email**. Wh
 
 ## 25. Provider profile and verification
 
+**Position 02 (spec 0006, D111 to D120) is built to this; it wins where the rest of this section differs.**
+
 ### Registration → verification → active
 
-1. Provider signs up and completes their profile
-2. Uploads required documents
-3. Status `PENDING` — **cannot apply to any request**
-4. Admin reviews and approves or rejects (with a reason)
-5. `APPROVED` → can apply
+1. Provider signs up and completes their profile (individual or company, bio, years, languages, photo)
+2. Accepts the documents consent, then uploads the required documents (`draft`)
+3. Sends the file: status `pending` — **cannot apply to any request**
+4. Admin shows each document (each view is recorded), marks it matching or rejected with one of six
+   reasons, then approves or rejects the file
+5. `approved` → can apply. Admin may suspend (`suspended`, with a reason shown as written) and lift
+6. A replaced document or photo, a name change, or a change to the company details sends an approved file
+   back to `pending`. A required document past its `valid_until` reads as `document_expired`: no applying
+   until it is replaced
+7. **The ID number is never asked for or stored.** Replaced files are deleted at once (D114)
 
 ### Profile fields
 

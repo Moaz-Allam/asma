@@ -146,6 +146,13 @@ SELECT is(
   'a signed in user who is not an admin cannot delete a flag'
 );
 
+-- Who is admin comes from profiles.role, never the token (D116, migration 20261111120000).
+INSERT INTO auth.users (id, aud, role, phone, phone_confirmed_at)
+VALUES ('00000000-0000-0000-0000-0000000000a2', 'authenticated', 'authenticated', '905550000002', now())
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.profiles (id, role, region, phone, full_name, locale)
+VALUES ('00000000-0000-0000-0000-0000000000a2', 'admin', 'TR', '+905550000002', 'Flag Admin', 'en')
+ON CONFLICT (id) DO UPDATE SET role = 'admin';
 SET LOCAL ROLE authenticated;
 SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000a2", "role": "authenticated", "app_metadata": {"role": "admin"}}';
 UPDATE public.platform_settings SET value = 'false' WHERE region = 'TR' AND key = 'funding_enabled';

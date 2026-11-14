@@ -1,7 +1,7 @@
 # 0006. Provider onboarding and approval (position 02)
 
 **Date**: 2026-11-01
-**Status**: Accepted (confirmed by the owner 2026-11-01, after a cross check on a second model; amended 2026-11-02 from the security critic, D120)
+**Status**: Accepted (confirmed by the owner 2026-11-01, after a cross check on a second model; amended 2026-11-02 from the security critic, D120; amended 2026-11-11 and 2026-11-14 from the reviews of PR #26, D127 to D133)
 
 ## Summary
 
@@ -55,8 +55,9 @@ Step 3 of the design (services, districts, work days) moves to 05, because its t
   stores neither. Saving twice changes only `updated_at`.
 - **AC-3**: `public.has_contact_info(text)` is the one scanner. `save_provider_profile` refuses a bio it flags with
   the stable code `contact_info_in_bio`. It first normalises: NFKC, lower case with no Turkish locale, zero width
-  characters, tatweel and Arabic marks removed, Arabic Indic and Persian digits folded. Then it flags: a run of 7 or
-  more digits with gaps of at most 2 characters between them; 5 or more spelled number words in a row, in `ar`, `tr` or
+  characters, tatweel and Arabic marks removed, Arabic Indic and Persian digits folded. Then it flags: 7 or more digits
+  within any 21 characters, whatever stands between them, so a separator of any length counts (D131; 25 was the start,
+  21 is the widest window that passes every must pass row); 5 or more spelled number words in a row, in `ar`, `tr` or
   `en`; emails, including spelled `at` and `dot`; links and bare domains on a fixed list of endings; `wa.me`, `t.me` and
   `@` followed by 3 or more word characters; the names of WhatsApp, Telegram and Instagram in the three languages. The
   must catch and must pass table in `verify.md` is the pgTAP corpus. When the field equals the saved bio, the `p2` chip
@@ -195,8 +196,10 @@ Step 3 of the design (services, districts, work days) moves to 05, because its t
   else with `forbidden`, so a customer or an admin cannot save a profile, accept the documents consent, register or submit.
 - **AC-22**: Storage rules, each with a negative test: both buckets are private. A provider writes only what
   `provider_may_store` allows: a `providers` row for `auth.uid()`, own folder from `auth.uid()`, right type and extension for
-  that bucket, not suspended, consent for documents, and under 20 counted objects. Counted means an object a
-  `provider_documents` row points to, or an orphan (no row points to it) younger than 24 hours. Customers and admins upload
+  that bucket, not suspended, consent for documents, under 20 counted objects, and under 100 MB across every object in
+  the folder, orphans of any age included. Counted means an object a `provider_documents` row points to, or an orphan (no
+  row points to it) younger than 24 hours. The same rules run again at the real insert, and an object's bytes, name or
+  bucket never change in place, because a signed upload URL writes as `service_role` past RLS. Customers and admins upload
   nothing, even with a `terms_acceptances` row. A provider reads their own objects. An admin reads an object only with a
   `document.viewed` row by that admin for that object id and that path in the last 2 minutes, so a view row for a replaced
   file never opens a new object at a reused path. Another provider and a
@@ -420,11 +423,11 @@ Document: `pending` to `approved` or `rejected` by admin, and back and forth whi
 | --- | --- | --- | --- | --- | --- |
 | `saveProviderProfile` in `actions/provider.ts` | Server Action | entity fields, `bio`, `years`, `languages` | `backToReview` | `['provider']` | `validation_failed`, `contact_info_in_bio`, `provider_suspended` |
 | `acceptDocsConsent` | Server Action | none | ok | `['provider']` | `provider_suspended` |
-| `uploadProviderFile` in `lib/storage/client.ts` | Browser to Storage | `type`, `File` | `path` | session | `file_too_large`, `file_type_refused`, `upload_refused`, `network` |
-| `registerDocument` | Server Action | `type`, `path` | document row | `['provider']` | `file_missing`, `file_type_refused`, `provider_suspended` |
-| `submitProviderFile` | Server Action | none | `status`, `missing` | `['provider']` | `file_incomplete`, `file_missing`, `provider_suspended` |
+| `uploadProviderFile` in `lib/storage/client.ts` | Browser to Storage | `type`, `File` | `path` | session | `file_too_large`, `file_type_refused`, `image_unreadable`, `upload_refused`, `network` |
+| `registerDocument` | Server Action | `type`, `path` | document row | `['provider']` | `file_missing`, `file_type_refused`, `file_too_large`, `provider_suspended` |
+| `submitProviderFile` | Server Action | none | `status`, `incomplete` (`code` and every type needing work: missing, rejected, objects missing) | `['provider']` | `file_incomplete`, `file_missing`, `provider_suspended` |
 | `reviewDocuments` in `actions/admin-providers.ts` | Server Action | `providerId`, `ids`, `objectIds`, `verdict`, `code`, `note`, `validUntil` | ok | `['admin']` | `not_under_review`, `stale_document`, `view_required`, `valid_until_required`, `valid_until_invalid`, `reason_required` |
-| `decideProvider` | Server Action | `providerId`, `decision`, `seenUpdatedAt`, `code`, `note` | `status` | `['admin']` | `not_under_review`, `documents_not_reviewed`, `reason_required`, `stale_profile`, `file_missing` |
+| `decideProvider` | Server Action | `providerId`, `decision`, `seenUpdatedAt`, `code`, `note` | `status`, `replayed` | `['admin']` | `not_found`, `not_under_review`, `documents_not_reviewed`, `reason_required`, `stale_profile`, `file_missing` (approve only) |
 | `suspendProvider`, `reinstateProvider` | Server Action | `providerId`, `reason` | `status` | `['admin']` | `not_approved`, `not_suspended`, `validation_failed` |
 | `showDocument` | Server Action | `documentId`, `objectId` | signed link | `['admin']` | `stale_document`, `file_missing` |
 | `updateAccount` (exists) | Server Action | `fullName` | `done`, `backToReview` | any role | adds `provider_suspended` |
@@ -443,7 +446,7 @@ the functions raise, as `actions/onboarding.ts` does, and a mapped code reaches 
 | Step 1 | Checked chip | The field equals the saved `bio` |
 | Any write | Region | `profiles.region`, read inside the function. Never from the client |
 | Step 2 | Which cards | `provider_required_types(region)` plus the optional certificate |
-| Step 2 | Consent text | `Provider.documents.consent`, `[draft] ` until S16 |
+| Step 2 | Consent text | `ProviderDocs.consent`, `[draft] ` until S16 |
 | Consent | Version | `platform_settings (region, 'provider_docs_consent_version')`, read inside the function |
 | Consent | Locale | `getLocale()` |
 | Upload | Object path | `lib/storage/client.ts`: the user id from the page, `crypto.randomUUID()`. `provider_may_store` checks the shape |
@@ -452,7 +455,7 @@ the functions raise, as `actions/onboarding.ts` does, and a mapped code reaches 
 | `FileProgress` | Rows | Phone (always done), profile (profile row and photo row), ID (both sides), selfie, criminal record when required |
 | `FileProgress` | Done, percent | A row exists and is not `rejected`. `floor(done / total * 100)` |
 | Header chip | Standing | `provider_standing()`, once per request in the provider layout |
-| Status page | Reason text | `Provider.rejection.{code}`; `rejection_note` and `suspension_reason` as written |
+| Status page | Reason text | `Rejection.{code}`; `rejection_note` and `suspension_reason` as written |
 | Status page | Two working days | Catalogue (owner, 2026-11-01) |
 | `/account` | Warn before rename | `provider_standing()`, read by the account page |
 | Step 1 | Warn before a company change | The standing from the layout, and the form's fields against the saved row |
@@ -578,6 +581,28 @@ new door) and a position section that overrides `providers` and `provider_docume
 (Storage facts, including the real error responses and `storage.protect_delete()`); `build-plan.md` (row 02 links this spec, row 05 gains `p4`); the
 tracker's decision log, risks and owner steps.
 
+## Review fixes (2026-11-11)
+
+From the three reviews of 2026-11-11, in migration `20261111120000_provider_onboarding_review_fixes` (D127 to D129). Where
+this list and an AC above differ, this list wins.
+
+- **AC-12, AC-23 (D127):** `provider.company_changed` keeps `tax_number_last4`, never the full tax number, in old and new.
+- **AC-16 (D128), accepted risk:** the 60 seconds is the lifetime our action asks for. Storage takes `expiresIn` from whoever
+  signs, so an admin token holding a fresh view row could sign a longer link. Accepted by the owner; revisit before G3.
+  After 55 seconds a shown PDF swaps its link back for Show, which writes one more view row.
+- **AC-22:** a trigger on `storage.objects` runs `provider_store_allowed` at the real insert for the `authenticated` and
+  `service_role` roles, because a signed upload URL is checked when it is made and written later as `service_role`, past RLS.
+- **AC-14, AC-15:** every admin function answers `not_found` for a draft provider, a direct RPC call included, and `forbidden`
+  on the admin's own `providers` row. `provider_can_apply` also needs `profiles.role = 'provider'`.
+- **AC-21:** the admin policies of positions 00 and 01 read `is_admin()` too; no policy reads `app_metadata`. `decided_by` and
+  `reviewed_by` are outside the column grants, for providers and admins alike (`audit_log` names who decided).
+- **AC-6:** only a version starting `provider-docs-` counts as the documents consent.
+- **AC-18:** `file_missing` blocks approve only; a lost required object is a reason to reject. A replay answers
+  `replayed: true`, and `provider_decided` fires only when it is false.
+- **AC-12:** any file added while approved asks first in a `ConfirmDialog`, a first upload of a missing card too.
+- **AC-5, AC-13, AC-15, AC-20:** a card's chip says uploading during an upload; the phone tab bar carries the pending count;
+  the admin file shows the region by name, valid until dates formatted, and the chip from `provider_standing()`.
+
 ## Consequences
 
 **Positive**:
@@ -603,7 +628,8 @@ tracker's decision log, risks and owner steps.
 
 **Neutral**:
 - `/account` gains one dialog for approved providers, on a page from spec 0005, and `updateAccount` returns one more field.
-- New tables decide admin through `is_admin()`, while the tables of 01 still read the token claim.
+- Every admin policy decides admin through `is_admin()`, the tables of 00 and 01 included (D129, item 3 signed off by the owner
+  2026-11-14); no policy reads the token claim.
 - `complete_onboarding` does not change: a trigger on `profiles` creates the row.
 - `profile_photo` is a row in `provider_documents` but its file sits in its own bucket, so 06 can open photos without any rule touching IDs.
 - Admin decisions fire events from the admin's browser, because the server side PostHog client arrives at 08 or 09 (D68).
@@ -615,6 +641,13 @@ tracker's decision log, risks and owner steps.
 - [ ] Position 06: a customer read policy on `provider_profiles`, and on `provider-photos` for approved providers; the display name; the verified badge.
 - [ ] Position 13: notice 18 (approved or rejected) by email to a confirmed address.
 - [ ] Position 16: console search; the `criminal_record_required` switch on the settings page.
+- [ ] Before position 06 shows names to customers: scan `profiles.full_name` with `has_contact_info()`. Safe until then, because a
+      rename sends an approved provider back to review (AC-12).
+- [ ] Before G3: an alert that compares the 2 minute view window with the lifetime of signed links an admin makes (D128).
+- [ ] **Hard gate before G1 (D133):** the real calls of AC-29 and AC-16's Safari PDF, on the preview once real sign in works:
+      an iPhone Safari and an Android Chrome camera photo, a real PDF as e-Devlet issues it, a file over 10 MB and a renamed
+      `.exe`, the real token refusals (provider, admin with no view row and with a stale one, customer), and the preview CSP
+      check. PR #26 merged with them open on the owner's written waiver.
 - [ ] Position 19: the funnel stages beside `status`, the `a1` lifecycle bar, reminders before expiry, the acceptance rate, a rescan of stored bios when
       the scanner changes.
 - [ ] Position 20: invoicing reads `legal_name` and `tax_number` (B9).

@@ -63,22 +63,27 @@ describe('the action guard', () => {
     expect(readFileSync(file, 'utf8')).toMatch(/^'use server';/);
   });
 
-  it.each(actionFiles)('%s: every export refuses anyone anonymous', async (file) => {
-    const loaded = (await import(/* @vite-ignore */ `../${file}`)) as Record<string, Action>;
-    const exported = Object.entries(loaded);
-    expect(exported.length).toBeGreaterThan(0);
+  it.each(actionFiles)(
+    '%s: every export refuses anyone anonymous',
+    async (file) => {
+      const loaded = (await import(/* @vite-ignore */ `../${file}`)) as Record<string, Action>;
+      const exported = Object.entries(loaded);
+      expect(exported.length).toBeGreaterThan(0);
 
-    for (const [name, action] of exported) {
-      for (const input of INPUTS) {
-        await expect(action(input), `${file} ${name}`).resolves.toEqual({
-          success: false,
-          error: 'unauthorized',
-        });
+      for (const [name, action] of exported) {
+        for (const input of INPUTS) {
+          await expect(action(input), `${file} ${name}`).resolves.toEqual({
+            success: false,
+            error: 'unauthorized',
+          });
+        }
       }
-    }
-    expect(auth.rpc).not.toHaveBeenCalled();
-    expect(auth.from).not.toHaveBeenCalled();
-  });
+      expect(auth.rpc).not.toHaveBeenCalled();
+      expect(auth.from).not.toHaveBeenCalled();
+      // The first action file loaded pays the cold import of every door under a full parallel run.
+    },
+    30_000,
+  );
 });
 
 describe('the route guard', () => {

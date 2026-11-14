@@ -106,7 +106,7 @@ describe('the markers in the catalogues (D58, D100)', () => {
     }
   });
 
-  it.each(['Legal.termsBody', 'Legal.privacyBody', 'Onboarding.agreement'])(
+  it.each(['Legal.termsBody', 'Legal.privacyBody', 'Onboarding.agreement', 'ProviderDocs.consent'])(
     '%s starts with the [draft] marker in all three locales',
     (key) => {
       for (const catalogue of [ar, tr, en]) {

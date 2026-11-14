@@ -22,6 +22,12 @@ export type AnalyticsEvents = {
   phone_rejected: { reason: 'not_mobile' | 'too_short' | 'other_country' };
   /** A new account chose its role. */
   onboarding_completed: { role: 'customer' | 'provider' };
+  /** A provider sent their file for review (spec 0006 AC-24). */
+  provider_file_submitted: Record<string, never>;
+  /** Admin decided a file. Fired from the admin's browser until the server client lands (D68). */
+  provider_decided: { decision: 'approved' | 'rejected' };
+  /** An upload failed before or at Storage. Only the reason, never the file, its name or its path. */
+  document_upload_failed: { reason: 'too_large' | 'wrong_type' | 'refused' | 'network' };
 };
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
@@ -34,6 +40,9 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'code_limited',
   'phone_rejected',
   'onboarding_completed',
+  'provider_file_submitted',
+  'provider_decided',
+  'document_upload_failed',
 ]);
 
 /** The typed property names per event: the only non `$` properties an event may carry. */
@@ -45,4 +54,7 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   code_limited: ['limit'],
   phone_rejected: ['reason'],
   onboarding_completed: ['role'],
+  provider_file_submitted: [],
+  provider_decided: ['decision'],
+  document_upload_failed: ['reason'],
 };

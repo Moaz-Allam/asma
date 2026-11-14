@@ -58,7 +58,7 @@ Versions are recorded in `progress-tracker.md` once pinned. Always check the off
 
 ### Supabase — Storage
 - Verification documents go in a **private** bucket, served only via short-lived signed URLs. No public buckets for anything user-uploaded.
-- Validate MIME type and size server-side; never trust the client's declared type.
+- Validate MIME type and size server-side; never trust the client's declared type. **Overridden in 02 (D116, spec 0006):** the bucket checks the declared type and size, the browser checks the first bytes for honest mistakes, and `register_provider_document` cross checks type, extension, size and folder from `storage.objects`; no server can read bytes a hostile client could not also avoid. Real responses: the section below "Supabase Storage: what real calls return".
 
 ### Supabase — Edge Functions
 - Used for: PSP webhooks and scheduled jobs (auto-release, unlock-window expiry, reconciliation, invariant checks).
@@ -292,6 +292,32 @@ Verify's own limits and the per IP limit need the cloud project: `docs/specs/000
 - **`shadcn add`** with a hand written `components.json`, at CLI 4.21.5, generated `import { cn } from "cn"` and
   installed the `cn` package (published days earlier), and did not install `clsx`, `tailwind-merge`,
   `class-variance-authority` or `lucide-react`. Read what it wrote before trusting it.
+
+## Supabase Storage: what real calls return (checked 2026-11-10, local stack, storage-js 2.112.3)
+
+Position 02 (spec 0006). Recorded from real calls against local Storage with a real provider token, for
+the code map in `lib/storage/files.ts`.
+
+- **Every refusal answers HTTP 400.** The real status is the body's `statusCode` string, and storage-js
+  puts it on `StorageApiError.statusCode` (with `code`): `403` `AccessDenied` "new row violates row-level
+  security policy" (no policy, another folder, no consent); `415` `InvalidMimeType` (declared type not in
+  the bucket's list); `413` `EntityTooLarge` (over `file_size_limit`); `409` `KeyAlreadyExists` (upsert off,
+  object there). Map on `statusCode`/`code`, never on the HTTP status.
+- **`remove()` reports only what it deleted.** An object the policy hides (another folder, or a file a row
+  points to) is missing from the list with status 200 and no error, so compare the list with what you asked.
+- **`createSignedUrl` on an object you cannot select** answers 404 `NoSuchKey`, never 403: the select
+  policy hides the row. Signing needs the select policy; downloading by the token then needs none.
+- **A Blob body is sent as a form part with the Blob's own type, and `contentType` is ignored there.** A PDF
+  picked on Android with an empty `File.type` is refused as `invalid_mime_type`. `uploadProviderFile`
+  rewraps every body as `new Blob([file], { type })` (found by `/develop` 2026-11-10).
+- `cacheControl: '0'` is stored as `metadata.cacheControl = "max-age=0"`; `metadata.size` and
+  `metadata.mimetype` are set when the upload returns, so `register_provider_document` reads them then.
+- **`storage.protect_delete()`** is a trigger on `storage.objects` that refuses every SQL `DELETE` unless
+  `storage.allow_delete_query` is `true` for the transaction (the Storage API sets it). pgTAP sets
+  `SET LOCAL storage.allow_delete_query = 'true'` to prove the delete policy.
+- A migration may insert into `storage.buckets` and create policies on `storage.objects` as `postgres`;
+  the cloud project accepted both on 2026-11-10. `storage.objects.name` has the default collation: compare
+  it with a `collate "C"` column as `name collate "C"`, or Postgres cannot pick a collation.
 
 ## Telemetry relays: what real traffic sends (checked 2026-10-31)
 
