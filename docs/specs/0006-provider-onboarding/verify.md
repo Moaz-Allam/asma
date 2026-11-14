@@ -151,6 +151,7 @@ Recorded 2026-11-10 on the local stack (`context/library-docs.md` holds the deta
 
 - [x] Cloud accepted the buckets and the policies on `storage.objects`; advisors clean → AC-22 · *proof: 2026-11-10 after the owner's push, read only: migration listed, both buckets private, four policies; the security advisors list only the intended definer RPCs (the same class as `complete_onboarding`)*
 - [x] The AC-26 guard query against the cloud: no public bucket, no policy without a bucket, none granted to `anon` or `public` → AC-26 · *proof: 2026-11-10, all three guards empty on the cloud*
+- [x] After the push of `20261114090000` (2026-11-15, read only): 8 migrations in the cloud; no public bucket; every `storage.objects` policy opens with its bucket list; none granted to `anon` or `public`; no policy reads `app_metadata`; both bucket triggers (`provider_files_guard` on insert, `provider_files_guard_update` on update) present and enabled; the new bodies of `has_contact_info`, `contact_normalise`, `provider_store_allowed` and `register_provider_document` live. Security advisors: only the intended definer RPCs, as on 2026-11-10 → AC-22, AC-26
 - [ ] A real camera photo from iPhone Safari uploads as JPEG and shows for admin, with `camera=()` in place. Note any problem with
       the selfie capture → AC-5, AC-29
 - [ ] The same from Android Chrome, and a PDF from Android → AC-7, AC-29

@@ -45,7 +45,7 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 - 2026-10-31 · **01 part 1 merged** (PR #22, `09a7501`). Its real calls (AC-26) and reviews are still owed.
 - 2026-11-13 · **01 part 2 merged** (PR #25, `3c8ca33`): landing page, SEO, full account. Its migration is in the cloud.
 - 2026-11-14 · **02 reviewed and fixed** (spec 0006, PR #26 on `feat/02-provider-onboarding`): provider onboarding, admin review,
-  suspend. Three migrations; the first two are in the cloud, `20261114090000` waits for the owner's push. Local CI replaced
+  suspend. Three migrations, all in the cloud (the third pushed by the owner 2026-11-15). Merges on local CI, which replaced
   GitHub CI (down). AC-29 real calls are a hard gate before G1 (D133).
 
 ## Stack (pinned exactly)
