@@ -1504,8 +1504,9 @@ Flags for: `funding_enabled`, `unlock_enabled`, `payouts_enabled`, `auto_release
   `storage.objects.id`, compared by every view and verdict; `valid_until` for the ID and the record, set by
   admin. The ID number is never stored.
 - No API role, `service_role` included, writes these tables; definer functions do, with their audit row.
-  New policies decide admin through `public.is_admin()` from `profiles.role`; the tables of 01 still read
-  the token claim (21 decides whether they move).
+  Every admin policy decides admin through `public.is_admin()` from `profiles.role`, the tables of 00 and 01
+  included (migration `20261111120000`, D129 item 3 signed off by the owner 2026-11-14), so a demotion counts at
+  once; a pgTAP guard fails on any policy that reads `app_metadata`.
 - `provider_standing()` adds `document_expired`, a reading of `valid_until`, with no scheduled job.
   `provider_can_apply()` is what position 05's insert policy calls.
 - Stays in 19: the funnel stages of §30 beside `status`, the lifecycle bar, reminders before expiry, the

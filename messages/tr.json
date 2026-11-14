@@ -569,7 +569,7 @@
   },
   "AdminReview": {
     "railBadge": "[tr] Admin",
-    "pendingCount": "[tr] {count} files under review",
+    "pendingCount": "[tr] {count, plural, one {# file under review} other {# files under review}}",
     "back": "[tr] Back to the queue",
     "phone": "[tr] Phone",
     "region": "[tr] Region",
@@ -642,7 +642,8 @@
       "not_approved": "[tr] Only an approved provider can be suspended.",
       "not_suspended": "[tr] This provider is not suspended.",
       "reason_short": "[tr] Write a reason of 5 to 500 characters.",
-      "action_failed": "[tr] Something went wrong. Nothing changed. Please try again."
+      "action_failed": "[tr] Something went wrong. Nothing changed. Please try again.",
+      "network": "[tr] The connection dropped. Nothing changed. Try again."
     }
   }
 }

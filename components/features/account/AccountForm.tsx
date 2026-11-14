@@ -44,12 +44,17 @@ export function AccountForm({
     const name = typeof typed === 'string' ? typed : '';
     setConfirm(null);
     startTransition(async () => {
-      const account = await updateAccount({ fullName: name });
-      if (!account.success) return setError(account.error);
-      setBackToReview(account.data.backToReview);
-      const contact = await updateEmail({ email: form.get('email') });
-      if (contact.success) setSaved(true);
-      else setError(contact.error === 'validation_failed' ? 'email' : contact.error);
+      try {
+        const account = await updateAccount({ fullName: name });
+        if (!account.success) return setError(account.error);
+        // Set before the email step: if that step fails, the name was still saved and the file is in review.
+        setBackToReview(account.data.backToReview);
+        const contact = await updateEmail({ email: form.get('email') });
+        if (contact.success) setSaved(true);
+        else setError(contact.error === 'validation_failed' ? 'email' : contact.error);
+      } catch {
+        setError('action_failed');
+      }
     });
   }
 
@@ -117,7 +122,7 @@ export function AccountForm({
           {t(`errors.${error}`)}
         </p>
       ) : null}
-      {saved ? (
+      {saved || backToReview ? (
         <p role="status" className="text-body-s text-text-secondary">
           {backToReview ? t('savedBackToReview') : t('saved')}
         </p>

@@ -206,7 +206,8 @@ export async function hasDocsConsent(userId: string, region: string): Promise<bo
     .maybeSingle();
   if (error) throw error;
   const version = typeof setting?.value === 'string' ? setting.value : null;
-  if (version === null) return false;
+  // Only a provider-docs- version is the documents consent, as provider_docs_consent_version() says (D129).
+  if (version === null || !version.startsWith('provider-docs-')) return false;
   const { count, error: readError } = await supabase
     .from('terms_acceptances')
     .select('id', { count: 'exact', head: true })

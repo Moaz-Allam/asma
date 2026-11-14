@@ -237,6 +237,43 @@ describe('decideProvider (AC-18)', () => {
   });
 });
 
+describe('the role each action asks for', () => {
+  it('provider actions ask for provider, admin actions for admin', async () => {
+    m.requireRole.mockResolvedValue(PROVIDER);
+    m.registerDocumentInDb.mockResolvedValue({
+      id: DOC,
+      type: 'selfie',
+      status: 'pending',
+      object_id: OBJ,
+      previous_path: null,
+      sweep: [],
+      backToReview: false,
+      created: true,
+    });
+    m.submitFileInDb.mockResolvedValue({ status: 'pending', missing: [], rejected: [], objectsMissing: [] });
+    await registerDocument({ type: 'selfie', path: PATH });
+    await submitProviderFile();
+    expect(m.requireRole.mock.calls).toEqual([['provider'], ['provider']]);
+    m.requireRole.mockClear().mockResolvedValue(ADMIN);
+    m.logDocumentViewInDb.mockResolvedValue({
+      bucket: 'provider-documents',
+      path: PATH,
+      mime_type: 'image/jpeg',
+    });
+    m.signedLink.mockResolvedValue('https://storage.example/signed');
+    m.decideProviderInDb.mockResolvedValue({ status: 'approved', replayed: false });
+    await showDocument({ documentId: DOC, objectId: OBJ });
+    await decideProvider({
+      providerId: PROVIDER.id,
+      decision: 'approved',
+      seenUpdatedAt: '2026-11-11T10:00:00Z',
+      code: null,
+      note: null,
+    });
+    expect(m.requireRole.mock.calls).toEqual([['admin'], ['admin']]);
+  });
+});
+
 describe('databaseCode', () => {
   it('reads a known code from a PostgREST error', () => {
     expect(databaseCode(raised('provider_suspended'), PROVIDER_DB_CODES)).toBe('provider_suspended');

@@ -61,7 +61,7 @@ export async function AccountStateBanner({
         {standing === 'suspended' && file.suspensionReason ? (
           <section className="flex flex-col gap-2 rounded-block border-2 border-border p-5.5">
             <h3 className="text-meta font-bold text-text-secondary">{t('suspended.reasonLabel')}</h3>
-            <p className="text-body font-bold whitespace-pre-line text-text-primary">
+            <p className="text-body font-bold break-words whitespace-pre-line text-text-primary">
               {file.suspensionReason}
             </p>
           </section>
@@ -74,7 +74,9 @@ export async function AccountStateBanner({
               <p className="text-body font-bold text-text-primary">{reason(file.rejectionCode)}</p>
             ) : null}
             {file.rejectionNote ? (
-              <p className="text-body whitespace-pre-line text-text-primary">{file.rejectionNote}</p>
+              <p className="text-body break-words whitespace-pre-line text-text-primary">
+                {file.rejectionNote}
+              </p>
             ) : null}
           </section>
         ) : null}
@@ -86,7 +88,9 @@ export async function AccountStateBanner({
                 <span className="text-body-s font-bold text-text-primary">{tType(item.type)}</span>
                 {item.reason ? <span className="text-body-s text-text-primary">{item.reason}</span> : null}
                 {item.note ? (
-                  <span className="text-body-s whitespace-pre-line text-text-primary">{item.note}</span>
+                  <span className="text-body-s break-words whitespace-pre-line text-text-primary">
+                    {item.note}
+                  </span>
                 ) : null}
               </li>
             ))}

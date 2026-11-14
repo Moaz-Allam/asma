@@ -1,3 +1,4 @@
+import { reportServerError } from '@/lib/observability/server';
 import type { ReactNode } from 'react';
 
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
@@ -18,7 +19,14 @@ export async function AdminShell({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
   const profile = user ? await getProfile(user.id) : null;
   const role = user?.role ?? null;
-  const pending = role === 'admin' ? await pendingCount().catch(() => 0) : 0;
+  // A failed count shows no badge, but it is reported, never silent.
+  const pending =
+    role === 'admin'
+      ? await pendingCount().catch((error: unknown) => {
+          reportServerError('adminShell', error);
+          return 0;
+        })
+      : 0;
   const items = role ? menuFor(role) : [];
 
   return (

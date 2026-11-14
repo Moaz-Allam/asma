@@ -181,7 +181,7 @@ Domain components. Path: `components/features/<domain>/`.
 | `NavLinks` | `components/layout/NavLinks.tsx` | Desktop role menu with `aria-current` | s3 | ✅ done |
 | `CustomerLayout` | `app/[locale]/(customer)/layout.tsx` | `AppShell`, `noindex` | s3 | ✅ done |
 | `ProviderLayout` | `app/[locale]/(provider)/layout.tsx` | Provider header with the account state chip | p6 | 📋 planned |
-| `AdminLayout` | `app/[locale]/(admin)/layout.tsx` | `AdminRail` + top bar (search, region switch) | app-01 | 📋 planned |
+| `AdminLayout` | `app/[locale]/(admin)/layout.tsx` | `AdminShell`: `AdminRail` from `lg`, the normal header and `BottomTabBar` below it. No search and no region switch yet (spec 0006 AC-13) | app-01, app-03 | ✅ built (02) |
 
 ---
 
@@ -333,12 +333,12 @@ comes from `messages/`. Placeholder content; the real landing is design screen `
 
 ## 9. Built in position 02 (spec 0006, 2026-11-10)
 
-RTL: every piece uses logical properties only (`lint:rtl` clean); a visual pass in `ar` is owed to
-`/check verify`, so each row says ⬜ until then. Frames read from the live Claude Design project (`p2`,
+RTL: every piece uses logical properties only (`lint:rtl` clean), and the visual pass in `ar`, `tr` and `en` at
+360, 390, 430 and 1280 px ran in `/check verify` on 2026-11-11, so each row says ✅. Frames read from the live Claude Design project (`p2`,
 `p3`, `p5`, `p7`, `p14`; `app-03`, `a1`, `a2`, `a4` from the admin export, which matches live).
 
 ### StatusChip
-**Path:** components/shared/StatusChip.tsx · **Used by:** provider header, queue rows, document cards · **Design ref:** p5, app-03 · **RTL checked:** ⬜
+**Path:** components/shared/StatusChip.tsx · **Used by:** provider header, queue rows, document cards · **Design ref:** p5, app-03 · **RTL checked:** ✅ 2026-11-11
 ```
 Pill:     inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-chip whitespace-nowrap
 waiting:  bg-warning-light text-warning-foreground   (pending, approved: D59)
@@ -349,7 +349,7 @@ info:     bg-accent-light text-text-primary          (review reason, matching)
 The label always names the state. `STANDING_TONE` in `components/features/provider/StandingChip.tsx` is the one standing mapping.
 
 ### ChoiceChips · ToggleChips
-**Path:** components/shared/ChoiceChips.tsx, ToggleChips.tsx · **Used by:** step 1 (entity type, languages) · **Design ref:** p2 · **RTL checked:** ⬜
+**Path:** components/shared/ChoiceChips.tsx, ToggleChips.tsx · **Used by:** step 1 (entity type, languages) · **Design ref:** p2 · **RTL checked:** ✅ 2026-11-11
 ```
 Pill:     inline-flex min-h-11 cursor-pointer items-center rounded-full px-5 py-3 text-btn-sm
 Selected: bg-accent text-accent-foreground   (ToggleChips adds a Check icon, so never colour alone)
@@ -359,7 +359,7 @@ Focus:    has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring
 Real radio and checkbox inputs, `sr-only`, inside a `fieldset` with a `legend`.
 
 ### Stepper
-**Path:** components/shared/Stepper.tsx · **Used by:** steps 1 and 2 · **Design ref:** p2, p3 · **RTL checked:** ⬜
+**Path:** components/shared/Stepper.tsx · **Used by:** steps 1 and 2 · **Design ref:** p2, p3 · **RTL checked:** ✅ 2026-11-11
 ```
 Step:     inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 py-2 (text-body-s font-semibold)
 current:  bg-accent text-accent-foreground (aria-current="step") · done: bg-surface-secondary + Check · next: text-text-secondary
@@ -367,7 +367,7 @@ Separator: › with rtl:-scale-x-100
 ```
 
 ### ConfirmDialog
-**Path:** components/shared/ConfirmDialog.tsx · **Used by:** replace on an approved file, company change, rename, suspend, lift · **Design ref:** a2 · **RTL checked:** ⬜
+**Path:** components/shared/ConfirmDialog.tsx · **Used by:** replace on an approved file, company change, rename, suspend, lift · **Design ref:** a2 · **RTL checked:** ✅ 2026-11-11
 ```
 Overlay: fixed inset-0 z-40 bg-surface-inverse/40
 Content: fixed inset-x-4 top-1/2 z-50 mx-auto flex max-w-md -translate-y-1/2 flex-col gap-4 rounded-panel bg-surface p-6.5 shadow-overlay
@@ -377,7 +377,7 @@ Buttons: Button lg (flex-1) + Button lg secondary
 Radix Dialog from `radix-ui`; `children` holds a field (the suspension reason).
 
 ### ErrorState · PageSkeleton · FormField · Textarea
-**Paths:** components/shared/ErrorState.tsx, PageSkeleton.tsx, FormField.tsx, components/ui/textarea.tsx · **RTL checked:** ⬜
+**Paths:** components/shared/ErrorState.tsx, PageSkeleton.tsx, FormField.tsx, components/ui/textarea.tsx · **RTL checked:** ✅ 2026-11-11
 ```
 ErrorState:  role=alert, EmptyState's shape on bg-error-light (rounded-card px-6.5 py-12 text-center)
 PageSkeleton: role=status, animate-pulse blocks bg-surface-secondary (rounded-row, rounded-panel)
@@ -386,7 +386,7 @@ Textarea:    Input's classes with min-h-24 py-4
 ```
 
 ### Provider onboarding (feature)
-**Paths:** components/features/provider/{OnboardingFrame,ProfileForm,DocumentsStep,FileProgress,StandingChip,AccountStateBanner,ProviderProfileView}.tsx, use-provider-upload.ts · **Used by:** /provider, /provider/profile, /provider/profile/documents · **Design ref:** p2, p3, p5, p7, p14 · **RTL checked:** ⬜
+**Paths:** components/features/provider/{OnboardingFrame,ProfileForm,DocumentsStep,FileProgress,StandingChip,AccountStateBanner,ProviderProfileView}.tsx, use-provider-upload.ts · **Used by:** /provider, /provider/profile, /provider/profile/documents · **Design ref:** p2, p3, p5, p7, p14 · **RTL checked:** ✅ 2026-11-11
 ```
 Frame grid:   grid items-start gap-3.5 lg:grid-cols-[1.5fr_1fr]; aside lg:sticky lg:top-4
 Gate line:    rounded-block bg-accent-light p-5 + chip rounded-full bg-accent px-4.5 py-2 text-chip text-accent-foreground
@@ -398,7 +398,7 @@ Status panel: rounded-panel bg-accent-light p-6.5 lg:p-9, title font-display tex
 File inputs are `sr-only` with `tabIndex=-1` and an `aria-label`; a pill button opens them, so the keyboard reaches one control per file. Images show through a plain `<img>` (never `next/image`: its optimizer would fetch a signed link).
 
 ### Admin console (feature)
-**Paths:** components/features/admin/{AdminShell,AdminRail,ProviderQueue,ProviderFileReview}.tsx · **Used by:** /admin, /admin/providers, /admin/providers/[id] · **Design ref:** app-03, a1, a2, a4 · **RTL checked:** ⬜
+**Paths:** components/features/admin/{AdminShell,AdminRail,ProviderQueue,ProviderFileReview}.tsx · **Used by:** /admin, /admin/providers, /admin/providers/[id] · **Design ref:** app-03, a1, a2, a4 · **RTL checked:** ✅ 2026-11-11
 ```
 Rail:        hidden w-64 shrink-0 flex-col gap-8 bg-surface-inverse px-5 py-7 text-text-inverse lg:flex
 Rail item:   flex min-h-11 items-center gap-3 rounded-row px-4 py-3 text-nav; active bg-accent-light font-extrabold text-text-primary

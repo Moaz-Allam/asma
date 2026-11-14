@@ -4,7 +4,7 @@ import { CirclePlus, LayoutDashboard, List, UserRound, UsersRound, type LucideIc
 import { useTranslations } from 'next-intl';
 
 import { Link, usePathname } from '@/lib/i18n/navigation';
-import type { MenuItem } from '@/lib/navigation/menus';
+import { activeMenuKey, type MenuItem } from '@/lib/navigation/menus';
 import { cn } from '@/lib/utils';
 
 const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
@@ -30,6 +30,7 @@ export function BottomTabBar({
   const t = useTranslations('Nav');
   const tAdmin = useTranslations('AdminReview');
   const pathname = usePathname();
+  const activeKey = activeMenuKey(items, pathname);
 
   return (
     <nav
@@ -39,9 +40,7 @@ export function BottomTabBar({
       <ul className="flex">
         {items.map(({ key, href }) => {
           const Icon = ICONS[key];
-          const active =
-            pathname === href ||
-            (href !== '/admin' && href !== '/provider' && pathname.startsWith(`${href}/`));
+          const active = key === activeKey;
           return (
             <li key={key} className="flex-1">
               <Link

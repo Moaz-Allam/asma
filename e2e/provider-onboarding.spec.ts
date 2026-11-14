@@ -50,6 +50,10 @@ function sql(query: string): string {
 
 async function axe(page: Page) {
   // A button fades from disabled when the page hydrates; scan the settled page, not a frame of the fade.
+  // Hydration starts the fade, so wait for it first (network idle, then two frames), or getAnimations() can
+  // still be empty here and axe reads a frame of the fade (it failed this way in full runs on 2026-11-11 and 11-14).
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
   await page.evaluate(() =>
     Promise.allSettled(document.getAnimations().map((animation) => animation.finished)),
   );
@@ -274,7 +278,7 @@ test('a provider is reviewed, rejected, fixed and approved, then a replaced docu
 });
 
 test('admin suspends and lifts an approved provider', async ({ page, browser }, testInfo) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   const locale = testInfo.project.name;
   const name = `Usta ${locale} Suspended`;
   await newProvider(page, locale, 'suspended', name);
@@ -299,10 +303,54 @@ test('admin suspends and lifts an approved provider', async ({ page, browser }, 
   await admin.getByRole('button', { name: m(locale, 'AdminReview.liftConfirm') }).click();
   await expect(admin.getByRole('button', { name: m(locale, 'AdminReview.suspend') })).toBeVisible();
   await page.reload();
-  await expect(
-    page.locator('header').first().getByText(m(locale, 'Provider.standing.approved'), { exact: true }),
-  ).toBeVisible();
+  const chip = (standing: string) =>
+    page
+      .locator('header')
+      .first()
+      .getByText(m(locale, `Provider.standing.${standing}`), { exact: true });
+  await expect(chip('approved')).toBeVisible();
   await admin.context().close();
+
+  // AC-11: approved sees `p7`, with Edit.
+  await page.goto(`/${locale}/provider/profile`);
+  await expect(page.getByRole('heading', { name })).toBeVisible();
+  await page.getByRole('link', { name: m(locale, 'Provider.view.edit') }).click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/provider/profile\\?edit=1$`));
+
+  // AC-12: the first save of the company fields is no change; switching to a company asks first.
+  await fillStepOne(
+    page,
+    locale,
+    'Ev ve ofis temizliğinde altı yıllık deneyimim var, malzemelerimi getiririm.',
+  );
+  await expect(page).toHaveURL(new RegExp(`/${locale}/provider/profile$`), { timeout: 20_000 });
+  await expect(chip('approved')).toBeVisible();
+  await page.goto(`/${locale}/provider/profile?edit=1`);
+  await page.locator('label', { has: page.locator('input[name="entityType"][value="company"]') }).click();
+  await page.locator('#legal-name').fill(`Usta ${locale} Temizlik Ltd`);
+  await page.locator('#tax-number').fill('1234567890');
+  await page.getByRole('button', { name: m(locale, 'ProviderForm.save') }).click();
+  await expect(
+    page.getByRole('heading', { name: m(locale, 'ProviderForm.confirmCompanyTitle') }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: m(locale, 'ProviderForm.cancel') }).click();
+  await page.reload();
+  await expect(chip('approved')).toBeVisible();
+
+  // AC-12 on /account: a rename asks first; cancel changes nothing, confirm returns the file to review.
+  await page.goto(`/${locale}/account`);
+  await page.locator('#account-name').fill(`${name} Yeni`);
+  await page.getByRole('button', { name: m(locale, 'Account.save') }).click();
+  await page.getByRole('button', { name: m(locale, 'Account.renameCancel') }).click();
+  await page.goto(`/${locale}/provider`);
+  await expect(chip('approved')).toBeVisible();
+  await page.goto(`/${locale}/account`);
+  await page.locator('#account-name').fill(`${name} Yeni`);
+  await page.getByRole('button', { name: m(locale, 'Account.save') }).click();
+  await page.getByRole('button', { name: m(locale, 'Account.renameConfirm') }).click();
+  await expect(page.getByText(m(locale, 'Account.savedBackToReview'))).toBeVisible({ timeout: 20_000 });
+  await page.goto(`/${locale}/provider`);
+  await expect(chip('pending')).toBeVisible();
 });
 
 test('a customer never reaches the provider or admin pages', async ({ page }, testInfo) => {
@@ -311,6 +359,8 @@ test('a customer never reaches the provider or admin pages', async ({ page }, te
   await onboard(page, `Müşteri ${locale}`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/new$`), { timeout: 20_000 });
   await page.goto(`/${locale}/admin/providers`);
+  await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`), { timeout: 20_000 });
+  await page.goto(`/${locale}/provider`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`), { timeout: 20_000 });
   await page.goto(`/${locale}/provider/profile/documents`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`), { timeout: 20_000 });

@@ -1,3 +1,4 @@
+import { reportServerError } from '@/lib/observability/server';
 import type { ReactNode } from 'react';
 
 import { AppShell } from '@/components/layout/AppShell';
@@ -14,6 +15,13 @@ export const metadata = PRIVATE_PAGE_METADATA;
  */
 export default async function Layout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
-  const standing = user?.role === 'provider' ? await getStanding(user.id).catch(() => null) : null;
+  // A failed read shows no chip (the page shows its own ErrorState), but it is reported, never silent.
+  const standing =
+    user?.role === 'provider'
+      ? await getStanding(user.id).catch((error: unknown) => {
+          reportServerError('providerLayout', error);
+          return null;
+        })
+      : null;
   return <AppShell badge={standing ? <StandingChip standing={standing} /> : null}>{children}</AppShell>;
 }

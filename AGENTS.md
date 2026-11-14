@@ -43,10 +43,10 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 - 2026-10-31 · **00b merged, G0 closed** (`b0d54d7`): clean clone and CI green, all three relays proved
   on production with real browsers.
 - 2026-10-31 · **01 part 1 merged** (PR #22, `09a7501`). Its real calls (AC-26) and reviews are still owed.
-- 2026-11-01 · **01 part 2 built** on `feat/01b-landing-seo-account`, committed 2026-11-10 and not pushed: landing page, SEO,
-  full account. Its migration is already in the cloud (checked 2026-11-10).
-- 2026-11-10 · **02 built** (spec 0006) on `feat/02-provider-onboarding`, cut from 01 part 2, not committed: provider
-  onboarding, admin review, suspend. Its migration is already in the cloud (owner push 2026-11-10). Reviews and real calls owed.
+- 2026-11-13 · **01 part 2 merged** (PR #25, `3c8ca33`): landing page, SEO, full account. Its migration is in the cloud.
+- 2026-11-14 · **02 reviewed and fixed** (spec 0006, PR #26 on `feat/02-provider-onboarding`): provider onboarding, admin review,
+  suspend. Three migrations; the first two are in the cloud, `20261114090000` waits for the owner's push. Local CI replaced
+  GitHub CI (down). AC-29 real calls are a hard gate before G1 (D133).
 
 ## Stack (pinned exactly)
 

@@ -94,6 +94,17 @@ export function ProviderFileReview({
   const byType = new Map(documents.map((d) => [d.type, d]));
   const underReview = status === 'pending';
 
+  /** Runs an action; a dropped connection shows as network instead of an unhandled rejection. */
+  function safely(run: () => Promise<unknown>) {
+    startTransition(async () => {
+      try {
+        await run();
+      } catch {
+        setError('network');
+      }
+    });
+  }
+
   function fail(code: string) {
     setError(code);
     if (code === 'stale_document' || code === 'stale_profile' || code === 'not_under_review')
@@ -102,7 +113,7 @@ export function ProviderFileReview({
 
   function show(doc: ReviewDocument) {
     setError(null);
-    startTransition(async () => {
+    safely(async () => {
       const result = await showDocument({ documentId: doc.id, objectId: doc.objectId });
       if (!result.success) return fail(result.error);
       const view = result.data;
@@ -132,7 +143,7 @@ export function ProviderFileReview({
     },
   ) {
     setError(null);
-    startTransition(async () => {
+    safely(async () => {
       const result = await reviewDocuments({
         providerId,
         ids: docs.map((d) => d.id),
@@ -146,7 +157,7 @@ export function ProviderFileReview({
 
   function decide(decision: 'approved' | 'rejected') {
     setError(null);
-    startTransition(async () => {
+    safely(async () => {
       const result = await decideProvider({
         providerId,
         decision,
@@ -163,7 +174,7 @@ export function ProviderFileReview({
 
   function suspend() {
     setError(null);
-    startTransition(async () => {
+    safely(async () => {
       const result = await suspendProvider({ providerId, reason });
       setSuspendOpen(false);
       if (!result.success) return fail(result.error);
@@ -174,7 +185,7 @@ export function ProviderFileReview({
 
   function lift() {
     setError(null);
-    startTransition(async () => {
+    safely(async () => {
       const result = await reinstateProvider({ providerId });
       setLiftOpen(false);
       if (!result.success) return fail(result.error);

@@ -22,7 +22,10 @@ here first.
 | Split digits | `0555.123.45.67` |
 | Split digits | `0555-123-45-67` |
 | Hidden characters | The first phone above with zero width spaces between digits |
+| Wide separators | `0555 - 123 - 45 - 67`, `0555   123   4567`, `0555 x 123 x 4567`, `0555 / 123 / 4567` |
+| Wide separators | `0 5 5 5 - 1 2 3 - 4 5 6 7` |
 | Spelled, Turkish | `sıfır beş beş beş bir iki üç dört` |
+| Spelled, Turkish with diacritics first | `üç dört beş altı sıfır`, `dört dört beş üç üç`, `altı yedi sekiz dokuz üç`, `ÜÇ DÖRT BEŞ ALTI SIFIR`, `beş üç dört üç dört beş üç` (ö and ç were crossed in the fold until 2026-11-14) |
 | Spelled, English | `zero five five five one two three` |
 | Spelled, Arabic | `صفر خمسة خمسة خمسة واحد اثنان ثلاثة` |
 | Email | `ali@example.com` |
@@ -53,9 +56,16 @@ here first.
 | Arabic | `خبرة 6 سنوات في تنظيف المنازل والفلل` |
 | Arabic | `بدأت العمل عام 2019` |
 | Arabic | `أعمل من 9 إلى 5` |
+| English | `9 to 5, 10 years since 2015` (7 digits inside 22 characters: the row that set the window at 21) |
+| English | `3 bedrooms, 2 bathrooms, 1 kitchen, 6 years since 2019` |
 
-**Known false positive, accepted:** `2015-2020` is 8 digits with a one character gap, so it is refused. The provider writes
-`from 2015 to 2020`, and the message says to remove numbers that look like a phone.
+**Known false positives, accepted (D131):** the rule is 7 digits within any 21 characters, so more honest bios are refused
+than under the old run rule: `2015-2020`, or several years and counts close together, such as `2015, 2018 and 2021`. The
+provider rewrites them (`from 2015 to 2020`), and the message already says to remove numbers that look like a phone.
+
+**Property checks (pgTAP, seeded):** a 10 digit number in groups of 4,3,3 or 3,3,2,2 or 4,3,2,2 with 1 to 5 characters
+between groups is always flagged, and so is 1 to 2 characters between every digit. 1 to 3 characters between every digit can
+span 25 characters, past the window, so it is not always caught; the owner was told.
 
 **Known miss, accepted:** an email spelled in Turkish or Arabic words, such as `ali nokta example`. Admin reads every bio at review.
 

@@ -110,6 +110,7 @@ Each is a small call the design needed. The runner up is named.
 
 | Call | Why | Runner up |
 | --- | --- | --- |
+| The digit rule is 7 digits within 21 characters (D131, 2026-11-13) | A phone split by wide separators (`0555 - 123 - 45 - 67`) passed the old run with gaps of at most 2. 25 was the owner's start; 21 is the widest window that passes every must pass row (`9 to 5, 10 years since 2015` spans 22) | The old run rule with longer gaps, which a separator of any new length beats again |
 | `providers.id` equals `profiles.id` | `auth.uid()` works in every policy with no join | A separate id with `profile_id`, as `architecture.md` §13 draws |
 | A trigger on `profiles` creates the row | Every provider has a row, and `complete_onboarding` stays as merged | Upserts in two functions |
 | Two tables, `providers` and `provider_profiles` | 06 opens one to customers and never touches tax fields | One table with column grants |

@@ -1,7 +1,7 @@
 # 0006. Provider onboarding and approval (position 02)
 
 **Date**: 2026-11-01
-**Status**: Accepted (confirmed by the owner 2026-11-01, after a cross check on a second model; amended 2026-11-02 from the security critic, D120)
+**Status**: Accepted (confirmed by the owner 2026-11-01, after a cross check on a second model; amended 2026-11-02 from the security critic, D120; amended 2026-11-11 and 2026-11-14 from the reviews of PR #26, D127 to D133)
 
 ## Summary
 
@@ -55,8 +55,9 @@ Step 3 of the design (services, districts, work days) moves to 05, because its t
   stores neither. Saving twice changes only `updated_at`.
 - **AC-3**: `public.has_contact_info(text)` is the one scanner. `save_provider_profile` refuses a bio it flags with
   the stable code `contact_info_in_bio`. It first normalises: NFKC, lower case with no Turkish locale, zero width
-  characters, tatweel and Arabic marks removed, Arabic Indic and Persian digits folded. Then it flags: a run of 7 or
-  more digits with gaps of at most 2 characters between them; 5 or more spelled number words in a row, in `ar`, `tr` or
+  characters, tatweel and Arabic marks removed, Arabic Indic and Persian digits folded. Then it flags: 7 or more digits
+  within any 21 characters, whatever stands between them, so a separator of any length counts (D131; 25 was the start,
+  21 is the widest window that passes every must pass row); 5 or more spelled number words in a row, in `ar`, `tr` or
   `en`; emails, including spelled `at` and `dot`; links and bare domains on a fixed list of endings; `wa.me`, `t.me` and
   `@` followed by 3 or more word characters; the names of WhatsApp, Telegram and Instagram in the three languages. The
   must catch and must pass table in `verify.md` is the pgTAP corpus. When the field equals the saved bio, the `p2` chip
@@ -195,8 +196,10 @@ Step 3 of the design (services, districts, work days) moves to 05, because its t
   else with `forbidden`, so a customer or an admin cannot save a profile, accept the documents consent, register or submit.
 - **AC-22**: Storage rules, each with a negative test: both buckets are private. A provider writes only what
   `provider_may_store` allows: a `providers` row for `auth.uid()`, own folder from `auth.uid()`, right type and extension for
-  that bucket, not suspended, consent for documents, and under 20 counted objects. Counted means an object a
-  `provider_documents` row points to, or an orphan (no row points to it) younger than 24 hours. Customers and admins upload
+  that bucket, not suspended, consent for documents, under 20 counted objects, and under 100 MB across every object in
+  the folder, orphans of any age included. Counted means an object a `provider_documents` row points to, or an orphan (no
+  row points to it) younger than 24 hours. The same rules run again at the real insert, and an object's bytes, name or
+  bucket never change in place, because a signed upload URL writes as `service_role` past RLS. Customers and admins upload
   nothing, even with a `terms_acceptances` row. A provider reads their own objects. An admin reads an object only with a
   `document.viewed` row by that admin for that object id and that path in the last 2 minutes, so a view row for a replaced
   file never opens a new object at a reused path. Another provider and a
@@ -443,7 +446,7 @@ the functions raise, as `actions/onboarding.ts` does, and a mapped code reaches 
 | Step 1 | Checked chip | The field equals the saved `bio` |
 | Any write | Region | `profiles.region`, read inside the function. Never from the client |
 | Step 2 | Which cards | `provider_required_types(region)` plus the optional certificate |
-| Step 2 | Consent text | `Provider.documents.consent`, `[draft] ` until S16 |
+| Step 2 | Consent text | `ProviderDocs.consent`, `[draft] ` until S16 |
 | Consent | Version | `platform_settings (region, 'provider_docs_consent_version')`, read inside the function |
 | Consent | Locale | `getLocale()` |
 | Upload | Object path | `lib/storage/client.ts`: the user id from the page, `crypto.randomUUID()`. `provider_may_store` checks the shape |
@@ -452,7 +455,7 @@ the functions raise, as `actions/onboarding.ts` does, and a mapped code reaches 
 | `FileProgress` | Rows | Phone (always done), profile (profile row and photo row), ID (both sides), selfie, criminal record when required |
 | `FileProgress` | Done, percent | A row exists and is not `rejected`. `floor(done / total * 100)` |
 | Header chip | Standing | `provider_standing()`, once per request in the provider layout |
-| Status page | Reason text | `Provider.rejection.{code}`; `rejection_note` and `suspension_reason` as written |
+| Status page | Reason text | `Rejection.{code}`; `rejection_note` and `suspension_reason` as written |
 | Status page | Two working days | Catalogue (owner, 2026-11-01) |
 | `/account` | Warn before rename | `provider_standing()`, read by the account page |
 | Step 1 | Warn before a company change | The standing from the layout, and the form's fields against the saved row |
@@ -625,7 +628,8 @@ this list and an AC above differ, this list wins.
 
 **Neutral**:
 - `/account` gains one dialog for approved providers, on a page from spec 0005, and `updateAccount` returns one more field.
-- New tables decide admin through `is_admin()`, while the tables of 01 still read the token claim.
+- Every admin policy decides admin through `is_admin()`, the tables of 00 and 01 included (D129, item 3 signed off by the owner
+  2026-11-14); no policy reads the token claim.
 - `complete_onboarding` does not change: a trigger on `profiles` creates the row.
 - `profile_photo` is a row in `provider_documents` but its file sits in its own bucket, so 06 can open photos without any rule touching IDs.
 - Admin decisions fire events from the admin's browser, because the server side PostHog client arrives at 08 or 09 (D68).
@@ -637,6 +641,13 @@ this list and an AC above differ, this list wins.
 - [ ] Position 06: a customer read policy on `provider_profiles`, and on `provider-photos` for approved providers; the display name; the verified badge.
 - [ ] Position 13: notice 18 (approved or rejected) by email to a confirmed address.
 - [ ] Position 16: console search; the `criminal_record_required` switch on the settings page.
+- [ ] Before position 06 shows names to customers: scan `profiles.full_name` with `has_contact_info()`. Safe until then, because a
+      rename sends an approved provider back to review (AC-12).
+- [ ] Before G3: an alert that compares the 2 minute view window with the lifetime of signed links an admin makes (D128).
+- [ ] **Hard gate before G1 (D133):** the real calls of AC-29 and AC-16's Safari PDF, on the preview once real sign in works:
+      an iPhone Safari and an Android Chrome camera photo, a real PDF as e-Devlet issues it, a file over 10 MB and a renamed
+      `.exe`, the real token refusals (provider, admin with no view row and with a stale one, customer), and the preview CSP
+      check. PR #26 merged with them open on the owner's written waiver.
 - [ ] Position 19: the funnel stages beside `status`, the `a1` lifecycle bar, reminders before expiry, the acceptance rate, a rescan of stored bios when
       the scanner changes.
 - [ ] Position 20: invoicing reads `legal_name` and `tax_number` (B9).

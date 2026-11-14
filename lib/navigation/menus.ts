@@ -32,6 +32,20 @@ export function menuFor(role: Role): readonly MenuItem[] {
   return MENUS[role];
 }
 
+/**
+ * The one menu item a path belongs to: the longest href that equals the path or is a folder of it. So
+ * `/requests/new` lights only New request, never Requests too, and `/admin/providers/x` lights Providers,
+ * not Dashboard. Null when the path is under no item.
+ */
+export function activeMenuKey(items: readonly MenuItem[], pathname: string): MenuItem['key'] | null {
+  let best: MenuItem | null = null;
+  for (const item of items) {
+    const matches = pathname === item.href || pathname.startsWith(`${item.href}/`);
+    if (matches && (best === null || item.href.length > best.href.length)) best = item;
+  }
+  return best?.key ?? null;
+}
+
 /** The sections of the landing page, in the header and the phone menu (spec 0005 AC-27). */
 export const PUBLIC_ANCHORS = [
   { key: 'categories', hash: 'categories' },

@@ -12,6 +12,10 @@ import { TEST_CODE, WRONG_CODE, testPhone } from './numbers';
 
 async function axe(page: Page) {
   // A button fades from disabled when the page hydrates; scan the settled page, not a frame of the fade.
+  // Hydration starts the fade, so wait for it first (network idle, then two frames), or getAnimations() can
+  // still be empty here and axe reads a frame of the fade (it failed this way in full runs on 2026-11-11 and 11-14).
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
   await page.evaluate(() =>
     Promise.allSettled(document.getAnimations().map((animation) => animation.finished)),
   );

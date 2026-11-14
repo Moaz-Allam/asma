@@ -12,7 +12,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(6);
+SELECT plan(7);
 
 -- 1. No bucket is public.
 SELECT is_empty(
@@ -62,6 +62,18 @@ SELECT results_eq(
   $$ VALUES ('provider_files_delete_orphan', 'd'), ('provider_files_insert', 'a'),
             ('provider_files_read_admin', 'r'), ('provider_files_read_own', 'r') $$,
   'the provider file policies are insert, two reads and an orphan delete'
+);
+
+-- 7. The triggers that guard the provider buckets, taken together, fire on INSERT and on UPDATE. A signed
+--    upload URL writes as service_role past RLS, and with upsert on it becomes `insert ... on conflict do
+--    update`, which fires only the update side: a guard on insert alone let approved bytes change under
+--    the same object id (security review of PR #26, 2026-11-13).
+SELECT results_eq(
+  $$ SELECT DISTINCT event_manipulation::text COLLATE "default" FROM information_schema.triggers
+      WHERE event_object_schema = 'storage' AND event_object_table = 'objects'
+        AND action_statement LIKE '%provider_files_guard%' ORDER BY 1 $$,
+  $$ VALUES ('INSERT'), ('UPDATE') $$,
+  'the provider bucket guards fire on insert and on update'
 );
 
 -- 6. A probe: a bucket made public by mistake would be caught by guard 1.

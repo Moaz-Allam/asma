@@ -112,14 +112,19 @@ export function ProfileForm({
   function save() {
     setConfirmCompany(false);
     startTransition(async () => {
-      const result = await saveProviderProfile({
-        entityType,
-        legalName: entityType === 'company' ? legalName : null,
-        taxNumber: entityType === 'company' ? taxNumber : null,
-        bio,
-        years: Number(years),
-        languages,
-      });
+      let result: Awaited<ReturnType<typeof saveProviderProfile>>;
+      try {
+        result = await saveProviderProfile({
+          entityType,
+          legalName: entityType === 'company' ? legalName : null,
+          taxNumber: entityType === 'company' ? taxNumber : null,
+          bio,
+          years: Number(years),
+          languages,
+        });
+      } catch {
+        return setFormError('network');
+      }
       if (!result.success) {
         if (result.error === 'contact_info_in_bio') setErrors(['bio']);
         return setFormError(result.error);

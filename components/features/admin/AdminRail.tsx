@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import { Link, usePathname } from '@/lib/i18n/navigation';
-import type { MenuItem } from '@/lib/navigation/menus';
+import { activeMenuKey, type MenuItem } from '@/lib/navigation/menus';
 import { cn } from '@/lib/utils';
 
 /**
@@ -28,7 +28,7 @@ export function AdminRail({ items, pending }: { items: readonly MenuItem[]; pend
       <nav aria-label={t('main')}>
         <ul className="flex flex-col gap-1.5">
           {items.map(({ key, href }) => {
-            const active = pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`));
+            const active = key === activeMenuKey(items, pathname);
             return (
               <li key={key}>
                 <Link

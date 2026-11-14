@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { ContactEmailSchema, FullNameSchema, getProfile, updateProfile } from '@/lib/account/profile';
+import { ContactEmailSchema, FullNameSchema, updateProfile } from '@/lib/account/profile';
 import { fail, guardedAction } from '@/lib/auth/action';
 import { databaseCode } from '@/lib/provider/codes';
 import { getOwnStatus } from '@/lib/provider/queries';
@@ -23,7 +23,8 @@ export const signOut = guardedAction(
 
 /**
  * The name (spec 0005). For an approved provider a real change returns the file to review in the same
- * database transaction (spec 0006 AC-12, the `provider_name_changed` trigger); `backToReview` says so.
+ * database transaction (spec 0006 AC-12, the `provider_name_changed` trigger); `backToReview` says so,
+ * read from the database after the save (approved before, pending after), never guessed from the form.
  * A suspended provider cannot rename: the trigger refuses with `provider_suspended`, mapped here, so it
  * reaches no Sentry report.
  */
@@ -31,7 +32,6 @@ export const updateAccount = guardedAction(
   { name: 'updateAccount', access: 'any_role', schema: z.object({ fullName: FullNameSchema }) },
   async ({ fullName }, user) => {
     const before = user.role === 'provider' ? await getOwnStatus(user.id) : null;
-    const current = before === 'approved' ? await getProfile(user.id) : null;
     try {
       await updateProfile(user.id, { full_name: fullName });
     } catch (error) {
@@ -39,8 +39,9 @@ export const updateAccount = guardedAction(
       if (code) return fail(code);
       throw error;
     }
+    const after = before === 'approved' ? await getOwnStatus(user.id) : before;
     revalidatePath('/', 'layout');
-    return { done: true, backToReview: current !== null && current.fullName !== fullName };
+    return { done: true, backToReview: before === 'approved' && after === 'pending' };
   },
 );
 

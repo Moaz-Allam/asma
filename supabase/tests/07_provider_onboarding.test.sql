@@ -13,7 +13,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(248);
+SELECT plan(266);
 
 -- ── fixtures ─────────────────────────────────────────────────────────────────
 -- Rows an earlier local e2e run left behind; CI starts empty. Gone only inside this rolled back transaction.
@@ -105,7 +105,9 @@ SELECT is_empty(
        ('example.com'), ('example.net'), ('example.com.tr'),
        ('wa.me/905551234567'), ('t.me/ali'), ('@ali_temizlik'),
        ('WhatsApp'), ('whatsapp''tan yaz'), ('telegram'), ('Instagram'), ('insta'),
-       ('واتساب'), ('وتساب'), ('تلجرام'), ('تيليجرام'), ('انستقرام'), ('انستا')
+       ('واتساب'), ('وتساب'), ('تلجرام'), ('تيليجرام'), ('انستقرام'), ('انستا'),
+       ('0555 - 123 - 45 - 67'), ('0555   123   4567'), ('0555 x 123 x 4567'), ('0555 / 123 / 4567'),
+       ('0 5 5 5 - 1 2 3 - 4 5 6 7')
      ) AS c(t)
      WHERE NOT public.has_contact_info(t) $$,
   'every must catch row of the corpus is flagged'
@@ -117,7 +119,8 @@ SELECT is_empty(
        ('Marble, parquet and glass: safe for children and pets.'),
        ('10 yıldır temizlik yapıyorum'), ('2019''dan beri evlerde çalışıyorum'), ('bir iki saatte biter'),
        ('Mutfak, banyo ve cam temizliği yaparım.'),
-       ('خبرة 6 سنوات في تنظيف المنازل والفلل'), ('بدأت العمل عام 2019'), ('أعمل من 9 إلى 5')
+       ('خبرة 6 سنوات في تنظيف المنازل والفلل'), ('بدأت العمل عام 2019'), ('أعمل من 9 إلى 5'),
+       ('9 to 5, 10 years since 2015'), ('3 bedrooms, 2 bathrooms, 1 kitchen, 6 years since 2019')
      ) AS c(t)
      WHERE public.has_contact_info(t) $$,
   'every must pass row of the corpus passes'
@@ -831,6 +834,109 @@ SELECT ok(
   (SELECT r ->> 'previous_path' IS NULL AND (r ->> 'created')::boolean
      FROM (SELECT public.register_provider_document('selfie', (SELECT storage_path FROM public.provider_documents WHERE type = 'selfie')) AS r) x),
   'a reused path registers as new, with no previous_path to delete'
+);
+RESET ROLE;
+
+-- ── second review round, 2026-11-13 (migration 20261114090000) ────────────────
+-- The scanner window (D131): 7 digits within 21 characters, whatever stands between them.
+SELECT ok(public.has_contact_info('1xxx2xxx3xx4xx5xx6xx7'), '7 digits spanning 21 characters are flagged');
+SELECT ok(NOT public.has_contact_info('1xxx2xxx3xxx4xx5xx6xx7'), '7 digits spanning 22 characters are not');
+-- Random separators, seeded so a failure repeats: a 10 digit number in groups of 4,3,3 or 3,3,2,2 or
+-- 4,3,2,2 with 1 to 5 characters between groups, and 1 to 2 characters between every digit. Each must be
+-- flagged. (1 to 3 between every digit can span 25 characters, past the window; the owner was told.)
+SELECT setseed(0.42);
+CREATE TEMP TABLE sep_cases AS
+WITH s AS (
+  SELECT g, (ARRAY['4,3,3', '3,3,2,2', '4,3,2,2'])[1 + floor(random() * 3)::int] AS shape
+    FROM generate_series(1, 300) g
+), d AS (
+  SELECT g, shape, lpad((floor(random() * 1e10))::bigint::text, 10, '0') AS num FROM s
+)
+SELECT g, (
+  SELECT string_agg(substr(d.num, sum_before + 1, len::int),
+                    -- A separator of 1 to 5 characters, cut from a repeated pattern.
+                    substr(repeat((ARRAY[' ', '-', '/', '.', 'x', ' - ', ' / '])[1 + floor(random() * 7)::int], 5), 1, 1 + floor(random() * 5)::int)
+                    ORDER BY ord)
+    FROM (SELECT len::int, ord, coalesce(sum(len::int) OVER (ORDER BY ord ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0)::int AS sum_before
+            FROM unnest(string_to_array(d.shape, ',')) WITH ORDINALITY AS u(len, ord)) parts
+) AS t
+FROM d;
+SELECT is((SELECT count(*)::int FROM sep_cases WHERE char_length(regexp_replace(t, '[^0-9]', '', 'g')) = 10), 300, 'the 300 grouped cases each hold 10 digits');
+SELECT is_empty($$ SELECT t FROM sep_cases WHERE NOT public.has_contact_info(t) $$, 'a 10 digit number in groups with 1 to 5 characters between groups is always flagged');
+CREATE TEMP TABLE every_digit AS
+SELECT g, (
+  SELECT string_agg(c, repeat((ARRAY[' ', '-', '.', '/', 'x'])[1 + floor(random() * 5)::int], 1 + floor(random() * 2)::int) ORDER BY i)
+    FROM regexp_split_to_table(lpad((floor(random() * 1e10))::bigint::text, 10, '0'), '') WITH ORDINALITY AS u(c, i)
+) AS t
+FROM generate_series(1, 300) g;
+SELECT is_empty($$ SELECT t FROM every_digit WHERE NOT public.has_contact_info(t) $$, '1 to 2 characters between every digit is always flagged');
+
+-- No overwrite in place: a signed upload with upsert on runs `insert ... on conflict do update` as service_role.
+SET LOCAL ROLE service_role;
+SELECT throws_ok(
+  $$ INSERT INTO storage.objects (bucket_id, name, metadata)
+     VALUES ('provider-documents', (SELECT storage_path FROM public.provider_documents WHERE provider_id = '00000000-0000-0000-0000-0000000002a1' AND type = 'id_front'), '{"eTag": "\"new\"", "size": 99, "mimetype": "image/jpeg"}')
+     ON CONFLICT (bucket_id, name COLLATE "C") WHERE archived_at IS NULL
+     DO UPDATE SET metadata = excluded.metadata, version = gen_random_uuid()::text $$,
+  '42501', 'upload_refused', 'an upsert over a registered object is refused, so approved bytes cannot change under the same id'
+);
+SELECT throws_ok(
+  $$ UPDATE storage.objects SET name = name || '.moved' WHERE name = (SELECT storage_path FROM public.provider_documents WHERE provider_id = '00000000-0000-0000-0000-0000000002a1' AND type = 'id_front') $$,
+  '42501', 'upload_refused', 'a move is refused'
+);
+SELECT lives_ok(
+  $$ UPDATE storage.objects SET last_accessed_at = now() WHERE name = (SELECT storage_path FROM public.provider_documents WHERE provider_id = '00000000-0000-0000-0000-0000000002a1' AND type = 'id_front') $$,
+  'a bookkeeping update is allowed'
+);
+RESET ROLE;
+
+-- The cap in bytes (AC-22): 100 MB across the folder, orphans of any age included.
+SELECT pg_temp.put('provider-photos', '00000000-0000-0000-0000-0000000002a2/profile_photo/' || gen_random_uuid() || '.jpg', 'image/jpeg', 10485760, '30 days')
+  FROM generate_series(1, 10);
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000002a2", "role": "authenticated"}', true);
+SELECT ok(NOT public.provider_may_store('provider-photos', '00000000-0000-0000-0000-0000000002a2/profile_photo/30000000-0000-4000-8000-000000000009.jpg'), '100 MB of old orphans block an upload, though no object counts toward the 20');
+RESET ROLE;
+SET LOCAL storage.allow_delete_query = 'true';
+DELETE FROM storage.objects WHERE name IN (
+  SELECT name FROM storage.objects WHERE name LIKE '00000000-0000-0000-0000-0000000002a2/profile_photo/%' ORDER BY name LIMIT 1);
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000002a2", "role": "authenticated"}', true);
+SELECT ok(public.provider_may_store('provider-photos', '00000000-0000-0000-0000-0000000002a2/profile_photo/30000000-0000-4000-8000-000000000009.jpg'), 'just under 100 MB, the upload is allowed again');
+RESET ROLE;
+
+-- contact_normalise: each fold maps to the letter it is meant to (ö and ç were crossed before 20261114090000).
+SELECT is(public.contact_normalise('ığüşöçâîû'), 'igusocaiu', 'each Turkish letter folds to its own Latin base: ö to o, ç to c');
+SELECT is(public.contact_normalise('İIĞÜŞÖÇÂÎÛ'), 'iigusocaiu', 'Turkish capitals fold the same way, with no locale');
+SELECT is(public.contact_normalise('٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'), '01234567890123456789', 'Arabic Indic and Persian digits fold to 0 to 9');
+SELECT is(public.contact_normalise('أإآٱىةؤئکی'), 'ااااي' || 'هويكي', 'Arabic letter variants fold to one form each');
+-- Every Turkish digit word, spelled with its diacritics, in runs that start with a diacritic word.
+SELECT is_empty(
+  $$ SELECT t FROM (VALUES
+       ('üç dört beş altı sıfır'), ('dört dört beş üç üç'), ('sıfır beş beş üç dört'),
+       ('altı yedi sekiz dokuz üç'), ('üç iki bir dört beş'), ('ÜÇ DÖRT BEŞ ALTI SIFIR'),
+       ('beş üç dört üç dört beş üç')
+     ) AS c(t)
+     WHERE NOT public.has_contact_info(t) $$,
+  'spelled Turkish digits with their diacritics are caught, üç and dört included'
+);
+SELECT is_empty(
+  $$ SELECT w FROM unnest(ARRAY['sıfır', 'bir', 'iki', 'üç', 'dört', 'beş', 'altı', 'yedi', 'sekiz', 'dokuz']) w
+      WHERE NOT public.has_contact_info(repeat(w || ' ', 5)) $$,
+  'each of the ten Turkish digit words counts as a digit word'
+);
+
+-- register_provider_document never hands a provider the admin id in reviewed_by.
+SELECT pg_temp.put('provider-documents', '00000000-0000-0000-0000-0000000002a1/skill_certificate/40000000-0000-4000-8000-000000000001.png', 'image/png', 10);
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000002a1", "role": "authenticated"}', true);
+SELECT ok(
+  NOT (public.register_provider_document('skill_certificate', '00000000-0000-0000-0000-0000000002a1/skill_certificate/40000000-0000-4000-8000-000000000001.png') ? 'reviewed_by'),
+  'a first register returns no reviewed_by'
+);
+SELECT ok(
+  NOT (public.register_provider_document('skill_certificate', '00000000-0000-0000-0000-0000000002a1/skill_certificate/40000000-0000-4000-8000-000000000001.png') ? 'reviewed_by'),
+  'a replay of the same object returns no reviewed_by either'
 );
 RESET ROLE;
 

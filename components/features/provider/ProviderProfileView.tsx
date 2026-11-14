@@ -78,7 +78,9 @@ export async function ProviderProfileView({
             </p>
           ) : null}
           {file.profile ? (
-            <p className="max-w-60ch text-body-s whitespace-pre-line text-text-body">{file.profile.bio}</p>
+            <p className="max-w-60ch text-body-s break-words whitespace-pre-line text-text-body">
+              {file.profile.bio}
+            </p>
           ) : null}
         </div>
         {editable ? (
