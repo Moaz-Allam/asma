@@ -44,6 +44,8 @@ export type CatalogQuestion = Texts & {
   options: CatalogOption[] | null;
   validation: { min?: number; max?: number; step?: number; maxLength?: number } | null;
   serviceId: string | null;
+  /** Option values an active formula matches: these cannot be removed (AC-4, AC-18). */
+  inUseValues: string[];
   /** The service's name when the question is for one service only. */
   scopeName: string | null;
   active: boolean;

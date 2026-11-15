@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import type { CatalogLocale, LocalizedText } from '@/lib/catalog/localized';
 import { CATALOG_LIMITS, OPTION_VALUE_PATTERN } from '@/lib/catalog/options';
 
-export type OptionDraft = { value: string; label: LocalizedText; saved: boolean };
+export type OptionDraft = { uid: string; value: string; label: LocalizedText; saved: boolean };
 
 /**
  * The options of a select question (ui-registry `QuestionOptionsEditor`, spec 0007 AC-18). A value is typed
@@ -21,8 +21,11 @@ export function QuestionOptionsEditor({
   options,
   onChange,
   regionDefault,
+  inUse = [],
 }: {
   options: OptionDraft[];
+  /** Values an active formula matches: Remove is not offered for them (AC-18). */
+  inUse?: readonly string[];
   onChange: (options: OptionDraft[]) => void;
   regionDefault: CatalogLocale;
 }) {
@@ -39,7 +42,7 @@ export function QuestionOptionsEditor({
         const id = `option-${index}`;
         const badValue = option.value !== '' && !OPTION_VALUE_PATTERN.test(option.value);
         return (
-          <div key={id} className="flex flex-col gap-3 rounded-row border-2 border-border p-4">
+          <div key={option.uid} className="flex flex-col gap-3 rounded-row border-2 border-border p-4">
             <div className="flex items-end gap-2">
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label htmlFor={`${id}-value`} className="text-meta text-text-secondary">
@@ -61,6 +64,7 @@ export function QuestionOptionsEditor({
                 variant="destructive"
                 size="sm"
                 className="min-h-11"
+                disabled={option.saved && inUse.includes(option.value)}
                 onClick={() => onChange(options.filter((_, i) => i !== index))}
                 aria-label={t('removeOption', { value: option.value || String(index + 1) })}
               >
@@ -72,6 +76,7 @@ export function QuestionOptionsEditor({
               className={badValue ? 'text-meta text-error' : 'text-meta text-text-secondary'}
             >
               {t(option.saved ? 'optionValueFixed' : 'optionValueRule')}
+              {option.saved && inUse.includes(option.value) ? ` ${t('optionInUse')}` : null}
             </p>
             <LocalizedField
               id={`${id}-label`}
@@ -87,7 +92,9 @@ export function QuestionOptionsEditor({
       {options.length < CATALOG_LIMITS.options ? (
         <Button
           variant="secondary"
-          onClick={() => onChange([...options, { value: '', label: {}, saved: false }])}
+          onClick={() =>
+            onChange([...options, { uid: crypto.randomUUID(), value: '', label: {}, saved: false }])
+          }
           className="self-start"
         >
           {t('addOption')}

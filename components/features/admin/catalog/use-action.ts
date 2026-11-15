@@ -5,8 +5,10 @@ import { useState, useTransition } from 'react';
 
 import { useRouter } from '@/lib/i18n/navigation';
 import type { ActionResult } from '@/lib/auth/action';
+import { settle } from '@/lib/catalog/settle';
 
 const KNOWN = new Set([
+  'network',
   'validation_failed',
   'forbidden',
   'key_taken',
@@ -33,7 +35,8 @@ export function useCatalogAction() {
     setError(null);
     setCode(null);
     startTransition(async () => {
-      const result = await call();
+      // A dropped connection settles as `network`: the sheet stays open with what was typed.
+      const result = await settle(call);
       if (result.success) {
         onDone?.(result.data);
         router.refresh();

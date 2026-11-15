@@ -9,6 +9,7 @@ import { ToggleChips } from '@/components/shared/ToggleChips';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { parseWhole } from '@/lib/catalog/digits';
 import {
   CATALOG_LIMITS,
   effectsFor,
@@ -23,9 +24,9 @@ const SELECT_CLASS =
   'h-11 rounded-field-sm border-2 border-input bg-surface px-3.5 text-body-s text-text-primary';
 const NONE = '__none__';
 
-/** A whole number as typed, or the text itself so the database refuses it: never a guessed number. */
+/** A whole number, Eastern digits folded, or the text itself so the database refuses it: never guessed. */
 function wholeOrText(text: string): unknown {
-  return /^-?[0-9]{1,6}$/.test(text.trim()) ? Number(text.trim()) : text;
+  return parseWhole(text, { allowNegative: true }) ?? text;
 }
 
 function defaultValue(match: MatchType, question: PricingQuestion | null): unknown {

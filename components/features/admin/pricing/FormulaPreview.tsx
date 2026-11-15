@@ -10,13 +10,13 @@ import { ToggleChips } from '@/components/shared/ToggleChips';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { minorTextToMajor, parseWhole } from '@/lib/catalog/digits';
 import type { PricedResult } from '@/lib/pricing';
 
 import type { PricingAddon, PricingQuestion, PricingZone } from './types';
 
 export type PreviewState =
   | { kind: 'idle' }
-  | { kind: 'waiting' }
   | { kind: 'loading' }
   | { kind: 'ok'; result: PricedResult }
   | { kind: 'message'; code: string };
@@ -111,7 +111,10 @@ export function FormulaPreview({
             legend={t('zone')}
             options={[
               { value: NO_ZONE, label: t('noZone') },
-              ...zones.map((z) => ({ value: z.id, label: `${z.name} ×${z.multiplier}` })),
+              ...zones.map((z) => ({
+                value: z.id,
+                label: `${z.name} \u2066×${z.multiplier}\u2069${z.active ? '' : ` · ${t('off')}`}`,
+              })),
             ]}
             value={zoneId ?? NO_ZONE}
             onChange={(value) => onZone(value === NO_ZONE ? null : value)}
@@ -165,7 +168,7 @@ export function FormulaPreview({
             </Line>
             <Line label={t('line.unrounded')}>
               <span dir="ltr" className="font-mono">
-                {state.result.breakdown.unrounded}
+                {minorTextToMajor(state.result.breakdown.unrounded)} {currency}
               </span>
             </Line>
             <Line label={t('line.rounding')}>
@@ -219,7 +222,7 @@ function PreviewControl({
           value={value === undefined ? '' : String(value)}
           onChange={(event) => {
             const text = event.target.value.trim();
-            onChange(text === '' ? undefined : /^[0-9]{1,6}$/.test(text) ? Number(text) : text);
+            onChange(text === '' ? undefined : (parseWhole(text) ?? text));
           }}
         />
       </div>

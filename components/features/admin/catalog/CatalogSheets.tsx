@@ -16,6 +16,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { parseWhole } from '@/lib/catalog/digits';
 import type { CatalogLocale, LocalizedText } from '@/lib/catalog/localized';
 import { CATALOG_LIMITS } from '@/lib/catalog/options';
 
@@ -59,7 +60,7 @@ export function CatalogSheet({
         closeLabel={t('close')}
         className={wide ? 'w-full overflow-y-auto sm:max-w-xl' : 'w-full overflow-y-auto sm:max-w-md'}
       >
-        <form onSubmit={submit} className="flex min-h-full flex-col">
+        <form onSubmit={submit} noValidate className="flex min-h-full flex-col">
           <SheetHeader>
             <SheetTitle>{title}</SheetTitle>
             {description ? <SheetDescription>{description}</SheetDescription> : null}
@@ -146,8 +147,8 @@ export function ServiceSheet({
               categoryId,
               name,
               note,
-              hoursMin: Number.parseInt(hoursMin, 10),
-              hoursMax: Number.parseInt(hoursMax, 10),
+              hoursMin: parseWhole(hoursMin) ?? Number.NaN,
+              hoursMax: parseWhole(hoursMax) ?? Number.NaN,
             }),
           () => onOpenChange(false),
         )

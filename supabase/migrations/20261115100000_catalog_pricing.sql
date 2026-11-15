@@ -40,7 +40,7 @@ as $$
        where e.key not in ('ar', 'tr', 'en')
           or jsonb_typeof(e.value) <> 'string'
           or char_length(regexp_replace(e.value #>> '{}',
-               '^[\s   -‍    ⁠　﻿]+|[\s   -‍    ⁠　﻿]+$',
+               '^[\s ­͏؜ ᠎ -‏ -  -⁤⁦-⁩　﻿]+|[\s ­͏؜ ᠎ -‏ -  -⁤⁦-⁩　﻿]+$',
                '', 'g')) not between 1 and p_max
     ),
     false)
@@ -271,7 +271,8 @@ create table public.pricing_modifiers (
 -- 3. RLS (rule 7, AC-14). Admin reads all seven and writes the five catalog tables; everyone else
 --    reads and writes nothing directly (04 opens its own read path). No delete policy anywhere, and
 --    no write policy on the two pricing tables: publish_pricing_formula is their only writer.
---    Admin is decided through is_admin(), in a subselect so it runs once per query (D116).
+--    Admin is decided through is_admin(), from profiles.role (D116), in a subselect so it runs once per query
+--    (architecture.md §32).
 -- ═══════════════════════════════════════════════════════════════════════════
 
 alter table public.service_categories enable row level security;
@@ -419,7 +420,8 @@ create trigger catalog_audit after insert or update on public.questions
   for each row execute function public.catalog_audit();
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 6. questions_guard() (AC-4): a question an active formula reads cannot be turned off, lose
+-- 6. questions_guard() (AC-3, AC-4): key, type, category and scope never change, for any role. A question an
+--    active formula reads cannot be turned off, lose
 --    affects_pricing, stop being required (a multi_select may be optional), or lose an option a
 --    modifier matches. Volatile and row level, before update: its queries see a formula committed
 --    while the update waited on the publish's `for share` lock.
@@ -435,6 +437,14 @@ as $$
 declare
   v_matched text[];
 begin
+  -- The column grants stop an API role; this stops every role, the SQL editor included. A renamed priced
+  -- key would silently drop a surcharge, and answers already stored use the key, type and scope.
+  if new.key is distinct from old.key or new.type is distinct from old.type
+     or new.category_id is distinct from old.category_id or new.service_id is distinct from old.service_id
+     or new.region is distinct from old.region then
+    raise exception 'question_immutable';
+  end if;
+
   select coalesce(array_agg(distinct v.value), '{}')
     into v_matched
     from public.pricing_modifiers m
@@ -486,7 +496,7 @@ create trigger questions_guard before update on public.questions
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 7. pricing_history_guard() (AC-12): a published formula and its modifiers never change, for any
 --    role, the SQL editor included. The one move allowed is a formula's active going true to false,
---    with nothing else changed.
+--    with nothing else changed, and a row comes in only through publish_pricing_formula.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 create function public.pricing_history_guard()
@@ -496,6 +506,15 @@ create function public.pricing_history_guard()
   set search_path = ''
 as $$
 begin
+  -- A new version comes in only through publish_pricing_formula, which sets this flag for its own
+  -- transaction and clears it after its inserts. Anything else, `postgres` included, is refused, so a row
+  -- can never be added under a published version without its audit row.
+  if tg_op = 'INSERT' then
+    if current_setting('pricing.publishing', true) = 'on' then
+      return new;
+    end if;
+    raise exception 'pricing_history_immutable';
+  end if;
   -- Nested, because only a formula row has an active field to read.
   if tg_op = 'UPDATE' and tg_table_name = 'pricing_formulas' then
     if (to_jsonb(old) ->> 'active')::boolean and to_jsonb(new) = to_jsonb(old) || '{"active": false}'::jsonb then
@@ -508,9 +527,9 @@ $$;
 
 revoke all on function public.pricing_history_guard() from public, anon, authenticated, service_role;
 
-create trigger pricing_history_guard before update or delete on public.pricing_formulas
+create trigger pricing_history_guard before insert or update or delete on public.pricing_formulas
   for each row execute function public.pricing_history_guard();
-create trigger pricing_history_guard before update or delete on public.pricing_modifiers
+create trigger pricing_history_guard before insert or update or delete on public.pricing_modifiers
   for each row execute function public.pricing_history_guard();
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -527,7 +546,7 @@ create function public.catalog_trim(p_text text)
   set search_path = ''
 as $$
   select regexp_replace(p_text,
-    '^[\s   -‍    ⁠　﻿]+|[\s   -‍    ⁠　﻿]+$',
+    '^[\s ­͏؜ ᠎ -‏ -  -⁤⁦-⁩　﻿]+|[\s ­͏؜ ᠎ -‏ -  -⁤⁦-⁩　﻿]+$',
     '', 'g')
 $$;
 
@@ -551,7 +570,8 @@ revoke all on function public.pricing_answer_blank(jsonb) from public, anon, aut
 
 -- Answers against questions (AC-7). p_questions is a JSON array of question rows. Returns every
 -- failure as { key, code }, sorted by key, or []. With p_priced_only, only priced questions are
--- checked and an answer to any other question of the set is ignored (a preview).
+-- checked and an answer to any other question of the set is ignored (a preview). An object with more keys
+-- than questions plus 100 is refused with one error, and at most 50 errors come back.
 create function public.pricing_answer_errors(p_questions jsonb, p_answers jsonb, p_priced_only boolean)
   returns jsonb
   language plpgsql
@@ -578,6 +598,10 @@ declare
   v_values  text[];
 begin
   if jsonb_typeof(p_answers) is distinct from 'object' then
+    return jsonb_build_array(jsonb_build_object('key', null, 'code', 'answer_invalid'));
+  end if;
+  -- More keys than the service has questions, plus room for slack, is junk: one error, no per key work.
+  if (select count(*) from jsonb_object_keys(p_answers)) > jsonb_array_length(coalesce(p_questions, '[]'::jsonb)) + 100 then
     return jsonb_build_array(jsonb_build_object('key', null, 'code', 'answer_invalid'));
   end if;
 
@@ -634,7 +658,7 @@ begin
         v_code := 'answer_invalid';
       else
         v_text := public.catalog_trim(v_answer #>> '{}');
-        v_limit := coalesce((v_q -> 'validation' ->> 'maxLength')::integer, case v_type when 'text' then 200 else 500 end);
+        v_limit := coalesce((v_q -> 'validation' ->> 'maxLength')::numeric::integer, case v_type when 'text' then 200 else 500 end);
         if char_length(v_text) > v_limit then
           v_code := 'answer_out_of_range';
         elsif public.has_contact_info(v_text) then
@@ -664,8 +688,11 @@ begin
     end if;
   end loop;
 
+  -- At most 50 errors, the first by key: enough for a form, bounded for a hostile caller.
   return coalesce(
-    (select jsonb_agg(e order by (e ->> 'key') collate "C", e ->> 'code') from jsonb_array_elements(v_errors) e),
+    (select jsonb_agg(e order by (e ->> 'key') collate "C", e ->> 'code')
+       from (select e from jsonb_array_elements(v_errors) e
+              order by (e ->> 'key') collate "C", e ->> 'code' limit 50) x),
     '[]'::jsonb);
 end;
 $$;
@@ -713,7 +740,7 @@ begin
     v_match := v_m ->> 'match_type';
     v_value := v_m -> 'match_value';
     v_answer := case when jsonb_typeof(v_m -> 'question_key') = 'string' then p_answers -> (v_m ->> 'question_key') end;
-    v_amount := (v_m ->> 'amount')::bigint;
+    v_amount := (v_m ->> 'amount')::numeric::bigint;
     v_factor := (v_m ->> 'factor')::numeric(6,4);
     v_units := null;
 
@@ -838,7 +865,8 @@ begin
   end if;
 
   if p_addon_ids is not null and cardinality(p_addon_ids) > 0 then
-    if array_position(p_addon_ids, null) is not null
+    if cardinality(p_addon_ids) > 50
+       or array_position(p_addon_ids, null) is not null
        or (select count(distinct x) from unnest(p_addon_ids) x) <> cardinality(p_addon_ids) then
       raise exception 'addon_unavailable';
     end if;
@@ -881,7 +909,7 @@ begin
   end if;
 
   v_result := public.pricing_evaluate(p_base, p_modifiers, p_answers, v_addons_sum, v_multiplier,
-                                      (v_rounding #>> '{}')::bigint, (v_multiple #>> '{}')::numeric);
+                                      (v_rounding #>> '{}')::numeric::bigint, (v_multiple #>> '{}')::numeric);
   if v_result ->> 'status' <> 'ok' then
     raise exception 'price_out_of_range';
   end if;
@@ -903,7 +931,7 @@ begin
       'zone', case when p_zone_id is null then null
                    else jsonb_build_object('id', v_zone.id, 'name', v_zone.name, 'multiplier', v_zone.multiplier::text) end,
       'unrounded', v_result -> 'unrounded',
-      'rounding_minor', (v_rounding #>> '{}')::bigint));
+      'rounding_minor', (v_rounding #>> '{}')::numeric::bigint));
 end;
 $$;
 
@@ -1230,6 +1258,9 @@ begin
 
   select coalesce(max(f.version), 0) + 1 into v_version from public.pricing_formulas f where f.service_id = p_service_id;
 
+  -- The one door into the history tables (pricing_history_guard), for this transaction only.
+  perform set_config('pricing.publishing', 'on', true);
+
   insert into public.pricing_formulas (service_id, region, version, base_price, active, created_by)
   values (p_service_id, v_service.region, v_version, p_base, true, (select auth.uid()))
   returning id into v_id;
@@ -1238,8 +1269,10 @@ begin
                                         effect_type, amount, factor)
   select v_id, v_service.region, o::integer, m ->> 'question_key', m ->> 'match_type',
          nullif(m -> 'match_value', 'null'::jsonb), m ->> 'effect_type',
-         (m ->> 'amount')::bigint, (m ->> 'factor')::numeric(6,4)
+         (m ->> 'amount')::numeric::bigint, (m ->> 'factor')::numeric(6,4)
     from jsonb_array_elements(p_modifiers) with ordinality as t(m, o);
+
+  perform set_config('pricing.publishing', 'off', true);
 
   insert into public.audit_log (actor_id, action, entity_type, entity_id, region, old_value, new_value)
   values ((select auth.uid()), 'pricing.formula_published', 'pricing_formula', v_id::text, v_service.region,
@@ -1297,8 +1330,9 @@ revoke all on function public.preview_pricing_formula(uuid, bigint, jsonb, uuid,
 grant execute on function public.preview_pricing_formula(uuid, bigint, jsonb, uuid, uuid[], jsonb) to authenticated;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 10. Settings (AC-8). The rounding unit per region, and checks that hold both pricing keys, so a
---     quote never prices on a bad value and never guesses a default. Edited by SQL until 16.
+-- 10. Settings (AC-8). The rounding unit per region, checks that hold both pricing keys, and a guard that
+--     keeps both rows, so a quote never prices on a bad value and never guesses a default. Edited by SQL
+--     until 16.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 alter table public.platform_settings
@@ -1311,6 +1345,29 @@ alter table public.platform_settings
     case when key <> 'max_price_multiple' then true
          when jsonb_typeof(value) <> 'number' then false
          else (value #>> '{}')::numeric > 0 and (value #>> '{}')::numeric <= 1000 end);
+
+-- An admin token may write platform_settings (its policy covers every command), so without this a delete of
+-- either key would stop every quote in the region. Refused for every role; a value may still change, inside
+-- the checks above.
+create function public.pricing_settings_guard()
+  returns trigger
+  language plpgsql
+  security invoker
+  set search_path = ''
+as $$
+begin
+  if old.key in ('price_rounding_minor', 'max_price_multiple')
+     and (tg_op = 'DELETE' or new.key is distinct from old.key or new.region is distinct from old.region) then
+    raise exception 'pricing_setting_required';
+  end if;
+  return case when tg_op = 'DELETE' then old else new end;
+end;
+$$;
+
+revoke all on function public.pricing_settings_guard() from public, anon, authenticated, service_role;
+
+create trigger pricing_settings_guard before update or delete on public.platform_settings
+  for each row execute function public.pricing_settings_guard();
 
 insert into public.platform_settings (region, key, value) values
   ('TR',  'price_rounding_minor', '100'),

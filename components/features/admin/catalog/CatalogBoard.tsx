@@ -117,12 +117,15 @@ export function CatalogBoard({
                           {t('categoryMeta', { services: c.services, questions: c.questions })}
                         </span>
                       </Link>
-                      <Switch
-                        checked={c.active}
-                        disabled={action.busy}
-                        onCheckedChange={toggle('service_categories', c.id)}
-                        aria-label={t(c.active ? 'turnOff' : 'turnOn', { name: c.name })}
-                      />
+                      {/* The label is the 44px target around the 22px switch (ui-rules: touch targets). */}
+                      <label className="inline-flex min-h-11 min-w-11 items-center justify-center">
+                        <Switch
+                          checked={c.active}
+                          disabled={action.busy}
+                          onCheckedChange={toggle('service_categories', c.id)}
+                          aria-label={t(c.active ? 'turnOff' : 'turnOn', { name: c.name })}
+                        />
+                      </label>
                     </div>
                     <Missing missing={c.missing} />
                     {selected ? (

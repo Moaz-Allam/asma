@@ -21,6 +21,7 @@ const SQLSTATE: Readonly<Record<string, string>> = {
   '23514': 'validation_failed',
   '23503': 'validation_failed',
   '22P02': 'validation_failed',
+  '22003': 'validation_failed',
   '42501': 'forbidden',
 };
 

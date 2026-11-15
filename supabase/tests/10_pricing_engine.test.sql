@@ -10,7 +10,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(155);
+SELECT plan(181);
 
 -- ── fixtures ─────────────────────────────────────────────────────────────────
 -- c1: customer, a1: admin, u0: signed in with no profile yet.
@@ -35,7 +35,8 @@ INSERT INTO public.services (id, category_id, region, name, hours_min, hours_max
   ('00000000-0000-0000-0000-000000105003', '00000000-0000-0000-0000-00000010c002', 'TR', '{"tr": "Sıva"}', 2, 4, true),
   ('00000000-0000-0000-0000-000000105004', '00000000-0000-0000-0000-00000010c003', 'TR', '{"tr": "Kapalı"}', 2, 4, true),
   ('00000000-0000-0000-0000-000000105005', '00000000-0000-0000-0000-00000010c004', 'KSA', '{"ar": "منزل"}', 2, 4, true),
-  ('00000000-0000-0000-0000-000000105006', '00000000-0000-0000-0000-00000010c001', 'TR', '{"tr": "Ofis"}', 2, 4, true);
+  ('00000000-0000-0000-0000-000000105006', '00000000-0000-0000-0000-00000010c001', 'TR', '{"tr": "Ofis"}', 2, 4, true),
+  ('00000000-0000-0000-0000-000000105007', '00000000-0000-0000-0000-00000010c001', 'TR', '{"tr": "Kapalı hizmet"}', 2, 4, false);
 INSERT INTO public.zones (id, region, name, multiplier, active) VALUES
   ('00000000-0000-0000-0000-000000102001', 'TR', '{"tr": "Z1"}', 1.00, true),
   ('00000000-0000-0000-0000-000000102002', 'TR', '{"tr": "Z2"}', 1.15, true),
@@ -127,12 +128,16 @@ SELECT is(pg_temp.price(pg_temp.ev(100000,
 SELECT is(pg_temp.price(pg_temp.ev(100000,
     '[{"question_key": "x", "match_type": "equals", "match_value": "a", "effect_type": "FIXED", "amount": 5000, "factor": null}]',
     '{"x": []}', 0, 1)), '100000', 'an empty multi select fires nothing');
-SELECT is(pg_temp.price(pg_temp.ev(120000, pg_temp.f(), '{"rooms": 3, "bathrooms": 2, "property_type": "apartment", "has_pets": true}', 40000, 1.00)),
-          pg_temp.price(pg_temp.ev(120000, pg_temp.f(), '{"rooms": 3, "bathrooms": 2, "property_type": "apartment", "has_pets": true}', 40000, 1.00)),
-  'the same inputs give the same output');
+-- The same twice: the first answer is stored by one statement and read back by another, so a planner
+-- folding two identical calls in one statement cannot make this pass; the whole output is compared.
+CREATE TEMP TABLE first_run AS
+  SELECT public.pricing_evaluate(120000, pg_temp.f(), '{"rooms": 3, "bathrooms": 2, "property_type": "villa", "has_pets": true}', 40000, 1.15, 100, 20) AS r;
+SELECT is(public.pricing_evaluate(120000, pg_temp.f(), '{"rooms": 3, "bathrooms": 2, "property_type": "villa", "has_pets": true}', 40000, 1.15, 100, 20),
+          (SELECT r FROM first_run),
+  'the same inputs give the same output, across two statements');
 
 -- The seeded loop: 300 random formulas, each a whole multiple of the unit between the floor and the
--- ceiling, or refused, and the same twice.
+-- ceiling, or refused, and one more positive amount never lowers a price.
 SELECT setseed(0.42);
 CREATE TEMP TABLE loop_cases AS
   SELECT g,
@@ -146,16 +151,118 @@ CREATE TEMP TABLE loop_cases AS
     FROM generate_series(1, 300) g;
 SELECT is_empty(
   $$ SELECT g FROM (
-       SELECT g, base, pg_temp.ev(base, mods, '{}', addons, mult) AS r, pg_temp.ev(base, mods, '{}', addons, mult) AS r2
+       SELECT g, base, pg_temp.ev(base, mods, '{}', addons, mult) AS r,
+              pg_temp.ev(base, mods || jsonb_build_array(pg_temp.fix(10000)), '{}', addons, mult) AS r2
          FROM loop_cases) x
-      WHERE r <> r2
+      WHERE (r ->> 'status' = 'ok' AND r2 ->> 'status' = 'ok' AND (r2 ->> 'price')::bigint < (r ->> 'price')::bigint)
          OR (r ->> 'status' = 'ok' AND ((r ->> 'price')::bigint % 100 <> 0
                                         OR (r ->> 'price')::bigint < 100
                                         OR (r ->> 'price')::bigint > base * 20))
          OR (r ->> 'status' NOT IN ('ok', 'price_out_of_range')) $$,
-  '300 seeded formulas: every price a whole multiple of the unit, inside the floor and the ceiling, or refused, and repeatable');
+  '300 seeded formulas: every price a whole multiple of the unit, inside the floor and the ceiling, or refused, and monotonic');
 SELECT ok((SELECT count(*) FROM loop_cases WHERE pg_temp.ev(base, mods, '{}', addons, mult) ->> 'status' = 'ok') BETWEEN 30 AND 290,
   'the loop reaches both prices and refusals');
+
+-- A second seeded loop over the branchy lines: PER_UNIT, equals, in and range on a number, a select, a
+-- multi select and is_true on a boolean, against random answers (review of PR #27). The same two properties hold.
+CREATE FUNCTION pg_temp.branchy(k integer) RETURNS jsonb LANGUAGE sql VOLATILE AS $$
+  SELECT CASE k % 8
+    WHEN 0 THEN jsonb_build_object('question_key', 'q', 'match_type', 'always', 'match_value', null,
+                                   'effect_type', 'PER_UNIT', 'amount', (1 + floor(random() * 50000))::bigint, 'factor', null)
+    WHEN 1 THEN jsonb_build_object('question_key', 'q', 'match_type', 'range', 'match_value', '{"min": 2, "max": 6}'::jsonb,
+                                   'effect_type', 'FIXED', 'amount', (floor(random() * 200001) - 100000)::bigint * 10 + 1, 'factor', null)
+    WHEN 2 THEN jsonb_build_object('question_key', 'q', 'match_type', 'equals', 'match_value', 3,
+                                   'effect_type', 'MULTIPLIER', 'amount', null, 'factor', (round((0.1 + random() * 9.9)::numeric, 4))::text)
+    WHEN 3 THEN jsonb_build_object('question_key', 's', 'match_type', 'in', 'match_value', '["a", "b"]'::jsonb,
+                                   'effect_type', 'FIXED', 'amount', (1 + floor(random() * 90000))::bigint, 'factor', null)
+    WHEN 4 THEN jsonb_build_object('question_key', 's', 'match_type', 'equals', 'match_value', 'c',
+                                   'effect_type', 'MULTIPLIER', 'amount', null, 'factor', (round((0.1 + random() * 9.9)::numeric, 4))::text)
+    WHEN 5 THEN jsonb_build_object('question_key', 'm', 'match_type', 'equals', 'match_value', 'a',
+                                   'effect_type', 'FIXED', 'amount', (1 + floor(random() * 90000))::bigint, 'factor', null)
+    WHEN 6 THEN jsonb_build_object('question_key', 'm', 'match_type', 'in', 'match_value', '["b", "c"]'::jsonb,
+                                   'effect_type', 'FIXED', 'amount', (1 + floor(random() * 90000))::bigint, 'factor', null)
+    ELSE jsonb_build_object('question_key', 'b', 'match_type', 'is_true', 'match_value', null,
+                            'effect_type', 'MULTIPLIER', 'amount', null, 'factor', (round((0.1 + random() * 9.9)::numeric, 4))::text)
+  END $$;
+SELECT setseed(0.17);
+CREATE TEMP TABLE branchy_cases AS
+  SELECT g,
+         (1 + floor(random() * 1000000))::bigint AS base,
+         (SELECT jsonb_agg(pg_temp.branchy((floor(random() * 8))::integer)) FROM generate_series(1, 1 + g % 6) k WHERE g > 0) AS mods,
+         jsonb_build_object(
+           'q', (floor(random() * 11))::integer,
+           's', (ARRAY['a', 'b', 'c'])[1 + floor(random() * 3)::integer],
+           'm', (SELECT coalesce(jsonb_agg(v), '[]'::jsonb) FROM unnest(ARRAY['a', 'b', 'c']) v WHERE random() < 0.5 AND g > 0),
+           'b', random() < 0.5) AS answers,
+         (floor(random() * 100000))::bigint AS addons,
+         round((0.5 + random() * 1.5)::numeric, 2) AS mult
+    FROM generate_series(1, 300) g;
+SELECT is_empty(
+  $$ SELECT g FROM (
+       SELECT g, base, pg_temp.ev(base, mods, answers, addons, mult) AS r,
+              pg_temp.ev(base, mods || jsonb_build_array(pg_temp.fix(10000)), answers, addons, mult) AS r2
+         FROM branchy_cases) x
+      WHERE (r ->> 'status' = 'ok' AND r2 ->> 'status' = 'ok' AND (r2 ->> 'price')::bigint < (r ->> 'price')::bigint)
+         OR (r ->> 'status' = 'ok' AND ((r ->> 'price')::bigint % 100 <> 0
+                                        OR (r ->> 'price')::bigint < 100
+                                        OR (r ->> 'price')::bigint > base * 20))
+         OR (r ->> 'status' NOT IN ('ok', 'price_out_of_range')) $$,
+  '300 seeded formulas on number, select, multi select and boolean lines: whole units, in range or refused, monotonic');
+SELECT ok(
+  (SELECT count(*) FILTER (WHERE (l ->> 'fired')::boolean) FROM branchy_cases, pg_temp.ev(base, mods, answers, addons, mult) r,
+          jsonb_array_elements(coalesce(r -> 'modifiers', '[]'::jsonb)) l) BETWEEN 100 AND 1500
+  AND (SELECT count(*) FILTER (WHERE NOT (l ->> 'fired')::boolean) FROM branchy_cases, pg_temp.ev(base, mods, answers, addons, mult) r,
+          jsonb_array_elements(coalesce(r -> 'modifiers', '[]'::jsonb)) l) > 50,
+  'the branchy loop fires lines and leaves lines unfired');
+
+-- The browser's match table (lib/catalog/options.ts MATCH_TABLE) equals this JSON; tests/catalog-lib.test.ts
+-- reads it from here, and this test proves it against pricing_formula_errors, so the two cannot drift.
+CREATE FUNCTION pg_temp.match_table() RETURNS jsonb LANGUAGE sql IMMUTABLE AS $mt$ SELECT $json$
+{
+  "number": { "always": ["FIXED", "PER_UNIT", "MULTIPLIER"], "equals": ["FIXED", "PER_UNIT", "MULTIPLIER"], "range": ["FIXED", "PER_UNIT", "MULTIPLIER"] },
+  "single_select": { "equals": ["FIXED", "MULTIPLIER"], "in": ["FIXED", "MULTIPLIER"] },
+  "multi_select": { "equals": ["FIXED"], "in": ["FIXED"] },
+  "boolean": { "is_true": ["FIXED", "MULTIPLIER"] },
+  "none": { "always": ["FIXED", "MULTIPLIER"] }
+}
+$json$::jsonb $mt$;
+SELECT is_empty(
+  $$ WITH kinds(kind, key, service) AS (VALUES
+       ('number', 'rooms', '00000000-0000-0000-0000-000000105001'::uuid),
+       ('single_select', 'property_type', '00000000-0000-0000-0000-000000105001'::uuid),
+       ('multi_select', 'extras', '00000000-0000-0000-0000-000000105002'::uuid),
+       ('boolean', 'has_pets', '00000000-0000-0000-0000-000000105001'::uuid),
+       ('none', NULL, '00000000-0000-0000-0000-000000105001'::uuid)),
+     combos AS (
+       SELECT k.kind, k.key, k.service, m.match, e.effect
+         FROM kinds k, unnest(ARRAY['always', 'equals', 'in', 'range', 'is_true']) m(match),
+              unnest(ARRAY['FIXED', 'PER_UNIT', 'MULTIPLIER']) e(effect)),
+     judged AS (
+       SELECT c.*, public.pricing_formula_errors(c.service, 100000, jsonb_build_array(jsonb_build_object(
+                'question_key', c.key, 'match_type', c.match, 'effect_type', c.effect,
+                'match_value', CASE c.match
+                  WHEN 'equals' THEN CASE c.kind WHEN 'number' THEN '1'::jsonb WHEN 'single_select' THEN '"villa"'
+                                                 WHEN 'multi_select' THEN '"a"' ELSE '"x"' END
+                  WHEN 'in' THEN CASE c.kind WHEN 'single_select' THEN '["villa"]'::jsonb WHEN 'multi_select' THEN '["a"]' ELSE '["x"]' END
+                  WHEN 'range' THEN '{"min": 1, "max": 2}'::jsonb
+                  ELSE 'null'::jsonb END,
+                'amount', CASE WHEN c.effect = 'MULTIPLIER' THEN NULL ELSE 100 END,
+                'factor', CASE WHEN c.effect = 'MULTIPLIER' THEN '1.1' END))) AS errors
+         FROM combos c)
+     SELECT kind, match, effect FROM judged
+      WHERE NOT EXISTS (SELECT 1 FROM jsonb_array_elements(errors) x
+                         WHERE x ->> 'code' IN ('match_not_allowed', 'effect_not_allowed'))
+            <> coalesce((pg_temp.match_table() -> kind -> match) ? effect, false) $$,
+  'the match table JSON equals what pricing_formula_errors allows, for all 75 combinations');
+
+-- Every invisible mark counts as blank, in both copies of the pattern (review of PR #27).
+SELECT is_empty(
+  $$ SELECT to_hex(cp) FROM unnest(ARRAY[173, 847, 1564, 6158, 8206, 8207, 8234, 8235, 8236, 8237, 8238,
+                                         8289, 8290, 8291, 8292, 8294, 8295, 8296, 8297, 8203, 160, 65279]) cp
+      WHERE public.catalog_trim(chr(cp) || chr(cp)) <> ''
+         OR NOT public.pricing_answer_blank(to_jsonb(chr(cp)))
+         OR public.catalog_text_ok(jsonb_build_object('tr', chr(cp)), 'TR', 10) $$,
+  'LRM, RLM, ALM, the soft hyphen, bidi controls and the other invisible marks are blank everywhere');
 
 -- ── publish the fixtures (AC-12) ─────────────────────────────────────────────
 SET LOCAL ROLE authenticated;
@@ -170,11 +277,16 @@ SELECT is(public.publish_pricing_formula('00000000-0000-0000-0000-000000105002',
 SELECT is(public.publish_pricing_formula('00000000-0000-0000-0000-000000105003', 0, 100000,
   '[{"question_key": "size", "match_type": "range", "match_value": {"min": 3, "max": 5}, "effect_type": "PER_UNIT", "amount": 10000, "factor": null}]') ->> 'status',
   'ok', 'a service scoped question is read by its own service');
+SELECT is(public.publish_pricing_formula('00000000-0000-0000-0000-000000105007', 0, 100000, '[]') ->> 'status', 'ok',
+  'an off service under an on category can publish');
 SELECT is(public.publish_pricing_formula('00000000-0000-0000-0000-000000105004', 0, 100000, '[]') ->> 'status', 'ok',
   'a service under an off category can publish');
 RESET ROLE;
+-- A KSA formula as a fixture, through the same door publish uses (pricing_history_guard refuses it otherwise).
+SELECT set_config('pricing.publishing', 'on', true);
 INSERT INTO public.pricing_formulas (service_id, region, version, base_price, active)
   VALUES ('00000000-0000-0000-0000-000000105005', 'KSA', 1, 100000, true);
+SELECT set_config('pricing.publishing', 'off', true);
 
 -- ── quote_price, worked figures end to end (AC-5, AC-6, AC-9) ────────────────
 SET LOCAL ROLE authenticated;
@@ -266,6 +378,8 @@ SELECT throws_ok($$ SELECT public.quote_price('00000000-0000-0000-0000-000000105
   'P0001', 'service_unavailable', 'a service of another region');
 SELECT throws_ok($$ SELECT public.quote_price('00000000-0000-0000-0000-000000105006', '00000000-0000-0000-0000-000000102001', NULL, '{}') $$,
   'P0001', 'service_unavailable', 'a service with no formula');
+SELECT throws_ok($$ SELECT public.quote_price('00000000-0000-0000-0000-000000105007', '00000000-0000-0000-0000-000000102001', NULL, '{}') $$,
+  'P0001', 'service_unavailable', 'an off service, under an on category and with a formula');
 SELECT throws_ok($$ SELECT public.quote_price(gen_random_uuid(), '00000000-0000-0000-0000-000000102001', NULL, '{}') $$,
   'P0001', 'service_unavailable', 'a service that does not exist');
 SELECT throws_ok($$ SELECT public.quote_price('00000000-0000-0000-0000-000000105001', '00000000-0000-0000-0000-000000102003', NULL, '[]') $$,
@@ -289,6 +403,19 @@ SELECT throws_ok($$ SELECT public.quote_price('00000000-0000-0000-0000-000000105
 RESET ROLE;
 
 -- ── settings (AC-8) ──────────────────────────────────────────────────────────
+SELECT throws_ok($$ DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'price_rounding_minor' $$,
+  'P0001', 'pricing_setting_required', 'the rounding unit cannot be deleted, even as postgres');
+SELECT throws_ok($$ UPDATE public.platform_settings SET key = 'price_rounding_old' WHERE region = 'TR' AND key = 'max_price_multiple' $$,
+  'P0001', 'pricing_setting_required', 'nor can the price multiple be renamed away');
+SELECT lives_ok($$ UPDATE public.platform_settings SET value = '100' WHERE region = 'TR' AND key = 'price_rounding_minor' $$,
+  'a value may still change, inside the checks');
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000010a1", "role": "authenticated"}', true);
+SELECT throws_ok($$ DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'max_price_multiple' $$,
+  'P0001', 'pricing_setting_required', 'an admin token, which the settings policy lets write, cannot delete it either');
+RESET ROLE;
+-- A missing row can still happen by migration; simulate it in this rolled back transaction.
+ALTER TABLE public.platform_settings DISABLE TRIGGER pricing_settings_guard;
 DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'price_rounding_minor';
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000010c1", "role": "authenticated"}', true);
@@ -312,6 +439,49 @@ SELECT is(public.quote_price('00000000-0000-0000-0000-000000105003', '00000000-0
           '{"count": 1, "size": 6}') ->> 'price', '100000', 'other answers still price');
 RESET ROLE;
 UPDATE public.platform_settings SET value = '20' WHERE region = 'TR' AND key = 'max_price_multiple';
+ALTER TABLE public.platform_settings ENABLE TRIGGER pricing_settings_guard;
+UPDATE public.platform_settings SET value = '100.0' WHERE region = 'TR' AND key = 'price_rounding_minor';
+INSERT INTO public.questions (category_id, region, key, label, type, validation, active)
+  VALUES ('00000000-0000-0000-0000-00000010c002', 'TR', 'memo', '{"tr": "Not"}', 'text', '{"maxLength": 200.0}', true);
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000010c1", "role": "authenticated"}', true);
+SELECT is(pg_temp.refusal('{"count": 1, "extras": ["a"], "memo": "kısa not"}') ->> 'price', '105000',
+  'a rounding unit stored as 100.0 and a maxLength stored as 200.0 still price');
+SELECT is(pg_temp.refusal(jsonb_build_object('count', 1, 'memo', repeat('ş', 201))) -> 'errors',
+  '[{"key": "memo", "code": "answer_out_of_range"}]', 'and 200.0 still limits the answer to 200');
+RESET ROLE;
+UPDATE public.questions SET active = false WHERE key = 'memo';
+UPDATE public.platform_settings SET value = '100' WHERE region = 'TR' AND key = 'price_rounding_minor';
+
+-- ── size caps (security review 2026-11-15) ───────────────────────────────────
+CREATE FUNCTION pg_temp.timed_refusal(p_answers jsonb) RETURNS jsonb LANGUAGE plpgsql AS $fn$
+DECLARE
+  t0 timestamptz := clock_timestamp();
+  r jsonb;
+BEGIN
+  r := public.quote_price('00000000-0000-0000-0000-000000105002', '00000000-0000-0000-0000-000000102001', NULL, p_answers);
+  RETURN jsonb_build_object('result', r, 'seconds', extract(epoch FROM clock_timestamp() - t0));
+END;
+$fn$;
+GRANT EXECUTE ON FUNCTION pg_temp.timed_refusal(jsonb) TO authenticated;
+CREATE TEMP TABLE big_answers AS
+  SELECT jsonb_object_agg('junk_' || g, 1) AS answers FROM generate_series(1, 200000) g;
+GRANT SELECT ON big_answers TO authenticated;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000010c1", "role": "authenticated"}', true);
+CREATE TEMP TABLE big_result AS SELECT pg_temp.timed_refusal(answers) AS r FROM big_answers;
+SELECT is((SELECT r -> 'result' FROM big_result),
+  '{"status": "invalid", "errors": [{"key": null, "code": "answer_invalid"}]}',
+  '200,000 junk keys come back as one answer_invalid');
+SELECT ok((SELECT (r ->> 'seconds')::numeric FROM big_result) < 1,
+  'and fast, with no work per key');
+SELECT is(jsonb_array_length(pg_temp.refusal(
+    (SELECT jsonb_object_agg('junk_' || g, 1) FROM generate_series(1, 90) g) || '{"count": 1}') -> 'errors'), 50,
+  'at most 50 errors come back');
+SELECT throws_ok($$ SELECT public.quote_price('00000000-0000-0000-0000-000000105001', '00000000-0000-0000-0000-000000102001',
+                    (SELECT array_agg(gen_random_uuid()) FROM generate_series(1, 51)), '{}') $$,
+  'P0001', 'addon_unavailable', 'more than 50 addons are refused before any lookup');
+RESET ROLE;
 
 -- ── tamper (AC-10, AC-11) ────────────────────────────────────────────────────
 CREATE TEMP VIEW money_args AS
@@ -321,7 +491,7 @@ CREATE TEMP VIEW money_args AS
    WHERE n.nspname = 'public'
      AND (has_function_privilege('authenticated', p.oid, 'EXECUTE') OR has_function_privilege('anon', p.oid, 'EXECUTE'))
      AND EXISTS (SELECT 1 FROM unnest(coalesce(p.proargnames, '{}'::text[])) a
-                  WHERE a ~* '(price|amount|total|fee|commission|base)')
+                  WHERE a ~* '(price|amount|total|fee|commission|base|factor|multiplier|rounding|cost|discount|unit)')
      AND p.proname NOT IN ('publish_pricing_formula', 'preview_pricing_formula');
 SELECT is_empty($$ SELECT signature FROM money_args $$,
   'no function a customer or provider can run takes an argument named for money (rule 1)');
@@ -329,12 +499,41 @@ CREATE FUNCTION public.scratch_quote(p_price bigint) RETURNS bigint LANGUAGE sql
 GRANT EXECUTE ON FUNCTION public.scratch_quote(bigint) TO authenticated;
 SELECT isnt_empty($$ SELECT signature FROM money_args $$, 'the meta test catches a scratch function with a p_price argument');
 DROP FUNCTION public.scratch_quote(bigint);
+-- Rule 8 over every function we own, not only the pricing ones: no dynamic SQL, and no format() feeding one.
+-- A function that needs one is named here, with its reason, after review.
+CREATE TEMP TABLE allowed_dynamic (proname text PRIMARY KEY);
 SELECT is_empty(
   $$ SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
       WHERE n.nspname = 'public'
-        AND p.proname ~ '^(pricing_|quote_price|publish_pricing|preview_pricing|catalog_|question_shape|questions_guard)'
-        AND p.prosrc ~* 'execute' $$,
-  'no pricing function runs a string (rule 8)');
+        AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e')
+        AND (p.prosrc ~* '\mexecute\M' OR p.prosrc ~* 'format\s*\(')
+        AND p.proname NOT IN (SELECT proname FROM allowed_dynamic) $$,
+  'no function in public runs a string or builds one with format() (rule 8)');
+-- Every definer function a signed in user can run, reviewed by name: a new grant fails here until it is added.
+SELECT set_eq(
+  $$ SELECT n.nspname || '.' || p.proname || '(' || oidvectortypes(p.proargtypes) || ')'
+       FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public' AND p.prosecdef
+        AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
+        AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e') $$,
+  $$ VALUES ('public.accept_provider_docs_consent(text)'),
+            ('public.admin_may_read(uuid, text)'),
+            ('public.complete_onboarding(text, text, text, boolean)'),
+            ('public.decide_provider(uuid, text, timestamp with time zone, text, text)'),
+            ('public.is_admin()'),
+            ('public.log_document_view(uuid, uuid)'),
+            ('public.preview_pricing_formula(uuid, bigint, jsonb, uuid, uuid[], jsonb)'),
+            ('public.provider_may_store(text, text)'),
+            ('public.public_region_info()'),
+            ('public.publish_pricing_formula(uuid, integer, bigint, jsonb)'),
+            ('public.quote_price(uuid, uuid, uuid[], jsonb)'),
+            ('public.register_provider_document(text, text)'),
+            ('public.reinstate_provider(uuid)'),
+            ('public.review_provider_documents(uuid, uuid[], uuid[], text, text, text, date)'),
+            ('public.save_provider_profile(text, text, text, text, integer, text[])'),
+            ('public.submit_provider_file()'),
+            ('public.suspend_provider(uuid, text)') $$,
+  'every definer function a signed in user can run is on the reviewed list');
 SELECT is_empty(
   $$ SELECT c.table_name || '.' || c.column_name FROM information_schema.columns c
       WHERE c.table_schema = 'public' AND c.table_name IN ('pricing_formulas', 'pricing_modifiers')
@@ -480,8 +679,31 @@ SELECT throws_ok($$ UPDATE public.pricing_modifiers SET amount = 1 WHERE region 
 SELECT throws_ok($$ DELETE FROM public.pricing_formulas WHERE region = 'TR' $$,
   'P0001', 'pricing_history_immutable', 'a formula is never deleted');
 SELECT throws_ok($$ INSERT INTO public.pricing_formulas (service_id, region, version, base_price, active)
+                    VALUES ('00000000-0000-0000-0000-000000105001', 'TR', 9, 100, false) $$,
+  'P0001', 'pricing_history_immutable', 'a formula row comes in only through publish, even as postgres');
+SELECT throws_ok($$ INSERT INTO public.pricing_modifiers (formula_id, region, apply_order, question_key, match_type, effect_type, amount)
+                    SELECT id, 'TR', 99, NULL, 'always', 'FIXED', 100 FROM public.pricing_formulas
+                     WHERE service_id = '00000000-0000-0000-0000-000000105001' AND active $$,
+  'P0001', 'pricing_history_immutable', 'no modifier can be added under a published version, even as postgres');
+SELECT set_config('pricing.publishing', 'on', true);
+SELECT throws_ok($$ INSERT INTO public.pricing_formulas (service_id, region, version, base_price, active)
                     VALUES ('00000000-0000-0000-0000-000000105001', 'TR', 9, 100, true) $$,
   '23505', NULL, 'a service has at most one active formula');
+SELECT set_config('pricing.publishing', 'off', true);
+SELECT is(current_setting('pricing.publishing', true), 'off', 'publish leaves the door shut behind it');
+
+-- A whole amount written with a decimal point is still whole: no raw 22P02 (security review 2026-11-15).
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000010a1", "role": "authenticated"}', true);
+SELECT is(public.preview_pricing_formula('00000000-0000-0000-0000-000000105003', 100000,
+    '[{"question_key": null, "match_type": "always", "match_value": null, "effect_type": "FIXED", "amount": 100.0, "factor": null}]',
+    NULL, NULL, '{"count": 1, "size": 1}') ->> 'price', '100100', 'a preview reads 100.0 as 100');
+SELECT is(public.publish_pricing_formula('00000000-0000-0000-0000-000000105006', 0, 100000,
+    '[{"question_key": null, "match_type": "always", "match_value": null, "effect_type": "FIXED", "amount": 100.0, "factor": null}]') ->> 'status',
+  'ok', 'a publish stores 100.0 as 100');
+RESET ROLE;
+SELECT is((SELECT m.amount FROM public.pricing_modifiers m JOIN public.pricing_formulas f ON f.id = m.formula_id
+            WHERE f.service_id = '00000000-0000-0000-0000-000000105006'), 100::bigint, 'stored as the whole number 100');
 
 -- ── preview (AC-13) ──────────────────────────────────────────────────────────
 SET LOCAL ROLE authenticated;
@@ -529,7 +751,13 @@ SELECT is((SELECT count(*)::int FROM public.pricing_formulas WHERE service_id = 
   'a preview writes nothing');
 RESET ROLE;
 
--- ── the question guard (AC-4) ────────────────────────────────────────────────
+-- ── the question guard (AC-3, AC-4) ─────────────────────────────────────────
+SELECT throws_ok($$ UPDATE public.questions SET key = 'room_count' WHERE key = 'rooms' $$,
+  'P0001', 'question_immutable', 'a key never changes, even as postgres');
+SELECT throws_ok($$ UPDATE public.questions SET type = 'boolean', validation = NULL WHERE key = 'notes' $$,
+  'P0001', 'question_immutable', 'a type never changes, even as postgres');
+SELECT throws_ok($$ UPDATE public.questions SET service_id = '00000000-0000-0000-0000-000000105006' WHERE key = 'notes' $$,
+  'P0001', 'question_immutable', 'nor does a scope');
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000010a1", "role": "authenticated"}', true);
 SELECT throws_ok($$ UPDATE public.questions SET active = false WHERE key = 'has_pets' $$,

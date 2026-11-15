@@ -19,6 +19,7 @@ import {
   pricedQuestions,
 } from '@/lib/catalog/queries';
 import { formatMinor } from '@/lib/money/parse';
+import { reportServerError } from '@/lib/observability/server';
 import { currencyFor } from '@/lib/region';
 
 type Props = {
@@ -85,7 +86,11 @@ export default async function Page({ params, searchParams }: Props) {
       addons: addons.map((a) => ({ id: a.id, name: text(a.name), price: a.price, active: a.active })),
       zones: zones.map((z) => ({ id: z.id, name: text(z.name), multiplier: z.multiplier, active: z.active })),
     };
-  })().catch(() => null);
+  })().catch((error: unknown) => {
+    // The page shows ErrorState, but the cause is reported, never silent.
+    reportServerError('adminPricing', error);
+    return null;
+  });
   if (view === null) return failed;
   if (view === 'empty') {
     return (

@@ -4,17 +4,12 @@
  * arithmetic (rule 4). The database decides again on publish (`no_changes`).
  */
 
-const EASTERN = /[٠-٩۰-۹]/g;
-
-function fold(ch: string): string {
-  const code = ch.codePointAt(0) ?? 0;
-  return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
-}
+import { foldDigits } from './digits';
 
 /** A decimal as canonical text (`-1.3`, `0`, `1200`), or the trimmed input when it is not one. */
 export function canonicalDecimal(text: string | null): string | null {
   if (text === null) return null;
-  const folded = text.trim().replace(EASTERN, fold).replace(/[,٫]/g, '.').replace('−', '-');
+  const folded = foldDigits(text.trim()).replace(/[,٫]/g, '.').replace('−', '-');
   const match = /^(-?)([0-9]+)(?:\.([0-9]+))?$/.exec(folded);
   if (!match) return folded;
   const whole = (match[2] ?? '').replace(/^0+(?=[0-9])/, '');

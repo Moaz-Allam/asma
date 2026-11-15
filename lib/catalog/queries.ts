@@ -199,6 +199,29 @@ export async function listQuestions(categoryId: string): Promise<QuestionRow[]> 
   return ((data ?? []) as QuestionDb[]).map(toQuestion);
 }
 
+/**
+ * The option values each question key of a category is matched by, in the active formulas (spec 0007 AC-4,
+ * AC-18). Such an option cannot be removed; the page says so instead of letting the database refuse.
+ */
+export async function matchedOptionValues(categoryId: string): Promise<Map<string, string[]>> {
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from('pricing_modifiers')
+    .select('question_key, match_value, pricing_formulas!inner(active, services!inner(category_id))')
+    .eq('pricing_formulas.active', true)
+    .eq('pricing_formulas.services.category_id', categoryId)
+    .not('question_key', 'is', null);
+  if (error) fail(error);
+  const out = new Map<string, string[]>();
+  for (const row of (data ?? []) as { question_key: string; match_value: unknown }[]) {
+    const values = Array.isArray(row.match_value) ? row.match_value : [row.match_value];
+    const kept = values.filter((v): v is string => typeof v === 'string');
+    if (kept.length > 0)
+      out.set(row.question_key, [...new Set([...(out.get(row.question_key) ?? []), ...kept])]);
+  }
+  return out;
+}
+
 /** Every service of the region, ordered by category, then service (the pricing page's picker and its first). */
 export async function listServicesForPricing(
   region: Region,

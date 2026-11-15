@@ -11,7 +11,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(141);
+SELECT plan(147);
 
 -- ── fixtures ─────────────────────────────────────────────────────────────────
 -- c1: customer, p1: provider, a1: admin, a2: an admin demoted below while their token lives.
@@ -26,6 +26,20 @@ INSERT INTO public.profiles (id, role, region, phone, full_name, locale) VALUES
   ('00000000-0000-0000-0000-0000000003b1', 'provider', 'TR', '+905553330002', 'Ayşe Usta', 'tr'),
   ('00000000-0000-0000-0000-0000000003a1', 'admin', 'TR', '+905553330003', 'Admin Bir', 'en'),
   ('00000000-0000-0000-0000-0000000003a2', 'admin', 'TR', '+905553330004', 'Admin İki', 'en');
+
+-- Rows an earlier local e2e run left behind; CI starts empty. Gone only inside this rolled back
+-- transaction (the history guard is switched off for it, as only its owner can).
+ALTER TABLE public.pricing_modifiers DISABLE TRIGGER pricing_history_guard;
+ALTER TABLE public.pricing_formulas DISABLE TRIGGER pricing_history_guard;
+DELETE FROM public.pricing_modifiers;
+DELETE FROM public.pricing_formulas;
+ALTER TABLE public.pricing_modifiers ENABLE TRIGGER pricing_history_guard;
+ALTER TABLE public.pricing_formulas ENABLE TRIGGER pricing_history_guard;
+DELETE FROM public.addons;
+DELETE FROM public.questions;
+DELETE FROM public.services;
+DELETE FROM public.service_categories;
+DELETE FROM public.zones;
 
 -- Catalog rows, written as postgres (the trigger records them with a null actor).
 INSERT INTO public.service_categories (id, region, name) VALUES
@@ -79,6 +93,24 @@ SELECT throws_ok(
   $$ INSERT INTO public.questions (category_id, region, key, label, type)
      VALUES ('00000000-0000-0000-0000-000000003c01', 'KSA', 'notes', '{"ar": "X"}', 'boolean') $$,
   '23503', NULL, 'a KSA question cannot name a TR category');
+INSERT INTO public.services (id, category_id, region, name, hours_min, hours_max)
+  VALUES ('00000000-0000-0000-0000-000000003502', '00000000-0000-0000-0000-000000003c02', 'KSA', '{"ar": "Y"}', 1, 2);
+SELECT set_config('pricing.publishing', 'on', true);
+SELECT throws_ok(
+  $$ INSERT INTO public.pricing_formulas (service_id, region, version, base_price)
+     VALUES ('00000000-0000-0000-0000-000000003501', 'KSA', 1, 100) $$,
+  '23503', NULL, 'a KSA formula cannot name a TR service');
+INSERT INTO public.pricing_formulas (id, service_id, region, version, base_price)
+  VALUES ('00000000-0000-0000-0000-000000003f01', '00000000-0000-0000-0000-000000003501', 'TR', 1, 100);
+SELECT throws_ok(
+  $$ INSERT INTO public.pricing_modifiers (formula_id, region, apply_order, match_type, effect_type, amount)
+     VALUES ('00000000-0000-0000-0000-000000003f01', 'KSA', 1, 'always', 'FIXED', 100) $$,
+  '23503', NULL, 'a KSA modifier cannot name a TR formula');
+SELECT set_config('pricing.publishing', 'off', true);
+SELECT throws_ok(
+  $$ INSERT INTO public.questions (category_id, service_id, region, key, label, type)
+     VALUES ('00000000-0000-0000-0000-000000003c01', '00000000-0000-0000-0000-000000003502', 'TR', 'other', '{"tr": "X"}', 'boolean') $$,
+  '23503', NULL, 'a question cannot be scoped to a service of another category');
 SELECT throws_ok(
   $$ INSERT INTO public.services (category_id, region, name, hours_min, hours_max)
      VALUES ('00000000-0000-0000-0000-000000003c01', 'TR', '{"tr": "X"}', 3, 2) $$,
@@ -169,6 +201,18 @@ SELECT throws_ok(
   $$ INSERT INTO public.questions (category_id, region, key, label, type, affects_pricing)
      VALUES ('00000000-0000-0000-0000-000000003c01', 'TR', 'notes', '{"tr": "Not"}', 'text', true) $$,
   '23514', NULL, 'a text question can never affect the price');
+SELECT throws_ok(
+  $$ INSERT INTO public.questions (category_id, region, key, label, type, affects_pricing)
+     VALUES ('00000000-0000-0000-0000-000000003c01', 'TR', 'never_textarea', '{"tr": "X"}', 'textarea', true) $$,
+  '23514', NULL, 'a textarea question can never affect the price');
+SELECT throws_ok(
+  $$ INSERT INTO public.questions (category_id, region, key, label, type, affects_pricing)
+     VALUES ('00000000-0000-0000-0000-000000003c01', 'TR', 'never_date', '{"tr": "X"}', 'date', true) $$,
+  '23514', NULL, 'a date question can never affect the price');
+SELECT throws_ok(
+  $$ INSERT INTO public.questions (category_id, region, key, label, type, affects_pricing)
+     VALUES ('00000000-0000-0000-0000-000000003c01', 'TR', 'never_time', '{"tr": "X"}', 'time', true) $$,
+  '23514', NULL, 'a time question can never affect the price');
 SELECT throws_ok(
   $$ INSERT INTO public.questions (category_id, region, key, label, type)
      VALUES ('00000000-0000-0000-0000-000000003c01', 'TR', 'Rooms', '{"tr": "Oda"}', 'boolean') $$,

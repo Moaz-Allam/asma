@@ -8,6 +8,7 @@ import { FormField } from '@/components/shared/FormField';
 import { LocalizedField } from '@/components/shared/LocalizedField';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { parseWhole } from '@/lib/catalog/digits';
 import type { CatalogLocale, LocalizedText } from '@/lib/catalog/localized';
 import {
   CATALOG_LIMITS,
@@ -27,9 +28,9 @@ import { useCatalogAction } from './use-action';
 const SELECT_CLASS =
   'h-15.25 w-full rounded-field border-2 border-input bg-surface px-4.5 text-body text-text-primary read-only:bg-surface-secondary disabled:bg-surface-secondary';
 
-/** Digits only, or the text as typed so the server refuses it: never a guessed number. */
+/** A whole number, Eastern digits folded; anything else is NaN, which the action's schema refuses. */
 function whole(text: string): number {
-  return /^[0-9]{1,6}$/.test(text.trim()) ? Number(text.trim()) : Number.NaN;
+  return parseWhole(text) ?? Number.NaN;
 }
 
 /**
@@ -69,7 +70,12 @@ export function QuestionBuilder({
     question?.validation?.maxLength === undefined ? '' : String(question.validation.maxLength),
   );
   const [options, setOptions] = useState<OptionDraft[]>(
-    question?.options?.map((option) => ({ value: option.value, label: option.values, saved: true })) ?? [],
+    question?.options?.map((option) => ({
+      uid: option.value,
+      value: option.value,
+      label: option.values,
+      saved: true,
+    })) ?? [],
   );
 
   const canPrice = PRICED_TYPES.includes(type);
@@ -248,7 +254,12 @@ export function QuestionBuilder({
         </FormField>
       ) : null}
       {isSelect ? (
-        <QuestionOptionsEditor options={options} onChange={setOptions} regionDefault={regionDefault} />
+        <QuestionOptionsEditor
+          options={options}
+          onChange={setOptions}
+          regionDefault={regionDefault}
+          inUse={question?.inUseValues ?? []}
+        />
       ) : null}
     </CatalogSheet>
   );

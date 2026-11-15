@@ -20,8 +20,10 @@ import {
   listQuestions,
   listServices,
   listZones,
+  matchedOptionValues,
 } from '@/lib/catalog/queries';
 import { formatMinor } from '@/lib/money/parse';
+import { reportServerError } from '@/lib/observability/server';
 import { currencyFor } from '@/lib/region';
 
 type Props = {
@@ -70,8 +72,9 @@ export default async function Page({ params, searchParams }: Props) {
     const tab: CatalogTab = CATALOG_TABS.includes(askedTab as CatalogTab)
       ? (askedTab as CatalogTab)
       : 'questions';
-    const [questionRows, serviceRows, zoneRows] = await Promise.all([
+    const [questionRows, matched, serviceRows, zoneRows] = await Promise.all([
       categoryId ? listQuestions(categoryId) : Promise.resolve([]),
+      categoryId ? matchedOptionValues(categoryId) : Promise.resolve(new Map<string, string[]>()),
       categoryId ? listServices(region, categoryId) : Promise.resolve([]),
       listZones(region),
     ]);
@@ -119,6 +122,7 @@ export default async function Page({ params, searchParams }: Props) {
         validation: q.validation,
         serviceId: q.serviceId,
         scopeName: q.serviceId ? (serviceName.get(q.serviceId) ?? null) : null,
+        inUseValues: matched.get(q.key) ?? [],
         active: q.active,
       })),
       addons: addonRows.map<CatalogAddon>((a) => ({
@@ -136,7 +140,11 @@ export default async function Page({ params, searchParams }: Props) {
         active: z.active,
       })),
     };
-  })().catch(() => null);
+  })().catch((error: unknown) => {
+    // The page shows ErrorState, but the cause is reported, never silent.
+    reportServerError('adminCatalog', error);
+    return null;
+  });
   if (data === null) {
     return (
       <>

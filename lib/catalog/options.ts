@@ -79,34 +79,3 @@ export const CATALOG_LIMITS = {
 
 export const KEY_PATTERN = /^[a-z][a-z0-9_]{0,39}$/;
 export const OPTION_VALUE_PATTERN = /^[a-z0-9_]{1,40}$/;
-
-/** Every refusal the catalog and pricing pages can show, as message keys. */
-export const CATALOG_ERROR_CODES = [
-  'validation_failed',
-  'forbidden',
-  'key_taken',
-  'question_in_use',
-  'not_found',
-  'action_failed',
-] as const;
-
-export const FORMULA_ERROR_CODES = [
-  'modifier_malformed',
-  'base_price_out_of_range',
-  'too_many_modifiers',
-  'amount_out_of_range',
-  'factor_out_of_range',
-  'question_not_priced',
-  'question_not_required',
-  'match_not_allowed',
-  'effect_not_allowed',
-  'option_unknown',
-] as const;
-
-export const ANSWER_ERROR_CODES = [
-  'answer_unknown',
-  'answer_required',
-  'answer_invalid',
-  'answer_out_of_range',
-  'contact_info_in_answer',
-] as const;

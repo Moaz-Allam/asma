@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import type { Browser, Page } from '@playwright/test';
 
+import { formatMoney } from '../lib/format/money';
 import { expect, test } from './fixtures';
 import { TEST_CODE, testE164, testPhone, type NUMBER } from './numbers';
 
@@ -17,7 +18,7 @@ import { TEST_CODE, testE164, testPhone, type NUMBER } from './numbers';
  * in parallel. No test counts a whole list.
  *
  * Fixture figures only: base 1200, rooms × 400, villa × 1.30, addon 400, zone × 1.15, so rooms 3 and villa
- * give (120000 + 120000) × 1.30 + 40000 = 352000, × 1.15 = 404800 before rounding.
+ * give (120000 + 120000) × 1.30 + 40000 = 352000, × 1.15 = 404800 (4048.00 TRY) before rounding.
  */
 
 const CATALOGUES: Record<string, unknown> = Object.fromEntries(
@@ -68,6 +69,23 @@ async function noOverflow(page: Page) {
     expect(overflow, `overflow at ${width}px`).toBeLessThanOrEqual(0);
   }
   await page.setViewportSize({ width: 390, height: 844 });
+}
+
+/**
+ * ui-rules: every touch target is at least 44px. A switch is 22px tall, so it must sit inside a label of
+ * 44px or more, which is what a tap actually hits.
+ */
+async function switchTargets(page: Page) {
+  const small = await page.evaluate(() =>
+    [...document.querySelectorAll('[role="switch"]')]
+      .map((el) => {
+        const target = el.closest('label') ?? el;
+        const box = target.getBoundingClientRect();
+        return { name: el.getAttribute('aria-label') ?? '', width: box.width, height: box.height };
+      })
+      .filter((t) => t.width > 0 && (t.width < 44 || t.height < 44)),
+  );
+  expect(small).toEqual([]);
 }
 
 async function signIn(page: Page, locale: string, phone: string, path = `/${locale}/login`) {
@@ -136,6 +154,9 @@ test('admin builds a catalog, publishes a formula and is held to it', async ({ b
   const page = await newAdmin(browser, locale, 'catalogAdmin');
 
   // AC-16: below lg the bottom bar keeps three tabs, and /admin links to the catalog.
+  await page.getByRole('link', { name: m(locale, 'Nav.pricing'), exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/admin/pricing`));
+  await page.goto(`/${locale}/admin`);
   await page.getByRole('link', { name: m(locale, 'Nav.catalog'), exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/admin/catalog`));
 
@@ -179,6 +200,7 @@ test('admin builds a catalog, publishes a formula and is held to it', async ({ b
   await turnOn(page, locale, 'Ev tipi');
   await axe(page);
   await noOverflow(page);
+  await switchTargets(page);
 
   // An addon and a zone.
   await openTab(page, locale, 'addons');
@@ -224,13 +246,24 @@ test('admin builds a catalog, publishes a formula and is held to it', async ({ b
   await page.locator('#preview-rooms').fill('3');
   await panel.getByText('Villa', { exact: true }).click();
   await page.getByRole('switch', { name: m(locale, 'AdminPricing.addonLabel', { name: 'Cam' }) }).click();
-  await panel.getByText(`${zone} ×1.15`, { exact: true }).click();
-  await expect(page.getByText('404800.000000', { exact: true })).toBeVisible({ timeout: 20_000 });
+  await panel.getByText(new RegExp(`^${zone}`)).click();
+  // The server's total, as MoneyDisplay shows it, and the line before rounding in major units.
+  await expect(
+    panel.getByText(formatMoney(404800, 'TRY', locale as 'ar' | 'tr' | 'en'), { exact: true }).first(),
+  ).toBeVisible({
+    timeout: 20_000,
+  });
+  await expect(page.getByText('4048.00 TRY', { exact: true })).toBeVisible();
   await axe(page);
   await noOverflow(page);
+  await switchTargets(page);
 
   // Publish version 1, then change a modifier and publish version 2.
   await page.getByRole('button', { name: m(locale, 'AdminPricing.publish', { version: '1' }) }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: m(locale, 'AdminPricing.publish', { version: '1' }) })
+    .click();
   await expect(
     page.getByText(m(locale, 'AdminPricing.version', { version: '1' }), { exact: true }),
   ).toBeVisible({
@@ -241,6 +274,10 @@ test('admin builds a catalog, publishes a formula and is held to it', async ({ b
   ).toBeDisabled();
   await page.locator('article').nth(0).locator('input[id$="-value"]').fill('450');
   await page.getByRole('button', { name: m(locale, 'AdminPricing.publish', { version: '2' }) }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: m(locale, 'AdminPricing.publish', { version: '2' }) })
+    .click();
   await expect(
     page.getByText(m(locale, 'AdminPricing.version', { version: '2' }), { exact: true }),
   ).toBeVisible({

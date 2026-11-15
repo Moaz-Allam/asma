@@ -1,14 +1,16 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import { previewFormula, publishFormula } from '@/actions/admin-pricing';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from '@/lib/i18n/navigation';
 import { sameFormula } from '@/lib/catalog/compare';
+import { latestOnly, settle } from '@/lib/catalog/settle';
 
 import { FormulaPreview, type PreviewState } from './FormulaPreview';
 import { PricingRulesEditor } from './PricingRulesEditor';
@@ -60,13 +62,14 @@ export function PricingEditor({
   const [baseError, setBaseError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [publishing, startPublish] = useTransition();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [addonIds, setAddonIds] = useState<string[]>([]);
   const [zoneId, setZoneId] = useState<string | null>(null);
   // The last answer from the server, with the request it answered.
   const [answered, setAnswered] = useState<{ for: unknown; state: PreviewState } | null>(null);
-  const latest = useRef(0);
+  const [latest] = useState(latestOnly);
 
   // A newer published version (this admin's or another's) resets the draft to it.
   const [shown, setShown] = useState(version);
@@ -74,15 +77,17 @@ export function PricingEditor({
     setShown(version);
     setBase(publishedBase);
     setModifiers(publishedModifiers);
+    setErrors(new Map());
+    setBaseError(null);
   }
 
   const dirty = !sameFormula(
     { base, modifiers: toInput(modifiers) },
     { base: publishedBase, modifiers: toInput(publishedModifiers) },
   );
-  const complete = questions.every(
-    (q) => !q.required || q.type === 'multi_select' || answers[q.key] !== undefined,
-  );
+  const complete =
+    base.trim() !== '' &&
+    questions.every((q) => !q.required || q.type === 'multi_select' || answers[q.key] !== undefined);
   const request = useMemo(
     () => ({ serviceId, basePrice: base, modifiers: toInput(modifiers), zoneId, addonIds, answers }),
     [serviceId, base, modifiers, zoneId, addonIds, answers],
@@ -90,11 +95,12 @@ export function PricingEditor({
 
   // A change asks the server after 400 ms; an answer that comes back late never replaces a newer one.
   useEffect(() => {
-    const id = ++latest.current;
+    const ticket = latest.take();
     if (!complete) return;
     const timer = setTimeout(async () => {
-      const result = await previewFormula(request);
-      if (id !== latest.current) return;
+      // A dropped connection settles as `network`, so the panel never stays on loading.
+      const result = await settle(() => previewFormula(request));
+      if (!latest.isLatest(ticket)) return;
       let state: PreviewState;
       if (!result.success) {
         state = { kind: 'message', code: result.error === 'forbidden' ? 'forbidden' : 'failed' };
@@ -110,7 +116,7 @@ export function PricingEditor({
       setAnswered({ for: request, state });
     }, PREVIEW_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [request, complete]);
+  }, [request, complete, latest]);
 
   const preview: PreviewState = !complete
     ? { kind: 'idle' }
@@ -119,14 +125,18 @@ export function PricingEditor({
       : { kind: 'loading' };
 
   function publish() {
+    setConfirmOpen(false);
     setNotice(null);
     startPublish(async () => {
-      const result = await publishFormula({
-        serviceId,
-        expectedVersion: version,
-        basePrice: base,
-        modifiers: toInput(modifiers),
-      });
+      // A dropped connection settles as `network` and keeps the draft as typed.
+      const result = await settle(() =>
+        publishFormula({
+          serviceId,
+          expectedVersion: version,
+          basePrice: base,
+          modifiers: toInput(modifiers),
+        }),
+      );
       if (!result.success) {
         if (result.error === 'stale_formula') {
           setNotice(t('stale'));
@@ -178,7 +188,10 @@ export function PricingEditor({
             value={base}
             aria-invalid={baseError ? true : undefined}
             aria-describedby={baseError ? 'base-price-error' : undefined}
-            onChange={(event) => setBase(event.target.value)}
+            onChange={(event) => {
+              setBase(event.target.value);
+              setBaseError(null);
+            }}
           />
           {baseError ? (
             <p id="base-price-error" role="alert" className="w-full text-meta text-error">
@@ -207,7 +220,7 @@ export function PricingEditor({
             size="lg"
             variant={dirty ? 'primary' : 'secondary'}
             disabled={!dirty || publishing}
-            onClick={publish}
+            onClick={() => setConfirmOpen(true)}
           >
             {dirty ? t('publish', { version: version + 1 }) : t('publishedNoChanges')}
           </Button>
@@ -223,6 +236,16 @@ export function PricingEditor({
         ) : null}
       </section>
 
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('confirmTitle', { version: version + 1 })}
+        body={t('confirmBody', { base, currency, count: modifiers.length })}
+        confirmLabel={t('publish', { version: version + 1 })}
+        cancelLabel={t('confirmCancel')}
+        onConfirm={publish}
+        busy={publishing}
+      />
       <FormulaPreview
         questions={questions}
         addons={addons}

@@ -42,6 +42,7 @@ vi.mock('@/lib/pricing', () => ({ previewFormula: m.previewInDb, publishFormula:
 import { saveAddon, saveCategory, saveQuestion, saveZone, setCatalogActive } from '@/actions/admin-catalog';
 import { previewFormula, publishFormula } from '@/actions/admin-pricing';
 import { catalogCode, ZeroRows } from '@/lib/catalog/writes';
+import { AuthRefusal } from '@/lib/auth/session';
 
 const ADMIN = { id: '00000000-0000-4000-8000-0000000000d1', role: 'admin' as const, region: 'TR' as const };
 const ID = '00000000-0000-4000-8000-000000000501';
@@ -59,6 +60,19 @@ describe('catalog writes', () => {
   it('only an admin may call them', async () => {
     await saveCategory({ name: { tr: 'Temizlik' } });
     expect(m.requireRole).toHaveBeenCalledWith('admin');
+  });
+
+  it('a customer or provider is refused before any write', async () => {
+    m.requireRole.mockRejectedValue(new AuthRefusal('forbidden'));
+    expect(await saveCategory({ name: { tr: 'Temizlik' } })).toEqual({ success: false, error: 'forbidden' });
+    expect(
+      await publishFormula({ serviceId: ID, expectedVersion: 0, basePrice: '1', modifiers: [] }),
+    ).toEqual({
+      success: false,
+      error: 'forbidden',
+    });
+    expect(m.insertRow).not.toHaveBeenCalled();
+    expect(m.publishInDb).not.toHaveBeenCalled();
   });
 
   it('a new category takes the active region, read on the server, and drops blank locales', async () => {
@@ -155,6 +169,7 @@ describe('catalog writes', () => {
     [{ code: '23505' }, 'key_taken'],
     [{ code: '23514' }, 'validation_failed'],
     [{ code: '42501' }, 'forbidden'],
+    [{ code: '22003' }, 'validation_failed'],
     [{ code: 'P0001', message: 'question_in_use' }, 'question_in_use'],
     [{ code: '08006' }, null],
   ])('maps %j to %j', (error, code) => {

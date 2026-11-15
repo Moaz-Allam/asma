@@ -765,7 +765,8 @@
     "optionValueFixed": "Answers store this value, so it never changes.",
     "optionLabel": "Shown as",
     "addOption": "Add option",
-    "removeOption": "Remove option {value}"
+    "removeOption": "Remove option {value}",
+    "optionInUse": "A published formula matches it, so it cannot be removed."
   },
   "CatalogErrors": {
     "validation_failed": "Something in the form is not valid. Check each field and save again.",
@@ -777,7 +778,8 @@
     "zone_unavailable": "This zone is not available.",
     "addon_unavailable": "This addon is not available.",
     "rate_limited": "Too many changes at once. Wait a moment and try again.",
-    "action_failed": "That did not work. Nothing was changed. Try again."
+    "action_failed": "That did not work. Nothing was changed. Try again.",
+    "network": "The connection dropped. Nothing changed, and what you typed is still here. Try again."
   },
   "AdminPricing": {
     "title": "Pricing rules",
@@ -880,6 +882,9 @@
       "zone": "Zone multiplier",
       "unrounded": "Before rounding",
       "rounding": "Rounded to the nearest"
-    }
+    },
+    "confirmTitle": "Publish version {version}?",
+    "confirmBody": "Base price {base} {currency}, {count, plural, one {# rule} other {# rules}}. It goes live for new quotes at once and can never be edited. Requests already made keep their price.",
+    "confirmCancel": "Not yet"
   }
 }
