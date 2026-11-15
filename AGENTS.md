@@ -46,9 +46,9 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 - 2026-11-13 · **01 part 2 merged** (PR #25, `3c8ca33`): landing page, SEO, full account. Its migration is in the cloud.
 - 2026-11-15 · **02 merged** (spec 0006, PR #26, `5f6f283`): provider onboarding, admin review, suspend. Three migrations, all in
   the cloud. Merged on local CI, which replaced GitHub CI (down). **AC-29 real calls are a hard gate before G1** (D133).
-- 2026-11-15 · **03 built and reviewed** (spec 0007, PR #27, `feat/03-catalog-pricing`): catalog and pricing engine in Postgres, the
+- 2026-11-15 · **03 merged** (spec 0007, PR #27, `734517b`): catalog and pricing engine in Postgres, the
   admin pages `/admin/catalog` and `/admin/pricing`, `lib/pricing`, `lib/catalog`, `lib/money/parse.ts`. Security, slice and
-  `/check review` fixes folded in (D136, D137, R9). Its migration `20261115100000_catalog_pricing` waits for the owner's push (S29).
+  `/check review` fixes folded in (D136, D137, R9). Its migration `20261115100000_catalog_pricing` is in the cloud (S29). Merged on local CI (D135); **AC-26 real calls are a hard gate before G1**.
   AC-26 real calls are a hard gate before G1 (D135).
 
 ## Stack (pinned exactly)
