@@ -22,7 +22,10 @@ export type AlertReason =
   | 'flag_read_failed'
   // Spec 0007 AC-8, AC-24: a region's rounding unit or price multiple is missing or malformed, so every quote
   // in that region refuses. The record is the service id that was being quoted.
-  | 'pricing_settings_invalid';
+  | 'pricing_settings_invalid'
+  // Spec 0008 AC-1b, AC-11: a region's schedule, open cap or quote limit setting is missing or malformed, so no
+  // request can be posted there. The record is the service id being quoted, or `catalog` for the form read.
+  | 'request_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

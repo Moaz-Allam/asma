@@ -59,6 +59,11 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'authorization',
   'cookie',
   'note',
+  // Spec 0008 AC-18: a request's street line, its notes and the answers a customer typed.
+  'line',
+  'address_line',
+  'notes',
+  'answers',
   'description',
   'message',
   'body',

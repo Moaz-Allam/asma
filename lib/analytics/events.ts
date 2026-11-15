@@ -28,6 +28,8 @@ export type AnalyticsEvents = {
   provider_decided: { decision: 'approved' | 'rejected' };
   /** An upload failed before or at Storage. Only the reason, never the file, its name or its path. */
   document_upload_failed: { reason: 'too_large' | 'wrong_type' | 'refused' | 'network' };
+  /** A customer published a request (spec 0008 AC-25). Only whether it was a repeat: no id, price or text. */
+  request_posted: { repeated: boolean };
 };
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
@@ -43,6 +45,7 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'provider_file_submitted',
   'provider_decided',
   'document_upload_failed',
+  'request_posted',
 ]);
 
 /** The typed property names per event: the only non `$` properties an event may carry. */
@@ -57,4 +60,5 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   provider_file_submitted: [],
   provider_decided: ['decision'],
   document_upload_failed: ['reason'],
+  request_posted: ['repeated'],
 };
