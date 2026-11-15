@@ -154,6 +154,11 @@ Domain components. Path: `components/features/<domain>/`.
 | `RowControls` | Up, down, on and off, edit, for one catalog row | app-05 | ✅ built (03) | ✅ | 44px targets, each named for its row |
 | `PricingEditor` | `/admin/pricing`: base price, `PricingRulesEditor` and publish, beside `FormulaPreview` | app-06 | ✅ built (03) | ✅ | Publish version N only when the draft differs, compared as numbers in text; `stale_formula` reloads |
 | `ServicePicker` | The service whose formula is open, grouped by category | app-06 | ✅ built (03) | ✅ | Changes `?service=` |
+| `CatalogSheet` | The add and edit `Sheet` of the catalog: title, fields, the refusal, one Save | app-05 | ✅ built (03) | ✅ | `noValidate`: every message comes from the catalogue in the page locale, never the browser bubble |
+| `CategorySheet` | Add or edit a category name in three languages | app-05 | ✅ built (03) | ✅ | Region read on the server |
+| `ServiceSheet` | Add or edit a service: name, note, hours 1 to 24 | app-05 | ✅ built (03) | ✅ | Hours fold Eastern digits; `3.5` is refused, never 3 |
+| `AddonSheet` | Add or edit an addon: service (create only), name, price | app-05 | ✅ built (03) | ✅ | Price is text, parsed into minor units on the server |
+| `ZoneSheet` | Add or edit a zone: name, multiplier 0.50 to 2.00 | app-05 | ✅ built (03) | ✅ | Multiplier is text, canonical on the server; a typo like 15 is a refusal |
 | `DynamicQuestionForm` | Customer: renders questions by type | s4 | 📋 planned | — | ⚠️ Schema generated at runtime |
 | `PlatformSettingsForm` | Fees, commission, windows | app-07 | 📋 planned | — | |
 | `ProviderApprovalQueue` | Review + approve/reject | app-03, a1 | 📋 planned | — | Audit-logged |

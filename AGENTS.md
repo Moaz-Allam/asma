@@ -44,9 +44,12 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   on production with real browsers.
 - 2026-10-31 · **01 part 1 merged** (PR #22, `09a7501`). Its real calls (AC-26) and reviews are still owed.
 - 2026-11-13 · **01 part 2 merged** (PR #25, `3c8ca33`): landing page, SEO, full account. Its migration is in the cloud.
-- 2026-11-14 · **02 reviewed and fixed** (spec 0006, PR #26 on `feat/02-provider-onboarding`): provider onboarding, admin review,
-  suspend. Three migrations, all in the cloud (the third pushed by the owner 2026-11-15). Merges on local CI, which replaced
-  GitHub CI (down). AC-29 real calls are a hard gate before G1 (D133).
+- 2026-11-15 · **02 merged** (spec 0006, PR #26, `5f6f283`): provider onboarding, admin review, suspend. Three migrations, all in
+  the cloud. Merged on local CI, which replaced GitHub CI (down). **AC-29 real calls are a hard gate before G1** (D133).
+- 2026-11-15 · **03 built and reviewed** (spec 0007, PR #27, `feat/03-catalog-pricing`): catalog and pricing engine in Postgres, the
+  admin pages `/admin/catalog` and `/admin/pricing`, `lib/pricing`, `lib/catalog`, `lib/money/parse.ts`. Security, slice and
+  `/check review` fixes folded in (D136, D137, R9). Its migration `20261115100000_catalog_pricing` waits for the owner's push (S29).
+  AC-26 real calls are a hard gate before G1 (D135).
 
 ## Stack (pinned exactly)
 
@@ -204,6 +207,7 @@ other module may be named that way.
 | Auth | `lib/auth/` | Only it calls `supabase.auth`, with one exemption, `lib/db/proxy.ts`, for the session refresh. `getSession()` is banned everywhere. Pages call `guardPage`, Server Actions `guardedAction` |
 | Storage | `lib/storage/` | Only it calls `supabase.storage` (spec 0006 AC-26). `client.ts` checks first bytes, downscales and uploads; `server.ts` signs links and removes, always as the signed in user. Bucket names, limits and the 60 second link live in `buckets.ts` |
 | PSP | `lib/psp/` | Only the outbox relay calls it (rule 3) |
+| Pricing | `lib/pricing/` | The app's server only door to the engine in Postgres: `quotePrice`, `previewFormula`, `publishFormula` wrap `quote_price`, `preview_pricing_formula`, `publish_pricing_formula` (spec 0007, D121). No function takes a price (rule 1). No lint rule yet; the SQL side is guarded by the tamper meta test in `supabase/tests/10_pricing_engine.test.sql` |
 | Sentry | `lib/observability/` | `next.config.ts` may import only `withSentryConfig` from `@sentry/nextjs/config`. Server: `initServer`, `captureRequestError`, `log`, `raiseAlert`; browser: `initClient`, `reportClientError`, `routerTransitionStart`; routes: `createEnvelopeForwarder` (`/api/e`), `createCspReportForwarder` (`/api/csp`) in `forward.ts` (D83). One scrubber (`scrub.ts`) for every signal, CSP reports included |
 | PostHog | `lib/analytics/` | `initAnalytics`, `track`, `trackPageview`; events typed in `events.ts`, filtered again in `filter.ts`; route: `createPostHogForwarder` (`/api/a/*`) in `forward.ts`, its body parser in `capture-body.ts` (no `server-only`, so e2e runs real SDK bytes through it) (D83) |
 | Telemetry keys | the two doors, `lib/env.ts`, `lib/deployment.ts`, `next.config.ts` | `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`; `SENTRY_AUTH_TOKEN` in `next.config.ts` only. Others ask `sentryDsn()` or `posthogKey()` |

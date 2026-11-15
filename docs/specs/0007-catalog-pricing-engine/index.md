@@ -1,7 +1,8 @@
 # 0007. Catalog and pricing engine (position 03)
 
 **Date**: 2026-11-02
-**Status**: Accepted (confirmed by the owner 2026-11-02, after a cross check on a second model)
+**Status**: Accepted (confirmed by the owner 2026-11-02, after a cross check on a second model). Amended 2026-11-15 from the reviews of
+PR #27 (D136, D137): five internal functions added to the inventory, the size caps, the insert guard and the settings guard
 
 ## Summary
 
@@ -317,6 +318,11 @@ definer function, as `has_contact_info` does:
 | `pricing_formula_errors(p_service_id, p_base, p_modifiers)` | invoker, stable | none | AC-12. Stable, so it takes no lock: Postgres refuses `for share` in a stable function, and the locks sit in `publish_pricing_formula` |
 | `preview_pricing_formula(p_service_id, p_base, p_modifiers, p_zone_id, p_addon_ids, p_answers)` | definer, stable | `authenticated`, admin inside | AC-13 |
 | `publish_pricing_formula(p_service_id, p_expected_version, p_base, p_modifiers)` | definer | `authenticated`, admin inside | AC-12. Returns `{ status, formula_id, version }`, `{ status: 'invalid_formula', errors }` or `{ status: 'no_changes' }` |
+| `catalog_trim(p_text)` | invoker, immutable | none | AC-7. Trims whitespace, NBSP, zero width and direction marks from both ends |
+| `pricing_answer_blank(p_answer)` | invoker, immutable | none | AC-7. JSON null, missing, `[]` or a blank string is no answer |
+| `pricing_number_at_scale(p_value, p_scale)` | invoker, immutable | none | AC-12. A JSON number equal to itself at a scale, tested before any cast |
+| `pricing_canonical(p_modifiers)` | invoker, immutable | none | AC-12. A draft or stored formula as JSON that compares numbers by value, for `no_changes` |
+| `pricing_settings_guard()` | invoker, trigger | none | AC-8, D136. Before update or delete on `platform_settings`: the two pricing keys are never deleted or renamed |
 
 Grants (D77): `select` on the seven tables to `authenticated`, `service_role`. To `authenticated`, on the five catalog tables, on named
 columns: `insert` on every column but `id` and `created_at`; `update` on every column but those, `region`, each parent id, and `key` and
@@ -405,7 +411,7 @@ path. `publish_pricing_formula` and `preview_pricing_formula` check `is_admin()`
 | --- | --- | --- |
 | `app-05` | Region switch and console search. Addons grouped by service, and questions carry a scope. No addon key column. `start_date` is not a question | D117. `s4` and `architecture.md` put addons on a service and ask general and service questions. An id is enough. A request's dates are columns (§23) |
 | `app-06` | A service picker, and the title names the service. Typed fields replace the − and + steppers. Add and remove modifier join. Keys show as small secondary text | A formula is per service (`s4`, `architecture.md`). Real prices are not multiples of a step. The design has no way to add one. `docs/design/README.md` |
-| Both | Rail rows for pages not built yet | D99 |
+| Both | Rail rows for pages not built yet | D117 |
 
 **Failure handling**:
 - Two admins publish: the second gets `stale_formula`, and the page reloads with the new version.
@@ -493,6 +499,8 @@ Docs in the same change: `project-overview.md` §5 rule 1 (the engine sits in Po
 
 - [ ] Before G1 (D135): the real calls of AC-26 and of the real call section of `verify.md`, on a preview against the cloud project, once
       real sign in works. 03 merged on local CI with these open, on the owner's waiver for the merge only.
+- [ ] Position 04: rate limit quotes per user (owner accepted the formula mapping risk, 2026-11-15, R9). Each fired line shows its
+      `match_value`, `amount` and `factor`, so many quotes can map a formula; the price surface is the formula, so no field is hidden.
 - [ ] Position 04: the customer read path (bookable services, the question set, zones, addons, all without formula rows); `create_request` calls
       `quote_price` in its transaction and stores the snapshots; compare with the price the customer saw and refuse `price_changed`; raise an alert
       on `price_out_of_range` at submit, because the SQL path passes no door; `scheduled_end_at` from `hours_max`; `questions_snapshot`. The zone changes

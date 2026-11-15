@@ -134,6 +134,8 @@ Every arrow crossing a boundary is validated. Treat external services as untrust
 
 ## 4. Data model
 
+> The catalog and pricing tables are as built in **§39c** (spec 0007), which overrides this section where they differ.
+
 Names are canonical. Use these exact table names.
 
 ### Core
@@ -1011,6 +1013,8 @@ The formula body. **Structured rows, never an expression string.**
 
 ### 19.3 The pricing pipeline
 
+> **Overridden by §39c** (spec 0007, D121): the pipeline runs inside Postgres (`pricing_evaluate`, `quote_price`), not in TypeScript; `lib/pricing/` is its door.
+
 Order of operations is fixed. **Never reorder — the result would change.**
 
 ```
@@ -1053,6 +1057,8 @@ Admins will change questions and prices while requests are live.
 - Changing a question's `key` is **forbidden** — it would orphan stored answers and break modifiers
 
 ### 19.6 Dynamic validation
+
+> **Overridden by §39c** (spec 0007, D125): answers are checked in SQL by `pricing_answer_errors`, with no runtime Zod schema.
 
 Zod schemas for the answer set are **built at runtime from the active questions**:
 
