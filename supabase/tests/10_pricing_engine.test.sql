@@ -10,7 +10,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(181);
+SELECT plan(183);
 
 -- ── fixtures ─────────────────────────────────────────────────────────────────
 -- c1: customer, a1: admin, u0: signed in with no profile yet.
@@ -690,7 +690,6 @@ SELECT throws_ok($$ INSERT INTO public.pricing_formulas (service_id, region, ver
                     VALUES ('00000000-0000-0000-0000-000000105001', 'TR', 9, 100, true) $$,
   '23505', NULL, 'a service has at most one active formula');
 SELECT set_config('pricing.publishing', 'off', true);
-SELECT is(current_setting('pricing.publishing', true), 'off', 'publish leaves the door shut behind it');
 
 -- A whole amount written with a decimal point is still whole: no raw 22P02 (security review 2026-11-15).
 SET LOCAL ROLE authenticated;
@@ -704,6 +703,21 @@ SELECT is(public.publish_pricing_formula('00000000-0000-0000-0000-000000105006',
 RESET ROLE;
 SELECT is((SELECT m.amount FROM public.pricing_modifiers m JOIN public.pricing_formulas f ON f.id = m.formula_id
             WHERE f.service_id = '00000000-0000-0000-0000-000000105006'), 100::bigint, 'stored as the whole number 100');
+
+-- A real publish must shut the door behind itself: the function's own
+-- set_config(..., 'off') is the only thing that does (a function's SET clause does not undo another variable),
+-- so deleting that line has to fail this test (security delta review of PR #27).
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000010a1", "role": "authenticated"}', true);
+SELECT is(public.publish_pricing_formula('00000000-0000-0000-0000-000000105006',
+            coalesce((SELECT version FROM public.pricing_formulas WHERE service_id = '00000000-0000-0000-0000-000000105006' AND active), 0),
+            150000, '[]'::jsonb) ->> 'status', 'ok', 'an admin publishes a first version of another service');
+RESET ROLE;
+SELECT isnt(coalesce(current_setting('pricing.publishing', true), ''), 'on', 'publish leaves the door shut behind it');
+SELECT throws_ok($$ INSERT INTO public.pricing_modifiers (formula_id, region, apply_order, question_key, match_type, effect_type, amount)
+                    SELECT id, 'TR', 99, NULL, 'always', 'FIXED', 100 FROM public.pricing_formulas
+                     WHERE service_id = '00000000-0000-0000-0000-000000105006' AND active $$,
+  'P0001', 'pricing_history_immutable', 'after a publish, a direct insert is refused again, even as postgres');
 
 -- ── preview (AC-13) ──────────────────────────────────────────────────────────
 SET LOCAL ROLE authenticated;
