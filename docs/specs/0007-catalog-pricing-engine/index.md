@@ -491,6 +491,8 @@ Docs in the same change: `project-overview.md` §5 rule 1 (the engine sits in Po
 
 ## Follow-up
 
+- [ ] Before G1 (D135): the real calls of AC-26 and of the real call section of `verify.md`, on a preview against the cloud project, once
+      real sign in works. 03 merged on local CI with these open, on the owner's waiver for the merge only.
 - [ ] Position 04: the customer read path (bookable services, the question set, zones, addons, all without formula rows); `create_request` calls
       `quote_price` in its transaction and stores the snapshots; compare with the price the customer saw and refuse `price_changed`; raise an alert
       on `price_out_of_range` at submit, because the SQL path passes no door; `scheduled_end_at` from `hours_max`; `questions_snapshot`. The zone changes
