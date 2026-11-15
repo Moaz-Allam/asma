@@ -21,7 +21,10 @@ export type LogEvent =
   // type tries again.
   | 'document_sweep_failed'
   // Spec 0006 AC-16: the document.viewed row could not be written, so no link was signed.
-  | 'document_view_audit_failed';
+  | 'document_view_audit_failed'
+  // Spec 0007 AC-8: a customer's answers pushed a published formula past its ceiling. Logged, not alerted:
+  // the customer's own answers can reach it, and other answers still price.
+  | 'price_out_of_range';
 
 /** The only ids a record may carry: internal ids, never personal data. */
 export type LogIds = {

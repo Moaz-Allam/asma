@@ -1,6 +1,15 @@
 'use client';
 
-import { CirclePlus, LayoutDashboard, List, UserRound, UsersRound, type LucideIcon } from 'lucide-react';
+import {
+  Calculator,
+  CirclePlus,
+  LayoutDashboard,
+  LayoutList,
+  List,
+  UserRound,
+  UsersRound,
+  type LucideIcon,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Link, usePathname } from '@/lib/i18n/navigation';
@@ -14,6 +23,8 @@ const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
   profile: UserRound,
   account: UserRound,
   providers: UsersRound,
+  catalog: LayoutList,
+  pricing: Calculator,
 };
 
 /**

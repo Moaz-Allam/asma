@@ -487,16 +487,18 @@ eval(formula.expression);
 new Function("answers", formula.expression)(answers);
 ```
 
-The pricing formula is **structured rows** (`pricing_modifiers`) evaluated by our own interpreter in `lib/pricing/`. There is no expression string anywhere in the system.
+The pricing formula is **structured rows** (`pricing_modifiers`) evaluated by our own interpreter, `pricing_evaluate`, inside Postgres (spec 0007, D121). `lib/pricing/` is the app's thin server only door to it. There is no expression string anywhere in the system, and a pgTAP test fails if any pricing function's source runs a string (`execute`).
 
 Additional rules:
 
 - Question `key` is **immutable after creation**. The edit form must not expose it. Renaming would orphan stored answers and silently break formulas
 - Questions and services are **soft-deleted** (`active = false`). A hard delete would make historical requests unreadable
-- Answers are validated against a **runtime-generated Zod schema** built from the active questions. Unknown keys are rejected, not ignored
+- Answers are validated **in the database**, by `pricing_answer_errors`, against the service's active questions (spec 0007 overrides the runtime Zod schema). Unknown keys are rejected, not ignored, and every failure comes back at once as `{ key, code }`
 - Only questions with `affects_pricing = true` may be referenced by a modifier. `text` and `textarea` may never be
 - Every request stores `answers`, `questions_snapshot`, and `pricing_snapshot`. **Never re-price an existing request** when configuration changes
-- The pricing pipeline has exactly **one rounding step** (`architecture.md` §19.3). Rounding inside the modifier loop causes drift
+- The pricing pipeline has exactly **one rounding step**, half up to `price_rounding_minor`, in exact `numeric` (`architecture.md` §39c). Rounding inside the modifier loop causes drift
+- Money admin types is **text**, parsed on the server by `lib/money/parse.ts` (`parseMinor`, `parseFactor`) with string steps, never a float. The browser compares drafts by text (`lib/catalog/compare.ts`) and computes no price
+- No function a customer or provider can run takes an argument named for money; a pgTAP meta test holds it
 - `MULTIPLIER` factors are bounded so a typo cannot produce an absurd price
 - Every catalog, question, and formula change writes to `audit_log`
 

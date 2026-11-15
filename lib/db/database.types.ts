@@ -34,6 +34,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      addons: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_order: number
+          id: string
+          name: Json
+          price: number
+          region: string
+          service_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: Json
+          price: number
+          region: string
+          service_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: Json
+          price?: number
+          region?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addons_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "addons_service_fk"
+            columns: ["service_id", "region"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "region"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -134,6 +182,111 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "platform_settings_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      pricing_formulas: {
+        Row: {
+          active: boolean
+          base_price: number
+          created_at: string
+          created_by: string | null
+          id: string
+          region: string
+          service_id: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          base_price: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          region: string
+          service_id: string
+          version: number
+        }
+        Update: {
+          active?: boolean
+          base_price?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          region?: string
+          service_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_formulas_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "pricing_formulas_service_fk"
+            columns: ["service_id", "region"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "region"]
+          },
+        ]
+      }
+      pricing_modifiers: {
+        Row: {
+          amount: number | null
+          apply_order: number
+          created_at: string
+          effect_type: string
+          factor: number | null
+          formula_id: string
+          id: string
+          match_type: string
+          match_value: Json | null
+          question_key: string | null
+          region: string
+        }
+        Insert: {
+          amount?: number | null
+          apply_order: number
+          created_at?: string
+          effect_type: string
+          factor?: number | null
+          formula_id: string
+          id?: string
+          match_type: string
+          match_value?: Json | null
+          question_key?: string | null
+          region: string
+        }
+        Update: {
+          amount?: number | null
+          apply_order?: number
+          created_at?: string
+          effect_type?: string
+          factor?: number | null
+          formula_id?: string
+          id?: string
+          match_type?: string
+          match_value?: Json | null
+          question_key?: string | null
+          region?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_modifiers_formula_fk"
+            columns: ["formula_id", "region"]
+            isOneToOne: false
+            referencedRelation: "pricing_formulas"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "pricing_modifiers_region_fkey"
             columns: ["region"]
             isOneToOne: false
             referencedRelation: "regions"
@@ -377,6 +530,82 @@ export type Database = {
           },
         ]
       }
+      questions: {
+        Row: {
+          active: boolean
+          affects_pricing: boolean
+          category_id: string
+          created_at: string
+          display_order: number
+          help_text: Json | null
+          id: string
+          key: string
+          label: Json
+          options: Json | null
+          region: string
+          required: boolean
+          service_id: string | null
+          type: string
+          validation: Json | null
+        }
+        Insert: {
+          active?: boolean
+          affects_pricing?: boolean
+          category_id: string
+          created_at?: string
+          display_order?: number
+          help_text?: Json | null
+          id?: string
+          key: string
+          label: Json
+          options?: Json | null
+          region: string
+          required?: boolean
+          service_id?: string | null
+          type: string
+          validation?: Json | null
+        }
+        Update: {
+          active?: boolean
+          affects_pricing?: boolean
+          category_id?: string
+          created_at?: string
+          display_order?: number
+          help_text?: Json | null
+          id?: string
+          key?: string
+          label?: Json
+          options?: Json | null
+          region?: string
+          required?: boolean
+          service_id?: string | null
+          type?: string
+          validation?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_category_fk"
+            columns: ["category_id", "region"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "questions_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "questions_service_fk"
+            columns: ["service_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "category_id"]
+          },
+        ]
+      }
       regions: {
         Row: {
           active: boolean
@@ -406,6 +635,95 @@ export type Database = {
           psp_provider?: string
         }
         Relationships: []
+      }
+      service_categories: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_order: number
+          id: string
+          name: Json
+          region: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: Json
+          region: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: Json
+          region?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_categories_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          active: boolean
+          category_id: string
+          created_at: string
+          display_order: number
+          hours_max: number
+          hours_min: number
+          id: string
+          name: Json
+          note: Json | null
+          region: string
+        }
+        Insert: {
+          active?: boolean
+          category_id: string
+          created_at?: string
+          display_order?: number
+          hours_max: number
+          hours_min: number
+          id?: string
+          name: Json
+          note?: Json | null
+          region: string
+        }
+        Update: {
+          active?: boolean
+          category_id?: string
+          created_at?: string
+          display_order?: number
+          hours_max?: number
+          hours_min?: number
+          id?: string
+          name?: Json
+          note?: Json | null
+          region?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_category_fk"
+            columns: ["category_id", "region"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "services_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       terms_acceptances: {
         Row: {
@@ -449,6 +767,44 @@ export type Database = {
           },
         ]
       }
+      zones: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_order: number
+          id: string
+          multiplier: number
+          name: Json
+          region: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          multiplier?: number
+          name: Json
+          region: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          multiplier?: number
+          name?: Json
+          region?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zones_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -462,6 +818,11 @@ export type Database = {
         Args: { p_name: string; p_object_id: string }
         Returns: boolean
       }
+      catalog_text_ok: {
+        Args: { p_max: number; p_region: string; p_value: Json }
+        Returns: boolean
+      }
+      catalog_trim: { Args: { p_text: string }; Returns: string }
       check_new_user: { Args: { event: Json }; Returns: Json }
       complete_onboarding: {
         Args: {
@@ -491,6 +852,56 @@ export type Database = {
         Returns: Json
       }
       phone_region: { Args: { p_phone: string }; Returns: string }
+      preview_pricing_formula: {
+        Args: {
+          p_addon_ids: string[]
+          p_answers: Json
+          p_base: number
+          p_modifiers: Json
+          p_service_id: string
+          p_zone_id: string
+        }
+        Returns: Json
+      }
+      pricing_answer_blank: { Args: { p_answer: Json }; Returns: boolean }
+      pricing_answer_errors: {
+        Args: { p_answers: Json; p_priced_only: boolean; p_questions: Json }
+        Returns: Json
+      }
+      pricing_canonical: { Args: { p_modifiers: Json }; Returns: Json }
+      pricing_compute: {
+        Args: {
+          p_addon_ids: string[]
+          p_answers: Json
+          p_base: number
+          p_modifiers: Json
+          p_preview: boolean
+          p_region: string
+          p_service_id: string
+          p_zone_id: string
+        }
+        Returns: Json
+      }
+      pricing_evaluate: {
+        Args: {
+          p_addons_total: number
+          p_answers: Json
+          p_base: number
+          p_max_multiple: number
+          p_modifiers: Json
+          p_multiplier: number
+          p_rounding: number
+        }
+        Returns: Json
+      }
+      pricing_formula_errors: {
+        Args: { p_base: number; p_modifiers: Json; p_service_id: string }
+        Returns: Json
+      }
+      pricing_number_at_scale: {
+        Args: { p_scale: number; p_value: Json }
+        Returns: boolean
+      }
       promote_to_admin: { Args: { p_phone: string }; Returns: undefined }
       provider_back_to_review: {
         Args: {
@@ -581,6 +992,10 @@ export type Database = {
       }
       provider_required_types: { Args: { p_region: string }; Returns: string[] }
       provider_standing: { Args: { p_provider_id: string }; Returns: string }
+      provider_store_allowed: {
+        Args: { p_bucket: string; p_name: string; p_provider: string }
+        Returns: boolean
+      }
       provider_type_bucket: { Args: { p_type: string }; Returns: string }
       public_region_info: {
         Args: never
@@ -589,6 +1004,33 @@ export type Database = {
           dial_code: string
           support_whatsapp: string
         }[]
+      }
+      publish_pricing_formula: {
+        Args: {
+          p_base: number
+          p_expected_version: number
+          p_modifiers: Json
+          p_service_id: string
+        }
+        Returns: Json
+      }
+      question_shape_ok: {
+        Args: {
+          p_options: Json
+          p_region: string
+          p_type: string
+          p_validation: Json
+        }
+        Returns: boolean
+      }
+      quote_price: {
+        Args: {
+          p_addon_ids: string[]
+          p_answers: Json
+          p_service_id: string
+          p_zone_id: string
+        }
+        Returns: Json
       }
       register_provider_document: {
         Args: { p_path: string; p_type: string }

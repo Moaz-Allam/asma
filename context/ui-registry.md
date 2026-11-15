@@ -67,6 +67,7 @@ Cross-feature building blocks. Path: `components/shared/`.
 | `DeadlineDisplay` | Absolute time + relative hint, from server time | Inline text; the countdown card for live windows | s9, p11 | 📋 planned | — |
 | `CountdownCard` | A running window in big digits | `19:24:08` Alexandria 900 ~72px in an emphasis panel, the deadline under it | p11 | 📋 planned | — |
 | `FormField` | Label + control + inline error | Label 13px Cairo 600 `text-text-secondary` above; field per `ui-rules.md` §19 | s4, p2 | ✅ built (02, §9) | — |
+| `LocalizedField` | One text in three languages (spec 0007 AC-2) | A `FormField` per locale, each in its own direction, the region's default first and marked required; saved as localised JSON, shown escaped | app-05 | ✅ built (03) | ✅ |
 | `InitialAvatar` | A person without a photo | Circle, initial in Alexandria 700, `bg-accent-light` (40px nav, 56px cards) | s6, s7, s9 | ✅ done, 40px; first grapheme through `lib/account/initial.ts` | ✅ |
 | `RatingStars` | Choose 1–5 per dimension | Five 44px circles `bg-accent-muted` with ★, selected `bg-accent` | s9, s16 | 📋 planned | — |
 | `PhoneField` / `CodeField` | Phone sign-in and the one-time code (D55) | Phone field with the region prefix (`+90` in v1); code as **six** digit boxes (the design draws four), resend countdown | s2, p1 | ✅ done (`components/features/auth/`); `BotCheck` and `LoginForm` beside them, `Function` free | ✅ |
@@ -141,14 +142,23 @@ Domain components. Path: `components/features/<domain>/`.
 
 | Component | Purpose | Design ref | Status | RTL | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `AdminRail` | Navy rail with views and count badges | app-01 … app-09 | ✅ built (02, §9) | — | White items, active on a light pill |
+| `AdminRail` | Navy rail with views and count badges | app-01 … app-09 | ✅ built (02, §9) | — | White items, active on a light pill. Items from `ADMIN_RAIL` (03); below `lg` the page `/admin` links to the pages the bottom bar has no tab for |
 | `AdminTable` | Tables of the console | app-02, app-03, app-04 | 📋 planned | — | Header row `bg-surface-secondary`; stacked cards on phones |
 | `ActionQueue` | "Needs action" list on the dashboard | app-01, a5 | 📋 planned | — | |
 | `StatCard` | Counts and held amounts | app-01, app-08 | 📋 planned | — | Amounts via `MoneyDisplay` |
-| `PricingRulesEditor` | Pricing formula rows with live preview | app-06 | 📋 planned | — | ⚠️ Structured rows only, never a text expression |
-| `QuestionBuilder` | Add/edit/reorder questions per category | app-05 | 📋 planned | — | ⚠️ `key` immutable after create |
-| `QuestionOptionsEditor` | Options for select-type questions | app-05 | 📋 planned | — | value + label in three locales |
-| `FormulaPreview` | Sample answers → live breakdown | app-06 | 📋 planned | — | Price always from server |
+| `PricingRulesEditor` | Pricing formula rows, one card per modifier: order, question label and key, condition, effect chips, amount or factor, up, down, remove | app-06 | ✅ built (03) | ✅ | ⚠️ Structured rows only, never a text expression. Offers only the match types and effects of `MATCH_TABLE`. Typed fields replace the design's steppers; amounts are text, parsed on the server |
+| `QuestionBuilder` | Add or edit one question in a `Sheet`: key, type, scope (create only), label, help, required, affects price, number range, text length, options | app-05 | ✅ built (03) | ✅ | ⚠️ Key, type and scope read only after create. Affects price only for number, selects and yes or no |
+| `QuestionOptionsEditor` | Options for select questions | app-05 | ✅ built (03) | ✅ | Value typed once (mono, `dir="ltr"`), label in three locales through `LocalizedField`; at most 30 |
+| `FormulaPreview` | Test panel: a control per priced question, addon switches, zone chips, the total and every line, fired or not | app-06 | ✅ built (03) | ✅ | Price always from the server. No total until every required priced question is answered; asks 400 ms after a change; a late answer never replaces a newer one |
+| `CatalogBoard` | `/admin/catalog`: categories beside a panel with Questions, Services, Addons and Zones tabs | app-05 | ✅ built (03) | ✅ | Category and tab in the URL; stacks below `lg`; every list has up, down, a switch, add, edit and an empty state |
+| `RowControls` | Up, down, on and off, edit, for one catalog row | app-05 | ✅ built (03) | ✅ | 44px targets, each named for its row |
+| `PricingEditor` | `/admin/pricing`: base price, `PricingRulesEditor` and publish, beside `FormulaPreview` | app-06 | ✅ built (03) | ✅ | Publish version N only when the draft differs, compared as numbers in text; `stale_formula` reloads |
+| `ServicePicker` | The service whose formula is open, grouped by category | app-06 | ✅ built (03) | ✅ | Changes `?service=` |
+| `CatalogSheet` | The add and edit `Sheet` of the catalog: title, fields, the refusal, one Save | app-05 | ✅ built (03) | ✅ | `noValidate`: every message comes from the catalogue in the page locale, never the browser bubble |
+| `CategorySheet` | Add or edit a category name in three languages | app-05 | ✅ built (03) | ✅ | Region read on the server |
+| `ServiceSheet` | Add or edit a service: name, note, hours 1 to 24 | app-05 | ✅ built (03) | ✅ | Hours fold Eastern digits; `3.5` is refused, never 3 |
+| `AddonSheet` | Add or edit an addon: service (create only), name, price | app-05 | ✅ built (03) | ✅ | Price is text, parsed into minor units on the server |
+| `ZoneSheet` | Add or edit a zone: name, multiplier 0.50 to 2.00 | app-05 | ✅ built (03) | ✅ | Multiplier is text, canonical on the server; a typo like 15 is a refusal |
 | `DynamicQuestionForm` | Customer: renders questions by type | s4 | 📋 planned | — | ⚠️ Schema generated at runtime |
 | `PlatformSettingsForm` | Fees, commission, windows | app-07 | 📋 planned | — | |
 | `ProviderApprovalQueue` | Review + approve/reject | app-03, a1 | 📋 planned | — | Audit-logged |

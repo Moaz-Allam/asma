@@ -17,6 +17,10 @@ export const CLIENT_NAMESPACES = [
   'ProviderErrors',
   'Rejection',
   'AdminReview',
+  // Spec 0007 AC-23: the catalog and pricing editors of position 03.
+  'AdminCatalog',
+  'AdminPricing',
+  'CatalogErrors',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */

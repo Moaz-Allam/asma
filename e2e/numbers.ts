@@ -26,6 +26,10 @@ export const NUMBER = {
   suspended: 12,
   gateCustomer: 13,
   reviewer: 14,
+  // Position 03 (spec 0007 AC-25): each project builds its own catalog with its own admin and names.
+  catalogAdmin: 15,
+  catalogCustomer: 16,
+  catalogProvider: 17,
 } as const;
 
 /**
