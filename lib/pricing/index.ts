@@ -1,9 +1,6 @@
 import 'server-only';
 
 import { createSupabaseServer } from '@/lib/db/server';
-import { raiseAlert } from '@/lib/observability/alert';
-import { log } from '@/lib/observability/log';
-import type { Region } from '@/lib/region';
 
 import {
   type AnswerError,
@@ -11,18 +8,17 @@ import {
   type PricedResult,
   PreviewResult,
   PublishResult,
-  QuoteResult,
 } from './schemas';
 
 /**
- * The app's one door to the pricing engine (spec 0007, D121). The price is computed in Postgres, by
- * `quote_price`, from the customer's answers: no function here takes a price, and the browser never sends
- * one (rule 1). These wrappers call the three functions as the signed in user, parse the result, and map
- * each refusal to a stable code. A mapped code reaches no Sentry report; anything else is thrown for
- * `guardedAction` to report.
+ * Admin's door to the pricing engine (spec 0007, D121). The price is computed in Postgres from the
+ * customer's answers: no function here takes a customer's price (rule 1). These wrappers call the admin
+ * functions as the signed in user, parse the result, and map each refusal to a stable code. A mapped code
+ * reaches no Sentry report; anything else is thrown for `guardedAction` to report.
  *
- * Position 04's `create_request` calls `quote_price` inside its own transaction, so the stored price never
- * passes through here (and raises its own alert at submit).
+ * Customers reach the engine only through `lib/requests` (spec 0008): `quote_price` lost its authenticated
+ * grant in 04 (AC-28), so `quote_request` and `create_request` call it as their definer owner, behind the
+ * quote rate limit. Its alert and log moved there with it.
  */
 
 export type { AnswerError, Breakdown, BreakdownLine, FormulaError, PricedResult } from './schemas';
@@ -67,39 +63,6 @@ async function call(fn: string, args: Record<string, unknown>): Promise<{ data: 
     throw error;
   }
   return { data };
-}
-
-export type QuoteOutcome =
-  { ok: true; quote: PricedResult } | { ok: false; code: 'invalid'; errors: AnswerError[] } | Refused;
-
-/**
- * Quote a service for the signed in caller (AC-9). The region is the caller's, read inside the function;
- * `context` names it for the alert and the log only. `pricing_settings_invalid` raises an alert, because
- * every quote in that region now refuses; `price_out_of_range` only logs, because a customer's own answers
- * can reach it. Either way the caller shows a plain "this service cannot be priced right now".
- */
-export async function quotePrice(
-  input: { serviceId: string; zoneId: string; addonIds: readonly string[]; answers: Record<string, unknown> },
-  context: { region: Region; userId: string },
-): Promise<QuoteOutcome> {
-  const result = await call('quote_price', {
-    p_service_id: input.serviceId,
-    p_zone_id: input.zoneId,
-    p_addon_ids: input.addonIds,
-    p_answers: input.answers,
-  });
-  if ('ok' in result) {
-    if (result.code === 'pricing_settings_invalid') {
-      raiseAlert('pricing_settings_invalid', { recordId: input.serviceId, region: context.region });
-    } else if (result.code === 'price_out_of_range') {
-      log.warn('price_out_of_range', { region: context.region, user_id: context.userId });
-    }
-    return result;
-  }
-  const parsed = QuoteResult.parse(result.data);
-  return parsed.status === 'ok'
-    ? { ok: true, quote: parsed }
-    : { ok: false, code: 'invalid', errors: parsed.errors };
 }
 
 export type PreviewOutcome =

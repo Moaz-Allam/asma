@@ -14,6 +14,218 @@
 -- lib/requests maps them.
 
 -- ═══════════════════════════════════════════════════════════════════════════
+-- 0. Five Minor findings of the security pass over 03 (tracker Next, 2026-11-15), owed to this
+--    migration because 04 is the first customer path into the engine.
+--    (a) Both blank patterns gain the Hangul fillers, the braille blank, the variation selectors and
+--        the tag characters. The pattern is written with escapes, the same in both copies;
+--        supabase/tests/12 proves the two copies match.
+--    (b) pricing_answer_errors caps the answers object at 64 KiB and one answer at 16 KiB or 30
+--        array items, so a huge text or a long multi select costs nothing per key.
+--    (c) answer_unknown echoes a caller key only when it could be a question key; any other unknown
+--        key comes back once, as a null key.
+--    (d) platform_settings gains an audit trigger: an admin token may write it.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+create or replace function public.catalog_text_ok(p_value jsonb, p_region text, p_max integer)
+  returns boolean
+  language sql
+  immutable
+  security invoker
+  set search_path = ''
+as $$
+  select coalesce(
+    jsonb_typeof(p_value) = 'object'
+    and p_value ? (case p_region when 'TR' then 'tr' when 'KSA' then 'ar' end)
+    and not exists (
+      select 1
+        from jsonb_each(p_value) e
+       where e.key not in ('ar', 'tr', 'en')
+          or jsonb_typeof(e.value) <> 'string'
+          or char_length(regexp_replace(e.value #>> '{}',
+               '^[\s\u00A0\u00AD\u034F\u061C\u115F\u1160\u1680\u180E\u2000-\u200F\u2028-\u202F\u205F-\u2064\u2066-\u2069\u2800\u3000\u3164\uFE00-\uFE0F\uFEFF\uFFA0\U000E0000-\U000E007F\U000E0100-\U000E01EF]+|[\s\u00A0\u00AD\u034F\u061C\u115F\u1160\u1680\u180E\u2000-\u200F\u2028-\u202F\u205F-\u2064\u2066-\u2069\u2800\u3000\u3164\uFE00-\uFE0F\uFEFF\uFFA0\U000E0000-\U000E007F\U000E0100-\U000E01EF]+$',
+               '', 'g')) not between 1 and p_max
+    ),
+    false)
+$$;
+
+create or replace function public.catalog_trim(p_text text)
+  returns text
+  language sql
+  immutable
+  security invoker
+  set search_path = ''
+as $$
+  select regexp_replace(p_text,
+    '^[\s\u00A0\u00AD\u034F\u061C\u115F\u1160\u1680\u180E\u2000-\u200F\u2028-\u202F\u205F-\u2064\u2066-\u2069\u2800\u3000\u3164\uFE00-\uFE0F\uFEFF\uFFA0\U000E0000-\U000E007F\U000E0100-\U000E01EF]+|[\s\u00A0\u00AD\u034F\u061C\u115F\u1160\u1680\u180E\u2000-\u200F\u2028-\u202F\u205F-\u2064\u2066-\u2069\u2800\u3000\u3164\uFE00-\uFE0F\uFEFF\uFFA0\U000E0000-\U000E007F\U000E0100-\U000E01EF]+$',
+    '', 'g')
+$$;
+
+create or replace function public.pricing_answer_errors(p_questions jsonb, p_answers jsonb, p_priced_only boolean)
+  returns jsonb
+  language plpgsql
+  stable
+  security invoker
+  set search_path = ''
+as $$
+declare
+  v_errors  jsonb := '[]'::jsonb;
+  v_q       jsonb;
+  v_key     text;
+  v_type    text;
+  v_answer  jsonb;
+  v_code    text;
+  v_num     numeric;
+  v_min     numeric;
+  v_max     numeric;
+  v_step    numeric;
+  v_text    text;
+  v_limit   integer;
+  v_y       integer;
+  v_m       integer;
+  v_d       integer;
+  v_values  text[];
+begin
+  if jsonb_typeof(p_answers) is distinct from 'object' then
+    return jsonb_build_array(jsonb_build_object('key', null, 'code', 'answer_invalid'));
+  end if;
+  -- More than 64 KiB in all, or more keys than the service has questions plus room for slack, is junk:
+  -- one error, no per key work.
+  if octet_length(p_answers::text) > 65536
+     or (select count(*) from jsonb_object_keys(p_answers)) > jsonb_array_length(coalesce(p_questions, '[]'::jsonb)) + 100 then
+    return jsonb_build_array(jsonb_build_object('key', null, 'code', 'answer_invalid'));
+  end if;
+
+  -- A key that names no question of the set. Echoed only when it could be a question key; any other
+  -- comes back once, with a null key, so a caller never gets an arbitrary string back.
+  select v_errors || coalesce(jsonb_agg(jsonb_build_object('key', a.key, 'code', 'answer_unknown')), '[]'::jsonb)
+    into v_errors
+    from jsonb_object_keys(p_answers) a(key)
+   where a.key ~ '^[a-z][a-z0-9_]{0,39}$'
+     and not exists (select 1 from jsonb_array_elements(coalesce(p_questions, '[]'::jsonb)) q
+                      where q ->> 'key' = a.key);
+  if exists (select 1 from jsonb_object_keys(p_answers) a(key) where a.key !~ '^[a-z][a-z0-9_]{0,39}$') then
+    v_errors := v_errors || jsonb_build_array(jsonb_build_object('key', null, 'code', 'answer_unknown'));
+  end if;
+
+  for v_q in select q from jsonb_array_elements(coalesce(p_questions, '[]'::jsonb)) q loop
+    if p_priced_only and not coalesce((v_q ->> 'affects_pricing')::boolean, false) then
+      continue;
+    end if;
+    v_key := v_q ->> 'key';
+    v_type := v_q ->> 'type';
+    v_answer := p_answers -> v_key;
+    v_code := null;
+
+    if v_answer is not null
+       and (octet_length(v_answer::text) > 16384
+            or (jsonb_typeof(v_answer) = 'array' and jsonb_array_length(v_answer) > 30)) then
+      v_code := 'answer_out_of_range';
+    elsif public.pricing_answer_blank(v_answer) then
+      if coalesce((v_q ->> 'required')::boolean, false) then
+        v_code := 'answer_required';
+      end if;
+    elsif v_type = 'number' then
+      if jsonb_typeof(v_answer) <> 'number' or (v_answer #>> '{}')::numeric <> trunc((v_answer #>> '{}')::numeric) then
+        v_code := 'answer_invalid';
+      else
+        v_num := (v_answer #>> '{}')::numeric;
+        v_min := (v_q -> 'validation' ->> 'min')::numeric;
+        v_max := (v_q -> 'validation' ->> 'max')::numeric;
+        v_step := (v_q -> 'validation' ->> 'step')::numeric;
+        if v_num < v_min or v_num > v_max or mod(v_num - v_min, v_step) <> 0 then
+          v_code := 'answer_out_of_range';
+        end if;
+      end if;
+    elsif v_type in ('single_select', 'multi_select') then
+      select array_agg(o ->> 'value') into v_values from jsonb_array_elements(v_q -> 'options') o;
+      if v_type = 'single_select' then
+        if jsonb_typeof(v_answer) <> 'string' or not ((v_answer #>> '{}') = any (v_values)) then
+          v_code := 'answer_invalid';
+        end if;
+      elsif jsonb_typeof(v_answer) <> 'array'
+            or exists (select 1 from jsonb_array_elements(v_answer) e
+                        where jsonb_typeof(e) <> 'string' or not ((e #>> '{}') = any (v_values)))
+            or (select count(distinct e #>> '{}') from jsonb_array_elements(v_answer) e) <> jsonb_array_length(v_answer) then
+        v_code := 'answer_invalid';
+      end if;
+    elsif v_type = 'boolean' then
+      if jsonb_typeof(v_answer) <> 'boolean' then
+        v_code := 'answer_invalid';
+      end if;
+    elsif v_type in ('text', 'textarea') then
+      if jsonb_typeof(v_answer) <> 'string' then
+        v_code := 'answer_invalid';
+      else
+        v_text := public.catalog_trim(v_answer #>> '{}');
+        v_limit := coalesce((v_q -> 'validation' ->> 'maxLength')::numeric::integer, case v_type when 'text' then 200 else 500 end);
+        if char_length(v_text) > v_limit then
+          v_code := 'answer_out_of_range';
+        elsif public.has_contact_info(v_text) then
+          v_code := 'contact_info_in_answer';
+        end if;
+      end if;
+    elsif v_type = 'date' then
+      if jsonb_typeof(v_answer) <> 'string' or (v_answer #>> '{}') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' then
+        v_code := 'answer_invalid';
+      else
+        v_y := substr(v_answer #>> '{}', 1, 4)::integer;
+        v_m := substr(v_answer #>> '{}', 6, 2)::integer;
+        v_d := substr(v_answer #>> '{}', 9, 2)::integer;
+        if v_y < 1 or v_m not between 1 and 12 or v_d < 1
+           or v_d > extract(day from (make_date(v_y, v_m, 1) + interval '1 month' - interval '1 day'))::integer then
+          v_code := 'answer_invalid';
+        end if;
+      end if;
+    elsif v_type = 'time' then
+      if jsonb_typeof(v_answer) <> 'string' or (v_answer #>> '{}') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$' then
+        v_code := 'answer_invalid';
+      end if;
+    end if;
+
+    if v_code is not null then
+      v_errors := v_errors || jsonb_build_array(jsonb_build_object('key', v_key, 'code', v_code));
+    end if;
+  end loop;
+
+  -- At most 50 errors, the first by key: enough for a form, bounded for a hostile caller.
+  return coalesce(
+    (select jsonb_agg(e order by (e ->> 'key') collate "C", e ->> 'code')
+       from (select e from jsonb_array_elements(v_errors) e
+              order by (e ->> 'key') collate "C", e ->> 'code' limit 50) x),
+    '[]'::jsonb);
+end;
+$$;
+
+-- An admin token may write platform_settings (its policy covers every command), so every change is
+-- recorded, the SQL editor's too. Settings hold no personal data; the values are copied whole.
+create function public.platform_settings_audit()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+declare
+  v_row public.platform_settings%rowtype;
+begin
+  if tg_op = 'DELETE' then
+    v_row := old;
+  else
+    v_row := new;
+  end if;
+  insert into public.audit_log (actor_id, action, entity_type, entity_id, region, old_value, new_value)
+  values (auth.uid(), 'settings.' || lower(tg_op), 'platform_settings', v_row.region || ':' || v_row.key, v_row.region,
+          case when tg_op = 'INSERT' then null else to_jsonb(old) end,
+          case when tg_op = 'DELETE' then null else to_jsonb(new) end);
+  return null;
+end;
+$$;
+
+revoke all on function public.platform_settings_audit() from public, anon, authenticated, service_role;
+
+create trigger platform_settings_audit after insert or update or delete on public.platform_settings
+  for each row execute function public.platform_settings_audit();
+
+-- ═══════════════════════════════════════════════════════════════════════════
 -- 1. regions.timezone (AC-1). A start is a local date and hour, built into a timestamp here, so no
 --    time zone arithmetic happens in TypeScript. Added nullable, both rows set, then not null.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -182,6 +394,8 @@ create table public.requests (
                                                      'IN_PROGRESS', 'AWAITING_CONFIRMATION', 'COMPLETED',
                                                      'CANCELLED')),
   constraint requests_answers_object check (jsonb_typeof(answers) = 'object'),
+  -- The same 64 KiB cap pricing_answer_errors puts on the answers it accepts (03's security Minor).
+  constraint requests_answers_size check (octet_length(answers::text) <= 65536),
   constraint requests_questions_array check (jsonb_typeof(questions_snapshot) = 'array'),
   constraint requests_pricing_object check (jsonb_typeof(pricing_snapshot) = 'object'),
   constraint requests_price_positive check (fixed_price >= 1),
@@ -319,6 +533,7 @@ create function public.request_settings(p_region text)
 as $$
 declare
   v_out  jsonb := '{}'::jsonb;
+  v_bad  boolean;
   r      record;
 begin
   for r in
@@ -328,10 +543,11 @@ begin
                    ('max_open_requests', 1, 100)) k(key, lo, hi)
       left join public.platform_settings s on s.region = p_region and s.key = k.key
   loop
-    if case when jsonb_typeof(r.value) = 'number'
-            then (r.value #>> '{}')::numeric <> trunc((r.value #>> '{}')::numeric)
-                 or (r.value #>> '{}')::numeric not between r.lo and r.hi
-            else true end then
+    v_bad := case when jsonb_typeof(r.value) = 'number'
+                  then (r.value #>> '{}')::numeric <> trunc((r.value #>> '{}')::numeric)
+                       or (r.value #>> '{}')::numeric not between r.lo and r.hi
+                  else true end;
+    if v_bad then
       raise exception 'request_settings_invalid';
     end if;
     v_out := v_out || jsonb_build_object(r.key, (r.value #>> '{}')::numeric::integer);
@@ -403,13 +619,15 @@ as $$
 declare
   v_limit  jsonb;
   v_count  integer;
+  v_bad    boolean;
 begin
   select s.value into v_limit from public.platform_settings s
    where s.region = p_region and s.key = 'quotes_per_hour';
-  if case when jsonb_typeof(v_limit) = 'number'
-          then (v_limit #>> '{}')::numeric <> trunc((v_limit #>> '{}')::numeric)
-               or (v_limit #>> '{}')::numeric not between 1 and 10000
-          else true end then
+  v_bad := case when jsonb_typeof(v_limit) = 'number'
+                then (v_limit #>> '{}')::numeric <> trunc((v_limit #>> '{}')::numeric)
+                     or (v_limit #>> '{}')::numeric not between 1 and 10000
+                else true end;
+  if v_bad then
     raise exception 'request_settings_invalid';
   end if;
 

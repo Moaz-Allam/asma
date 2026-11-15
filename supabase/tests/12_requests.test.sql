@@ -9,7 +9,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(155);
+SELECT plan(172);
 
 -- ── fixtures ─────────────────────────────────────────────────────────────────
 -- c1, c2: customers; c3: the rate limit; c4: the open cap; b1: a provider; a1: an admin;
@@ -184,6 +184,37 @@ SELECT lives_ok($$ UPDATE public.platform_settings SET value = CASE key WHEN 're
                     WHERE region = 'TR' AND key IN ('request_lead_days', 'request_horizon_days') $$,
   'and back');
 SET CONSTRAINTS request_settings_guard DEFERRED;
+
+-- ── 03's security Minors, fixed here (tracker Next, 2026-11-15) ──────────────
+SELECT is(
+  (SELECT substring(prosrc FROM position('^[\s' IN prosrc) FOR position(']+|' IN prosrc) - position('^[\s' IN prosrc))
+     FROM pg_proc WHERE proname = 'catalog_trim'),
+  (SELECT substring(prosrc FROM position('^[\s' IN prosrc) FOR position(']+|' IN prosrc) - position('^[\s' IN prosrc))
+     FROM pg_proc WHERE proname = 'catalog_text_ok'),
+  'the two copies of the blank pattern are the same');
+SELECT is_empty(
+  $$ SELECT to_hex(cp) FROM unnest(ARRAY[4447, 4448, 12644, 65440, 10240, 65024, 65039, 917505, 917536, 917631, 917760, 917999]) cp
+      WHERE public.catalog_trim(chr(cp) || chr(cp)) <> ''
+         OR NOT public.pricing_answer_blank(to_jsonb(chr(cp)))
+         OR public.catalog_text_ok(jsonb_build_object('tr', chr(cp)), 'TR', 10) $$,
+  'Hangul fillers, the braille blank, variation selectors and tags are blank everywhere');
+SELECT is(public.catalog_trim(chr(12644) || 'Moda' || chr(65039)), 'Moda', 'and are trimmed from both ends');
+SELECT is(public.pricing_answer_errors('[{"key": "details", "type": "textarea", "required": false}]',
+            jsonb_build_object('details', repeat('a', 20000)), false),
+  '[{"key": "details", "code": "answer_out_of_range"}]', 'one answer over 16 KiB is out of range, before any trim');
+SELECT is(public.pricing_answer_errors('[{"key": "extras", "type": "multi_select", "required": false, "options": [{"value": "a"}]}]',
+            jsonb_build_object('extras', (SELECT jsonb_agg('a'::text) FROM generate_series(1, 31))), false),
+  '[{"key": "extras", "code": "answer_out_of_range"}]', 'a multi select of more than 30 items is out of range');
+SELECT is(public.pricing_answer_errors('[]', (SELECT jsonb_object_agg('k' || g, repeat('a', 15000)) FROM generate_series(1, 5) g), false),
+  '[{"key": null, "code": "answer_invalid"}]', 'answers over 64 KiB in all are one answer_invalid');
+SELECT is(public.pricing_answer_errors('[]', jsonb_build_object(repeat('x', 500), 1, 'zz', 1, 'Büyük', 1), false),
+  '[{"key": "zz", "code": "answer_unknown"}, {"key": null, "code": "answer_unknown"}]',
+  'an unknown key is echoed only when it could be a question key; the others come back once, as null');
+UPDATE public.platform_settings SET value = '11' WHERE region = 'TR' AND key = 'commission_percent';
+SELECT is((SELECT jsonb_build_object('old', old_value -> 'value', 'new', new_value -> 'value') FROM public.audit_log
+            WHERE action = 'settings.update' AND entity_id = 'TR:commission_percent' ORDER BY id DESC LIMIT 1),
+  '{"old": 10, "new": 11}', 'a settings change writes an audit row');
+UPDATE public.platform_settings SET value = '10' WHERE region = 'TR' AND key = 'commission_percent';
 
 -- ── the split, worked figures (AC-5) ─────────────────────────────────────────
 SELECT is(public.pricing_split('TR', 350000), '{"commission_percent": "10", "commission": 35000, "cash_due": 315000}',
@@ -550,8 +581,15 @@ SELECT throws_ok($$ UPDATE public.request_addresses SET line = 'Başka sokak' WH
   'P0001', 'request_address_immutable', 'an address row never changes');
 SELECT throws_ok($$ DELETE FROM public.request_addresses WHERE request_id = (SELECT (r ->> 'id')::uuid FROM r1) $$,
   'P0001', 'request_address_immutable', 'and is never deleted');
+CREATE TEMP TABLE bare AS
+  WITH ins AS (INSERT INTO public.requests (region, customer_id, client_key, service_id, zone_id, answers, questions_snapshot,
+                 pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at)
+               VALUES ('TR', '00000000-0000-0000-0000-0000001200c3', gen_random_uuid(), '00000000-0000-0000-0000-000000125001',
+                 '00000000-0000-0000-0000-000000122001', '{}', '[]', '{}', 100, 0, 100, 'TRY', now() + interval '1 day', now() + interval '2 days')
+               RETURNING id)
+  SELECT id FROM ins;
 SELECT throws_ok($$ INSERT INTO public.request_addresses (request_id, region, customer_id, line)
-                    VALUES ((SELECT (r ->> 'id')::uuid FROM r3), 'TR', '00000000-0000-0000-0000-0000001200c1', 'Başka sokak') $$,
+                    VALUES ((SELECT id FROM bare), 'TR', '00000000-0000-0000-0000-0000001200c1', 'Başka sokak') $$,
   '23503', NULL, 'an address naming another customer than its request is refused by the composite key');
 
 -- ── snapshots never move (AC-9) ──────────────────────────────────────────────

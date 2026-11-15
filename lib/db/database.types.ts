@@ -606,6 +606,42 @@ export type Database = {
           },
         ]
       }
+      quote_counters: {
+        Row: {
+          count: number
+          region: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          count: number
+          region: string
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          region?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_counters_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "quote_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       regions: {
         Row: {
           active: boolean
@@ -615,6 +651,7 @@ export type Database = {
           default_locale: string
           dial_code: string
           psp_provider: string
+          timezone: string
         }
         Insert: {
           active?: boolean
@@ -624,6 +661,7 @@ export type Database = {
           default_locale: string
           dial_code: string
           psp_provider: string
+          timezone: string
         }
         Update: {
           active?: boolean
@@ -633,8 +671,159 @@ export type Database = {
           default_locale?: string
           dial_code?: string
           psp_provider?: string
+          timezone?: string
         }
         Relationships: []
+      }
+      request_addresses: {
+        Row: {
+          created_at: string
+          customer_id: string
+          line: string
+          region: string
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          line: string
+          region: string
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          line?: string
+          region?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_addresses_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_addresses_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "request_addresses_request_fk"
+            columns: ["request_id", "region", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "region", "customer_id"]
+          },
+        ]
+      }
+      requests: {
+        Row: {
+          addon_ids: string[]
+          answers: Json
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          cash_due: number
+          client_key: string
+          commission_amount: number
+          created_at: string
+          currency: string
+          customer_id: string
+          fixed_price: number
+          id: string
+          notes: string | null
+          pricing_snapshot: Json
+          questions_snapshot: Json
+          region: string
+          scheduled_end_at: string
+          scheduled_start_at: string
+          service_id: string
+          status: string
+          zone_id: string
+        }
+        Insert: {
+          addon_ids?: string[]
+          answers: Json
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          cash_due: number
+          client_key: string
+          commission_amount: number
+          created_at?: string
+          currency: string
+          customer_id: string
+          fixed_price: number
+          id?: string
+          notes?: string | null
+          pricing_snapshot: Json
+          questions_snapshot: Json
+          region: string
+          scheduled_end_at: string
+          scheduled_start_at: string
+          service_id: string
+          status?: string
+          zone_id: string
+        }
+        Update: {
+          addon_ids?: string[]
+          answers?: Json
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          cash_due?: number
+          client_key?: string
+          commission_amount?: number
+          created_at?: string
+          currency?: string
+          customer_id?: string
+          fixed_price?: number
+          id?: string
+          notes?: string | null
+          pricing_snapshot?: Json
+          questions_snapshot?: Json
+          region?: string
+          scheduled_end_at?: string
+          scheduled_start_at?: string
+          service_id?: string
+          status?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "requests_service_fk"
+            columns: ["service_id", "region"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "requests_zone_fk"
+            columns: ["zone_id", "region"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id", "region"]
+          },
+        ]
       }
       service_categories: {
         Row: {
@@ -818,6 +1007,10 @@ export type Database = {
         Args: { p_name: string; p_object_id: string }
         Returns: boolean
       }
+      cancel_request: {
+        Args: { p_reason: string; p_request_id: string }
+        Returns: Json
+      }
       catalog_text_ok: {
         Args: { p_max: number; p_region: string; p_value: Json }
         Returns: boolean
@@ -834,6 +1027,26 @@ export type Database = {
         Returns: Json
       }
       contact_normalise: { Args: { p_text: string }; Returns: string }
+      count_quote: {
+        Args: { p_region: string; p_user_id: string }
+        Returns: number
+      }
+      create_request: {
+        Args: {
+          p_addon_ids: string[]
+          p_address_line: string
+          p_answers: Json
+          p_client_key: string
+          p_expected_commission: number
+          p_expected_price: number
+          p_notes: string
+          p_service_id: string
+          p_start_date: string
+          p_start_hour: number
+          p_zone_id: string
+        }
+        Returns: Json
+      }
       decide_provider: {
         Args: {
           p_code: string
@@ -901,6 +1114,10 @@ export type Database = {
       pricing_number_at_scale: {
         Args: { p_scale: number; p_value: Json }
         Returns: boolean
+      }
+      pricing_split: {
+        Args: { p_price: number; p_region: string }
+        Returns: Json
       }
       promote_to_admin: { Args: { p_phone: string }; Returns: undefined }
       provider_back_to_review: {
@@ -1032,11 +1249,22 @@ export type Database = {
         }
         Returns: Json
       }
+      quote_request: {
+        Args: {
+          p_addon_ids: string[]
+          p_answers: Json
+          p_service_id: string
+          p_zone_id: string
+        }
+        Returns: Json
+      }
       register_provider_document: {
         Args: { p_path: string; p_type: string }
         Returns: Json
       }
       reinstate_provider: { Args: { p_provider_id: string }; Returns: Json }
+      request_catalog: { Args: never; Returns: Json }
+      request_settings: { Args: { p_region: string }; Returns: Json }
       review_provider_documents: {
         Args: {
           p_code: string
