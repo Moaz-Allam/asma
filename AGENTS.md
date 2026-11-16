@@ -48,8 +48,12 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   the cloud. Merged on local CI, which replaced GitHub CI (down). **AC-29 real calls are a hard gate before G1** (D133).
 - 2026-11-15 · **03 merged** (spec 0007, PR #27, `734517b`): catalog and pricing engine in Postgres, the
   admin pages `/admin/catalog` and `/admin/pricing`, `lib/pricing`, `lib/catalog`, `lib/money/parse.ts`. Security, slice and
-  `/check review` fixes folded in (D136, D137, R9). Its migration `20261115100000_catalog_pricing` is in the cloud (S29). Merged on local CI (D135); **AC-26 real calls are a hard gate before G1**.
-  AC-26 real calls are a hard gate before G1 (D135).
+  `/check review` fixes folded in (D136, D137, R9). Its migration `20261115100000_catalog_pricing` is in the cloud (S29). Merged on local CI (D135); **AC-26 real calls are a hard gate before G1** (D135).
+- 2026-11-16 · **04 merged** (spec 0008, PR #28, `1118a5b`): post a request. The form is built from a service's active
+  questions, Postgres computes the price, commission and cash due, the street line sits in its own PII table, and
+  `lib/requests/` is the customer's door. Its migration `20261116090000_post_request` is in the cloud (S30). Two Opus
+  security passes and a Sonnet cross review (D143 to D145); merged on local CI, because GitHub Actions fails at startup.
+  **AC-27 real calls are a hard gate before G1.** Its SQL review findings go into 05's first migration (R10).
 
 ## Stack (pinned exactly)
 
