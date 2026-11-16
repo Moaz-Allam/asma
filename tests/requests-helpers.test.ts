@@ -8,6 +8,7 @@ import { decodeCursor, encodeCursor } from '@/lib/requests/cursor';
 import { parseTab } from '@/lib/requests/input';
 import { prefillFrom } from '@/lib/requests/prefill';
 import type { RequestCatalog } from '@/lib/requests/schemas';
+import { allowedDates, allowedHours, expectedEnd, quoteLines } from '@/lib/requests/view';
 
 /**
  * Spec 0008: the pure pieces of `lib/requests`. The blank pattern's two copies agree (03's security Minor),
@@ -185,5 +186,61 @@ describe('repeat prefill', () => {
         addressLine: null,
       }),
     ).toEqual({ kind: 'service_unavailable' });
+  });
+});
+
+describe('the form helpers (spec 0008 AC-7, AC-8, AC-20)', () => {
+  it('lists tomorrow to the horizon, across a month end', () => {
+    const dates = allowedDates('2026-11-29', 1, 3);
+    expect(dates).toEqual(['2026-11-30', '2026-12-01', '2026-12-02']);
+    expect(allowedHours(8, 10)).toEqual([8, 9, 10]);
+  });
+
+  it('puts the expected end on the next day past midnight', () => {
+    expect(expectedEnd('2026-11-30', 18, 5)).toEqual({ date: '2026-11-30', hour: 23 });
+    expect(expectedEnd('2026-12-31', 20, 6)).toEqual({ date: '2027-01-01', hour: 2 });
+  });
+
+  it('names the fired lines and never multiplies an amount', () => {
+    const lines = quoteLines(
+      {
+        base: 120000,
+        modifiers: [
+          {
+            question_key: 'rooms',
+            match_type: 'always',
+            match_value: null,
+            effect_type: 'PER_UNIT',
+            amount: 40000,
+            factor: null,
+            units: 3,
+            fired: true,
+          },
+          {
+            question_key: 'kind',
+            match_type: 'equals',
+            match_value: 'villa',
+            effect_type: 'MULTIPLIER',
+            amount: null,
+            factor: '1.30',
+            units: null,
+            fired: true,
+          },
+        ],
+        addons: [{ id: 'a1', name: { tr: 'Cam' }, price: 40000 }],
+        zone: { id: 'z2', name: { tr: 'Beşiktaş' }, multiplier: '1.15' },
+        unrounded: '0',
+        rounding_minor: 100,
+      },
+      { questions: { rooms: 'Rooms', kind: 'Type' }, addons: { a1: 'Windows' }, zones: { z2: 'Beşiktaş' } },
+      { base: 'Home cleaning', adjustment: 'Adjustment' },
+    );
+    expect(lines).toEqual([
+      { key: 'base', label: 'Home cleaning', amount: 120000 },
+      { key: 'm0', label: 'Rooms', amount: 40000, units: 3 },
+      { key: 'm1', label: 'Type', factor: '1.30' },
+      { key: 'aa1', label: 'Windows', amount: 40000 },
+      { key: 'zone', label: 'Beşiktaş', factor: '1.15' },
+    ]);
   });
 });

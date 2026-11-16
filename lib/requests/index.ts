@@ -166,7 +166,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LIVE = ['SELECTED', 'COMMISSION_PAID', 'UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION'];
 
 const LIST_COLUMNS =
-  'id, status, fixed_price, currency, scheduled_start_at, created_at, service:pricing_snapshot->service, zone_name:pricing_snapshot->breakdown->zone->name';
+  'id, status, fixed_price, currency, scheduled_start_at, created_at, service:pricing_snapshot->service, zone_name:pricing_snapshot->breakdown->zone->name, region_info:regions(timezone)';
 
 /** A PostgREST filter value with reserved characters, double quoted. */
 const quoted = (value: string) => `"${value.replace(/["\\]/g, '')}"`;
@@ -223,7 +223,7 @@ export async function listMyRequests(input: {
 export type MyRequest = { request: RequestDetailRow; addressLine: string | null; now: string };
 
 const DETAIL_COLUMNS =
-  'id, status, service_id, zone_id, addon_ids, answers, questions_snapshot, pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at, notes, cancelled_at, cancel_reason, created_at';
+  'id, status, service_id, zone_id, addon_ids, answers, questions_snapshot, pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at, notes, cancelled_at, cancel_reason, created_at, region_info:regions(timezone)';
 
 /** One of the caller's own requests and its address, or null: another's, unknown or malformed (AC-14). */
 export async function getMyRequest(input: { userId: string; id: string }): Promise<MyRequest | null> {

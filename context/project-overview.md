@@ -144,7 +144,10 @@ number everywhere ("rule 3"); `AGENTS.md` carries a one line summary and this te
 
 1. **Price, commission, and fees are computed on the server.** The client sends answers, never a price.
    The job price is computed **inside Postgres** by `quote_price`, from structured formula rows and the
-   caller's answers; no function a customer or provider can run takes an amount (D121, spec 0007).
+   caller's answers; no function a customer or provider can run takes an amount (D121, spec 0007). The
+   commission and the cash due are split inside Postgres too, by `pricing_split`, and stored with the price
+   at publish (D139). The one named exemption: `create_request` takes the two figures the customer saw,
+   compares them and never stores them (D140, spec 0008).
    `lib/pricing/` (server only) is the app's thin door to it, and 04's `create_request` calls `quote_price`
    in its own transaction, so no caller can hand a price in. The request stores `pricing_snapshot`.
    Enforced by the function signatures, a pgTAP meta test on every function an API role can run, and a
@@ -365,6 +368,12 @@ Admin:      لوحة التحكم (Dashboard)  الطلبات (Requests)        
 - Selects category → service → size/rooms → addons → date/time → address
 - **Price is computed server-side and displayed before confirmation**
 - Confirms → request created with status `OPEN`
+- As built in 04 (spec 0008): one page, two steps (`/requests/new`, then review). The district is a chip; the
+  street line goes to `request_addresses`, readable by its customer only. Days run from tomorrow to 14 days
+  ahead, hours 08:00 to 18:00 in the region's time zone (settings). The price card shows the job price, the
+  commission paid online after choosing a provider and the cash due to the provider after the service. At most
+  5 live open requests per customer and 60 quotes an hour. `/requests` lists them (All, Active, Closed);
+  `/requests/[id]` cancels while open and repeats with the same answers (D56)
 - Message shows: "تم نشر طلبك — سيصلك عروض من مقدمي الخدمة قريبًا"
 
 ### Provider — see and apply

@@ -71,7 +71,7 @@ Cross-feature building blocks. Path: `components/shared/`.
 | `InitialAvatar` | A person without a photo | Circle, initial in Alexandria 700, `bg-accent-light` (40px nav, 56px cards) | s6, s7, s9 | ✅ done, 40px; first grapheme through `lib/account/initial.ts` | ✅ |
 | `RatingStars` | Choose 1–5 per dimension | Five 44px circles `bg-accent-muted` with ★, selected `bg-accent` | s9, s16 | 📋 planned | — |
 | `PhoneField` / `CodeField` | Phone sign-in and the one-time code (D55) | Phone field with the region prefix (`+90` in v1); code as **six** digit boxes (the design draws four), resend countdown | s2, p1 | ✅ done (`components/features/auth/`); `BotCheck` and `LoginForm` beside them, `Function` free | ✅ |
-| `ToggleRow` | Add-on with price, notification channel | Wide `rounded-field` row, label at start, price or switch at end | s4, s12 | 📋 planned | — |
+| `ToggleRow` | Add-on with price, notification channel (`components/shared/ToggleRow.tsx`) | Wide `rounded-field` row, a real checkbox, label at start, price or switch at end; checked is `accent-light` plus a filled tick, never colour alone | s4, s12 | ✅ built (04) | ✅ |
 
 ---
 
@@ -84,9 +84,11 @@ Domain components. Path: `components/features/<domain>/`.
 | Component | Purpose | Design ref | Status | RTL | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `RequestForm` | Post a request; shows the **server-computed** price live | s4, s18 | 📋 planned | — | Never computes price client-side |
-| `PriceCard` | Eyebrow, the big price, explanation, breakdown card, main action | s4, s5, s6, s7 | 📋 planned | — | Replaces `PriceSummary`; display only |
+| `PriceCard` | Eyebrow, the big price, the fired lines, the split (online after choosing a provider, in cash to the provider after the service, D87), main action (`components/shared/PriceCard.tsx`) | s4, s5, s6, s7 | ✅ built (04) | ✅ | Replaces `PriceSummary`; display only, server figures; a per unit line shows amount × count, never multiplied |
 | `RequestCard` | Customer's view of own request (summary column) | s6, s9, s15 | 📋 planned | — | Full detail |
-| `RequestRow` | One request in "my requests" with status and price | s10 | 📋 planned | — | |
+| `RequestRow` | One request in "my requests": status chip, service, start, district, price, posted date; the whole card links to the detail (`components/features/requests/RequestRow.tsx`) | s10 | ✅ built (04) | ✅ | "Expired" is OPEN with a past start, a reading, not a state |
+| `RequestForm` | Customer: `/requests/new`, both steps, the 400 ms quote loop, publish with the expected figures (`components/features/requests/RequestForm.tsx`) | s4, s5 | ✅ built (04) | ✅ | A late quote never replaces a newer one; the client key is made once per form |
+| `RequestActions` | Customer: cancel while OPEN (a `ConfirmDialog` with reason chips) and repeat (`components/features/requests/RequestActions.tsx`) | s14 row 1, s9 repeat | ✅ built (04) | ✅ | |
 | `RequestShortCard` | **Provider's pre-unlock view** (feed row) | p10, p6 | 📋 planned | — | ⚠️ **PII free: service, size, district, date only. Must not query restricted fields** |
 | `RequestTimeline` | Status progression with times | s15, s18 | 📋 planned | — | From canonical state machine |
 | `CancelRequestPanel` | Outcome by state at cancellation | s14 | 📋 planned | — | Matches `project-overview.md` cancellation table rows 1–12 |
@@ -159,7 +161,7 @@ Domain components. Path: `components/features/<domain>/`.
 | `ServiceSheet` | Add or edit a service: name, note, hours 1 to 24 | app-05 | ✅ built (03) | ✅ | Hours fold Eastern digits; `3.5` is refused, never 3 |
 | `AddonSheet` | Add or edit an addon: service (create only), name, price | app-05 | ✅ built (03) | ✅ | Price is text, parsed into minor units on the server |
 | `ZoneSheet` | Add or edit a zone: name, multiplier 0.50 to 2.00 | app-05 | ✅ built (03) | ✅ | Multiplier is text, canonical on the server; a typo like 15 is a refusal |
-| `DynamicQuestionForm` | Customer: renders questions by type | s4 | 📋 planned | — | ⚠️ Schema generated at runtime |
+| `DynamicQuestionForm` | Customer: renders questions by type (`components/features/requests/DynamicQuestionForm.tsx`) | s4 | ✅ built (04) | ✅ | Number as chips up to 8 values, else a field; hints in plain TypeScript, the database checks (D106, D125) |
 | `PlatformSettingsForm` | Fees, commission, windows | app-07 | 📋 planned | — | |
 | `ProviderApprovalQueue` | Review + approve/reject | app-03, a1 | 📋 planned | — | Audit-logged |
 | `ProviderFile` | Lifecycle, derived metrics, documents, actions | a1, a2 | 📋 planned | — | |
@@ -180,7 +182,7 @@ Domain components. Path: `components/features/<domain>/`.
 | `RootLayout` | `app/[locale]/layout.tsx` | `lang={locale}` + `dir={dirFor(locale)}`, **derived, never hardcoded**; providers; `setRequestLocale` | — | ✅ done (fonts per `ui-rules.md` §12 still to load) |
 | `LocaleSwitcher` | `components/layout/LocaleSwitcher.tsx` | ar / tr / en as a pill group; persists to the cookie, and to `profiles.locale` with `signedIn` | s12 | ✅ done |
 | `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, `NavLinks`, avatar; signed-out pills. No bell before 18 | s1, s3, s6 | ✅ done |
-| `FlowHeader` | `components/layout/FlowHeader.tsx` | Wordmark, `Stepper`, cancel or back | s4, s5, s7 | 📋 planned |
+| `FlowHeader` | `components/layout/FlowHeader.tsx` | `Stepper` at the start, cancel or back at the end (the wordmark stays in `AppShell`) | s4, s5, s7 | ✅ built (04) |
 | `BottomTabBar` | `components/layout/BottomTabBar.tsx` | Phone: three tabs, fixed, from `lib/navigation/menus.ts` | s18, p18 | ✅ done |
 | `SiteFooter` | `components/layout/SiteFooter.tsx` | Copyright, legal links, join link, support link, language | s1 | ✅ done |
 | `PublicMenu` | `components/layout/PublicMenu.tsx` | The two bar menu on every width, a `Sheet` from the top: anchors, both calls and the language, stacked | s1 | ✅ done |

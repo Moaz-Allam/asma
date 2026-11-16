@@ -2,7 +2,7 @@ import 'server-only';
 
 import { z } from 'zod';
 
-import { AnswerErrors, PricedResult } from '@/lib/pricing/schemas';
+import { AnswerErrors, Breakdown, PricedResult } from '@/lib/pricing/schemas';
 
 /**
  * The shapes the request functions return (spec 0008, Feature design). Parsed on the server, so a change in
@@ -85,15 +85,7 @@ export const PricingSnapshot = z.object({
   currency: z.enum(['TRY', 'SAR']),
   commission_percent: z.string(),
   rounding_minor: Minor,
-  breakdown: z.object({
-    modifiers: z.array(
-      z
-        .object({ question_key: z.string().nullable(), effect_type: z.string(), amount: Minor.nullable() })
-        .passthrough(),
-    ),
-    addons: z.array(z.object({ id: z.string(), name: Localized, price: Minor })),
-    zone: z.object({ id: z.string(), name: Localized, multiplier: z.string() }).nullable(),
-  }),
+  breakdown: Breakdown,
   service: z.object({ id: z.string(), name: Localized, category_name: Localized }),
 });
 export type PricingSnapshot = z.infer<typeof PricingSnapshot>;
@@ -128,6 +120,7 @@ export const RequestListRow = z.object({
   created_at: z.string(),
   service: z.object({ id: z.string(), name: Localized, category_name: Localized }),
   zone_name: Localized.nullable(),
+  region_info: z.object({ timezone: z.string() }),
 });
 export type RequestListRow = z.infer<typeof RequestListRow>;
 
@@ -150,5 +143,6 @@ export const RequestDetailRow = z.object({
   cancelled_at: z.string().nullable(),
   cancel_reason: z.enum(['plans_changed', 'found_elsewhere', 'price', 'other']).nullable(),
   created_at: z.string(),
+  region_info: z.object({ timezone: z.string() }),
 });
 export type RequestDetailRow = z.infer<typeof RequestDetailRow>;

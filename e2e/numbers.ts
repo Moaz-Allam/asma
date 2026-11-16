@@ -30,6 +30,10 @@ export const NUMBER = {
   catalogAdmin: 15,
   catalogCustomer: 16,
   catalogProvider: 17,
+  // Position 04 (spec 0008 AC-26): a customer who posts, another customer and a provider who are kept out.
+  requestCustomer: 18,
+  requestOther: 19,
+  requestProvider: 20,
 } as const;
 
 /**

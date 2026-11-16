@@ -456,6 +456,11 @@ struck through, with the replacement named.
 | Max re-picks before the commission is refunded | 3 | ✅ D13, D90 |
 | Max price multiple of base | 20× | ✅ D13 |
 | Job price rounding | Whole lira, half up (`price_rounding_minor` 100) | ✅ D122 |
+| Commission rounding | Whole lira, half up, stored at publish (`commission_percent` seeded 10) | ✅ D139 · ☐ value (S17) |
+| Request start window | Tomorrow to 14 days ahead (`request_lead_days` 1, `request_horizon_days` 14) | ☐ (D138) |
+| Request start hours | 08:00 to 18:00 local (`request_first_hour` 8, `request_last_hour` 18) | ☐ (D138) |
+| Live open requests per customer | 5 (`max_open_requests`), no daily limit | ✅ D138 |
+| Quotes per user per hour | 60 (`quotes_per_hour`), tuned after the real calls | ☐ (D142) |
 | Applications per provider per hour | 20 | ✅ D13 |
 | PSP fee absorbed on refund by | Platform | ✅ D13 |
 | Default locale, TR / KSA | `tr` / `ar` | ✅ D13 |
@@ -529,6 +534,7 @@ them.
 | S27 | **Sim account and sign in (D119).** Open a free account at sim.ai. Then in an interactive `claude` terminal in this repo: `/mcp`, select `sim`, sign in in the browser. The server is already added at local scope | Builds the critics over MCP | Sim critics | ✅ 2026-11-02: `claude mcp get sim` shows Connected. A session started before the sign in cannot see it |
 | S28 | **GitHub token for the PR critic (D119).** A fine grained token for `Moaz-Allam/asma` only: Contents read, Pull requests read and write. Add it in Sim. Never in chat | Builds the PR critic | PR critic only | ☐ |
 | S29 | **Push the 03 migration (D121).** After `/check verify` and the reviews: in `D:\work\web\asma` on the merged branch, `npx supabase db push --dry-run` (it must list only `20261115100000_catalog_pricing`), then `npx supabase db push` | Checks the cloud read only (tables, grants, advisors), then the real calls of AC-26 on a preview | 03 merge, 04 | ✅ 2026-11-15, owner (`db push` listed only this file; `list_migrations` confirms) |
+| S30 | **Push the 04 migration (D138 to D142).** After `/check verify` and the reviews: in `D:\work\web\asma` on the branch, `npx supabase db push --dry-run` (it must list only `20261116090000_post_request`), then `npx supabase db push`. Then the real calls of spec 0008 `verify.md` (AC-27) on a preview | Unblocks 04's real calls and the merge | P0 | ☐ |
 
 ---
 

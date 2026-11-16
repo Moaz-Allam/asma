@@ -21,6 +21,8 @@ export const CLIENT_NAMESPACES = [
   'AdminCatalog',
   'AdminPricing',
   'CatalogErrors',
+  // Spec 0008 AC-24: the request form, its price card and the cancel dialog of position 04.
+  'Requests',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */
