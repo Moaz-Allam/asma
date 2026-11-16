@@ -1575,6 +1575,8 @@ Flags for: `funding_enabled`, `unlock_enabled`, `payouts_enabled`, `auto_release
   never a default. `platform_settings` has an audit trigger.
 - **Doors.** `lib/requests/` wraps the four functions and the two reads; `actions/requests.ts` has the three
   actions. The scrubber treats `line`, `address_line`, `notes` and `answers` as personal.
+- **Review carry overs (D143, R10):** the SQL findings of the review round go into 05's first migration, because
+  `post_request` is in the cloud: see the tracker's R10.
 
 ## 40. Updated invariants
 

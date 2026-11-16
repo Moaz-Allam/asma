@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { CANCEL_REASONS } from './constants';
+
 /**
  * The inputs of the three request actions (spec 0008, API surface). Shapes only: the database is the
  * check (D106, D125). The two expected figures are what the form showed; `create_request` compares them
@@ -40,8 +42,7 @@ export const CreateRequestInput = QuoteRequestInput.extend({
 });
 export type CreateRequestInput = z.infer<typeof CreateRequestInput>;
 
-export const CANCEL_REASONS = ['plans_changed', 'found_elsewhere', 'price', 'other'] as const;
-export type CancelReason = (typeof CANCEL_REASONS)[number];
+export { CANCEL_REASONS, type CancelReason } from './constants';
 
 export const CancelRequestInput = z.object({
   requestId: Uuid,

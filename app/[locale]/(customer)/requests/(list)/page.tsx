@@ -8,15 +8,13 @@ import { localized } from '@/lib/catalog/localized';
 import { Link } from '@/lib/i18n/navigation';
 import { listMyRequests } from '@/lib/requests';
 import { parseTab, REQUEST_TABS } from '@/lib/requests/input';
-import { instantLabel, regionDefaultLocale } from '@/lib/requests/view';
+import { instantLabel, NUMBER_LOCALE, regionDefaultLocale } from '@/lib/requests/view';
 import { cn } from '@/lib/utils';
 
 type Props = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-const NUMBER_LOCALE: Readonly<Record<string, string>> = { ar: 'ar-u-nu-latn', tr: 'tr', en: 'en' };
 
 /**
  * My requests (spec 0008 AC-13, `s10`): the caller's own requests, newest first, 20 a page, tabs All, Active

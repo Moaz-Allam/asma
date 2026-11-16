@@ -244,3 +244,12 @@ describe('the form helpers (spec 0008 AC-7, AC-8, AC-20)', () => {
     ]);
   });
 });
+
+describe('pageview paths (spec 0008 AC-25)', () => {
+  it('replace a request id with [id] and leave other paths alone', async () => {
+    const { withoutIds } = await import('@/lib/analytics/client');
+    expect(withoutIds('/tr/requests/0f8fad5b-d9cb-469f-a165-70867728950e')).toBe('/tr/requests/[id]');
+    expect(withoutIds('/ar/requests/0F8FAD5B-D9CB-469F-A165-70867728950E/x')).toBe('/ar/requests/[id]/x');
+    expect(withoutIds('/en/requests/new')).toBe('/en/requests/new');
+  });
+});

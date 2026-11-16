@@ -74,7 +74,9 @@ SELECT extensions.dblink_connect('a', pg_temp.conn());
 SELECT extensions.dblink_connect('b', pg_temp.conn());
 
 -- ── two tabs take the cap's last slot at once: one wins (AC-7) ───────────────
+SELECT extensions.dblink_exec('a', $$ SET ROLE authenticated $$);
 SELECT extensions.dblink_exec('a', $$ SET request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000001300c1"}' $$);
+SELECT extensions.dblink_exec('b', $$ SET ROLE authenticated $$);
 SELECT extensions.dblink_exec('b', $$ SET request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000001300c1"}' $$);
 SELECT count(*) FROM generate_series(9, 12) h,
   LATERAL extensions.dblink('a', pg_temp.post_sql(gen_random_uuid()::text, h)) AS t(r text);
@@ -94,7 +96,9 @@ SELECT is(
   '5', 'the cap holds: five requests');
 
 -- ── a double tap: the same client key from two sessions (AC-12) ──────────────
+SELECT extensions.dblink_exec('a', $$ SET ROLE authenticated $$);
 SELECT extensions.dblink_exec('a', $$ SET request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000001300c2"}' $$);
+SELECT extensions.dblink_exec('b', $$ SET ROLE authenticated $$);
 SELECT extensions.dblink_exec('b', $$ SET request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000001300c2"}' $$);
 SELECT extensions.dblink_exec('a', 'BEGIN');
 CREATE TEMP TABLE tap_a AS
@@ -114,7 +118,9 @@ SELECT is(
 SELECT extensions.dblink_exec(pg_temp.conn(), $$
   INSERT INTO public.quote_counters (user_id, region, window_start, count)
   VALUES ('00000000-0000-0000-0000-0000001300c3', 'TR', now(), 59) $$);
+SELECT extensions.dblink_exec('a', $$ SET ROLE authenticated $$);
 SELECT extensions.dblink_exec('a', $$ SET request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000001300c3"}' $$);
+SELECT extensions.dblink_exec('b', $$ SET ROLE authenticated $$);
 SELECT extensions.dblink_exec('b', $$ SET request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000001300c3"}' $$);
 SELECT extensions.dblink_exec('a', 'BEGIN');
 SELECT is((SELECT r FROM extensions.dblink('a', $$ SELECT public.quote_request('00000000-0000-0000-0000-000000130051',

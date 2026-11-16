@@ -104,11 +104,20 @@ export function track<E extends AnalyticsEvent>(
   }
 }
 
+const UUID_SEGMENT = /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=\/|$)/gi;
+
+/** A path with every uuid segment replaced by `[id]`. */
+export function withoutIds(pathname: string): string {
+  return pathname.replace(UUID_SEGMENT, '/[id]');
+}
+
 /** One `$pageview` per page, its URL scrubbed (AC-3). Called on start and on every route change. */
 export function trackPageview(href: string): void {
   if (!sdk) return;
   try {
     const url = new URL(scrubUrl(href), window.location.origin);
+    // A record id in the path, such as /requests/<uuid>, is not sent: the route's shape is enough (spec 0008 AC-25, review 2026-11-16).
+    url.pathname = withoutIds(url.pathname);
     track('$pageview', { $current_url: url.href, $pathname: url.pathname });
   } catch (error) {
     // A pageview that cannot be read is lost, but never silently.

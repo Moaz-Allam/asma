@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
 import { createRequestAction, quoteRequestAction } from '@/actions/requests';
 import { FlowHeader } from '@/components/layout/FlowHeader';
@@ -60,6 +60,7 @@ type QuoteState =
 type Field = 'date' | 'hour' | 'line' | 'notes';
 
 const QUOTE_WAIT_MS = 400;
+const UNPRICED_TYPES: ReadonlySet<string> = new Set(['text', 'textarea', 'date', 'time']);
 const MAX_ZONE_CHIPS = 8;
 const LINE_MIN = 5;
 const LINE_MAX = 200;
@@ -134,7 +135,20 @@ export function RequestForm({
   const sentAnswers: Record<string, unknown> = {};
   for (const q of service?.questions ?? [])
     if (answers[q.key] !== undefined) sentAnswers[q.key] = answers[q.key];
-  const sentKey = JSON.stringify([serviceId, zoneId, addonIds, sentAnswers]);
+  // Text, dates and times never change a price (spec 0007), so typing in them asks for no new quote and
+  // spends nothing of the hourly limit (AC-28, review 2026-11-16). They still travel with every quote, from
+  // a ref, so the server checks them; a change of their blank state moves `missing` and asks again.
+  const priced: Record<string, unknown> = {};
+  const unpriced: Record<string, unknown> = {};
+  for (const q of service?.questions ?? []) {
+    if (sentAnswers[q.key] === undefined) continue;
+    (UNPRICED_TYPES.has(q.type) ? unpriced : priced)[q.key] = sentAnswers[q.key];
+  }
+  const sentKey = JSON.stringify([serviceId, zoneId, addonIds, priced]);
+  const unpricedRef = useRef(unpriced);
+  useEffect(() => {
+    unpricedRef.current = unpriced;
+  });
 
   // What is missing before a quote can be asked (AC-6), read on every render.
   let missing: 'needService' | 'needAnswers' | 'needDistrict' | null = null;
@@ -154,7 +168,17 @@ export function RequestForm({
     const key = sentKey;
     const [sId, zId, aIds, ans] = JSON.parse(key) as [string, string, string[], Record<string, unknown>];
     const timer = setTimeout(async () => {
-      const result = await quoteRequestAction({ serviceId: sId, zoneId: zId, addonIds: aIds, answers: ans });
+      let result: Awaited<ReturnType<typeof quoteRequestAction>>;
+      try {
+        result = await quoteRequestAction({
+          serviceId: sId,
+          zoneId: zId,
+          addonIds: aIds,
+          answers: { ...ans, ...unpricedRef.current },
+        });
+      } catch {
+        result = { success: false, error: 'action_failed' };
+      }
       if (!result.success) {
         setAnswered({ key, state: { kind: 'refused', code: result.error } });
       } else if (result.data.status === 'ok') {
@@ -225,19 +249,24 @@ export function RequestForm({
     const shown = quote.quote;
     startPublish(async () => {
       setBanner(null);
-      const result = await createRequestAction({
-        clientKey,
-        serviceId: service.id,
-        zoneId,
-        addonIds,
-        answers: sentAnswers,
-        startDate: date,
-        startHour: hour,
-        addressLine: line,
-        notes: trimBlank(notes) === '' ? null : notes,
-        expectedPrice: shown.price,
-        expectedCommission: shown.commission,
-      });
+      let result: Awaited<ReturnType<typeof createRequestAction>>;
+      try {
+        result = await createRequestAction({
+          clientKey,
+          serviceId: service.id,
+          zoneId,
+          addonIds,
+          answers: sentAnswers,
+          startDate: date,
+          startHour: hour,
+          addressLine: line,
+          notes: trimBlank(notes) === '' ? null : notes,
+          expectedPrice: shown.price,
+          expectedCommission: shown.commission,
+        });
+      } catch {
+        result = { success: false, error: 'action_failed' };
+      }
       if (result.success && result.data.status === 'ok') {
         track('request_posted', { repeated });
         router.push(`/requests/${result.data.id}?posted=1`);
@@ -260,6 +289,11 @@ export function RequestForm({
       if (field) {
         setFieldErrors({ [field]: message });
         setStep('form');
+      }
+      if (code === 'schedule_invalid') {
+        setDate(null);
+        setHour(null);
+        router.refresh();
       }
       setBanner(message);
     });

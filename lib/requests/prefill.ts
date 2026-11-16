@@ -33,7 +33,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** Is this answer still valid for this question, by the same rules the database applies? */
-export function answerStillValid(question: CatalogQuestion, answer: unknown): boolean {
+function answerStillValid(question: CatalogQuestion, answer: unknown): boolean {
   const options = new Set((question.options ?? []).map((o) => o.value));
   switch (question.type) {
     case 'number': {

@@ -500,7 +500,8 @@ CREATE TEMP VIEW money_args AS
                   WHERE a ~* '(price|amount|total|fee|commission|base|factor|multiplier|rounding|cost|discount|unit)'
                     -- The one exemption (spec 0008 AC-10, D140): the figures the customer saw, compared and never
                     -- stored. Keyed on the function and the argument pair; supabase/tests/12 reads the source.
-                    AND NOT (p.proname = 'create_request' AND a IN ('p_expected_price', 'p_expected_commission')))
+                    AND NOT (p.oid = 'public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, text, text, bigint, bigint)'::regprocedure
+                             AND a IN ('p_expected_price', 'p_expected_commission')))
      AND p.proname NOT IN ('publish_pricing_formula', 'preview_pricing_formula');
 SELECT is_empty($$ SELECT signature FROM money_args $$,
   'no function a customer or provider can run takes an argument named for money (rule 1)');

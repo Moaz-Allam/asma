@@ -8,7 +8,7 @@ import { ChoiceChips } from '@/components/shared/ChoiceChips';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Link, useRouter } from '@/lib/i18n/navigation';
-import { CANCEL_REASONS, type CancelReason } from '@/lib/requests/input';
+import { CANCEL_REASONS, type CancelReason } from '@/lib/requests/constants';
 
 /**
  * The detail page's actions (spec 0008 AC-14, AC-15, `s14` row 1): Cancel while OPEN, expired included,
@@ -33,8 +33,13 @@ export function RequestActions({
 
   function confirm() {
     startTransition(async () => {
-      const result = await cancelRequestAction({ requestId, reason });
-      if (!result.success) setError(t(`errors.${result.error}` as 'errors.action_failed'));
+      let result: Awaited<ReturnType<typeof cancelRequestAction>>;
+      try {
+        result = await cancelRequestAction({ requestId, reason });
+      } catch {
+        result = { success: false, error: 'action_failed' };
+      }
+      setError(result.success ? null : t(`errors.${result.error}` as 'errors.action_failed'));
       setOpen(false);
       router.refresh();
     });
@@ -55,7 +60,13 @@ export function RequestActions({
           </Button>
         ) : null}
         {canCancel ? (
-          <Button variant="outline" onClick={() => setOpen(true)}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setError(null);
+              setOpen(true);
+            }}
+          >
             {t('detail.cancel')}
           </Button>
         ) : null}

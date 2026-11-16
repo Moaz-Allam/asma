@@ -115,6 +115,9 @@ describe('isPersonalKey: the keys whose values never leave', () => {
     'addressLine',
     'notes',
     'answers',
+    'p_address_line',
+    'p_notes',
+    'p_answers',
   ])('%s is personal', (key) => {
     expect(isPersonalKey(key)).toBe(true);
   });

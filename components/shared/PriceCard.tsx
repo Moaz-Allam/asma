@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
+import type { PriceLine } from '@/lib/requests/view';
 
 /**
  * The price panel (ui-registry `PriceCard`, `s4`, `s5`): an eyebrow, the job price large, the fired lines,
@@ -9,15 +10,7 @@ import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
  * the client; a per unit line shows its amount and its count.
  */
 
-export type PriceLine = {
-  key: string;
-  label: string;
-  /** A fixed amount, or a per unit amount shown with its count. */
-  amount?: number;
-  units?: number;
-  /** A multiplier as the server sent it, such as `1.30`. */
-  factor?: string;
-};
+export type { PriceLine };
 
 export type PriceFigures = {
   price: number;

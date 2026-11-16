@@ -9,7 +9,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(172);
+SELECT plan(176);
 
 -- ── fixtures ─────────────────────────────────────────────────────────────────
 -- c1, c2: customers; c3: the rate limit; c4: the open cap; b1: a provider; a1: an admin;
@@ -186,12 +186,11 @@ SELECT lives_ok($$ UPDATE public.platform_settings SET value = CASE key WHEN 're
 SET CONSTRAINTS request_settings_guard DEFERRED;
 
 -- ── 03's security Minors, fixed here (tracker Next, 2026-11-15) ──────────────
-SELECT is(
-  (SELECT substring(prosrc FROM position('^[\s' IN prosrc) FOR position(']+|' IN prosrc) - position('^[\s' IN prosrc))
-     FROM pg_proc WHERE proname = 'catalog_trim'),
-  (SELECT substring(prosrc FROM position('^[\s' IN prosrc) FOR position(']+|' IN prosrc) - position('^[\s' IN prosrc))
-     FROM pg_proc WHERE proname = 'catalog_text_ok'),
-  'the two copies of the blank pattern are the same');
+SELECT is((SELECT (regexp_match(prosrc, '''(\^\[[^'']+\]\+\|\[[^'']+\]\+\$)'''))[1] FROM pg_proc WHERE proname = 'catalog_trim'), (SELECT (regexp_match(prosrc, '''(\^\[[^'']+\]\+\|\[[^'']+\]\+\$)'''))[1] FROM pg_proc WHERE proname = 'catalog_text_ok'),
+  'the two copies of the blank pattern are the same, both classes');
+SELECT ok((SELECT split_part(substr(x, 3), ']+|[', 1) = split_part(split_part(x, ']+|[', 2), ']+$', 1)
+             FROM (SELECT (regexp_match(prosrc, '''(\^\[[^'']+\]\+\|\[[^'']+\]\+\$)'''))[1] FROM pg_proc WHERE proname = 'catalog_trim') AS q(x)),
+  'and in each, the leading class equals the trailing class');
 SELECT is_empty(
   $$ SELECT to_hex(cp) FROM unnest(ARRAY[4447, 4448, 12644, 65440, 10240, 65024, 65039, 917505, 917536, 917631, 917760, 917999]) cp
       WHERE public.catalog_trim(chr(cp) || chr(cp)) <> ''
@@ -669,6 +668,9 @@ SELECT table_privs_are('public', 'request_addresses', 'service_role', ARRAY[]::t
 SELECT table_privs_are('public', 'requests', 'authenticated', ARRAY['SELECT'], 'signed in users only read requests');
 SELECT table_privs_are('public', 'request_addresses', 'authenticated', ARRAY['SELECT'], 'and addresses');
 SELECT table_privs_are('public', 'quote_counters', 'authenticated', ARRAY['SELECT'], 'and counters');
+SELECT table_privs_are('public', 'requests', 'anon', ARRAY[]::text[], 'anon holds nothing on requests');
+SELECT table_privs_are('public', 'request_addresses', 'anon', ARRAY[]::text[], 'nor on addresses');
+SELECT table_privs_are('public', 'quote_counters', 'anon', ARRAY[]::text[], 'nor on counters');
 
 -- Every definer function a signed in user can run, as this migration leaves it: quote_price is gone.
 SELECT set_eq(

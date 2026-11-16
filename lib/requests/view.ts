@@ -1,5 +1,4 @@
 import { localized } from '@/lib/catalog/localized';
-import type { PriceLine } from '@/components/shared/PriceCard';
 
 import type { RequestCatalog, RequestQuote } from './schemas';
 
@@ -8,6 +7,16 @@ import type { RequestCatalog, RequestQuote } from './schemas';
  * page's locale, so a client gets strings, never the localised objects (lib/catalog/localized.ts), and the
  * pure helpers the form and the pages share. No `server-only`; no money arithmetic (rule 4).
  */
+
+/** One line of a price card. A per unit line shows its amount and its count, never their product. */
+export type PriceLine = {
+  key: string;
+  label: string;
+  amount?: number;
+  units?: number;
+  /** A multiplier as the server sent it, such as `1.30`. */
+  factor?: string;
+};
 
 export type FormQuestion = {
   key: string;
@@ -108,7 +117,8 @@ export function expectedEnd(date: string, hour: number, hoursMax: number): { dat
   return { date: addDays(date, Math.floor(total / 24)), hour: total % 24 };
 }
 
-const NUMBER_LOCALE: Readonly<Record<string, string>> = { ar: 'ar-u-nu-latn', tr: 'tr', en: 'en' };
+/** Western digits in all three locales (D52). */
+export const NUMBER_LOCALE: Readonly<Record<string, string>> = { ar: 'ar-u-nu-latn', tr: 'tr', en: 'en' };
 
 /** A calendar day, such as "Thu 13", in the page's locale. */
 export function dayParts(date: string, locale: string): { weekday: string; day: string; long: string } {

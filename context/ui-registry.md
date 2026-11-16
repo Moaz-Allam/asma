@@ -83,7 +83,6 @@ Domain components. Path: `components/features/<domain>/`.
 
 | Component | Purpose | Design ref | Status | RTL | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `RequestForm` | Post a request; shows the **server-computed** price live | s4, s18 | 📋 planned | — | Never computes price client-side |
 | `PriceCard` | Eyebrow, the big price, the fired lines, the split (online after choosing a provider, in cash to the provider after the service, D87), main action (`components/shared/PriceCard.tsx`) | s4, s5, s6, s7 | ✅ built (04) | ✅ | Replaces `PriceSummary`; display only, server figures; a per unit line shows amount × count, never multiplied |
 | `RequestCard` | Customer's view of own request (summary column) | s6, s9, s15 | 📋 planned | — | Full detail |
 | `RequestRow` | One request in "my requests": status chip, service, start, district, price, posted date; the whole card links to the detail (`components/features/requests/RequestRow.tsx`) | s10 | ✅ built (04) | ✅ | "Expired" is OPEN with a past start, a reading, not a state |

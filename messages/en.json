@@ -1019,7 +1019,8 @@
       "retry": "Try again",
       "emptyTitle": "No services yet",
       "emptyBody": "Services open here soon. Nothing was charged.",
-      "emptyLead": "0"
+      "emptyLead": "0",
+      "loading": "Loading…"
     },
     "errors": {
       "answer_required": "Please answer this.",

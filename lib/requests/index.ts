@@ -25,8 +25,7 @@ import {
  * anything else is thrown for `guardedAction` or the page to report.
  */
 
-export type { CatalogQuestion, CatalogService, RequestCatalog, RequestQuote } from './schemas';
-export type { RequestDetailRow, RequestListRow, PricingSnapshot, QuestionSnapshot } from './schemas';
+export type { RequestCatalog, RequestQuote } from './schemas';
 
 /** Every code the request functions raise. */
 export const REQUEST_DB_CODES = [

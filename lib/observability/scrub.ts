@@ -83,6 +83,10 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'dob',
 ]);
 const PERSONAL_SUFFIXES = [
+  // Spec 0008 (review A5): the request RPC arguments p_address_line, p_notes, p_answers.
+  '_line',
+  '_notes',
+  '_answers',
   '_email',
   '_phone',
   '_phone_number',
