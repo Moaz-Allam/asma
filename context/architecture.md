@@ -1544,6 +1544,39 @@ Flags for: `funding_enabled`, `unlock_enabled`, `payouts_enabled`, `auto_release
   `lib/money/parse.ts` turns typed text into minor units without a float.
 - **Not here:** the customer read path and `create_request` (04), commission and provider fee (07), the
   region switch and the settings page (16), date driven pricing.
+- **Changed by 04 (spec 0008):** `quote_price` has no `authenticated` grant (AC-28); customers reach it only
+  through `quote_request` and `create_request`, and `quotePrice` left `lib/pricing`.
+
+## 39d. Post a request (position 04, spec 0008)
+
+**Overrides §4 and §20 where they differ** (D138 to D142). Migration `post_request`. `addresses` (§4) is
+`request_addresses`: one row per request, no address book. §19.6's runtime Zod stays overridden by D125.
+
+- **Three tables.** `requests`: region, customer, `client_key` (unique per customer), service and zone (each
+  with the region in the key), `addon_ids`, status (the lifecycle's eight values), `answers`,
+  `questions_snapshot`, `pricing_snapshot`, `fixed_price`, `commission_amount`, `cash_due`
+  (`= fixed_price - commission_amount`), currency, `scheduled_start_at`, `scheduled_end_at`, `notes`, the three
+  cancel columns. `request_addresses`: the street line, its region and customer held equal to the request's
+  by a three column key. `quote_counters`: one hourly window per user. Nothing is deleted.
+- **Writes only through definer functions.** `create_request` (role from the profile, a lock on the caller's
+  profile row, replay by client key, settings, schedule in `regions.timezone`, line and notes, the open cap,
+  one counted quote, `quote_price`, `pricing_split`, then the expected figures compared and never stored,
+  then the insert, the address and the audit row) and `cancel_request` (OPEN only, by its owner).
+  `requests_guard` lets only status and the cancel columns move, for every role; `request_addresses_guard`
+  refuses every update and delete.
+- **Reads.** `request_catalog` is the customer's only read of the catalog, with no formula, modifier,
+  `affects_pricing` or multiplier. RLS: a customer reads their own requests and addresses; an admin reads
+  requests, never addresses; a provider and anon read nothing. `service_role` reads requests only.
+- **Money.** `pricing_split` is the one place the commission is computed: `round(price × percent / 100 /
+  unit) × unit`, half up, so both figures are whole lira (D139). Stored at publish, never recomputed.
+- **Settings.** `commission_percent`, `request_lead_days`, `request_horizon_days`, `request_first_hour`,
+  `request_last_hour`, `max_open_requests`, `quotes_per_hour`, each with a row check; the two pairs held at
+  commit by a deferred trigger; a missing one refuses (`request_settings_invalid`, `pricing_settings_invalid`),
+  never a default. `platform_settings` has an audit trigger.
+- **Doors.** `lib/requests/` wraps the four functions and the two reads; `actions/requests.ts` has the three
+  actions. The scrubber treats `line`, `address_line`, `notes` and `answers` as personal.
+- **Review carry overs (D143, R10):** the SQL findings of the review round go into 05's first migration, because
+  `post_request` is in the cloud: see the tracker's R10.
 
 ## 40. Updated invariants
 

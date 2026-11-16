@@ -17,3 +17,5 @@ supabase/.temp/
 supabase/.branches/
 # The Claude Design export, kept verbatim as the visual reference (docs/design/README.md).
 docs/design/source/
+# Other sessions' git worktrees: their own checkouts, formatted on their own branches.
+.claude/worktrees/

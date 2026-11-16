@@ -33,6 +33,12 @@ ALTER TABLE public.pricing_modifiers DISABLE TRIGGER pricing_history_guard;
 ALTER TABLE public.pricing_formulas DISABLE TRIGGER pricing_history_guard;
 DELETE FROM public.pricing_modifiers;
 DELETE FROM public.pricing_formulas;
+-- Since 04, a request (and its address, guarded the same way) refers to a service and a zone, so a database
+-- an e2e run left behind needs them gone first.
+ALTER TABLE public.request_addresses DISABLE TRIGGER request_addresses_guard;
+DELETE FROM public.request_addresses;
+ALTER TABLE public.request_addresses ENABLE TRIGGER request_addresses_guard;
+DELETE FROM public.requests;
 ALTER TABLE public.pricing_modifiers ENABLE TRIGGER pricing_history_guard;
 ALTER TABLE public.pricing_formulas ENABLE TRIGGER pricing_history_guard;
 DELETE FROM public.addons;

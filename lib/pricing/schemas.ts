@@ -55,7 +55,6 @@ export const FormulaErrors = z.object({
 });
 export type FormulaError = z.infer<typeof FormulaErrors>['errors'][number];
 
-export const QuoteResult = z.discriminatedUnion('status', [PricedResult, AnswerErrors]);
 export const PreviewResult = z.discriminatedUnion('status', [PricedResult, AnswerErrors, FormulaErrors]);
 export const PublishResult = z.discriminatedUnion('status', [
   z.object({ status: z.literal('ok'), formula_id: z.string(), version: z.number().int().positive() }),

@@ -12,6 +12,12 @@ CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
 SELECT plan(183);
 
+-- Since 04 (spec 0008 AC-28, D142), quote_price has no authenticated grant: a customer reaches it only through
+-- quote_request and create_request, which count against the quote rate limit. This file still proves the
+-- engine end to end as a real customer, so it grants it back for this rolled back transaction only;
+-- supabase/tests/12 proves the grant is gone.
+GRANT EXECUTE ON FUNCTION public.quote_price(uuid, uuid, uuid[], jsonb) TO authenticated;
+
 -- ── fixtures ─────────────────────────────────────────────────────────────────
 -- c1: customer, a1: admin, u0: signed in with no profile yet.
 INSERT INTO auth.users (id, aud, role, phone, phone_confirmed_at) VALUES
@@ -491,7 +497,11 @@ CREATE TEMP VIEW money_args AS
    WHERE n.nspname = 'public'
      AND (has_function_privilege('authenticated', p.oid, 'EXECUTE') OR has_function_privilege('anon', p.oid, 'EXECUTE'))
      AND EXISTS (SELECT 1 FROM unnest(coalesce(p.proargnames, '{}'::text[])) a
-                  WHERE a ~* '(price|amount|total|fee|commission|base|factor|multiplier|rounding|cost|discount|unit)')
+                  WHERE a ~* '(price|amount|total|fee|commission|base|factor|multiplier|rounding|cost|discount|unit)'
+                    -- The one exemption (spec 0008 AC-10, D140): the figures the customer saw, compared and never
+                    -- stored. Keyed on the function and the argument pair; supabase/tests/12 reads the source.
+                    AND NOT (p.oid = 'public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, text, text, bigint, bigint)'::regprocedure
+                             AND a IN ('p_expected_price', 'p_expected_commission')))
      AND p.proname NOT IN ('publish_pricing_formula', 'preview_pricing_formula');
 SELECT is_empty($$ SELECT signature FROM money_args $$,
   'no function a customer or provider can run takes an argument named for money (rule 1)');
@@ -518,7 +528,9 @@ SELECT set_eq(
         AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e') $$,
   $$ VALUES ('public.accept_provider_docs_consent(text)'),
             ('public.admin_may_read(uuid, text)'),
+            ('public.cancel_request(uuid, text)'),
             ('public.complete_onboarding(text, text, text, boolean)'),
+            ('public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, text, text, bigint, bigint)'),
             ('public.decide_provider(uuid, text, timestamp with time zone, text, text)'),
             ('public.is_admin()'),
             ('public.log_document_view(uuid, uuid)'),
@@ -527,7 +539,9 @@ SELECT set_eq(
             ('public.public_region_info()'),
             ('public.publish_pricing_formula(uuid, integer, bigint, jsonb)'),
             ('public.quote_price(uuid, uuid, uuid[], jsonb)'),
+            ('public.quote_request(uuid, uuid, uuid[], jsonb)'),
             ('public.register_provider_document(text, text)'),
+            ('public.request_catalog()'),
             ('public.reinstate_provider(uuid)'),
             ('public.review_provider_documents(uuid, uuid[], uuid[], text, text, text, date)'),
             ('public.save_provider_profile(text, text, text, text, integer, text[])'),

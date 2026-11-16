@@ -109,6 +109,15 @@ describe('isPersonalKey: the keys whose values never leave', () => {
     'client.address',
     'details',
     'hint',
+    // Spec 0008 AC-18: a request's street line, its notes and the answers a customer typed.
+    'line',
+    'address_line',
+    'addressLine',
+    'notes',
+    'answers',
+    'p_address_line',
+    'p_notes',
+    'p_answers',
   ])('%s is personal', (key) => {
     expect(isPersonalKey(key)).toBe(true);
   });
@@ -294,6 +303,23 @@ describe('URLs inside text keep no token, code or fragment (review 2026-10-29)',
     const json = JSON.stringify(out);
     for (const secret of ['c0d', 'ali%40x.com']) expect(json).not.toContain(secret);
     expect(out?.spans?.[0]?.description).toBe('GET /api/x');
+  });
+
+  it('redacts a request action payload at any depth (spec 0008 AC-18)', () => {
+    const out = scrubEvent({
+      extra: {
+        input: {
+          serviceId: '0f8fad5b-d9cb-469f-a165-70867728950e',
+          addressLine: 'Moda Cad. No 5 Daire 3',
+          notes: 'Kapının şifresi 4411',
+          answers: { rooms: 3, details: 'Yaşlı annem evde' },
+          nested: [{ line: 'Bağdat Cad. 12' }],
+        },
+      },
+    });
+    const json = JSON.stringify(out);
+    for (const secret of ['Moda Cad', 'Kapının', 'Yaşlı', 'Bağdat']) expect(json).not.toContain(secret);
+    expect(json).toContain('0f8fad5b-d9cb-469f-a165-70867728950e');
   });
 });
 
