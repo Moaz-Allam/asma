@@ -221,7 +221,8 @@ SELECT is(
   'admin', 'promotion sets app_metadata'
 );
 SELECT results_eq(
-  $$ SELECT actor_id, old_value, new_value, region FROM public.audit_log WHERE action = 'account.promoted' $$,
+  $$ SELECT actor_id, old_value, new_value, region FROM public.audit_log WHERE action = 'account.promoted'
+       AND entity_id = '00000000-0000-0000-0000-0000000000a7' $$,
   $$ VALUES (NULL::uuid, '{"role": "customer"}'::jsonb, '{"role": "admin"}'::jsonb, 'TR') $$,
   'promotion is audited, with no actor from the SQL editor'
 );

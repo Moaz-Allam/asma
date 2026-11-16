@@ -294,22 +294,22 @@ INSERT INTO public.platform_settings (region, key, value) VALUES ('TR', 'quotes_
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c1');
 CREATE TEMP TABLE cat AS SELECT public.request_catalog() AS c;
-SELECT is((SELECT jsonb_path_query_array(c, '$.categories[*].id') FROM cat),
+SELECT is((SELECT coalesce(jsonb_agg(x ORDER BY ord), '[]') FROM cat, jsonb_path_query(c, '$.categories[*].id') WITH ORDINALITY AS q(x, ord) WHERE x #>> '{}' LIKE '00000000-0000-0000-0000-00000012%'),
   '["00000000-0000-0000-0000-00000012c001"]', 'only an active category with a bookable service');
-SELECT is((SELECT jsonb_path_query_array(c, '$.categories[*].services[*].id') FROM cat),
+SELECT is((SELECT coalesce(jsonb_agg(x ORDER BY ord), '[]') FROM cat, jsonb_path_query(c, '$.categories[*].services[*].id') WITH ORDINALITY AS q(x, ord) WHERE x #>> '{}' LIKE '00000000-0000-0000-0000-00000012%'),
   '["00000000-0000-0000-0000-000000125001"]', 'no off service, no service without a formula');
-SELECT is((SELECT jsonb_path_query_array(c, '$.categories[0].services[0].questions[*].key') FROM cat),
+SELECT is((SELECT jsonb_path_query_array(s, '$.questions[*].key') FROM cat, jsonb_path_query(c, '$.categories[*].services[*]') s WHERE s ->> 'id' = '00000000-0000-0000-0000-000000125001'),
   '["rooms", "bathrooms", "property_type", "has_pets", "details"]',
   'the service''s questions, in display order, with no off question and no other service''s');
-SELECT is((SELECT array_agg(k ORDER BY k) FROM cat, jsonb_object_keys(c -> 'categories' -> 0 -> 'services' -> 0 -> 'questions' -> 0) k),
+SELECT is((SELECT array_agg(k ORDER BY k) FROM cat, jsonb_path_query(c, '$.categories[*].services[*]') s, jsonb_object_keys(s -> 'questions' -> 0) k WHERE s ->> 'id' = '00000000-0000-0000-0000-000000125001'),
   ARRAY['help_text', 'key', 'label', 'options', 'required', 'service_id', 'type', 'validation'],
   'a question carries no affects_pricing');
-SELECT is((SELECT c -> 'categories' -> 0 -> 'services' -> 0 -> 'addons' FROM cat),
+SELECT is((SELECT s -> 'addons' FROM cat, jsonb_path_query(c, '$.categories[*].services[*]') s WHERE s ->> 'id' = '00000000-0000-0000-0000-000000125001'),
   '[{"id": "00000000-0000-0000-0000-00000012a001", "name": {"tr": "Cam"}, "price": 40000}]', 'only the active addon, with its price');
-SELECT is((SELECT c -> 'zones' FROM cat),
+SELECT is((SELECT coalesce(jsonb_agg(z ORDER BY ord), '[]') FROM cat, jsonb_array_elements(c -> 'zones') WITH ORDINALITY AS q(z, ord) WHERE z ->> 'id' LIKE '00000000-0000-0000-0000-00000012%'),
   '[{"id": "00000000-0000-0000-0000-000000122001", "name": {"tr": "Kadıköy"}}, {"id": "00000000-0000-0000-0000-000000122002", "name": {"tr": "Beşiktaş"}}]',
   'the active zones of the region, with no multiplier');
-SELECT is((SELECT (c -> 'categories' -> 0 -> 'services' -> 0) - 'questions' - 'addons' FROM cat),
+SELECT is((SELECT s - 'questions' - 'addons' FROM cat, jsonb_path_query(c, '$.categories[*].services[*]') s WHERE s ->> 'id' = '00000000-0000-0000-0000-000000125001'),
   '{"id": "00000000-0000-0000-0000-000000125001", "name": {"en": "Home cleaning", "tr": "Ev temizliği"}, "note": null, "hours_min": 3, "hours_max": 5}',
   'a service: its name, note and hours');
 SELECT is((SELECT c - 'zones' - 'categories' FROM cat),

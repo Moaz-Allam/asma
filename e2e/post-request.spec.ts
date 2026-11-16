@@ -68,12 +68,12 @@ function seedCatalog(locale: string): { category: string; service: string; zone:
       ` insert into public.zones (id, region, name, multiplier, display_order, active) values ('${id('21')}', 'TR', '{"tr": "${names.zone}"}', 1.00, 900, true) on conflict (id) do nothing;` +
       ` insert into public.addons (id, service_id, region, name, price, display_order, active) values ('${id('a1')}', '${id('51')}', 'TR', '{"tr": "${names.addon}"}', 40000, 1, true) on conflict (id) do nothing;` +
       ` insert into public.questions (category_id, region, key, label, type, required, affects_pricing, validation, display_order, active) values` +
-      ` ('${id('c1')}', 'TR', 'rooms', '{"tr": "Oda"}', 'number', true, true, '{"min": 1, "max": 4, "step": 1}', 1, true),` +
-      ` ('${id('c1')}', 'TR', 'has_pets', '{"tr": "Evcil hayvan"}', 'boolean', true, true, null, 2, true) on conflict (category_id, key) do nothing;` +
+      ` ('${id('c1')}', 'TR', 'e2e_rooms', '{"tr": "Oda"}', 'number', true, true, '{"min": 1, "max": 4, "step": 1}', 1, true),` +
+      ` ('${id('c1')}', 'TR', 'e2e_pets', '{"tr": "Evcil hayvan"}', 'boolean', true, true, null, 2, true) on conflict (category_id, key) do nothing;` +
       ` insert into public.pricing_formulas (id, service_id, region, version, base_price, active) values ('${id('f1')}', '${id('51')}', 'TR', 1, 120000, true) on conflict (id) do nothing;` +
       ` insert into public.pricing_modifiers (formula_id, region, apply_order, question_key, match_type, match_value, effect_type, amount, factor) values` +
-      ` ('${id('f1')}', 'TR', 1, 'rooms', 'always', null, 'PER_UNIT', 40000, null),` +
-      ` ('${id('f1')}', 'TR', 2, 'has_pets', 'is_true', null, 'FIXED', 20000, null) on conflict (formula_id, apply_order) do nothing;` +
+      ` ('${id('f1')}', 'TR', 1, 'e2e_rooms', 'always', null, 'PER_UNIT', 40000, null),` +
+      ` ('${id('f1')}', 'TR', 2, 'e2e_pets', 'is_true', null, 'FIXED', 20000, null) on conflict (formula_id, apply_order) do nothing;` +
       ` perform set_config('pricing.publishing', 'off', true); end $seed$;`,
   );
   return names;
@@ -138,7 +138,9 @@ test('a customer posts a request, sees it, repeats it and cancels it', async ({
 
   // The form, step one (AC-6, AC-19): the card says what is missing until the inputs are set.
   const card = page.getByRole('region', { name: m(locale, 'Requests.price.eyebrow') });
-  await pick(page, m(locale, 'Requests.form.category'), names.category);
+  // Category chips show only when more than one category is bookable; the projects seed in parallel.
+  const categories = page.getByRole('group', { name: m(locale, 'Requests.form.category'), exact: true });
+  if ((await categories.count()) > 0) await pick(page, m(locale, 'Requests.form.category'), names.category);
   await expect(card).toContainText(m(locale, 'Requests.price.needService'));
   await page.locator('label').filter({ hasText: names.service }).click();
   await expect(card).toContainText(m(locale, 'Requests.price.needAnswers'));
