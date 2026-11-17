@@ -396,8 +396,8 @@ begin
   update public.applications a
      set status = case when a.id = p_application_id then 'SELECTED' else 'NOT_SELECTED' end,
          status_changed_at = v_now,
-         provider_fee_amount = case when a.id = p_application_id then v_fee end,
-         provider_fee_kind = case when a.id = p_application_id then v_fees ->> 'kind' end
+         provider_fee_amount = case when a.id = p_application_id then v_fee else a.provider_fee_amount end,
+         provider_fee_kind = case when a.id = p_application_id then v_fees ->> 'kind' else a.provider_fee_kind end
    where a.request_id = v_req.id and a.status = 'APPLIED';
 
   -- 8. The request, with the deadline capped by the start.
@@ -446,6 +446,7 @@ create table public.fee_payments (
   created_at       timestamptz not null default now(),
 
   constraint fee_payments_id_region unique (id, region),
+  constraint fee_payments_id_request unique (id, request_id),
   constraint fee_payments_psp_payment_unique unique (psp_payment_id),
   constraint fee_payments_request_fk foreign key (request_id, region)
     references public.requests (id, region) on delete restrict,
@@ -517,6 +518,8 @@ create table public.fee_refunds (
     references public.requests (id, region) on delete restrict,
   constraint fee_refunds_fee_fk foreign key (fee_payment_id, region)
     references public.fee_payments (id, region) on delete restrict,
+  constraint fee_refunds_fee_request_fk foreign key (fee_payment_id, request_id)
+    references public.fee_payments (id, request_id) on delete restrict,
   constraint fee_refunds_kind_valid check (kind in ('fee', 'late')),
   constraint fee_refunds_kind_fee check ((kind = 'fee') = (fee_payment_id is not null)),
   constraint fee_refunds_status_valid check (status in ('queued', 'done', 'failed', 'done_by_hand')),
@@ -650,6 +653,7 @@ create index checkout_attempts_fee_idx on public.checkout_attempts (fee_payment_
 create index checkout_attempts_region_idx on public.checkout_attempts (region);
 create index fee_refunds_request_idx on public.fee_refunds (request_id, region);
 create index fee_refunds_fee_idx on public.fee_refunds (fee_payment_id, region);
+create index fee_refunds_fee_request_idx on public.fee_refunds (fee_payment_id, request_id);
 create index fee_refunds_requested_by_idx on public.fee_refunds (requested_by);
 create index fee_refunds_region_idx on public.fee_refunds (region);
 create index ledger_journals_fee_idx on public.ledger_journals (fee_payment_id, region);
@@ -1112,8 +1116,10 @@ $$;
 revoke all on function public.after_provider_fee_paid(uuid) from public, anon, authenticated, service_role;
 
 -- R-9: drop every card field at any depth: any key containing "card" in any case, and the named iyzico
--- fields. The hosted page never sends us one; this is the second line.
-create function public.psp_payload_strip(p_payload jsonb)
+-- fields. The hosted page never sends us one; this is the second line. The buyer's personal data the PSP
+-- may echo (the buyer object, names, email, phone, identity number, IP, any address) goes too (KVKK). A
+-- payload nested deeper than 32 levels is refused with a stable code before the stack runs out.
+create function public.psp_payload_strip(p_payload jsonb, p_depth integer default 0)
   returns jsonb
   language plpgsql
   immutable
@@ -1121,16 +1127,22 @@ create function public.psp_payload_strip(p_payload jsonb)
   set search_path = ''
 as $$
 begin
+  if p_depth > 32 then
+    raise exception 'payload_too_large';
+  end if;
   if jsonb_typeof(p_payload) = 'object' then
     return coalesce(
-      (select jsonb_object_agg(e.key, public.psp_payload_strip(e.value))
+      (select jsonb_object_agg(e.key, public.psp_payload_strip(e.value, p_depth + 1))
          from jsonb_each(p_payload) e
         where position('card' in lower(e.key)) = 0
-          and lower(e.key) not in ('cvc', 'cvv', 'expiremonth', 'expireyear', 'binnumber', 'lastfourdigits')),
+          and position('address' in lower(e.key)) = 0
+          and lower(e.key) not in ('cvc', 'cvv', 'expiremonth', 'expireyear', 'binnumber', 'lastfourdigits',
+                                   'buyer', 'email', 'gsmnumber', 'identitynumber', 'ip', 'name', 'surname',
+                                   'contactname')),
       '{}'::jsonb);
   elsif jsonb_typeof(p_payload) = 'array' then
     return coalesce(
-      (select jsonb_agg(public.psp_payload_strip(x.v) order by x.i)
+      (select jsonb_agg(public.psp_payload_strip(x.v, p_depth + 1) order by x.i)
          from jsonb_array_elements(p_payload) with ordinality as x(v, i)),
       '[]'::jsonb);
   end if;
@@ -1138,7 +1150,7 @@ begin
 end;
 $$;
 
-revoke all on function public.psp_payload_strip(jsonb) from public, anon, authenticated, service_role;
+revoke all on function public.psp_payload_strip(jsonb, integer) from public, anon, authenticated, service_role;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 10. The relay's functions (service role only). They return results, never send: alerts come back in
@@ -1185,6 +1197,9 @@ begin
     raise exception 'not_found';
   end if;
   perform 1 from public.requests r where r.id = v_request for update;
+  -- One PSP payment is applied by one call at a time, across requests too: two fees on different requests
+  -- would otherwise each pass the checks below and book one payment twice (reviews, 2026-11-18).
+  perform pg_advisory_xact_lock(hashtextextended('psp_payment:' || p_psp_payment_id, 0));
   select f.* into v_fee from public.fee_payments f where f.id = p_fee_payment_id for update;
   perform 1 from public.checkout_attempts a where a.id = p_attempt_id and a.fee_payment_id = v_fee.id for update;
   if not found then
@@ -1333,7 +1348,8 @@ begin
   end if;
 
   if v_ref.kind = 'fee' then
-    if v_fee.status <> 'paid' or v_ref.amount <> v_fee.amount or v_ref.currency <> v_fee.currency then
+    if v_fee.status <> 'paid' or v_ref.amount <> v_fee.amount or v_ref.currency <> v_fee.currency
+       or v_ref.psp_payment_id is distinct from v_fee.psp_payment_id then
       raise exception 'invalid_state';
     end if;
     update public.fee_payments set status = 'refunded' where id = v_fee.id;
@@ -1370,7 +1386,8 @@ grant execute on function public.apply_fee_refunded(uuid, text) to service_role;
 
 -- AC-10, R-10: claim due rows (pending and due, or claimed with a lease older than 2 minutes) with skip
 -- locked, so two relays never take one row. Each claim counts an attempt; a sixth attempt whose lease ran
--- out is failed instead.
+-- out is failed instead. Each claimed row carries a claim token (its claim time): finish_outbox acts only
+-- with the current token, so a relay whose lease ran out cannot finish a row another relay claimed since.
 create function public.claim_outbox(p_limit integer, p_worker text)
   returns jsonb
   language plpgsql
@@ -1407,9 +1424,10 @@ begin
            next_attempt_at = null
       from due
      where o.id = due.id
-    returning o.id, o.kind, o.idempotency_key, o.payload, o.attempts, o.region)
+    returning o.id, o.kind, o.idempotency_key, o.payload, o.attempts, o.region, o.claimed_at)
   select coalesce(jsonb_agg(jsonb_build_object('id', c.id, 'kind', c.kind, 'idempotency_key', c.idempotency_key,
-                                               'payload', c.payload, 'attempts', c.attempts, 'region', c.region)
+                                               'payload', c.payload, 'attempts', c.attempts, 'region', c.region,
+                                               'claim_token', c.claimed_at)
                             order by c.id), '[]'::jsonb)
     into v_out
     from claimed c;
@@ -1421,8 +1439,8 @@ revoke all on function public.claim_outbox(integer, text) from public, anon, aut
 grant execute on function public.claim_outbox(integer, text) to service_role;
 
 -- AC-10, R-10: done, or the next try at 1, 5, 30, 120, then 720 minutes; failed after the sixth try. A row
--- that is not claimed any more is left as it is.
-create function public.finish_outbox(p_id uuid, p_ok boolean, p_error text)
+-- that is not claimed any more, or was claimed again since this claim token, is left as it is (stale).
+create function public.finish_outbox(p_id uuid, p_ok boolean, p_error text, p_claim_token timestamptz)
   returns jsonb
   language plpgsql
   volatile
@@ -1436,7 +1454,11 @@ begin
   if not found then
     raise exception 'not_found';
   end if;
-  if v_row.status = 'claimed' then
+  if v_row.status <> 'claimed' or v_row.claimed_at is distinct from p_claim_token then
+    return jsonb_build_object('id', v_row.id, 'status', v_row.status, 'attempts', v_row.attempts,
+                              'next_attempt_at', v_row.next_attempt_at, 'stale', true);
+  end if;
+  begin
     if coalesce(p_ok, false) then
       update public.outbox_events set status = 'done', done_at = now(), next_attempt_at = null
        where id = p_id returning * into v_row;
@@ -1450,14 +1472,14 @@ begin
              last_error = left(coalesce(p_error, 'error'), 1000)
        where id = p_id returning * into v_row;
     end if;
-  end if;
+  end;
   return jsonb_build_object('id', v_row.id, 'status', v_row.status, 'attempts', v_row.attempts,
-                            'next_attempt_at', v_row.next_attempt_at);
+                            'next_attempt_at', v_row.next_attempt_at, 'stale', false);
 end;
 $$;
 
-revoke all on function public.finish_outbox(uuid, boolean, text) from public, anon, authenticated, service_role;
-grant execute on function public.finish_outbox(uuid, boolean, text) to service_role;
+revoke all on function public.finish_outbox(uuid, boolean, text, timestamptz) from public, anon, authenticated, service_role;
+grant execute on function public.finish_outbox(uuid, boolean, text, timestamptz) to service_role;
 
 -- AC-11, R-9: store a PSP fact once per (source, event key), card fields stripped; refuse a payload over
 -- 64 KiB before reading it.
@@ -1469,7 +1491,8 @@ create function public.record_psp_event(p_source text, p_event_key text, p_paylo
   set search_path = ''
 as $$
 declare
-  v_id  uuid;
+  v_id     uuid;
+  v_clean  jsonb;
 begin
   if p_source is null or p_source not in ('callback', 'webhook', 'retrieve', 'reconcile')
      or p_event_key is null or char_length(p_event_key) not between 1 and 200
@@ -1479,8 +1502,9 @@ begin
   if octet_length(p_payload::text) > 65536 then
     raise exception 'payload_too_large';
   end if;
+  v_clean := public.psp_payload_strip(p_payload);
   insert into public.psp_events (region, source, event_key, payload)
-  values (p_region, p_source, p_event_key, public.psp_payload_strip(p_payload))
+  values (p_region, p_source, p_event_key, v_clean)
   on conflict (source, event_key) do nothing
   returning id into v_id;
   if v_id is not null then
@@ -1498,7 +1522,8 @@ grant execute on function public.record_psp_event(text, text, jsonb, text) to se
 -- 11. The books (AC-12). Every (currency, account) total of a region, and every imbalance: a journal that
 --     does not balance, a region and currency that does not sum to zero, a fee paid or refunded with no
 --     journal or more than one, a journal for a fee that never got there, a late refund done with no
---     journal. No imbalance when the books are right. The service role and admins only.
+--     journal, a late payment journal with no late refund row (or the reverse), a stored PSP fee that
+--     differs from its ledger leg. No imbalance when the books are right. The service role and admins only.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 create function public.ledger_check(p_region text)
@@ -1561,6 +1586,26 @@ begin
        where x.region = p_region and x.kind = 'late'
        group by x.id, x.status
       having (x.status = 'done' and count(j.id) <> 1) or (x.status <> 'done' and count(j.id) > 0)
+      union all
+      select 'late_received_without_refund', j.idempotency_key, 1
+        from public.ledger_journals j
+       where j.region = p_region and j.kind = 'late_received'
+         and not exists (select 1 from public.fee_refunds x
+                          where x.kind = 'late' and j.idempotency_key = 'late:' || x.psp_payment_id || ':received')
+      union all
+      select 'late_refund_without_received', x.id::text, 1
+        from public.fee_refunds x
+       where x.region = p_region and x.kind = 'late'
+         and not exists (select 1 from public.ledger_journals j
+                          where j.idempotency_key = 'late:' || x.psp_payment_id || ':received')
+      union all
+      select 'psp_fee_differs', f.id::text, f.psp_fee_amount - coalesce(sum(e.amount), 0)
+        from public.fee_payments f
+        join public.ledger_journals j on j.fee_payment_id = f.id and j.kind = 'fee_paid'
+        left join public.ledger_entries e on e.journal_id = j.id and e.account = 'psp_fees'
+       where f.region = p_region and f.status in ('paid', 'refunded')
+       group by f.id, f.psp_fee_amount
+      having f.psp_fee_amount <> coalesce(sum(e.amount), 0)
     ) i;
 
   return jsonb_build_object('region', p_region, 'totals', v_totals, 'imbalances', v_imbalances);

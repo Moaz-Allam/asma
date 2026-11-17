@@ -14,7 +14,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS dblink WITH SCHEMA extensions;
 
-SELECT plan(18);
+SELECT plan(23);
 
 CREATE FUNCTION pg_temp.conn() RETURNS text LANGUAGE sql STABLE AS $$
   SELECT format('host=%s port=%s dbname=%s user=postgres password=postgres',
@@ -195,6 +195,26 @@ SELECT extensions.dblink_exec('a', 'COMMIT');
 SELECT is((SELECT r FROM extensions.dblink_get_result('b', false) AS t(r text)), '{"status": "ok"}',
   'AC-14: and then finishes, in one order, with no deadlock (09 and 12 decide what a cancel does to a paid commission)');
 SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
+SELECT is(pg_temp.one($$ SELECT r.status || ' ' || f.status FROM public.requests r JOIN public.fee_payments f ON f.request_id = r.id
+                          WHERE r.id = '00000000-0000-0000-0000-0000001900e4' $$),
+  'CANCELLED paid', 'AC-14: the request is cancelled and its commission stays paid, for 12 to refund');
+
+-- ── one PSP payment for two fees on two requests at once: never booked twice ─
+SELECT extensions.dblink_exec('b', 'RESET ROLE');
+SELECT extensions.dblink_exec('b', 'SET ROLE service_role');
+SELECT extensions.dblink_exec('a', 'BEGIN');
+SELECT is((SELECT r FROM extensions.dblink('a', pg_temp.pay_sql('e5', 'race-19-p6')) AS t(r text))::jsonb ->> 'status', 'paid',
+  'reviews: a payment is applied to E5, still uncommitted');
+SELECT extensions.dblink_send_query('b', pg_temp.pay_sql('e6', 'race-19-p6'));
+SELECT pg_sleep(0.3);
+SELECT is(extensions.dblink_is_busy('b'), 1, 'reviews: the same payment for E6 waits on the payment lock, though its request is free');
+SELECT extensions.dblink_exec('a', 'COMMIT');
+SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
+SELECT ok(extensions.dblink_error_message('b') LIKE '%idempotency_conflict%', 'reviews: and then refuses idempotency_conflict');
+SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
+SELECT is(pg_temp.one($$ SELECT f.status || ' ' || (SELECT count(*) FROM public.fee_refunds x WHERE x.psp_payment_id = 'race-19-p6')
+                          FROM public.fee_payments f WHERE f.request_id = '00000000-0000-0000-0000-0000001900e6' $$),
+  'pending 0', 'reviews: E6 stays pending and the payment is not booked as late');
 
 -- ── two relays claim the outbox at once: skip locked, no row twice ───────────
 SELECT extensions.dblink_exec('a', 'RESET ROLE');

@@ -414,6 +414,13 @@ export type Database = {
             referencedColumns: ["id", "region"]
           },
           {
+            foreignKeyName: "fee_refunds_fee_request_fk"
+            columns: ["fee_payment_id", "request_id"]
+            isOneToOne: false
+            referencedRelation: "fee_payments"
+            referencedColumns: ["id", "request_id"]
+          },
+          {
             foreignKeyName: "fee_refunds_region_fkey"
             columns: ["region"]
             isOneToOne: false
@@ -1776,7 +1783,12 @@ export type Database = {
         Returns: Json
       }
       finish_outbox: {
-        Args: { p_error: string; p_id: string; p_ok: boolean }
+        Args: {
+          p_claim_token: string
+          p_error: string
+          p_id: string
+          p_ok: boolean
+        }
         Returns: Json
       }
       has_contact_info: { Args: { p_text: string }; Returns: boolean }
@@ -2036,7 +2048,10 @@ export type Database = {
         Returns: Json
       }
       provider_type_bucket: { Args: { p_type: string }; Returns: string }
-      psp_payload_strip: { Args: { p_payload: Json }; Returns: Json }
+      psp_payload_strip: {
+        Args: { p_depth?: number; p_payload: Json }
+        Returns: Json
+      }
       public_region_info: {
         Args: never
         Returns: {

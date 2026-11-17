@@ -58,7 +58,10 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   Carries 04's R10 fixes. Migration `20261117090000_provider_feed_apply` in the cloud (S31). Local gate (D158). **AC-25 real calls owed.**
 - 2026-11-18 · **06 merged** (spec 0010, PR #32, `5812073`): offers, choose, payment deadline, timeline; closes R11. Spec 0010
   supersedes the umbrella child 0011-06 (D168). Migration `20261118090000_choose_provider` in the cloud (S35). Local gate
-  (D168). **AC-21 real calls owed.** Next: 07, after `/architect` amends 0011-07 against what 05 and 06 built (D168).
+  (D168). **AC-21 real calls owed.**
+- 2026-11-18 · **07 built** (spec 0011-07, D169, D170): the money core in Postgres, database only. Fee settings, one fee
+  formula, the commission floor, the fee frozen on the pick, seven money tables, the append only balanced ledger, the relay's
+  functions; pgTAP 18 and 19. Migration `20261119090000_money_core` owed to the cloud (S36) before the merge. Next: 08.
 
 ## Stack (pinned exactly)
 

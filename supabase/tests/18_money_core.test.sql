@@ -18,7 +18,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(190);
+SELECT plan(197);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -88,10 +88,12 @@ EXCEPTION WHEN raise_exception THEN
   RETURN sqlerrm;
 END;
 $$;
+CREATE FUNCTION pg_temp.token(p_id uuid) RETURNS timestamptz LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT claimed_at FROM public.outbox_events WHERE id = p_id $$;
 CREATE FUNCTION pg_temp.fee(p_request integer, p_kind text) RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER AS $$
   SELECT id FROM public.fee_payments WHERE request_id = pg_temp.r(p_request) AND kind = p_kind $$;
 GRANT EXECUTE ON FUNCTION pg_temp.u(text), pg_temp.r(integer), pg_temp.app(integer, text), pg_temp.as_user(text),
-  pg_temp.as_service(), pg_temp.err(text), pg_temp.fee(integer, text) TO authenticated, service_role;
+  pg_temp.as_service(), pg_temp.err(text), pg_temp.fee(integer, text), pg_temp.token(uuid) TO authenticated, service_role;
 
 -- R1 for the frozen fee and the provider fee; R2 for refusals on choose; R3 stays OPEN; R4 for amount
 -- mismatches; R5 for the commission path; R6 for a currency mismatch.
@@ -664,6 +666,17 @@ SELECT is(pg_temp.err(format('SELECT public.apply_fee_refunded(%L, %L)', (SELECT
   'invalid_state', 'AC-9: a fee that was never paid is never refunded');
 SELECT is(pg_temp.err(format('SELECT public.apply_fee_refunded(%L, %L)', gen_random_uuid(), 'refund-18-4')), 'not_found', 'AC-9: an unknown refund');
 RESET ROLE;
+INSERT INTO public.fee_refunds (region, request_id, kind, fee_payment_id, psp_payment_id, amount, currency, reason)
+VALUES ('TR', pg_temp.r(4), 'fee', pg_temp.fee(4, 'commission'), 'pay-18-not-its-own', 20000, 'TRY', 'test');
+INSERT INTO rid SELECT id, fee_payment_id FROM public.fee_refunds WHERE psp_payment_id = 'pay-18-not-its-own';
+SELECT throws_ok(
+  $$ INSERT INTO public.fee_refunds (region, request_id, kind, fee_payment_id, psp_payment_id, amount, currency, reason)
+     VALUES ('TR', pg_temp.r(5), 'fee', pg_temp.fee(1, 'provider_fee'), 'pay-18-other-request', 15000, 'TRY', 'test') $$,
+  '23503', NULL, 'reviews: a fee refund always names its fee''s own request');
+SET LOCAL ROLE service_role;
+SELECT is(pg_temp.err(format('SELECT public.apply_fee_refunded(%L, %L)', (SELECT id FROM rid WHERE fee_payment_id = pg_temp.fee(4, 'commission')), 'refund-18-5')),
+  'invalid_state', 'reviews: a fee refund of another payment than the fee''s own is refused');
+RESET ROLE;
 SELECT is(pg_temp.try_write('delete', 'fee_refunds'), 'fee_refund_immutable', 'AC-9: a refund row is never deleted');
 
 -- ══ AC-10, R-10: the outbox ══════════════════════════════════════════════════
@@ -679,15 +692,19 @@ CREATE TEMP TABLE c1 AS SELECT public.claim_outbox(100, 'worker-18') AS j;
 GRANT SELECT ON c1 TO authenticated, service_role;
 RESET ROLE;
 SELECT ok((SELECT j @> jsonb_build_array(jsonb_build_object('id', (SELECT id FROM ob), 'kind', 'email.send', 'idempotency_key', 'email:test-18:1',
-                                                           'payload', '{"n": 1}'::jsonb, 'attempts', 1, 'region', 'TR')) FROM c1),
-  'AC-10: a due row is claimed, with its attempt counted');
+                                                           'payload', '{"n": 1}'::jsonb, 'attempts', 1, 'region', 'TR',
+                                                           'claim_token', pg_temp.token((SELECT id FROM ob)))) FROM c1),
+  'AC-10: a due row is claimed, with its attempt counted and its claim token');
 SELECT results_eq($$ SELECT status, claimed_by, claimed_at = now(), attempts FROM public.outbox_events WHERE id = (SELECT id FROM ob) $$,
   $$ VALUES ('claimed', 'worker-18', true, 1) $$, 'AC-10: claimed by the worker now');
 SET LOCAL ROLE service_role;
 SELECT ok(NOT (public.claim_outbox(100, 'worker-other') @> jsonb_build_array(jsonb_build_object('id', (SELECT id FROM ob)))),
   'AC-10: a claimed row inside its lease is not claimed again');
-SELECT is(public.finish_outbox((SELECT id FROM ob), false, 'timeout') - 'next_attempt_at',
-  jsonb_build_object('id', (SELECT id FROM ob), 'status', 'pending', 'attempts', 1), 'AC-10: a failed try goes back to pending');
+SELECT is(public.finish_outbox((SELECT id FROM ob), true, NULL, pg_temp.token((SELECT id FROM ob)) - interval '1 second') - 'next_attempt_at',
+  jsonb_build_object('id', (SELECT id FROM ob), 'status', 'claimed', 'attempts', 1, 'stale', true),
+  'reviews: a finish with an old claim token changes nothing (a relay whose lease ran out)');
+SELECT is(public.finish_outbox((SELECT id FROM ob), false, 'timeout', pg_temp.token((SELECT id FROM ob))) - 'next_attempt_at',
+  jsonb_build_object('id', (SELECT id FROM ob), 'status', 'pending', 'attempts', 1, 'stale', false), 'AC-10: a failed try goes back to pending');
 RESET ROLE;
 SELECT results_eq($$ SELECT next_attempt_at = now() + interval '1 minute', last_error FROM public.outbox_events WHERE id = (SELECT id FROM ob) $$,
   $$ VALUES (true, 'timeout') $$, 'AC-10: the next try in 1 minute');
@@ -702,7 +719,7 @@ BEGIN
   FOR i IN 2..6 LOOP
     UPDATE public.outbox_events SET next_attempt_at = now() - interval '1 second' WHERE id = v_id;
     PERFORM public.claim_outbox(100, 'worker-18');
-    v_out := public.finish_outbox(v_id, false, 'boom');
+    v_out := public.finish_outbox(v_id, false, 'boom', pg_temp.token(v_id));
     INSERT INTO schedule SELECT i, (SELECT next_attempt_at - now() FROM public.outbox_events WHERE id = v_id), v_out ->> 'status';
   END LOOP;
 END $$;
@@ -718,8 +735,9 @@ UPDATE public.outbox_events SET status = 'claimed', claimed_at = now() - interva
 SET LOCAL ROLE service_role;
 SELECT ok(public.claim_outbox(100, 'worker-18') @> jsonb_build_array(jsonb_build_object('id', (SELECT id FROM ob2), 'attempts', 3)),
   'R-10: a lease that ran out is claimed again, as a new attempt');
-SELECT is(public.finish_outbox((SELECT id FROM ob2), true, NULL) ->> 'status', 'done', 'AC-10: a success is done');
-SELECT is(public.finish_outbox((SELECT id FROM ob2), false, 'late') ->> 'status', 'done', 'AC-10: a late finish changes nothing');
+SELECT is(public.finish_outbox((SELECT id FROM ob2), true, NULL, pg_temp.token((SELECT id FROM ob2))) ->> 'status', 'done', 'AC-10: a success is done');
+SELECT is(public.finish_outbox((SELECT id FROM ob2), false, 'late', pg_temp.token((SELECT id FROM ob2))) - 'next_attempt_at',
+  jsonb_build_object('id', (SELECT id FROM ob2), 'status', 'done', 'attempts', 3, 'stale', true), 'AC-10: a late finish changes nothing');
 RESET ROLE;
 CREATE TEMP TABLE ob3 AS SELECT public.enqueue_outbox('email.send', 'email:test-18:3', '{"n": 3}', 'TR') AS id;
 GRANT SELECT ON ob3 TO authenticated, service_role;
@@ -747,6 +765,16 @@ RESET ROLE;
 SELECT is((SELECT payload FROM public.psp_events WHERE source = 'retrieve' AND event_key = 'evt-18-2'),
   '{"paymentId": "9", "x": {"itemTransactions": [{"price": "1.0"}]}}', 'R-9: every card field is stripped, at any depth, in any case');
 SELECT is((SELECT count(*)::int FROM public.psp_events WHERE event_key = 'evt-18-1'), 2, 'AC-11: one row per source and key');
+SELECT is(public.psp_payload_strip(
+  '{"paymentId": "9", "buyer": {"id": "b"}, "email": "a@b.c", "gsmNumber": "+905550000000", "identityNumber": "1",
+    "ip": "1.2.3.4", "name": "A", "Surname": "B", "contactName": "C", "shippingAddress": {"x": 1}, "registrationAddress": "y",
+    "basketItems": [{"price": "1.0", "name": "Fee"}]}'),
+  '{"paymentId": "9", "basketItems": [{"price": "1.0"}]}', 'reviews: the buyer''s personal data is stripped too (KVKK)');
+SET LOCAL ROLE service_role;
+SELECT is(pg_temp.err(format('SELECT public.record_psp_event(%L, %L, %L, %L)', 'webhook', 'evt-18-deep',
+                             repeat('[', 40) || repeat(']', 40), 'TR')),
+  'payload_too_large', 'reviews: a payload nested deeper than 32 levels is refused with a stable code');
+RESET ROLE;
 SET LOCAL ROLE service_role;
 SELECT is(pg_temp.err(format('SELECT public.record_psp_event(%L, %L, %L, %L)', 'webhook', 'evt-18-3',
                              jsonb_build_object('blob', repeat('x', 65537)), 'TR')),
@@ -783,9 +811,18 @@ SELECT throws_ok($$ SELECT id FROM public.fee_payments $$, '42501', NULL, 'AC-13
 RESET ROLE;
 
 -- ══ AC-12: the books ══════════════════════════════════════════════════════════
+SELECT is_empty(
+  $$ SELECT t.tgname FROM pg_trigger t
+      WHERE t.tgname IN ('ledger_journals_balanced', 'ledger_entries_balanced', 'fee_settings_guard')
+        AND NOT (t.tgdeferrable AND t.tginitdeferred) $$,
+  'reviews: the balance and settings checks are deferred to commit (this file runs them per statement)');
+SELECT ok((SELECT prosecdef FROM pg_proc WHERE proname = 'ledger_balanced'),
+  'reviews: the balance check is a definer function, so it runs at the relay''s commit (19 proves it)');
 SET LOCAL ROLE service_role;
 SELECT pg_temp.as_service();
-SELECT is(public.ledger_check('TR') -> 'imbalances', '[]', 'AC-12: the books balance after every path above');
+SELECT is(public.ledger_check('TR') -> 'imbalances',
+  '[{"check": "late_received_without_refund", "ref": "late:test-j1:received", "value": 1}]',
+  'AC-12: the books balance after every path above, save the test journal of AC-7, which has no late refund row');
 SELECT ok((SELECT bool_and(t ? 'currency' AND t ? 'account' AND t ? 'total') AND count(*) > 0
              FROM jsonb_array_elements(public.ledger_check('TR') -> 'totals') t),
   'AC-12: with every (currency, account) total');
@@ -794,7 +831,7 @@ SELECT is((SELECT sum((t ->> 'total')::bigint) FROM jsonb_array_elements(public.
 RESET ROLE;
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('d1');
-SELECT is(public.ledger_check('TR') -> 'imbalances', '[]', 'AC-12: an admin may run it');
+SELECT is(jsonb_array_length(public.ledger_check('TR') -> 'imbalances'), 1, 'AC-12: an admin may run it');
 SELECT pg_temp.as_user('c1');
 SELECT is(pg_temp.err($$ SELECT public.ledger_check('TR') $$), 'forbidden', 'AC-12: a customer may not');
 RESET ROLE;
@@ -938,7 +975,7 @@ SELECT is_empty(
 SET LOCAL ROLE service_role;
 SELECT pg_temp.as_service();
 SELECT is((SELECT jsonb_agg(i) FROM jsonb_array_elements(public.ledger_check('TR') -> 'imbalances') i
-            WHERE i ->> 'ref' <> pg_temp.fee(1, 'provider_fee')::text), NULL,
+            WHERE i ->> 'ref' NOT IN (pg_temp.fee(1, 'provider_fee')::text, 'late:test-j1:received')), NULL,
   'AC-14, U-2: the books balance after 600 random steps (the planted double journal aside)');
 RESET ROLE;
 
