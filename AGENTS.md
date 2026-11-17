@@ -62,7 +62,11 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 - 2026-11-18 · **07 merged** (spec 0011-07, PR #35, `980eb5b`, D169, D170): the money core in Postgres, database only. Fee
   settings, one fee formula, the commission floor, the fee frozen on the pick, seven money tables, the append only balanced
   ledger, the relay's functions; pgTAP 18 and 19. Migration in the cloud (S36). Carry overs R13; owner answers D171, D172.
-  Next: 08 (adds `payments_enabled`, D172).
+- 2026-11-17 · **08 merged** (spec 0011-08, PR #38, `05cd9e1`, D173, D174): `lib/psp` (`off` default, `fake`, an iyzico
+  slot that refuses until S1), `lib/relay`, `/api/relay` and the PSP routes, pg_cron and pg_net schedules, `payments_enabled`
+  off in both regions, a database fence on fake payments. Migration in the cloud (S38). Local gate (Actions startup
+  failure, waived). Owed: S32, S33 and the deployment check (A-1); `/architect` records D174 in the spec; 08b after S1.
+  Next: 09.
 
 ## Stack (pinned exactly)
 
@@ -108,7 +112,7 @@ from gate G3 (Hobby forbids commercial use) · an uptime monitor (Q3) · GitHub 
 | `npm run lint:rtl` | Fails on physical direction classes (`ml-`, `text-left`, …) with replacements |
 | `npm run format` / `npm run format:check` | Prettier write / check (Markdown excluded) |
 | `npm test` | Vitest: unit, lint rule, and harness tests |
-| `npm run test:e2e` | Playwright through `scripts/e2e.mjs`: resets the local database, 390px, `ar` + `tr` + `en`. `node scripts/e2e.mjs --reuse-build --serve` serves that build on the local stack (`asma-local`); `--indexable` builds and serves with the indexing switch on (`asma-indexable`). Needs local Storage: a stack started before 02 must be restarted (`npx supabase stop`), which also loads new test numbers. `E2E_PORT` moves the server off 3100 |
+| `npm run test:e2e` | Playwright through `scripts/e2e.mjs`: resets the local database, 390px, `ar` + `tr` + `en`. `node scripts/e2e.mjs --reuse-build --serve` serves that build on the local stack (`asma-local`); `--indexable` builds and serves with the indexing switch on (`asma-indexable`). Needs local Storage: a stack started before 02 must be restarted (`npx supabase stop`), which also loads new test numbers. `E2E_PORT` moves the server off 3100. Runs the fake PSP (`PSP_DRIVER=fake`, its own `RELAY_SECRET`); the local seed turns payments on for `TR` and opens the fake fence |
 | `npm run launch:gate` | Run at G3, not in CI: fails while a `[tr]` or `[draft]` marker remains (D100) |
 | `npm run guardrails` | Regression suite for the write guard |
 | `npm run db:test` | pgTAP (`supabase test db`). Needs Docker locally; always runs in CI |
