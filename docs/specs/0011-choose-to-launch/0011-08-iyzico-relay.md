@@ -9,7 +9,7 @@ Child of [0011](index.md). Follows the cross child contract there. **High risk: 
 > one isolated slot that refuses until S1 lands (B3), with its unknowns named in AC-4. S32 and S33 are needed for the
 > real route on a deployment, not for the build. New AC-0, AC-18 to AC-21; every other AC changed. Cross checked on
 > Sonnet the same day (15 findings, all applied as the rules R-1 to R-15, plus R-16 found while applying).
-> **Where a rule below and an AC differ, the rule wins.** Awaiting the owner's acceptance.
+> Accepted by the owner 2026-11-17. **Where a rule below and an AC differ, the rule wins.**
 
 ## Summary
 
