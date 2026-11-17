@@ -7,8 +7,8 @@ import { call } from './db';
 
 /**
  * The browser back from the card page (spec 0011-08 AC-8, R-1). Store the fields and queue a check; change no
- * money state. Answers where to send the browser: the attempt's pay page, or home for an unknown token. The
- * token is never logged.
+ * money state. Answers where to send the browser: the attempt's return page (spec 0011-09 AC-12, A-3), which
+ * waits for the verified result, or home for an unknown token. The token is never logged.
  */
 
 export const CALLBACK_LIMIT_BYTES = 8 * 1024;
@@ -34,7 +34,7 @@ export async function handleCallback(db: Db, fields: Record<string, string>): Pr
       return '/';
     }
     const locale = ['ar', 'tr', 'en'].includes(found.locale) ? found.locale : 'tr';
-    return `/${locale}/pay/${found.attempt_id}`;
+    return `/${locale}/pay/${found.attempt_id}/return`;
   } catch {
     // reconcile_pending checks a ready attempt within 15 minutes anyway.
     log.error('relay_task_failed');

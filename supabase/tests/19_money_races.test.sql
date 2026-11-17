@@ -5,8 +5,8 @@
 -- start race-19-, and nothing else uses either. The money tables refuse a delete even as postgres, so the
 -- clean up lifts their triggers inside one transaction, as the owner, and names each table as a value.
 --
--- The accept check of 07 refuses every payment (R-6). This file commits a version that accepts a pending
--- fee on a SELECTED request, as 09 will, and its clean up puts the 07 stub back.
+-- Since 09 (spec 0011-09 AC-5) the real accept check runs here: a pending commission on a SELECTED request
+-- whose pick stands, inside the payment window. An accepted payment moves the request to COMMISSION_PAID.
 --
 -- Run: supabase test db
 
@@ -23,9 +23,6 @@ CREATE FUNCTION pg_temp.conn() RETURNS text LANGUAGE sql STABLE AS $$
 CREATE FUNCTION pg_temp.clean_up() RETURNS text LANGUAGE sql AS $fn$
   SELECT extensions.dblink_exec(pg_temp.conn(), $$
     BEGIN;
-    CREATE OR REPLACE FUNCTION public.accept_commission(p_fee uuid, p_attempt uuid)
-      RETURNS boolean LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS 'select false';
-    REVOKE ALL ON FUNCTION public.accept_commission(uuid, uuid) FROM public, anon, authenticated, service_role;
     CREATE TEMP TABLE race_journals ON COMMIT DROP AS
       SELECT id FROM public.ledger_journals
        WHERE idempotency_key LIKE '%race-19-%'
@@ -55,8 +52,8 @@ CREATE FUNCTION pg_temp.clean_up() RETURNS text LANGUAGE sql AS $fn$
        OR entity_id LIKE '00000000-0000-0000-0000-0000001900%'
        OR new_value::text LIKE '%00000000-0000-0000-0000-0000001900%';
     ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
-    UPDATE public.requests SET status = CASE WHEN status = 'SELECTED' THEN 'OPEN' ELSE status END,
-           selected_application_id = NULL, selected_at = NULL, payment_deadline = NULL
+    UPDATE public.requests SET status = CASE WHEN status IN ('SELECTED', 'COMMISSION_PAID') THEN 'OPEN' ELSE status END,
+           selected_application_id = NULL, selected_at = NULL, payment_deadline = NULL, fee_deadline = NULL
      WHERE customer_id::text LIKE '00000000-0000-0000-0000-0000001900%' AND selected_application_id IS NOT NULL;
     ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
     ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
@@ -105,13 +102,8 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000001900c1", "role": "authenticated"}', true);
   SELECT public.choose_provider(('00000000-0000-0000-0000-0000001900e' || g)::uuid, ('00000000-0000-0000-0000-0000001900f' || g)::uuid)
     FROM generate_series(1, 6) g;
-  SELECT public.start_checkout(public.open_fee(('00000000-0000-0000-0000-0000001900e' || g)::uuid, 'commission'))
+  SELECT public.start_checkout(public.open_fee(('00000000-0000-0000-0000-0000001900e' || g)::uuid, 'commission'), 'tr', NULL)
     FROM generate_series(1, 6) g;
-  CREATE OR REPLACE FUNCTION public.accept_commission(p_fee uuid, p_attempt uuid) RETURNS boolean
-    LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $f$
-    SELECT EXISTS (SELECT 1 FROM public.fee_payments f JOIN public.requests r ON r.id = f.request_id
-                    WHERE f.id = p_fee AND f.status = 'pending' AND r.status = 'SELECTED') $f$;
-  REVOKE ALL ON FUNCTION public.accept_commission(uuid, uuid) FROM public, anon, authenticated, service_role;
   COMMIT; $$);
 
 CREATE FUNCTION pg_temp.fee(p text) RETURNS text LANGUAGE sql AS $$
@@ -166,6 +158,10 @@ SELECT is(pg_temp.one($$ SELECT count(*)::text FROM public.fee_refunds WHERE psp
   'AC-8: and is not booked as a late payment');
 
 -- ── a cancel first: the payment that waits goes late ─────────────────────────
+-- Since 09 a cancel is refused while a young attempt is open (AC-2), so the card page of E3 failed first.
+SELECT pg_temp.one($$ SELECT public.mark_checkout_failed(a.id, 'psp_failed')::text FROM public.checkout_attempts a
+                        JOIN public.fee_payments f ON f.id = a.fee_payment_id
+                       WHERE f.request_id = '00000000-0000-0000-0000-0000001900e3' $$);
 SELECT extensions.dblink_exec('a', 'RESET ROLE');
 SELECT extensions.dblink_exec('a', 'SET ROLE authenticated');
 SELECT extensions.dblink_exec('a', $$ SET request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000001900c1", "role": "authenticated"}' $$);
@@ -192,12 +188,13 @@ SELECT extensions.dblink_send_query('b', $$ SELECT public.cancel_request('000000
 SELECT pg_sleep(0.3);
 SELECT is(extensions.dblink_is_busy('b'), 1, 'AC-14: the cancel waits on the request row');
 SELECT extensions.dblink_exec('a', 'COMMIT');
-SELECT is((SELECT r FROM extensions.dblink_get_result('b', false) AS t(r text)), '{"status": "ok"}',
-  'AC-14: and then finishes, in one order, with no deadlock (09 and 12 decide what a cancel does to a paid commission)');
+SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
+SELECT ok(extensions.dblink_error_message('b') LIKE '%not_cancellable%',
+  'AC-14: and then refuses not_cancellable, in one order, with no deadlock (09: the request is COMMISSION_PAID; 12 adds its refund path)');
 SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
 SELECT is(pg_temp.one($$ SELECT r.status || ' ' || f.status FROM public.requests r JOIN public.fee_payments f ON f.request_id = r.id
                           WHERE r.id = '00000000-0000-0000-0000-0000001900e4' $$),
-  'CANCELLED paid', 'AC-14: the request is cancelled and its commission stays paid, for 12 to refund');
+  'COMMISSION_PAID paid', 'AC-14: the request moved to COMMISSION_PAID and its commission is paid');
 
 -- ── one PSP payment for two fees on two requests at once: never booked twice ─
 SELECT extensions.dblink_exec('b', 'RESET ROLE');

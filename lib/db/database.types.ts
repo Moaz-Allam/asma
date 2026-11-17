@@ -34,6 +34,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      action_counters: {
+        Row: {
+          action: string
+          count: number
+          created_at: string
+          region: string
+          subject_id: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          count?: number
+          created_at?: string
+          region: string
+          subject_id: string
+          window_start: string
+        }
+        Update: {
+          action?: string
+          count?: number
+          created_at?: string
+          region?: string
+          subject_id?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_counters_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       addons: {
         Row: {
           active: boolean
@@ -1418,6 +1453,7 @@ export type Database = {
           created_at: string
           currency: string
           customer_id: string
+          fee_deadline: string | null
           fixed_price: number
           id: string
           notes: string | null
@@ -1445,6 +1481,7 @@ export type Database = {
           created_at?: string
           currency: string
           customer_id: string
+          fee_deadline?: string | null
           fixed_price: number
           id?: string
           notes?: string | null
@@ -1472,6 +1509,7 @@ export type Database = {
           created_at?: string
           currency?: string
           customer_id?: string
+          fee_deadline?: string | null
           fixed_price?: number
           id?: string
           notes?: string | null
@@ -1755,6 +1793,7 @@ export type Database = {
       catalog_trim: { Args: { p_text: string }; Returns: string }
       check_new_user: { Args: { event: Json }; Returns: Json }
       checkout_context: { Args: { p_attempt_id: string }; Returns: Json }
+      checkout_limit: { Args: { p_region: string }; Returns: number }
       checkout_settings: { Args: { p_region: string }; Returns: Json }
       choose_provider: {
         Args: { p_application_id: string; p_request_id: string }
@@ -1765,6 +1804,7 @@ export type Database = {
         Args: { p_limit: number; p_worker: string }
         Returns: Json
       }
+      commission_settled: { Args: { p_request_id: string }; Returns: string }
       complete_onboarding: {
         Args: {
           p_accept_terms: boolean
@@ -1827,6 +1867,7 @@ export type Database = {
         Args: { p_outcome: Json; p_token: string }
         Returns: undefined
       }
+      fake_psp_token: { Args: { p_key: string }; Returns: string }
       fee_amount: {
         Args: { p_price: number; p_settings: Json }
         Returns: number
@@ -1886,6 +1927,8 @@ export type Database = {
       mark_refund_failed: { Args: { p_fee_refund_id: string }; Returns: Json }
       message_digit_limit: { Args: never; Returns: number }
       message_has_contact_info: { Args: { p_text: string }; Returns: boolean }
+      my_checkout: { Args: { p_attempt_id: string }; Returns: Json }
+      my_receipt: { Args: { p_receipt_id: string }; Returns: Json }
       offer_card: {
         Args: {
           p_application: Database["public"]["Tables"]["applications"]["Row"]
@@ -1899,6 +1942,10 @@ export type Database = {
         Returns: string
       }
       outbox_health: { Args: never; Returns: Json }
+      pay_commission: {
+        Args: { p_locale: string; p_payer_ip: string; p_request_id: string }
+        Returns: Json
+      }
       payments_enabled: { Args: { p_region: string }; Returns: boolean }
       phone_region: { Args: { p_phone: string }; Returns: string }
       post_journal: {
@@ -2250,12 +2297,20 @@ export type Database = {
         }
         Returns: Json
       }
-      start_checkout: { Args: { p_fee_payment_id: string }; Returns: string }
+      start_checkout: {
+        Args: {
+          p_fee_payment_id: string
+          p_locale: string
+          p_payer_ip: unknown
+        }
+        Returns: string
+      }
       submit_provider_file: { Args: never; Returns: Json }
       suspend_provider: {
         Args: { p_provider_id: string; p_reason: string }
         Returns: Json
       }
+      unlock_settings: { Args: { p_region: string }; Returns: Json }
       work_days_ok: { Args: { p_days: number[] }; Returns: boolean }
     }
     Enums: {

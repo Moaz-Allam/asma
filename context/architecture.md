@@ -1676,6 +1676,9 @@ Migration `money_core`. Database only: no screen, no PSP call. This section is t
   `late:<psp_payment_id>:received`), a `late` refund and its `refund.request` outbox row. Refunds: refunds
   account `+A`, `psp_clearing −A` (`fee:<id>:refund`), or `refunds_due +A` (`late:<psp_payment_id>:refund`).
   A missing or out of range PSP fee posts 0 and alerts `reconcile_mismatch`.
+- **The commission side of the reveal (09, D171, spec 0011-09 R-4).** It is "`requests.commission_amount = 0` or
+  the commission fee `paid`": a commission of 0 reaches `COMMISSION_PAID` with no fee row. 10's unlock check and
+  rule 2's contact check read this predicate, never "a paid commission row exists".
 
 ## 40. Updated invariants
 

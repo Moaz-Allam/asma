@@ -25,6 +25,8 @@ export const CLIENT_NAMESPACES = [
   'Requests',
   // Spec 0009 AC-22: the setup form and the apply form of position 05.
   'ProviderFeed',
+  // Spec 0011-09 AC-11, AC-12: the pay and return pages poll in the browser.
+  'Payment',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */

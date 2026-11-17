@@ -9,7 +9,10 @@ import { isAllowedCheckoutUrl } from '@/lib/payments/checkout-url';
 import { isPspError, type CheckoutLocale, type FeeKind, type PspAdapter } from '@/lib/psp';
 import { isRegion, type Currency, type Region } from '@/lib/region';
 
-import { call } from './db';
+import { call, RelayDbError, type DbCode } from './db';
+
+/** Spec 0011-09 R-2: the settings refusals of apply_fee_paid that never become a late refund. */
+const SETTINGS_CODES: readonly DbCode[] = ['checkout_settings_invalid', 'unlock_settings_invalid'];
 
 /**
  * The three outbox kinds the relay carries out (spec 0011-08 AC-7, AC-10, AC-11). Each handler is safe to run
@@ -55,6 +58,7 @@ type Context = {
 };
 
 type ApplyResult = {
+  status?: 'paid' | 'late' | 'refunded';
   alerts?: unknown;
   fee_payment_id?: string;
   fee_refund_id?: string | null;
@@ -206,15 +210,31 @@ export async function verifyPayment(db: Db, psp: PspAdapter, row: OutboxRow): Pr
       raiseAlert('reconcile_mismatch', { recordId: ctx.fee_payment_id, region: ctx.region });
       return DONE;
     }
-    const applied = await call<ApplyResult>(db, 'apply_fee_paid', {
-      p_fee_payment_id: ctx.fee_payment_id,
-      p_attempt_id: attemptId,
-      p_psp_payment_id: result.pspPaymentId,
-      p_amount: result.amount,
-      p_currency: result.currency,
-      p_psp_fee: result.pspFee,
-    });
+    let applied: ApplyResult;
+    try {
+      applied = await call<ApplyResult>(db, 'apply_fee_paid', {
+        p_fee_payment_id: ctx.fee_payment_id,
+        p_attempt_id: attemptId,
+        p_psp_payment_id: result.pspPaymentId,
+        p_amount: result.amount,
+        p_currency: result.currency,
+        p_psp_fee: result.pspFee,
+      });
+    } catch (error) {
+      // Spec 0011-09 R-2: a setting the accept check or the transition reads is missing. The money stays
+      // untouched; alert at once (and when the row fails) and retry by the schedule until it is fixed.
+      if (error instanceof RelayDbError && SETTINGS_CODES.includes(error.code)) {
+        if (row.attempts === 1 || row.attempts >= MAX_TRIES) {
+          raiseAlert(error.code as AlertReason, { recordId: ctx.fee_payment_id, region: ctx.region });
+        }
+        return retry(error.code);
+      }
+      throw error;
+    }
     raiseApplyAlerts(applied, { fee: ctx.fee_payment_id }, ctx.region);
+    // Spec 0011-09 AC-8, A-7: a late payment closes its attempt, so the pages stop waiting. A succeeded or
+    // already failed attempt is left as it is (R-3); a replay changes nothing.
+    if (applied.status === 'late') await fail(db, attemptId, 'late_payment');
     return DONE;
   }
   if (unfinished(ctx.attempt_status)) return DONE;

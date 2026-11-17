@@ -198,9 +198,15 @@ describe('payment.verify (AC-10, R-2, R-13)', () => {
       checkout_context: context({ attempt_status: 'ready', psp_token: token }),
       record_psp_event: { new: true },
       apply_fee_paid: { status: 'late', alerts: ['late_payment_refunded'], replayed: true },
+      mark_checkout_failed: { changed: false, status: 'failed' },
     });
     expect(await verifyPayment(db, psp, verify())).toEqual({ ok: true });
-    expect(names()).toEqual(['checkout_context', 'record_psp_event', 'apply_fee_paid']);
+    expect(names()).toEqual([
+      'checkout_context',
+      'record_psp_event',
+      'apply_fee_paid',
+      'mark_checkout_failed',
+    ]);
     expect(calls[1]?.args.p_event_key).toBe(`retrieve:${ATTEMPT}:paid:fp1_${ATTEMPT}_10000_TRY`);
     expect(calls[2]?.args).toEqual({
       p_fee_payment_id: FEE,
@@ -211,6 +217,50 @@ describe('payment.verify (AC-10, R-2, R-13)', () => {
       p_psp_fee: 300,
     });
     expect(alerts()).toEqual([['late_payment_refunded', FEE]]);
+    // Spec 0011-09 AC-8: the late payment closes its attempt, so the return page stops waiting.
+    expect(calls[3]?.args).toEqual({ p_attempt_id: ATTEMPT, p_reason: 'late_payment' });
+  });
+
+  it('an accepted payment leaves the attempt to apply_fee_paid (spec 0011-09 AC-8)', async () => {
+    const { psp, token } = await paidToken();
+    const { db, names } = scriptedDb({
+      checkout_context: context({ attempt_status: 'ready', psp_token: token }),
+      record_psp_event: { new: true },
+      apply_fee_paid: { status: 'paid', alerts: [], replayed: false },
+    });
+    expect(await verifyPayment(db, psp, verify())).toEqual({ ok: true });
+    expect(names()).toEqual(['checkout_context', 'record_psp_event', 'apply_fee_paid']);
+    expect(alerts()).toEqual([]);
+  });
+
+  it.each([
+    ['checkout_settings_invalid', 1, true],
+    ['checkout_settings_invalid', 3, false],
+    ['unlock_settings_invalid', 1, true],
+    ['unlock_settings_invalid', 6, true],
+  ])(
+    'a missing setting (%s) on try %i retries, alerts on the first and the last try, never refunds (spec 0011-09 R-2)',
+    async (code, attempts, alerted) => {
+      const { psp, token } = await paidToken();
+      const { db, names } = scriptedDb({
+        checkout_context: context({ attempt_status: 'ready', psp_token: token }),
+        record_psp_event: { new: true },
+        apply_fee_paid: new Error(code),
+      });
+      expect(await verifyPayment(db, psp, verify(false, attempts))).toEqual({ ok: false, error: code });
+      expect(names()).not.toContain('mark_checkout_failed');
+      expect(alerts()).toEqual(alerted ? [[code, FEE]] : []);
+    },
+  );
+
+  it('any other refusal of apply_fee_paid goes to the drain, as before', async () => {
+    const { psp, token } = await paidToken();
+    const { db } = scriptedDb({
+      checkout_context: context({ attempt_status: 'ready', psp_token: token }),
+      record_psp_event: { new: true },
+      apply_fee_paid: new Error('idempotency_conflict'),
+    });
+    await expect(verifyPayment(db, psp, verify())).rejects.toMatchObject({ code: 'idempotency_conflict' });
   });
 
   it('a paid retrieve whose echoed ids differ is never applied, and alerts', async () => {

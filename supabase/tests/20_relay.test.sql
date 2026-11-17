@@ -148,7 +148,7 @@ SELECT is(pg_temp.as_role('authenticated', 'SELECT 1 FROM public.fake_psp_outcom
 
 -- ══ AC-6: start_checkout still queues, and kicks; relay_kick without Vault does nothing ══
 CREATE TEMP TABLE f1 AS SELECT pg_temp.fee(1) AS id;
-CREATE TEMP TABLE a1 AS SELECT public.start_checkout((SELECT id FROM f1)) AS id;
+CREATE TEMP TABLE a1 AS SELECT public.start_checkout((SELECT id FROM f1), 'tr', NULL) AS id;
 SELECT is((SELECT count(*)::int FROM public.outbox_events WHERE idempotency_key = 'checkout:' || (SELECT id FROM a1) || ':init'), 1,
   'AC-6: start_checkout still queues its initialize row');
 SELECT is((SELECT count(*)::int FROM net.http_request_queue WHERE convert_from(body, 'UTF8') LIKE '%drain%'), 0,
@@ -165,7 +165,7 @@ SELECT results_eq(
        FROM net.http_request_queue q WHERE q.id = (SELECT id FROM k1) $$,
   $$ VALUES ('https://relay.example.test/api/relay'::text, '{"task": "heartbeat"}'::jsonb, 'relay-test-secret'::text, 10000) $$,
   'AC-6, R-7: the kick posts {task} with the secret header and a 10 second timeout');
-CREATE TEMP TABLE a1b AS SELECT public.start_checkout(pg_temp.fee(2)) AS id;
+CREATE TEMP TABLE a1b AS SELECT public.start_checkout(pg_temp.fee(2), 'tr', NULL) AS id;
 SELECT ok(EXISTS (SELECT 1 FROM net.http_request_queue q WHERE convert_from(q.body, 'UTF8')::jsonb = '{"task": "drain"}'),
   'AC-6: start_checkout kicks a drain');
 SELECT vault.update_secret((SELECT id FROM vault.secrets WHERE name = 'relay_url'), 'http://relay.example.test/api/relay');
@@ -233,7 +233,7 @@ SELECT is(pg_temp.err(format('SELECT public.mark_checkout_failed(%L, %L)', (SELE
   'validation_failed', 'AC-20: a reason outside the closed list is refused');
 SELECT is(pg_temp.err(format('SELECT public.mark_checkout_failed(%L, %L)', gen_random_uuid(), 'psp_failed')),
   'not_found', 'AC-20: an unknown attempt');
-CREATE TEMP TABLE a2 AS SELECT public.start_checkout(pg_temp.fee(3)) AS id;
+CREATE TEMP TABLE a2 AS SELECT public.start_checkout(pg_temp.fee(3), 'tr', NULL) AS id;
 SELECT is(public.mark_checkout_failed((SELECT id FROM a2), 'fee_not_pending'),
   '{"changed": true, "status": "failed"}'::jsonb, 'R-4: queued to failed (fee_not_pending)');
 SELECT results_eq(
@@ -249,7 +249,7 @@ SELECT is(public.mark_checkout_failed((SELECT id FROM a3), 'init_failed'),
   '{"changed": false, "status": "succeeded"}'::jsonb, 'R-9: succeeded is never overwritten');
 SELECT is(public.abandon_checkout((SELECT id FROM a3)),
   '{"changed": false, "status": "succeeded"}'::jsonb, 'R-9: abandon never touches a succeeded attempt');
-CREATE TEMP TABLE a4 AS SELECT public.start_checkout(pg_temp.fee(5)) AS id;
+CREATE TEMP TABLE a4 AS SELECT public.start_checkout(pg_temp.fee(5), 'tr', NULL) AS id;
 SELECT is(public.abandon_checkout((SELECT id FROM a4)),
   '{"changed": false, "status": "queued"}'::jsonb, 'R-2: abandon acts on ready only');
 SELECT is(public.abandon_checkout((SELECT id FROM a1b)),
@@ -259,7 +259,7 @@ SELECT is(public.abandon_checkout((SELECT id FROM a1b)),
 SELECT is(pg_temp.err(format('SELECT public.abandon_checkout(%L)', gen_random_uuid())), 'not_found', 'AC-20: an unknown attempt');
 
 -- ══ AC-8, R-1, R-6: psp_callback ═══════════════════════════════════════════════
-CREATE TEMP TABLE a5 AS SELECT public.start_checkout(pg_temp.fee(6)) AS id;
+CREATE TEMP TABLE a5 AS SELECT public.start_checkout(pg_temp.fee(6), 'tr', NULL) AS id;
 SELECT public.mark_checkout_ready((SELECT id FROM a5), 'tok-5', 'https://pay.example.test/p/tok-5');
 UPDATE public.checkout_attempts SET locale = 'en' WHERE id = (SELECT id FROM a5);
 SELECT is(public.psp_callback('tok-unknown', '{"token": "tok-unknown"}'), NULL, 'AC-8: an unknown token answers null');

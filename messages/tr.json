@@ -1053,7 +1053,15 @@
       "not_choosable": "[tr] This request can no longer take a choice. The page shows where it stands now.",
       "offer_unavailable": "[tr] That offer is no longer available. The list is updated.",
       "choose_settings_invalid": "[tr] Choosing is not possible right now. Please try again later.",
-      "fee_settings_invalid": "[tr] Prices cannot be worked out right now. Please try again later."
+      "fee_settings_invalid": "[tr] Prices cannot be worked out right now. Please try again later.",
+      "invalid_state": "[tr] This request cannot be paid now. The page shows where it stands.",
+      "already_paid": "[tr] The commission is already paid.",
+      "deadline_passed": "[tr] The payment time ended.",
+      "payments_disabled": "[tr] Payments are paused. Try again later.",
+      "too_many_checkouts": "[tr] Too many payment tries. Try again within the hour.",
+      "checkout_open": "[tr] A card payment is in progress. Try again in a few minutes.",
+      "checkout_settings_invalid": "[tr] Payments are not possible right now. Please try again later.",
+      "unlock_settings_invalid": "[tr] Payments are not possible right now. Please try again later."
     },
     "offers": {
       "title": "[tr] {count, plural, =0 {No offers yet} one {# offer on your request} other {# offers on your request}}",
@@ -1081,17 +1089,26 @@
     },
     "next": {
       "title": "[tr] Next: pay the commission",
-      "commission": "[tr] Commission, online",
-      "cash": "[tr] To the provider in cash, after the service",
+      "price": "[tr] Job price",
+      "commission": "[tr] Pay now online",
+      "cash": "[tr] Pay in cash to the provider after the job",
       "deadline": "[tr] Pay by {date}",
-      "soon": "[tr] Payment opens here soon."
+      "pay": "[tr] Pay {amount}",
+      "continue": "[tr] Continue",
+      "cardEnglish": "[tr] The card page opens in English.",
+      "ended": "[tr] The payment time ended.",
+      "paidTitle": "[tr] Commission paid",
+      "waiting": "[tr] Waiting for the provider to pay their fee, until {date}.",
+      "receipt": "[tr] See the receipt"
     },
     "timeline": {
       "title": "[tr] Progress",
       "posted": "[tr] Posted",
       "chosen": "[tr] Provider chosen",
       "cancelled": "[tr] Cancelled",
-      "payment": "[tr] Commission payment"
+      "payment": "[tr] Commission payment",
+      "commissionPaid": "[tr] Commission paid",
+      "providerFee": "[tr] Provider fee"
     },
     "cancelSelected": "[tr] The provider you chose will see that their offer is cancelled."
   },
@@ -1283,6 +1300,49 @@
       "duplicate": "[tr] Paid twice",
       "mismatch": "[tr] Paid one unit more",
       "webhook_only": "[tr] Webhook only, no return"
+    }
+  },
+  "Payment": {
+    "agreement": "[draft] [tr] Before you pay: the platform may take legal action if one of the two parties does something wrong. Read the <terms>terms</terms>.",
+    "opening": "[tr] Opening the secure card page",
+    "openingBody": "[tr] Please wait. Keep this page open.",
+    "slow": "[tr] The card page is taking longer than usual. Try again in a few minutes.",
+    "openFailed": "[tr] The card page could not be opened.",
+    "tryAgain": "[tr] Try again",
+    "pendingTitle": "[tr] Checking your payment",
+    "pendingBody": "[tr] We are waiting for iyzico to confirm. This takes a few seconds.",
+    "pendingLong": "[tr] We will update this page when iyzico confirms.",
+    "refresh": "[tr] Refresh",
+    "successTitle": "[tr] Payment received",
+    "successBody": "[tr] Your commission is paid.",
+    "secondRefunded": "[tr] A second payment was refunded.",
+    "lateTitle": "[tr] Payment refunded",
+    "lateBody": "[tr] Your payment came after the time ended. It is refunded in full.",
+    "refundedBody": "[tr] This payment is refunded in full.",
+    "failedTitle": "[tr] Payment not completed",
+    "failedBody": "[tr] The payment did not go through.",
+    "ended": "[tr] The payment time ended.",
+    "toRequest": "[tr] Back to the request",
+    "toReceipt": "[tr] See the receipt",
+    "receipt": {
+      "title": "[tr] Receipt",
+      "number": "[tr] Receipt number",
+      "kind": "[tr] For",
+      "kinds": {
+        "commission": "[tr] Commission",
+        "provider_fee": "[tr] Provider fee"
+      },
+      "amount": "[tr] Amount",
+      "status": "[tr] Status",
+      "statuses": {
+        "paid": "[tr] Paid",
+        "refunded": "[tr] Refunded"
+      },
+      "paidAt": "[tr] Paid on",
+      "service": "[tr] Service",
+      "date": "[tr] Service date",
+      "notInvoice": "[tr] This is a payment receipt, not a tax invoice.",
+      "toRequest": "[tr] Back to the request"
     }
   }
 }

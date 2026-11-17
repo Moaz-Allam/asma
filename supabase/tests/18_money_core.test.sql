@@ -354,7 +354,7 @@ SELECT is_empty(
   'every money function with an API grant is a definer function');
 SELECT ok(NOT public.accept_commission(gen_random_uuid(), gen_random_uuid())
           AND NOT public.accept_provider_fee(gen_random_uuid(), gen_random_uuid()),
-  'R-6: 07 ships both accept checks returning false');
+  'R-6: neither accept check accepts an unknown fee');
 
 -- ══ AC-4, R-7: fee rows ═══════════════════════════════════════════════════════
 SELECT is(pg_temp.err(format('SELECT public.open_fee(%L, %L)', pg_temp.r(3), 'commission')), 'invalid_state',
@@ -410,7 +410,7 @@ SELECT is(pg_temp.try_write('delete', 'fee_payments'), 'fee_immutable', 'R-7: a 
 SELECT is(pg_temp.try_write('truncate', 'fee_payments'), 'fee_immutable', 'R-7: nor truncated');
 
 -- ══ AC-5: checkout attempts ══════════════════════════════════════════════════
-CREATE TEMP TABLE at5 AS SELECT public.start_checkout((SELECT id FROM f5)) AS id;
+CREATE TEMP TABLE at5 AS SELECT public.start_checkout((SELECT id FROM f5), 'tr', NULL) AS id;
 GRANT SELECT ON at5 TO authenticated, service_role;
 SELECT results_eq(
   $$ SELECT a.fee_payment_id, a.status, a.region, o.kind, o.status, o.payload, o.attempts
@@ -419,10 +419,10 @@ SELECT results_eq(
   $$ VALUES ((SELECT id FROM f5), 'queued', 'TR', 'checkout.initialize', 'pending',
              jsonb_build_object('attempt_id', (SELECT id FROM at5), 'fee_payment_id', (SELECT id FROM f5)), 0) $$,
   'AC-5: a queued attempt and its outbox row, keyed by the attempt, in one call');
-SELECT is(pg_temp.err(format('SELECT public.start_checkout(%L)', gen_random_uuid())), 'not_found', 'AC-5: an unknown fee');
-SELECT public.start_checkout(pg_temp.fee(4, 'commission'));
-SELECT public.start_checkout(pg_temp.fee(6, 'commission'));
-SELECT public.start_checkout(pg_temp.fee(1, 'provider_fee'));
+SELECT is(pg_temp.err(format('SELECT public.start_checkout(%L, ''tr'', NULL)', gen_random_uuid())), 'not_found', 'AC-5: an unknown fee');
+SELECT public.start_checkout(pg_temp.fee(4, 'commission'), 'tr', NULL);
+SELECT public.start_checkout(pg_temp.fee(6, 'commission'), 'tr', NULL);
+SELECT public.start_checkout(pg_temp.fee(1, 'provider_fee'), 'tr', NULL);
 CREATE FUNCTION pg_temp.att(p_fee uuid) RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER AS $$
   SELECT id FROM public.checkout_attempts WHERE fee_payment_id = p_fee ORDER BY started_at, id LIMIT 1 $$;
 GRANT EXECUTE ON FUNCTION pg_temp.att(uuid) TO service_role;
@@ -480,7 +480,13 @@ SELECT is(pg_temp.try_write('update', 'ledger_journals'), 'ledger_append_only', 
 SELECT is(pg_temp.try_write('delete', 'ledger_journals'), 'ledger_append_only', 'AC-6, rule 5: nor deleted');
 
 -- ══ AC-8: apply_fee_paid ═════════════════════════════════════════════════════
--- With the stub of 07 every payment goes the late path (R-6).
+-- A payment after the window goes the late path (09's accept check, spec 0011-09 AC-5): R5's payment window
+-- is moved into the past here, with the request guard lifted inside this test only, so the attempt started
+-- after the deadline.
+ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
+UPDATE public.requests SET selected_at = now() - interval '2 days', payment_deadline = now() - interval '1 day'
+ WHERE id = pg_temp.r(5);
+ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
 SET LOCAL ROLE service_role;
 CREATE TEMP TABLE p1 AS SELECT public.apply_fee_paid((SELECT id FROM f5), (SELECT id FROM at5), 'pay-18-p1', 30000, 'TRY', 900) AS j;
 GRANT SELECT ON p1 TO authenticated, service_role;
@@ -489,7 +495,7 @@ SELECT is((SELECT j - 'journal_id' - 'fee_refund_id' FROM p1),
   jsonb_build_object('status', 'late', 'fee_payment_id', (SELECT id FROM f5), 'attempt_id', (SELECT id FROM at5),
                      'psp_payment_id', 'pay-18-p1', 'amount', 30000, 'currency', 'TRY', 'psp_fee', 900,
                      'alerts', '["late_payment_refunded"]'::jsonb, 'replayed', false),
-  'AC-8, R-6: not accepted: late, with the alert');
+  'AC-8, R-6: not accepted (after the window): late, with the alert');
 SELECT results_eq($$ SELECT status, psp_payment_id FROM public.fee_payments WHERE id = (SELECT id FROM f5) $$,
   $$ VALUES ('pending', NULL::text) $$, 'AC-8: the fee stays as it was');
 SELECT results_eq(
@@ -611,7 +617,7 @@ SELECT is(pg_temp.err(format('SELECT public.apply_fee_paid(%L, %L, %L, 10000, %L
   'validation_failed', 'AC-8: an empty PSP payment id');
 RESET ROLE;
 SELECT is((SELECT status FROM public.fee_payments WHERE id = pg_temp.fee(6, 'commission')), 'pending', 'AC-8: no refusal changed the fee');
-SELECT is(pg_temp.err(format('SELECT public.start_checkout(%L)', (SELECT id FROM f5))), 'invalid_state', 'AC-5: a paid fee opens no new attempt');
+SELECT is(pg_temp.err(format('SELECT public.start_checkout(%L, ''tr'', NULL)', (SELECT id FROM f5))), 'invalid_state', 'AC-5: a paid fee opens no new attempt');
 
 -- ══ AC-9: apply_fee_refunded ═════════════════════════════════════════════════
 SET LOCAL ROLE service_role;
@@ -894,7 +900,7 @@ BEGIN
         PERFORM public.open_fee(v_req, 'provider_fee');
       ELSIF v_op = 2 THEN
         SELECT * INTO v_fee FROM public.fee_payments WHERE request_id = v_req ORDER BY random() LIMIT 1;
-        IF found THEN PERFORM public.start_checkout(v_fee.id); END IF;
+        IF found THEN PERFORM public.start_checkout(v_fee.id, 'tr', NULL); END IF;
       ELSIF v_op IN (3, 4) THEN
         -- A payment: usually the fee's figures, sometimes a wrong amount or currency, sometimes no PSP fee.
         SELECT f.* INTO v_fee FROM public.fee_payments f WHERE f.request_id = v_req ORDER BY random() LIMIT 1;

@@ -9,7 +9,8 @@ Child of [0011](index.md). Follows the cross child contract there. **High risk: 
 > one isolated slot that refuses until S1 lands (B3), with its unknowns named in AC-4. S32 and S33 are needed for the
 > real route on a deployment, not for the build. New AC-0, AC-18 to AC-21; every other AC changed. Cross checked on
 > Sonnet the same day (15 findings, all applied as the rules R-1 to R-15, plus R-16 found while applying).
-> Accepted by the owner 2026-11-17. **Where a rule below and an AC differ, the rule wins.**
+> Accepted by the owner 2026-11-17. **Where a rule below and an AC differ, the rule wins.** The forms 08 was built
+> with (D174) are recorded in *As built* below, which wins over both.
 
 ## Summary
 
@@ -265,6 +266,41 @@ found while applying them. **A rule wins over an AC and over the author notes.**
   to 100 characters) per region, with row checks under the `pricing_settings_guard` pattern; a missing or malformed key
   makes its reader refuse `checkout_settings_invalid` and alert. This replaces the null seed in the value sourcing.
 
+## As built (D174, recorded 2026-11-17)
+
+08 was built, verified and reviewed twice (`docs/reviews/2026-11-17-feat-08-iyzico-relay*.md`). These forms differ from
+the text above; **each wins over the AC or rule it names.**
+
+- **B-1 (AC-9, AC-20).** `psp_webhook(p_event_key, p_token, p_psp_payment_id, p_payload, p_home_region)`: the fifth
+  parameter is the adapter's home region, used when neither an attempt (by token) nor a fee or refund (by PSP payment id)
+  names the region. A code that is not a region refuses `validation_failed`.
+- **B-2 (AC-5, R-7, the API table).** `/api/relay` answers 202 `{ accepted }` once the secret and the body pass, then runs
+  the task inside `after()`. Every method but `POST` answers 404.
+- **B-3 (R-3).** `drain` stops claiming at 25 seconds and cuts a handler at 30 seconds, because R-3's 40 and 60 exceed
+  `maxDuration` 60.
+- **B-4 (AC-12, R-1, R-10).** A check queued by `reconcile_pending` carries `origin: reconcile` in its payload; when it
+  retrieves `pending` it finishes instead of retrying, because the next 15 minute window asks again. No check is queued
+  for an attempt started more than 26 hours ago.
+- **B-5 (R-8).** A payer's IP is cleared 2 hours after the attempt started or finished, whichever comes first.
+- **B-6 (R-12).** `outbox_health` itself marks the refund of a failed `refund.request` row `failed`
+  (`mark_refund_failed`, each in its own exception block, so one error never stops the rest).
+- **B-7 (AC-6, AC-8, AC-9, AC-12).** The relay is woken only for new work: `psp_callback` and `psp_webhook` kick it only
+  when their event is new, `reconcile_pending` only when it queued at least one check.
+- **B-8 (AC-15).** The fake's payment ids are `fp<n>_<attempt_id>_<amount>_<currency>` (`n` is 1, or 2 for the
+  duplicate): the attempt id, never the token. Its webhook secret is derived from `RELAY_SECRET`, not a fixed test secret.
+- **B-9 (the fake fence, new).** Triggers on `fee_payments` and `fee_refunds` refuse a `psp_payment_id` starting `fp1_`
+  or `fp2_` with `fake_payment_refused` unless the Vault secret `fake_psp_allowed` is `true`. Only the local seed sets it;
+  in the cloud it exists only inside an S37 window (0011-09 AC-16), so a fake preview on the shared database cannot pay
+  a real fee.
+- **B-10 (AC-3).** `@/lib/relay` may be imported only by its routes (`app/api/relay`, `app/api/psp/*`), the fake checkout
+  page and tests (lint, with proofs).
+- **B-11.** Supabase's own grants on the `pg_net` schema are accepted as they are: it is not an API schema.
+
+- **B-12 (owed by 09, D175; built in 09).** The callback's 303 moves to `/<locale>/pay/<attempt_id>/return`, and a
+  verify whose apply answers `late` fails the attempt `late_payment` (0011-09 AC-8, AC-12, R-2, R-15).
+- **08b checklist (0011-09 R-12).** AC-4 (k) gains: `checkout_hold_minutes` is at least the card page token lifetime,
+  so a payment after a cancel past the hold cannot happen.
+
 ## Decision
 
 A Next route relay driven by `pg_cron` and `pg_net`; initialize checkout in the relay, kicked at once; callback and
@@ -281,8 +317,8 @@ service role database function. iyzico over `fetch`, no SDK, built only after S1
 
 | Route | Method | Input | Output | Auth | Errors |
 | --- | --- | --- | --- | --- | --- |
-| `/api/relay` | POST | `{ task }` | `{ ran, failed }` | `x-relay-secret` | 404, 400 |
-| `/api/psp/callback` | POST (form) | `token` | 303 to pay page | none (machine) | 303 home |
+| `/api/relay` | POST | `{ task }` | 202 `{ accepted }` (B-2) | `x-relay-secret` | 404, 400 |
+| `/api/psp/callback` | POST (form) | `token` | 303 to the pay page (the return page from 09) | none (machine) | 303 home |
 | `/api/psp/webhook` | POST | PSP event | 200 | PSP signature | 401, 413, 503 |
 | `/[locale]/dev/fake-checkout/<token>` | GET, POST | outcome | posts the callback | fake driver, not production | 404 |
 

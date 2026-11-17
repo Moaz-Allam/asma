@@ -58,8 +58,13 @@ export type AlertReason =
   // The PSP answered something we cannot read, or a card page URL off its hosts. The record is the attempt or
   // refund id.
   | 'psp_bad_response'
-  // A region's checkout hold or buyer city is missing or malformed. The record is the attempt id.
-  | 'checkout_settings_invalid';
+  // A region's checkout hold or buyer city is missing or malformed, or (spec 0011-09 AC-1, R-6) its checkout limit.
+  // The record is the attempt id, the fee id (a payment the relay could not apply), or the request id.
+  | 'checkout_settings_invalid'
+  // Spec 0011-09 AC-1, R-2: a region's unlock window or fee window floor is missing or malformed, so a verified
+  // commission cannot be applied (the relay retries) and a commission of 0 cannot settle. The record is the fee id
+  // or the request id.
+  | 'unlock_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

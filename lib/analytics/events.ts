@@ -36,6 +36,10 @@ export type AnalyticsEvents = {
   application_submitted: Record<string, never>;
   /** A customer chose a provider (spec 0010 AC-16). Nothing else. A replay sends none. */
   provider_chosen: Record<string, never>;
+  /** A card page attempt was opened, not reused (spec 0011-09 AC-14). Only which fee: no id, amount or text. */
+  payment_started: { fee: 'commission' | 'provider_fee' };
+  /** The return page first saw the fee paid (spec 0011-09 AC-14). Only which fee. */
+  payment_succeeded: { fee: 'commission' | 'provider_fee' };
 };
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
@@ -55,6 +59,8 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'provider_setup_saved',
   'application_submitted',
   'provider_chosen',
+  'payment_started',
+  'payment_succeeded',
 ]);
 
 /** The typed property names per event: the only non `$` properties an event may carry. */
@@ -73,4 +79,6 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   provider_setup_saved: ['services', 'zones'],
   application_submitted: [],
   provider_chosen: [],
+  payment_started: ['fee'],
+  payment_succeeded: ['fee'],
 };
