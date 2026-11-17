@@ -82,8 +82,22 @@ type Requirement = {
   vercelOnly: boolean;
   /** What a well formed value looks like, for the refusal message. Never the value itself. */
   expected: string;
-  valid: (value: string) => boolean;
+  valid: (value: string, env: DeploymentEnv) => boolean;
+  /** When set, the key is checked only when this holds (spec 0011-08: the iyzico keys only with that driver). */
+  when?: (env: DeploymentEnv) => boolean;
+  /** An unset key passes; a set one must be valid (PSP_DRIVER defaults to `off`). */
+  optional?: boolean;
 };
+
+const IYZICO_LIVE_URL = 'https://api.iyzipay.com';
+const IYZICO_SANDBOX_URL = 'https://sandbox-api.iyzipay.com';
+
+/** The PSP driver a deployment runs, `off` when unset (spec 0011-08 AC-2). */
+function pspDriverOf(env: DeploymentEnv): string {
+  return read(env, 'PSP_DRIVER') ?? 'off';
+}
+
+const withIyzico = (env: DeploymentEnv) => pspDriverOf(env) === 'iyzico';
 
 /**
  * Each key joins this list in the task that adds its door (spec 0004 build plan), so a preview never
@@ -128,6 +142,66 @@ const REQUIREMENTS: readonly Requirement[] = [
     expected: 'a Turnstile site key, from the Cloudflare widget (owner step S9)',
     valid: (value) => value.trim() !== '',
   },
+  // Spec 0011-08 AC-2: the PSP door. `off` (unset) and `fake` boot without any PSP key, so merging 08 never
+  // stops production; the fake never runs on production; `iyzico` needs its keys, the relay secret and the
+  // server only DSN, and its live host only on production.
+  {
+    name: 'PSP_DRIVER',
+    phases: ['runtime'],
+    vercelOnly: false,
+    optional: true,
+    expected: 'off, fake or iyzico; never fake on production',
+    valid: (value, env) =>
+      ['off', 'fake', 'iyzico'].includes(value) &&
+      !(value === 'fake' && read(env, 'VERCEL_ENV') === 'production'),
+  },
+  {
+    name: 'IYZICO_API_KEY',
+    phases: ['runtime'],
+    vercelOnly: false,
+    when: withIyzico,
+    expected: 'the iyzico API key (a secret, owner step S1 or S2)',
+    valid: (value) => value.trim() !== '',
+  },
+  {
+    name: 'IYZICO_SECRET_KEY',
+    phases: ['runtime'],
+    vercelOnly: false,
+    when: withIyzico,
+    expected: 'the iyzico secret key (a secret, owner step S1 or S2)',
+    valid: (value) => value.trim() !== '',
+  },
+  {
+    name: 'IYZICO_BASE_URL',
+    phases: ['runtime'],
+    vercelOnly: false,
+    when: withIyzico,
+    expected: `${IYZICO_SANDBOX_URL}, or ${IYZICO_LIVE_URL} on production only`,
+    valid: (value, env) =>
+      value === IYZICO_SANDBOX_URL || (value === IYZICO_LIVE_URL && read(env, 'VERCEL_ENV') === 'production'),
+  },
+  {
+    name: 'RELAY_SECRET',
+    phases: ['runtime'],
+    vercelOnly: false,
+    when: withIyzico,
+    expected: 'the relay secret, at least 32 characters, equal to Vault relay_secret (owner step S33)',
+    valid: (value) => value.length >= 32,
+  },
+  {
+    name: 'SENTRY_SERVER_DSN',
+    phases: ['runtime'],
+    vercelOnly: false,
+    when: withIyzico,
+    expected: 'the server only EU Sentry DSN (owner step S32), never the browser one',
+    // Another project, not only another key: a second key on the browser project would let a browser forge
+    // server alerts (security review S9).
+    valid: (value, env) => {
+      const server = parseEuSentryDsn(value);
+      const browser = parseEuSentryDsn(read(env, 'NEXT_PUBLIC_SENTRY_DSN') ?? '');
+      return server !== null && (browser === null || server.projectId !== browser.projectId);
+    },
+  },
 ];
 
 /** A PostHog project key (`phc_…`), public by design. A personal API key (`phx_…`) must never ship. */
@@ -139,9 +213,11 @@ export function isPostHogProjectKey(value: string): boolean {
 export function missingDeploymentKeys(env: DeploymentEnv, phase: DeploymentPhase): string[] {
   const onVercel = read(env, 'VERCEL') === '1';
   return REQUIREMENTS.filter((r) => r.phases.includes(phase) && (onVercel || !r.vercelOnly))
+    .filter((r) => r.when === undefined || r.when(env))
     .filter((r) => {
       const value = read(env, r.name);
-      return value === undefined || !r.valid(value);
+      if (value === undefined) return r.optional !== true;
+      return !r.valid(value, env);
     })
     .map((r) => r.name);
 }

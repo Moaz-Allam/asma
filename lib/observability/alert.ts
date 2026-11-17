@@ -34,7 +34,32 @@ export type AlertReason =
   | 'choose_settings_invalid'
   // Spec 0011-07 AC-0, AC-1, R-3: a region's provider fee settings or fee floor is missing or malformed, so no
   // customer there can choose, quote or post. The record is the request id, the service id, or `catalog`.
-  | 'fee_settings_invalid';
+  | 'fee_settings_invalid'
+  // Spec 0011-08 AC-19 (R13, R-3 of 07), raised by the relay. Each record is named:
+  // A 07 function answered idempotency_conflict, validation_failed, not_found or invalid_state (on the first try
+  // and when the row fails). The record is the outbox row id.
+  | 'idempotency_conflict'
+  // apply_fee_paid booked a payment as late and queued its refund. The record is the fee id.
+  | 'late_payment_refunded'
+  // A verified PSP fact differs from ours: the echoed ids, the amount, the currency, the PSP's cut, a refund of
+  // another amount, a day not finished. The record is the fee or refund id, or `<region>:<day>:unfinished`.
+  | 'reconcile_mismatch'
+  // A refund ran out of tries. The record is the fee refund id.
+  | 'refund_failed'
+  // The oldest due outbox row waited more than 5 minutes. The record is `outbox`.
+  | 'relay_stalled'
+  // ledger_check found an imbalance. The record is `<region>:<check>:<ref>`.
+  | 'ledger_unbalanced'
+  // An outbox row ran out of tries. The record is the outbox row id.
+  | 'outbox_failed'
+  // A checkout was asked of a driver that refuses (`off`, or the iyzico slot before S1). The record is the
+  // attempt id.
+  | 'psp_not_configured'
+  // The PSP answered something we cannot read, or a card page URL off its hosts. The record is the attempt or
+  // refund id.
+  | 'psp_bad_response'
+  // A region's checkout hold or buyer city is missing or malformed. The record is the attempt id.
+  | 'checkout_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

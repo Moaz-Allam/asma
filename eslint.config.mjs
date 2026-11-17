@@ -14,7 +14,12 @@ import tseslint from 'typescript-eslint';
 // Files that are allowed through a door. Paths are relative to the repo root.
 const DB_DOOR = ['lib/db/**'];
 const PSP_DOOR = ['lib/psp/**'];
-const RELAY = ['**/relay/**', '**/outbox/**', '**/*relay*.ts'];
+// Spec 0011-08 AC-3: only modules under lib/ get the relay's rights. A route file, `app/api/relay` included,
+// only parses the request and calls lib/relay, so it may import neither lib/psp nor the service role.
+const RELAY = ['lib/**/relay/**', 'lib/**/outbox/**', 'lib/**/*relay*.ts'];
+// Spec 0011-08, security review G1: lib/relay hands out the service role client and the PSP, so only the
+// relay's own routes and the fake card page may import it.
+const RELAY_CALLERS = ['app/api/relay/**', 'app/api/psp/**', 'app/*/dev/fake-checkout/**'];
 const SERVICE_ROLE_USERS = ['lib/db/**', 'app/api/webhooks/**', 'lib/jobs/**', ...RELAY];
 const OBSERVABILITY_DOOR = ['lib/observability/**'];
 const ANALYTICS_DOOR = ['lib/analytics/**'];
@@ -37,6 +42,7 @@ function restrictedImports({
   admin = false,
   sentry = false,
   posthog = false,
+  relay = false,
 } = {}) {
   const paths = [];
   const patterns = [
@@ -62,6 +68,13 @@ function restrictedImports({
     patterns.push({
       group: ['@/lib/psp', '@/lib/psp/*'],
       message: 'Only the outbox relay calls lib/psp (rule 3). Write an outbox_events row instead.',
+    });
+  }
+  if (!relay) {
+    patterns.push({
+      group: ['@/lib/relay', '@/lib/relay/*'],
+      message:
+        'lib/relay holds the service role client and the PSP: only the relay route, the PSP routes and the fake card page call it (spec 0011-08).',
     });
   }
   if (!admin) {
@@ -117,11 +130,17 @@ function restrictedModules({
 
 // Secrets readable only inside their door: matched as identifier, string literal, template text, and
 // a destructured name (`const { KEY } = process.env`, D86).
-const SECRETS = ['SUPABASE_SERVICE_ROLE_KEY', 'IYZICO_[A-Z0-9_]+', 'PAYTABS_[A-Z0-9_]+'];
+const SECRETS = ['SUPABASE_SERVICE_ROLE_KEY', 'IYZICO_[A-Z0-9_]+', 'PAYTABS_[A-Z0-9_]+', 'RELAY_SECRET'];
 const secretMessage = 'This secret is read only inside its single door (architecture.md §42).';
 // Spec 0004 AC-8: the telemetry keys are read only by their doors, lib/env.ts, lib/deployment.ts and
 // next.config.ts; the auth token by next.config.ts alone (lib/deployment.ts only names it to check it).
-const TELEMETRY_KEYS = ['NEXT_PUBLIC_SENTRY_DSN', 'SENTRY_AUTH_TOKEN', 'NEXT_PUBLIC_POSTHOG_KEY'];
+// Spec 0011-08 AC-14: SENTRY_SERVER_DSN, the server only project (R5), joins the same rule.
+const TELEMETRY_KEYS = [
+  'NEXT_PUBLIC_SENTRY_DSN',
+  'SENTRY_AUTH_TOKEN',
+  'NEXT_PUBLIC_POSTHOG_KEY',
+  'SENTRY_SERVER_DSN',
+];
 const telemetryMessage =
   'This key is read only inside its door (lib/observability, lib/analytics), lib/env.ts, lib/deployment.ts or ' +
   'next.config.ts (spec 0004 AC-8). Call a door function, or sentryDsn() / posthogKey() from lib/env.ts.';
@@ -258,8 +277,12 @@ const config = [
   {
     files: RELAY,
     rules: {
-      'no-restricted-imports': restrictedImports({ psp: true, admin: true }),
-      'no-restricted-syntax': restrictedSyntax({ modules: { psp: true, admin: true } }),
+      'no-restricted-imports': restrictedImports({ psp: true, admin: true, relay: true }),
+      // The relay route's secret is checked inside lib/relay (spec 0011-08 AC-5).
+      'no-restricted-syntax': restrictedSyntax({
+        exempt: ['RELAY_SECRET'],
+        modules: { psp: true, admin: true },
+      }),
     },
   },
   {
@@ -312,7 +335,13 @@ const config = [
   },
   {
     files: ['lib/deployment.ts'],
-    rules: { 'no-restricted-syntax': restrictedSyntax({ exempt: TELEMETRY_KEYS }) },
+    // It names the PSP keys and the relay secret only to check that a deployment has them (spec 0011-08
+    // AC-2), as it names SENTRY_AUTH_TOKEN; it never passes a value on.
+    rules: {
+      'no-restricted-syntax': restrictedSyntax({
+        exempt: [...TELEMETRY_KEYS, 'IYZICO_[A-Z0-9_]+', 'RELAY_SECRET'],
+      }),
+    },
   },
   {
     files: ANALYTICS_DOOR,
@@ -328,7 +357,7 @@ const config = [
     files: ['lib/env.ts'],
     rules: {
       'no-restricted-syntax': restrictedSyntax({
-        exempt: ['NEXT_PUBLIC_SENTRY_DSN', 'NEXT_PUBLIC_POSTHOG_KEY'],
+        exempt: ['NEXT_PUBLIC_SENTRY_DSN', 'NEXT_PUBLIC_POSTHOG_KEY', 'SENTRY_SERVER_DSN'],
         envAccess: true,
       }),
     },
@@ -338,6 +367,10 @@ const config = [
   // Tests build fake environments and fixtures; the doors protect production code. This config file
   // must name the secrets to define the rule.
   { files: [...TESTS, 'eslint.config.mjs'], rules: { 'no-restricted-syntax': 'off' } },
+  // Spec 0011-08: the PSP contract suite and the relay's tests import lib/psp to test it. Every other import rule
+  // still holds in tests.
+  { files: TESTS, rules: { 'no-restricted-imports': restrictedImports({ psp: true, relay: true }) } },
+  { files: RELAY_CALLERS, rules: { 'no-restricted-imports': restrictedImports({ relay: true }) } },
 ];
 
 export default config;

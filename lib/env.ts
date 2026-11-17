@@ -11,7 +11,7 @@ import { isPostHogProjectKey, parseEuSentryDsn } from '@/lib/deployment';
  * app does not boot, rather than failing at first use in production.
  *
  * ⚠️ SCOPE — this schema covers only what the CURRENTLY BUILT features consume.
- * `.env.example` lists more (IYZICO_*, PAYTABS_*, EMAIL_API_KEY…)
+ * `.env.example` lists more (PAYTABS_*, EMAIL_API_KEY…; IYZICO_* joined with 08)
  * because it documents the whole system. Those are deliberately NOT validated yet:
  * requiring a PSP key before the PSP adapter exists would stop the app booting for
  * a feature nobody can call.
@@ -101,6 +101,46 @@ const EnvSchema = z.object({
       message: 'must be https, with no trailing slash',
     })
     .optional(),
+
+  // ── This deployment's own address (spec 0011-08 AC-4, AC-21) ─────────────
+  // Where the PSP sends the browser back, and the fake card page's host. Optional: unset, it is derived
+  // (lib/http/origin.ts). The e2e wrapper sets it to its own port.
+  APP_ORIGIN: z
+    .url()
+    .refine((url) => /^https:\/\/[^/@]+$/.test(url) || /^http:\/\/localhost(:\d{1,5})?$/.test(url), {
+      message: 'must be https (or http on localhost), a bare origin with no path and no trailing slash',
+    })
+    .optional(),
+
+  // ── The PSP door (lib/psp, spec 0011-08 AC-2) ─────────────────────────────
+  // `off` (the default) refuses every PSP call; `fake` is the deterministic test PSP; `iyzico` the real
+  // one. lib/deployment.ts refuses `fake` on production and `iyzico` without its keys.
+  PSP_DRIVER: z.enum(['off', 'fake', 'iyzico']).default('off'),
+  // Secrets, read only inside lib/psp (lint). Shape checked when present; required only with `iyzico`.
+  IYZICO_API_KEY: z.string().min(1).optional(),
+  IYZICO_SECRET_KEY: z.string().min(1).optional(),
+  IYZICO_BASE_URL: z
+    .url()
+    .refine((url) => /^https:\/\/(sandbox-api|api)\.iyzipay\.com$/.test(url), {
+      message: 'must be https://sandbox-api.iyzipay.com or https://api.iyzipay.com, with no trailing slash',
+    })
+    .optional(),
+  IYZICO_WEBHOOK_SECRET: z.string().min(1).optional(),
+
+  // ── The relay (lib/relay, spec 0011-08 AC-5) ─────────────────────────────
+  // SECRET: the x-relay-secret header pg_net sends (S33). Read only by lib/relay (lint). Without it the
+  // relay route answers 404 to everyone.
+  RELAY_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
+
+  // ── Server only error reporting (spec 0011-08 AC-14, R5) ──────────────────
+  // A second Sentry project that no browser ever sees, so nobody can forge a server alert. Unset, the
+  // server keeps NEXT_PUBLIC_SENTRY_DSN. Required on a deployment with PSP_DRIVER=iyzico.
+  SENTRY_SERVER_DSN: z
+    .string()
+    .refine((dsn) => parseEuSentryDsn(dsn) !== null, {
+      message: 'must be an EU Sentry DSN, https://<key>@o<org>.ingest.de.sentry.io/<project>',
+    })
+    .optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
@@ -165,4 +205,17 @@ export function sentryDsn(): string | undefined {
 /** The PostHog project key, for the /api/a route (D83). Same rule as `sentryDsn()`. */
 export function posthogKey(): string | undefined {
   return getEnv().NEXT_PUBLIC_POSTHOG_KEY;
+}
+
+/**
+ * The DSN the server reports to (spec 0011-08 AC-14, R5): the server only project when set, else the public
+ * one. Never shipped to a browser: this module is server only and the name has no NEXT_PUBLIC_ prefix.
+ */
+export function sentryServerDsn(): string | undefined {
+  return getEnv().SENTRY_SERVER_DSN ?? getEnv().NEXT_PUBLIC_SENTRY_DSN;
+}
+
+/** Which PSP driver runs (spec 0011-08 AC-2). `off` unless set. */
+export function pspDriver(): Env['PSP_DRIVER'] {
+  return getEnv().PSP_DRIVER;
 }

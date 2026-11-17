@@ -84,6 +84,14 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'birth_date',
   'date_of_birth',
   'dob',
+  // Spec 0011-08 AC-16: the PSP's buyer, the checkout token (`token`, `psp_token` by suffix) and the card
+  // page, as iyzico names them (camelCase folds to these).
+  'buyer',
+  'payment_page_url',
+  'checkout_form_content',
+  'gsm_number',
+  'ip',
+  'payer_ip',
 ]);
 const PERSONAL_SUFFIXES = [
   // Spec 0008 (review A5): the request RPC arguments p_address_line, p_notes, p_answers.
@@ -336,6 +344,8 @@ function cutStoragePath(path: string): string {
  * emails and IPs in the path. A Storage object URL is cut after its bucket, with no parameter. The host stays as it is: it is our server, even when it is an IP address
  * (local, e2e). Absolute or relative. `&` and `;` both separate parameters.
  */
+const FAKE_CHECKOUT_PATH = /(\/dev\/fake-checkout\/)[^/?#]+/g;
+
 export function scrubUrl(url: string): string {
   const withoutFragment = url.split('#', 1)[0] ?? '';
   const authority = SCHEME_AND_AUTHORITY.exec(withoutFragment);
@@ -344,7 +354,8 @@ export function scrubUrl(url: string): string {
   const origin = authority ? `${scheme}${hostPart.slice(hostPart.lastIndexOf('@') + 1)}` : '';
   const rest = withoutFragment.slice(prefix.length);
   const q = rest.indexOf('?');
-  const rawPath = q === -1 ? rest : rest.slice(0, q);
+  // The fake card page's path carries its checkout token (spec 0011-08, security review S7).
+  const rawPath = (q === -1 ? rest : rest.slice(0, q)).replace(FAKE_CHECKOUT_PATH, '$1[token]');
   const storagePath = cutStoragePath(rawPath);
   // A Storage URL keeps no parameter at all: a signed link's token is its key.
   if (storagePath !== rawPath || /\/storage\/v1\/object\//.test(rawPath)) {

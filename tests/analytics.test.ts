@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ANALYTICS_EVENTS, type AnalyticsEvents } from '@/lib/analytics/events';
-import { filterAnalyticsEvent } from '@/lib/analytics/filter';
+import { filterAnalyticsEvent, withoutIds } from '@/lib/analytics/filter';
 
 /**
  * Spec 0004 AC-3, AC-6, AC-7 (D68): PostHog sends only the allow listed events, each with its typed
@@ -151,5 +151,14 @@ describe('what an allowed event carries (AC-3, AC-6)', () => {
     };
     expect(filterAnalyticsEvent(hostile, 'local')).toBeNull();
     expect(filterAnalyticsEvent(null, 'local')).toBeNull();
+  });
+});
+
+describe('spec 0011-08 S7: the fake card page path loses its token', () => {
+  it('replaces the token segment in a path or a URL', () => {
+    expect(withoutIds('/tr/dev/fake-checkout/fk1_abc_def')).toBe('/tr/dev/fake-checkout/[token]');
+    expect(withoutIds('http://localhost:3100/en/dev/fake-checkout/fk1_x?chosen=success')).toBe(
+      'http://localhost:3100/en/dev/fake-checkout/[token]?chosen=success',
+    );
   });
 });

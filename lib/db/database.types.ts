@@ -218,10 +218,12 @@ export type Database = {
       checkout_attempts: {
         Row: {
           created_at: string
+          failure_reason: string | null
           fee_payment_id: string
           finished_at: string | null
           id: string
           locale: string | null
+          payer_ip: unknown
           psp_token: string | null
           region: string
           started_at: string
@@ -230,10 +232,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          failure_reason?: string | null
           fee_payment_id: string
           finished_at?: string | null
           id?: string
           locale?: string | null
+          payer_ip?: unknown
           psp_token?: string | null
           region: string
           started_at?: string
@@ -242,10 +246,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          failure_reason?: string | null
           fee_payment_id?: string
           finished_at?: string | null
           id?: string
           locale?: string | null
+          payer_ip?: unknown
           psp_token?: string | null
           region?: string
           started_at?: string
@@ -262,6 +268,38 @@ export type Database = {
           },
           {
             foreignKeyName: "checkout_attempts_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      fake_psp_outcomes: {
+        Row: {
+          created_at: string
+          outcome: Json
+          region: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          outcome: Json
+          region: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          outcome?: Json
+          region?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fake_psp_outcomes_region_fkey"
             columns: ["region"]
             isOneToOne: false
             referencedRelation: "regions"
@@ -580,6 +618,7 @@ export type Database = {
       }
       outbox_events: {
         Row: {
+          alerted_at: string | null
           attempts: number
           claimed_at: string | null
           claimed_by: string | null
@@ -595,6 +634,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          alerted_at?: string | null
           attempts?: number
           claimed_at?: string | null
           claimed_by?: string | null
@@ -610,6 +650,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          alerted_at?: string | null
           attempts?: number
           claimed_at?: string | null
           claimed_by?: string | null
@@ -1658,6 +1699,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      abandon_checkout: { Args: { p_attempt_id: string }; Returns: Json }
       accept_commission: {
         Args: { p_attempt: string; p_fee: string }
         Returns: boolean
@@ -1712,6 +1754,8 @@ export type Database = {
       }
       catalog_trim: { Args: { p_text: string }; Returns: string }
       check_new_user: { Args: { event: Json }; Returns: Json }
+      checkout_context: { Args: { p_attempt_id: string }; Returns: Json }
+      checkout_settings: { Args: { p_region: string }; Returns: Json }
       choose_provider: {
         Args: { p_application_id: string; p_request_id: string }
         Returns: Json
@@ -1774,6 +1818,15 @@ export type Database = {
         }
         Returns: string
       }
+      fail_attempt: {
+        Args: { p_attempt_id: string; p_reason: string }
+        Returns: Json
+      }
+      fake_psp_get: { Args: { p_token: string }; Returns: Json }
+      fake_psp_set: {
+        Args: { p_outcome: Json; p_token: string }
+        Returns: undefined
+      }
       fee_amount: {
         Args: { p_price: number; p_settings: Json }
         Returns: number
@@ -1795,10 +1848,42 @@ export type Database = {
       health_ping: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       ledger_check: { Args: { p_region: string }; Returns: Json }
+      lock_attempt: {
+        Args: { p_attempt_id: string }
+        Returns: {
+          created_at: string
+          failure_reason: string | null
+          fee_payment_id: string
+          finished_at: string | null
+          id: string
+          locale: string | null
+          payer_ip: unknown
+          psp_token: string | null
+          region: string
+          started_at: string
+          status: string
+          url: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "checkout_attempts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       log_document_view: {
         Args: { p_document_id: string; p_object_id: string }
         Returns: Json
       }
+      mark_checkout_failed: {
+        Args: { p_attempt_id: string; p_reason: string }
+        Returns: Json
+      }
+      mark_checkout_ready: {
+        Args: { p_attempt_id: string; p_token: string; p_url: string }
+        Returns: Json
+      }
+      mark_refund_failed: { Args: { p_fee_refund_id: string }; Returns: Json }
       message_digit_limit: { Args: never; Returns: number }
       message_has_contact_info: { Args: { p_text: string }; Returns: boolean }
       offer_card: {
@@ -1813,6 +1898,8 @@ export type Database = {
         Args: { p_kind: string; p_request_id: string }
         Returns: string
       }
+      outbox_health: { Args: never; Returns: Json }
+      payments_enabled: { Args: { p_region: string }; Returns: boolean }
       phone_region: { Args: { p_phone: string }; Returns: string }
       post_journal: {
         Args: {
@@ -2048,8 +2135,19 @@ export type Database = {
         Returns: Json
       }
       provider_type_bucket: { Args: { p_type: string }; Returns: string }
+      psp_callback: { Args: { p_fields: Json; p_token: string }; Returns: Json }
       psp_payload_strip: {
         Args: { p_depth?: number; p_payload: Json }
+        Returns: Json
+      }
+      psp_webhook: {
+        Args: {
+          p_event_key: string
+          p_home_region: string
+          p_payload: Json
+          p_psp_payment_id: string
+          p_token: string
+        }
         Returns: Json
       }
       public_region_info: {
@@ -2096,6 +2194,11 @@ export type Database = {
         }
         Returns: Json
       }
+      reconcile_daily_list: {
+        Args: { p_day: string; p_limit: number; p_region: string }
+        Returns: Json
+      }
+      reconcile_pending: { Args: never; Returns: Json }
       record_psp_event: {
         Args: {
           p_event_key: string
@@ -2110,6 +2213,7 @@ export type Database = {
         Returns: Json
       }
       reinstate_provider: { Args: { p_provider_id: string }; Returns: Json }
+      relay_kick: { Args: { p_task: string }; Returns: number }
       request_catalog: { Args: never; Returns: Json }
       request_offers: { Args: { p_request_id: string }; Returns: Json }
       request_settings: { Args: { p_region: string }; Returns: Json }

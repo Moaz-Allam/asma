@@ -1,0 +1,25 @@
+# Security review, feat/08-iyzico-relay, 2026-11-17
+
+**Reviewed by**: `security-reviewer` (Opus), read only, over `b137a68..2faa081`
+**Verdict**: fix then ship. Close the kick amplification, the `@/lib/relay` import gate and the two step heartbeat before merge; close the fake on a shared database before 09 or S37.
+
+| # | Sev | Where | Finding | Resolution |
+| --- | --- | --- | --- | --- |
+| S1 | Medium | `relay.sql` psp_callback, psp_webhook | Every callback or webhook with a known token kicks the relay, even when nothing new was written, so anyone holding a token can loop the endpoint and buy relay runs and pg_net rows | Fixed: `psp_callback` and `psp_webhook` kick only when the event is new; pgTAP proves a replay sends no kick. A per IP rate limit is left to 21 (launch hardening) |
+| S2 | Medium | `lib/psp/fake.ts` FAKE_WEBHOOK_SECRET | On a fake preview anyone can sign webhooks with the public secret and fill `psp_events` on the shared production database | Fixed: the fake signs with a secret derived from RELAY_SECRET per deployment (`lib/relay/psp.ts`); the public test secret only without one; unit test |
+| S3 | Medium | `relay.sql` outbox_health, `lib/relay/heartbeat.ts` | `alerted_at` is stamped before the alert and `mark_refund_failed`; a crash in between leaves a refund `queued` for good with no signal | Fixed: `outbox_health` marks a failed refund row failed in the same transaction as the stamp; pgTAP |
+| S4 | Low | `lib/relay/fake-checkout.ts` | A second choice resets the fake's refunds, so a refund can repeat on the fake and the contract stops proving rule 6 | Fixed: a token takes one choice; a second is a 404; unit test |
+| S5 | Low | `relay.sql` reconcile_pending | The payer IP clearing updates attempts without the request and fee locks first (R-9) | Fixed: IPs are cleared row by row through `lock_attempt` (request, fee, attempt) |
+| S6 | Low | `relay.sql` reconcile_pending | A `ready` or `queued` attempt that never finishes keeps its payer IP forever (R-8) | Fixed: cleared once an attempt started or finished more than 2 hours ago; pgTAP |
+| S7 | Low | `lib/psp/fake.ts`, analytics and scrub path rules | The fake payment id carries the token into `psp_events`, `fee_payments`; the fake page path carries it into PostHog and Sentry URLs | Fixed: payment ids are `fp<n>_<attempt>_<amount>_<currency>`, the store is read by attempt id; the fake page path becomes `[token]` in Sentry and PostHog; tests |
+| S8 | Low | `lib/relay/callback.ts` | Oversized field maps reach `psp_callback`, raise `validation_failed` and log `relay_task_failed` per request (log flood) | Fixed: the callback checks the 8 KiB JSON size and the token before the database, with a warn, not an error |
+| S9 | Low | `lib/deployment.ts` | The server DSN must only differ as a string; a second key on the browser project passes (R5) | Fixed: the server DSN must name another project; test |
+| S10 | Low | `app/api/relay/route.ts` | Other methods answer 405, which shows the route exists (AC-5 says 404) | Fixed: every other method answers 404; test |
+| L1 | High (before 09 or S37) | fake on previews sharing the production database (A-1) | Once 09 and 10 accept payments, a fake preview lets anyone settle a real fee for free and reveal contacts | Fixed in the database: a trigger refuses any `fp1_`/`fp2_` payment on fees and refunds unless Vault `fake_psp_allowed` is `true` (local seed only); pgTAP. Owner decision owed before S37: the fence must be switched on for that window, and then a fake preview can settle real fees |
+| L2 | Medium | `relay.sql` pg_net | Supabase grants `net.http_*` to anon and authenticated; not reachable today, an SSRF the day anything can call it | Accepted: the grants are made by Supabase's admin role and a migration cannot revoke them; `net` is not an API schema and no function runs SQL built from input. Documented in the migration |
+| L3 | Low | fake ban keyed on `VERCEL_ENV` only | Off Vercel a production server could run the fake | Accepted: the app runs only on Vercel; a production build off Vercel also needs APP_LOCAL_ONLY unset, which fails its key checks |
+| G1 | Guardrail | `eslint.config.mjs` | Nothing limits who imports `@/lib/relay`, which hands out the service role client and the PSP | Fixed: `@/lib/relay` may be imported only by `lib/relay`, the relay route, the PSP routes, the fake card page and tests; lint proofs |
+| G2 | Guardrail | `20_relay.test.sql` | No assertion on `net` and `cron` grants | Fixed for `cron` (pgTAP); `net` as L2 |
+| G3 | Guardrail | database | Nothing in the database stops a fake payment id settling a real fee | Fixed with L1 |
+
+Checked and sound: the relay secret check, `relay_kick`, every new definer function's search path and grants, `fake_psp_outcomes` RLS, the callback and fake checkout redirects (no open redirect), forged callbacks and webhooks moving no money, the verify keys, refunds at most once, the lock order, the attempt guard, the card page URL check, the server DSN staying off the browser, ids only in logs and alerts, the fake webhook self post (no SSRF), the lint narrowing, `payments_enabled` failing closed.
