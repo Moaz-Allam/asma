@@ -54,6 +54,11 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   `lib/requests/` is the customer's door. Its migration `20261116090000_post_request` is in the cloud (S30). Two Opus
   security passes and a Sonnet cross review (D143 to D145); merged on local CI, because GitHub Actions fails at startup.
   **AC-27 real calls are a hard gate before G1.** Its SQL review findings go into 05's first migration (R10).
+- 2026-11-18 · **05 merged** (spec 0009, PR #30, `6a7e666`): provider setup, feed, apply, My applications; `lib/provider-feed/`.
+  Carries 04's R10 fixes. Migration `20261117090000_provider_feed_apply` in the cloud (S31). Local gate (D158). **AC-25 real calls owed.**
+- 2026-11-18 · **06 merged** (spec 0010, PR #32, `5812073`): offers, choose, payment deadline, timeline; closes R11. Spec 0010
+  supersedes the umbrella child 0011-06 (D168). Migration `20261118090000_choose_provider` in the cloud (S35). Local gate
+  (D168). **AC-21 real calls owed.** Next: 07, after `/architect` amends 0011-07 against what 05 and 06 built (D168).
 
 ## Stack (pinned exactly)
 
