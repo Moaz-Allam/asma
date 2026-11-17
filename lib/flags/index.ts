@@ -16,13 +16,8 @@ import { isRegion, type Region } from '@/lib/region';
  * off. The database refuses a non boolean under an `_enabled` key as well.
  */
 
-export const MONEY_FLAGS = [
-  'funding_enabled',
-  'unlock_enabled',
-  'payouts_enabled',
-  'auto_release_enabled',
-  'notifications_enabled',
-] as const;
+// 07 deleted the four escrow flags with the escrow model (D95, spec 0011-07 AC-15); one is left.
+export const MONEY_FLAGS = ['notifications_enabled'] as const;
 export type MoneyFlag = (typeof MONEY_FLAGS)[number];
 
 export const FLAG_READ_TIMEOUT_MS = 2000;

@@ -1630,6 +1630,53 @@ Migration `choose_provider` (D159 to D163). No new table.
 - **Doors.** `lib/requests/` adds `loadOffers` and `chooseProvider`; `actions/requests.ts` adds
   `chooseProviderAction`.
 
+## 39g. Money core (position 07, spec 0011-07, D169)
+
+Migration `money_core`. Database only: no screen, no PSP call. This section is the money model as built; where
+§27, §28 or the v3/v4 ledger sections above still speak of escrow, holds, payouts or `unlock_fees`, this wins.
+
+- **Fee settings.** `provider_fee_kind` (`percent`, `fixed`), `provider_fee_value`, `fee_min_minor` per region,
+  seeded `percent`, 5, 1000 (unconfirmed until S17). Row checks per key; a deferred constraint trigger
+  (`fee_settings_guard`) holds a percent at most 100 and the floor and a fixed fee in whole units of
+  `price_rounding_minor`, in both directions; `pricing_settings_guard` keeps the three rows. A missing or
+  malformed key refuses `fee_settings_invalid` (alerted by `lib/requests`).
+- **One fee formula.** `fee_settings(region, unit)` reads the keys against one unit; `fee_amount(price, settings)`
+  is the integer core (percent half up to the unit in one step, or the fixed value; raised to the floor; capped
+  at the price rounded down to the unit); `provider_fee_for(region, price)` is the only entry with an API grant
+  (authenticated, service role). Any fee shown later calls it (R-12).
+- **Commission floor.** `pricing_split` raises the commission to `fee_min_minor` and caps it the same way, so
+  the cash due may be 0. Requests stored before keep their figures.
+- **The pick holds the provider fee.** `applications.provider_fee_amount` and `provider_fee_kind`, null together,
+  written by `choose_provider` on `APPLIED → SELECTED` only and never changed after (`applications_guard`).
+- **Tables.** `fee_payments` (one commission per request, one provider fee per request and provider, naming the
+  pick by `application_id`; amount, kind, payer, application, request frozen; `pending → paid → refunded`),
+  `checkout_attempts`, `fee_refunds` (kind `fee` or `late`; one per fee and one per PSP payment),
+  `ledger_journals` (unique idempotency key, normalised legs, stored response), `ledger_entries` (seven
+  accounts, region and currency through the journal key), `outbox_events`, `psp_events`. All with region, RLS,
+  guards for every role. Ledger rows refuse update, delete and truncate; a deferred definer trigger refuses a
+  journal with fewer than two legs or a non zero sum at commit.
+- **Reads.** A payer reads their own fee rows through column grants (never `psp_fee_amount` or
+  `psp_payment_id`). Nothing else is readable through the API; `ledger_check(region)` (service role, admin)
+  returns the totals and every imbalance.
+- **Functions.** Internal: `open_fee`, `start_checkout`, `enqueue_outbox`, `post_journal`, and the kind hooks
+  `accept_commission`, `accept_provider_fee` (07 returns false: every payment goes late until 09 and 10),
+  `after_commission_paid`, `after_provider_fee_paid` (no op until 09 and 10). Service role only:
+  `apply_fee_paid` (request lock, then an advisory lock on the PSP payment id, then the fee),
+  `apply_fee_refunded`, `claim_outbox` (skip locked, 2 minute lease, each row with a `claim_token`),
+  `finish_outbox(id, ok, error, claim_token)` (only the current claim acts, else `stale`; retries at 1, 5, 30,
+  120, 720 minutes, failed after the sixth try), `record_psp_event` (card fields and the buyer's personal data
+  stripped, 64 KiB and 32 levels at most). Results carry an `alerts` array the relay raises (R-3).
+- **Signatures beyond the AC text (D170).** `post_journal` also takes the fee id and the response to store;
+  `enqueue_outbox` and `record_psp_event` take the region; `finish_outbox` takes the claim token.
+- **Deferred checks run at commit as the caller's role.** `ledger_balanced` is a definer function for that
+  reason (the relay's service role reads no ledger table); any later deferred trigger that reads a money table
+  must be too.
+- **Posting.** Paid: `psp_clearing +(A − F)`, `psp_fees +F`, revenue `−A` (key `fee:<id>:paid`). Not accepted
+  (state, a second payment, an amount or currency mismatch): the fee untouched, `refunds_due −A` (key
+  `late:<psp_payment_id>:received`), a `late` refund and its `refund.request` outbox row. Refunds: refunds
+  account `+A`, `psp_clearing −A` (`fee:<id>:refund`), or `refunds_due +A` (`late:<psp_payment_id>:refund`).
+  A missing or out of range PSP fee posts 0 and alerts `reconcile_mismatch`.
+
 ## 40. Updated invariants
 
 > **G25 — every global aggregate below is scoped `GROUP BY (region, currency)`. Never bare.**

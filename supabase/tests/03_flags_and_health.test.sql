@@ -20,24 +20,15 @@ SELECT is(
   true, 'TR stays active'
 );
 
--- ── the five flags, per region (AC-14, AC-15) ────────────────────────────────
+-- ── the one flag left, per region (AC-14, AC-15; 07 deleted the four escrow flags, D95) ──
 SELECT results_eq(
   $$ SELECT region, key, value
        FROM public.platform_settings
-      WHERE key IN ('funding_enabled', 'unlock_enabled', 'payouts_enabled',
-                    'auto_release_enabled', 'notifications_enabled')
+      WHERE right(key, 8) = '_enabled'
       ORDER BY region, key $$,
-  $$ VALUES ('KSA', 'auto_release_enabled',  'false'::jsonb),
-            ('KSA', 'funding_enabled',       'false'::jsonb),
-            ('KSA', 'notifications_enabled', 'false'::jsonb),
-            ('KSA', 'payouts_enabled',       'false'::jsonb),
-            ('KSA', 'unlock_enabled',        'false'::jsonb),
-            ('TR',  'auto_release_enabled',  'true'::jsonb),
-            ('TR',  'funding_enabled',       'true'::jsonb),
-            ('TR',  'notifications_enabled', 'true'::jsonb),
-            ('TR',  'payouts_enabled',       'true'::jsonb),
-            ('TR',  'unlock_enabled',        'true'::jsonb) $$,
-  'five money flags per region: TR on, KSA off'
+  $$ VALUES ('KSA', 'notifications_enabled', 'false'::jsonb),
+            ('TR',  'notifications_enabled', 'true'::jsonb) $$,
+  'one money flag per region: TR on, KSA off'
 );
 
 SELECT is_empty(
@@ -58,7 +49,7 @@ SELECT throws_ok(
   'a number under an _enabled key is rejected'
 );
 SELECT throws_ok(
-  $$ UPDATE public.platform_settings SET value = '"true"' WHERE region = 'TR' AND key = 'funding_enabled' $$,
+  $$ UPDATE public.platform_settings SET value = '"true"' WHERE region = 'TR' AND key = 'notifications_enabled' $$,
   '23514', NULL,
   'an existing flag cannot be updated to a string either'
 );
@@ -116,14 +107,14 @@ RESET ROLE;
 SET LOCAL ROLE authenticated;
 SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000a1", "role": "authenticated", "app_metadata": {}}';
 SELECT is(
-  (SELECT value FROM public.platform_settings WHERE region = 'TR' AND key = 'funding_enabled'),
+  (SELECT value FROM public.platform_settings WHERE region = 'TR' AND key = 'notifications_enabled'),
   'true'::jsonb,
   'a signed in user reads a flag live (the isEnabled path, AC-14)'
 );
-UPDATE public.platform_settings SET value = 'false' WHERE region = 'TR' AND key = 'funding_enabled';
+UPDATE public.platform_settings SET value = 'false' WHERE region = 'TR' AND key = 'notifications_enabled';
 RESET ROLE;
 SELECT is(
-  (SELECT value FROM public.platform_settings WHERE region = 'TR' AND key = 'funding_enabled'),
+  (SELECT value FROM public.platform_settings WHERE region = 'TR' AND key = 'notifications_enabled'),
   'true'::jsonb,
   'a signed in user who is not an admin cannot switch a flag off'
 );
@@ -133,7 +124,7 @@ SELECT is(
 -- one on. Only the admin policy stops both, so both are proven here.
 SET LOCAL ROLE authenticated;
 SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000a1", "role": "authenticated", "app_metadata": {}}';
-DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'funding_enabled';
+DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'notifications_enabled';
 SELECT throws_ok(
   $$ INSERT INTO public.platform_settings (region, key, value) VALUES ('KSA', 'wallet_enabled', 'true') $$,
   '42501', NULL,
@@ -141,7 +132,7 @@ SELECT throws_ok(
 );
 RESET ROLE;
 SELECT is(
-  (SELECT count(*)::int FROM public.platform_settings WHERE region = 'TR' AND key = 'funding_enabled'),
+  (SELECT count(*)::int FROM public.platform_settings WHERE region = 'TR' AND key = 'notifications_enabled'),
   1,
   'a signed in user who is not an admin cannot delete a flag'
 );
@@ -155,10 +146,10 @@ VALUES ('00000000-0000-0000-0000-0000000000a2', 'admin', 'TR', '+905550000002', 
 ON CONFLICT (id) DO UPDATE SET role = 'admin';
 SET LOCAL ROLE authenticated;
 SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000a2", "role": "authenticated", "app_metadata": {"role": "admin"}}';
-UPDATE public.platform_settings SET value = 'false' WHERE region = 'TR' AND key = 'funding_enabled';
+UPDATE public.platform_settings SET value = 'false' WHERE region = 'TR' AND key = 'notifications_enabled';
 RESET ROLE;
 SELECT is(
-  (SELECT value FROM public.platform_settings WHERE region = 'TR' AND key = 'funding_enabled'),
+  (SELECT value FROM public.platform_settings WHERE region = 'TR' AND key = 'notifications_enabled'),
   'false'::jsonb,
   'an admin switches a flag off with a row update, no deploy (AC-14)'
 );

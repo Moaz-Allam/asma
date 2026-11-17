@@ -52,6 +52,8 @@ export const REQUEST_DB_CODES = [
   'not_choosable',
   'offer_unavailable',
   'choose_settings_invalid',
+  // Spec 0011-07 (07): the fee settings, read by the split and the choose.
+  'fee_settings_invalid',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -85,7 +87,8 @@ function signal(code: RequestCode, recordId: string, context: Context): void {
   if (
     code === 'pricing_settings_invalid' ||
     code === 'request_settings_invalid' ||
-    code === 'choose_settings_invalid'
+    code === 'choose_settings_invalid' ||
+    code === 'fee_settings_invalid'
   ) {
     raiseAlert(code, { recordId, region });
   } else if (code === 'price_out_of_range') {

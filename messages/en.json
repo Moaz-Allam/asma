@@ -1052,7 +1052,8 @@
       "action_failed": "Something went wrong. Nothing was charged. Try again.",
       "not_choosable": "This request can no longer take a choice. The page shows where it stands now.",
       "offer_unavailable": "That offer is no longer available. The list is updated.",
-      "choose_settings_invalid": "Choosing is not possible right now. Please try again later."
+      "choose_settings_invalid": "Choosing is not possible right now. Please try again later.",
+      "fee_settings_invalid": "Prices cannot be worked out right now. Please try again later."
     },
     "offers": {
       "title": "{count, plural, =0 {No offers yet} one {# offer on your request} other {# offers on your request}}",

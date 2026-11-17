@@ -87,6 +87,8 @@ export type Database = {
           created_at: string
           id: string
           message: string
+          provider_fee_amount: number | null
+          provider_fee_kind: string | null
           provider_id: string
           region: string
           request_id: string
@@ -97,6 +99,8 @@ export type Database = {
           created_at?: string
           id?: string
           message: string
+          provider_fee_amount?: number | null
+          provider_fee_kind?: string | null
           provider_id: string
           region: string
           request_id: string
@@ -107,6 +111,8 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string
+          provider_fee_amount?: number | null
+          provider_fee_kind?: string | null
           provider_id?: string
           region?: string
           request_id?: string
@@ -209,6 +215,330 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_attempts: {
+        Row: {
+          created_at: string
+          fee_payment_id: string
+          finished_at: string | null
+          id: string
+          locale: string | null
+          psp_token: string | null
+          region: string
+          started_at: string
+          status: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          fee_payment_id: string
+          finished_at?: string | null
+          id?: string
+          locale?: string | null
+          psp_token?: string | null
+          region: string
+          started_at?: string
+          status?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          fee_payment_id?: string
+          finished_at?: string | null
+          id?: string
+          locale?: string | null
+          psp_token?: string | null
+          region?: string
+          started_at?: string
+          status?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_attempts_fee_fk"
+            columns: ["fee_payment_id", "region"]
+            isOneToOne: false
+            referencedRelation: "fee_payments"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "checkout_attempts_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      fee_payments: {
+        Row: {
+          amount: number
+          application_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          kind: string
+          paid_at: string | null
+          payer_id: string
+          provider_id: string | null
+          psp_fee_amount: number | null
+          psp_payment_id: string | null
+          region: string
+          request_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          application_id?: string | null
+          created_at?: string
+          currency: string
+          id?: string
+          kind: string
+          paid_at?: string | null
+          payer_id: string
+          provider_id?: string | null
+          psp_fee_amount?: number | null
+          psp_payment_id?: string | null
+          region: string
+          request_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          application_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          kind?: string
+          paid_at?: string | null
+          payer_id?: string
+          provider_id?: string | null
+          psp_fee_amount?: number | null
+          psp_payment_id?: string | null
+          region?: string
+          request_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_payments_application_fk"
+            columns: ["application_id", "request_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id", "request_id"]
+          },
+          {
+            foreignKeyName: "fee_payments_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_provider_fk"
+            columns: ["provider_id", "region"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "fee_payments_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "fee_payments_request_fk"
+            columns: ["request_id", "region"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "region"]
+          },
+        ]
+      }
+      fee_refunds: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          fee_payment_id: string | null
+          finished_at: string | null
+          id: string
+          kind: string
+          psp_payment_id: string
+          psp_refund_id: string | null
+          reason: string | null
+          region: string
+          request_id: string
+          requested_by: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          fee_payment_id?: string | null
+          finished_at?: string | null
+          id?: string
+          kind: string
+          psp_payment_id: string
+          psp_refund_id?: string | null
+          reason?: string | null
+          region: string
+          request_id: string
+          requested_by?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          fee_payment_id?: string | null
+          finished_at?: string | null
+          id?: string
+          kind?: string
+          psp_payment_id?: string
+          psp_refund_id?: string | null
+          reason?: string | null
+          region?: string
+          request_id?: string
+          requested_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_refunds_fee_fk"
+            columns: ["fee_payment_id", "region"]
+            isOneToOne: false
+            referencedRelation: "fee_payments"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "fee_refunds_fee_request_fk"
+            columns: ["fee_payment_id", "request_id"]
+            isOneToOne: false
+            referencedRelation: "fee_payments"
+            referencedColumns: ["id", "request_id"]
+          },
+          {
+            foreignKeyName: "fee_refunds_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "fee_refunds_request_fk"
+            columns: ["request_id", "region"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "fee_refunds_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ledger_entries: {
+        Row: {
+          account: string
+          amount: number
+          created_at: string
+          currency: string
+          id: number
+          journal_id: string
+          region: string
+        }
+        Insert: {
+          account: string
+          amount: number
+          created_at?: string
+          currency: string
+          id?: never
+          journal_id: string
+          region: string
+        }
+        Update: {
+          account?: string
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: never
+          journal_id?: string
+          region?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entries_journal_fk"
+            columns: ["journal_id", "region", "currency"]
+            isOneToOne: false
+            referencedRelation: "ledger_journals"
+            referencedColumns: ["id", "region", "currency"]
+          },
+          {
+            foreignKeyName: "ledger_entries_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      ledger_journals: {
+        Row: {
+          created_at: string
+          currency: string
+          fee_payment_id: string | null
+          id: string
+          idempotency_key: string
+          kind: string
+          legs: Json
+          region: string
+          response: Json
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          fee_payment_id?: string | null
+          id?: string
+          idempotency_key: string
+          kind: string
+          legs: Json
+          region: string
+          response: Json
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          fee_payment_id?: string | null
+          id?: string
+          idempotency_key?: string
+          kind?: string
+          legs?: Json
+          region?: string
+          response?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_journals_fee_fk"
+            columns: ["fee_payment_id", "region"]
+            isOneToOne: false
+            referencedRelation: "fee_payments"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "ledger_journals_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           email_enabled: boolean
@@ -245,6 +575,62 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbox_events: {
+        Row: {
+          attempts: number
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string
+          done_at: string | null
+          id: string
+          idempotency_key: string
+          kind: string
+          last_error: string | null
+          next_attempt_at: string | null
+          payload: Json
+          region: string
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          idempotency_key: string
+          kind: string
+          last_error?: string | null
+          next_attempt_at?: string | null
+          payload: Json
+          region: string
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          idempotency_key?: string
+          kind?: string
+          last_error?: string | null
+          next_attempt_at?: string | null
+          payload?: Json
+          region?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbox_events_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -749,6 +1135,44 @@ export type Database = {
           },
         ]
       }
+      psp_events: {
+        Row: {
+          created_at: string
+          event_key: string
+          id: string
+          payload: Json
+          received_at: string
+          region: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          event_key: string
+          id?: string
+          payload: Json
+          received_at?: string
+          region: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          event_key?: string
+          id?: string
+          payload?: Json
+          received_at?: string
+          region?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psp_events_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       questions: {
         Row: {
           active: boolean
@@ -1234,13 +1658,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_commission: {
+        Args: { p_attempt: string; p_fee: string }
+        Returns: boolean
+      }
       accept_provider_docs_consent: {
         Args: { p_locale: string }
         Returns: Json
       }
+      accept_provider_fee: {
+        Args: { p_attempt: string; p_fee: string }
+        Returns: boolean
+      }
       admin_may_read: {
         Args: { p_name: string; p_object_id: string }
         Returns: boolean
+      }
+      after_commission_paid: { Args: { p_fee: string }; Returns: undefined }
+      after_provider_fee_paid: { Args: { p_fee: string }; Returns: undefined }
+      apply_fee_paid: {
+        Args: {
+          p_amount: number
+          p_attempt_id: string
+          p_currency: string
+          p_fee_payment_id: string
+          p_psp_fee: number
+          p_psp_payment_id: string
+        }
+        Returns: Json
+      }
+      apply_fee_refunded: {
+        Args: { p_fee_refund_id: string; p_psp_refund_id: string }
+        Returns: Json
       }
       apply_settings: { Args: { p_region: string }; Returns: Json }
       apply_to_request: {
@@ -1268,6 +1717,10 @@ export type Database = {
         Returns: Json
       }
       choose_settings: { Args: { p_region: string }; Returns: number }
+      claim_outbox: {
+        Args: { p_limit: number; p_worker: string }
+        Returns: Json
+      }
       complete_onboarding: {
         Args: {
           p_accept_terms: boolean
@@ -1312,9 +1765,36 @@ export type Database = {
         }
         Returns: Json
       }
+      enqueue_outbox: {
+        Args: {
+          p_key: string
+          p_kind: string
+          p_payload: Json
+          p_region: string
+        }
+        Returns: string
+      }
+      fee_amount: {
+        Args: { p_price: number; p_settings: Json }
+        Returns: number
+      }
+      fee_settings: {
+        Args: { p_region: string; p_unit?: number }
+        Returns: Json
+      }
+      finish_outbox: {
+        Args: {
+          p_claim_token: string
+          p_error: string
+          p_id: string
+          p_ok: boolean
+        }
+        Returns: Json
+      }
       has_contact_info: { Args: { p_text: string }; Returns: boolean }
       health_ping: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      ledger_check: { Args: { p_region: string }; Returns: Json }
       log_document_view: {
         Args: { p_document_id: string; p_object_id: string }
         Returns: Json
@@ -1329,7 +1809,23 @@ export type Database = {
         Returns: Json
       }
       offer_display_name: { Args: { p_name: string }; Returns: Json }
+      open_fee: {
+        Args: { p_kind: string; p_request_id: string }
+        Returns: string
+      }
       phone_region: { Args: { p_phone: string }; Returns: string }
+      post_journal: {
+        Args: {
+          p_currency: string
+          p_fee_payment_id: string
+          p_key: string
+          p_kind: string
+          p_legs: Json
+          p_region: string
+          p_response: Json
+        }
+        Returns: Json
+      }
       preview_pricing_formula: {
         Args: {
           p_addon_ids: string[]
@@ -1436,6 +1932,10 @@ export type Database = {
         Returns: boolean
       }
       provider_ext_mime: { Args: { p_name: string }; Returns: string }
+      provider_fee_for: {
+        Args: { p_price: number; p_region: string }
+        Returns: number
+      }
       provider_feed: {
         Args: {
           p_after_id: string
@@ -1548,6 +2048,10 @@ export type Database = {
         Returns: Json
       }
       provider_type_bucket: { Args: { p_type: string }; Returns: string }
+      psp_payload_strip: {
+        Args: { p_depth?: number; p_payload: Json }
+        Returns: Json
+      }
       public_region_info: {
         Args: never
         Returns: {
@@ -1592,6 +2096,15 @@ export type Database = {
         }
         Returns: Json
       }
+      record_psp_event: {
+        Args: {
+          p_event_key: string
+          p_payload: Json
+          p_region: string
+          p_source: string
+        }
+        Returns: Json
+      }
       register_provider_document: {
         Args: { p_path: string; p_type: string }
         Returns: Json
@@ -1633,6 +2146,7 @@ export type Database = {
         }
         Returns: Json
       }
+      start_checkout: { Args: { p_fee_payment_id: string }; Returns: string }
       submit_provider_file: { Args: never; Returns: Json }
       suspend_provider: {
         Args: { p_provider_id: string; p_reason: string }

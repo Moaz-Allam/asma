@@ -243,8 +243,8 @@ SELECT is(public.catalog_trim(chr(6155) || 'Moda' || chr(65531)), 'Moda', 'B5: a
 -- B1: a unit changed after the engine read it can round the commission past the price.
 UPDATE public.platform_settings SET value = '90' WHERE region = 'TR' AND key = 'commission_percent';
 UPDATE public.platform_settings SET value = '1000' WHERE region = 'TR' AND key = 'price_rounding_minor';
-SELECT throws_ok($$ SELECT public.pricing_split('TR', 600) $$, 'P0001', 'pricing_settings_invalid',
-  'B1: a commission above the price refuses');
+SELECT is(public.pricing_split('TR', 600) - 'commission_percent', '{"commission": 0, "cash_due": 600}',
+  'B1: a commission above the price is capped at the price rounded down to the unit (07 R-1)');
 SELECT is(public.pricing_split('TR', 2000) - 'commission_percent', '{"commission": 2000, "cash_due": 0}',
   'B1: a commission equal to the price is the edge that stands');
 UPDATE public.platform_settings SET value = '10' WHERE region = 'TR' AND key = 'commission_percent';

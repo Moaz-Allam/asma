@@ -12,6 +12,10 @@ CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
 SELECT plan(183);
 
+-- 07's cross key check on the fee settings is deferred; this file rewrites the rounding unit and then
+-- lifts a trigger, which a pending deferred event forbids, so the check runs per statement here.
+SET CONSTRAINTS fee_settings_guard IMMEDIATE;
+
 -- Since 04 (spec 0008 AC-28, D142), quote_price has no authenticated grant: a customer reaches it only through
 -- quote_request and create_request, which count against the quote rate limit. This file still proves the
 -- engine end to end as a real customer, so it grants it back for this rolled back transaction only;
@@ -501,7 +505,11 @@ CREATE TEMP VIEW money_args AS
                     -- The one exemption (spec 0008 AC-10, D140): the figures the customer saw, compared and never
                     -- stored. Keyed on the function and the argument pair; supabase/tests/12 reads the source.
                     AND NOT (p.oid = 'public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, text, text, bigint, bigint)'::regprocedure
-                             AND a IN ('p_expected_price', 'p_expected_commission')))
+                             AND a IN ('p_expected_price', 'p_expected_commission'))
+                    -- The second (spec 0011-07 AC-2, R-12): the fee formula, granted to signed in users by the
+                    -- spec. It stores nothing and returns a figure from the settings; every figure that is
+                    -- frozen or shown is computed in the database from a stored price.
+                    AND NOT (p.oid = 'public.provider_fee_for(text, bigint)'::regprocedure AND a = 'p_price'))
      AND p.proname NOT IN ('publish_pricing_formula', 'preview_pricing_formula');
 SELECT is_empty($$ SELECT signature FROM money_args $$,
   'no function a customer or provider can run takes an argument named for money (rule 1)');
@@ -542,6 +550,8 @@ SELECT set_eq(
             ('public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, text, text, bigint, bigint)'),
             ('public.decide_provider(uuid, text, timestamp with time zone, text, text)'),
             ('public.is_admin()'),
+            ('public.ledger_check(text)'),
+            ('public.provider_fee_for(text, bigint)'),
             ('public.log_document_view(uuid, uuid)'),
             ('public.preview_pricing_formula(uuid, bigint, jsonb, uuid, uuid[], jsonb)'),
             ('public.provider_may_store(text, text)'),

@@ -76,6 +76,18 @@ const CASES = [
     content: 'const escrowAmount = price - commission;',
   },
   {
+    name: 'a copy of the cash due calculation outside lib/pricing (D96)',
+    expect: 'commission-netted',
+    path: 'lib/requests/view.ts',
+    content: 'const cashDue = fixedPrice - commission;',
+  },
+  {
+    name: 'a cash due copy in a component is blocked too (D96)',
+    expect: 'commission-netted',
+    path: 'components/features/requests/PriceSplit.tsx',
+    content: 'const due = amount - commission;',
+  },
+  {
     name: 'CREATE TABLE without enabling RLS in the same migration',
     expect: 'rls-missing-on-new-table',
     path: 'supabase/migrations/0002_requests.sql',
@@ -260,6 +272,14 @@ const CASES = [
   },
 
   // ---- must PASS (false-positive guards) ---------------------------------
+  {
+    name: 'the cash due calculation is allowed in lib/pricing only (D96)',
+    expect: null,
+    path: 'lib/pricing/split.ts',
+    content:
+      "import 'server-only';\n" +
+      'export const cashDue = (price: bigint, commission: bigint) => price - commission;',
+  },
   {
     name: 'compliant component using semantic tokens and logical properties',
     expect: null,
