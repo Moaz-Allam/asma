@@ -66,6 +66,13 @@ leaves a slot for them (the reviews slot on the applicant card), the slot render
 > request, applications, fee_payments, fee_refunds. `payment_deadline` lives on `requests` (06); `fee_deadline` and the
 > extension times join `requests` or `applications` in the child that first needs them. `request_events` and
 > `failed_picks` come with the first child that needs them (12 or 13).
+>
+> **The relay (D173, 2026-11-17).** 0011-08 is amended to what 07 built. Read the verify keys as
+> `checkout:<attempt_id>:verify:callback:<minute>`, `…:verify:webhook:<psp_event_id>` and
+> `…:verify:reconcile:<window>:<final|open>` in place of the counted `<n>`; an `abandoned` or `failed` attempt is still
+> checked for 2 hours after it finished. The alerts list gains `idempotency_conflict`, `outbox_failed`,
+> `psp_not_configured`, `psp_bad_response` and `checkout_settings_invalid`. `payments_enabled` (D172) and the settings
+> `checkout_hold_minutes` and `psp_buyer_city` land in 08. 09 and 10 set `checkout_attempts.locale` and `payer_ip`.
 
 Every child builds to this section. A child may add to it, never contradict it.
 
