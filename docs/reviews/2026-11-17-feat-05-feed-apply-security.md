@@ -1,0 +1,17 @@
+# Security review, feat/05-feed-apply, 2026-11-17
+
+**Reviewed by**: `security-reviewer` agent on Opus (read only)
+**Scope**: branch vs origin/master: migration `20261117090000_provider_feed_apply`, pgTAP 14 and 15, `lib/provider-feed/`, `actions/provider-feed.ts`, the scrubber, the events, the provider pages and components
+**Verdict**: ship 05. No Critical or Major. F1 must close before 06 lets the customer read the message.
+
+| id | sev | where | finding | fix | kind | resolution |
+| --- | --- | --- | --- | --- | --- | --- |
+| F1 | Minor (before 06) | `has_contact_info`, `contact_normalise` (`20261114090000_provider_onboarding_review_fixes_2.sql`), reached from `apply_to_request` | A phone split by about 20 characters of words between digit groups passes both scanner rules; `contact_normalise` does not strip the full invisible class (U+2800, U+3164, U+115F, U+180B to U+180D, U+17B4, U+17B5, U+FE00 to U+FE0F), so those can pad the gaps. Today only the author and admin read the message; from 06 the customer does | Before 06: refuse 10 or more digits in the whole normalised message (or a TR or KSA mobile pattern with every non digit removed); strip the full blank class in `contact_normalise`; or show the message only after the reveal | Abuse, reveal | deferred to 06's first migration, tracker R11 |
+| F2 | Minor | `apply_to_request` | Standing read without a lock on the providers row: an apply can land beside a suspension. A suspended provider's APPLIED rows still count toward the cap | `for share` on the providers row after the request lock; count only approved providers toward the cap, or cancel APPLIED rows on suspend | Race, abuse | fixed in part: step 4b locks and reads the standing again (pgTAP 15, D156); the cap count of a suspended provider's rows goes to 06 with the choose rule (R11) |
+| F3 | Info | `apply_to_request` steps 4 to 10 | Any approved provider with a setup can lock any OPEN request of the region briefly before the picks check, at no rate cost; both answer `not_found` | Check picks before the lock, or count earlier | Abuse | accepted: moving the check before the lock would break the replay of an application whose picks changed (D155); random ids, nothing leaks |
+| F4 | Info | `provider_feed`, `provider_request` | An approved provider may pick every service and district and read every open request's short details | Confirm with the owner, or cap | Enumeration | by design (D146, D149): short details hold no personal data |
+| F5 | Info | `requests_commission_unit` | Validated at push | Count the cloud rows first | Deploy | done: 0 requests in the cloud (read only count, 2026-11-17) |
+| G1 | Guardrail | blank class copies | The invisible class lives in three hand kept copies, and the scanner keeps a fourth, narrower one | One SQL source and a meta test | Guardrail | deferred with F1 (R11) |
+| G2 | Guardrail | pgTAP 13, 15 | The delete guards stop at the table owner, who can disable a trigger | Event trigger or alert, or record as accepted | Guardrail | accepted: the owner is the migration and the SQL editor; a wipe at G3 (D37) needs it |
+| I1 | Info | migration section 0 | Every R10 carry over is fixed with no regression | none | Sound | none |
+| I2 | Info | migration sections 3 to 10, doors, pages | Definer functions pinned and revoked; named column reads; RLS negatives; races serialised on the request row; message never in a raise, return, audit row or event | none | Sound | none |

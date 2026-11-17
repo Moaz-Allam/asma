@@ -1104,8 +1104,11 @@ declare
 begin
   v_me := public.provider_reader();
   select g.timezone into v_tz from public.regions g where g.code = v_me.region;
+  -- A filter longer than any setup can match nothing more: refused as empty before any row is read.
   if public.provider_standing(v_me.id) is distinct from 'approved'
-     or not public.provider_setup_complete(v_me.id) then
+     or not public.provider_setup_complete(v_me.id)
+     or coalesce(cardinality(p_service_ids), 0) > 50
+     or coalesce(cardinality(p_zone_ids), 0) > 100 then
     return jsonb_build_object('timezone', v_tz, 'has_more', false, 'rows', '[]'::jsonb);
   end if;
 
@@ -1322,7 +1325,8 @@ grant execute on function public.provider_home_counts() to authenticated;
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 9. Apply (AC-10, D148, D155). The only way to create an application, in one transaction, in the
 --    spec's order. Lock order, a rule for every later position that touches applications: the request
---    row first, then the caller's apply_counters row, then applications rows. Steps 11 and 12 return
+--    row first, then the caller's providers row (shared), then the caller's apply_counters row, then
+--    applications rows. Steps 11 and 12 return
 --    instead of raising, so the count of step 10 commits: probing the scanner costs rate limit. No
 --    raise and no returned value ever carries the message text.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -1368,6 +1372,18 @@ begin
      for update;
   if not found then
     raise exception 'not_found';
+  end if;
+
+  -- 4b. The caller's providers row, shared, then the standing again: a suspension that commits while this
+  --     apply runs either waits for it or is seen here (review F2). Suspend touches no request row, so the
+  --     order request, then provider, cannot deadlock with it.
+  perform 1 from public.providers pr where pr.id = v_me.id for share;
+  v_standing := public.provider_standing(v_me.id);
+  if v_standing = 'suspended' then
+    raise exception 'provider_suspended';
+  end if;
+  if v_standing is distinct from 'approved' then
+    raise exception 'not_approved';
   end if;
 
   -- 5. A repeat returns the stored application with no write, whatever the request's state now.

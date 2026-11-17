@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS dblink WITH SCHEMA extensions;
 
-SELECT plan(11);
+SELECT plan(14);
 
 CREATE FUNCTION pg_temp.conn() RETURNS text LANGUAGE sql STABLE AS $$
   SELECT format('host=%s port=%s dbname=%s user=postgres password=postgres',
@@ -78,7 +78,7 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
   SELECT ('00000000-0000-0000-0000-0000001500e' || g)::uuid, 'TR', '00000000-0000-0000-0000-0000001500c1', gen_random_uuid(),
          '00000000-0000-0000-0000-000000150051', '00000000-0000-0000-0000-000000150021', '{}', '[]',
          '{"rounding_minor": 100}', 100000, 10000, 90000, 'TRY', now() + interval '2 days', now() + interval '2 days 2 hours'
-    FROM generate_series(1, 3) g;
+    FROM generate_series(1, 4) g;
   -- Nine offers on E1: the cap of ten minus one.
   INSERT INTO public.applications (region, request_id, provider_id, message)
   SELECT 'TR', '00000000-0000-0000-0000-0000001500e1', ('00000000-0000-0000-0000-0000001500' || lpad(g::text, 2, '0'))::uuid,
@@ -146,6 +146,22 @@ SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
 SELECT is(pg_temp.count_sql($$ SELECT string_agg(a.status, ',') FROM public.applications a
                                 WHERE a.request_id = '00000000-0000-0000-0000-0000001500e3' $$),
   'CANCELLED', 'and cancels the application: no APPLIED row on a CANCELLED request');
+
+-- ── a suspension racing an apply: the apply waits on the provider row (review F2) ─
+SELECT extensions.dblink_exec('a', 'RESET ROLE');
+SELECT extensions.dblink_exec('a', 'BEGIN');
+SELECT extensions.dblink_exec('a', $$ UPDATE public.providers SET status = 'suspended', suspension_reason = 'Repeated complaints from customers'
+                                      WHERE id = '00000000-0000-0000-0000-000000150002' $$);
+SELECT extensions.dblink_exec('b', pg_temp.as_sql('02'));
+SELECT extensions.dblink_send_query('b', pg_temp.apply_sql('e4'));
+SELECT pg_sleep(0.3);
+SELECT is(extensions.dblink_is_busy('b'), 1, 'the apply waits on the provider row the suspension holds');
+SELECT extensions.dblink_exec('a', 'COMMIT');
+SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
+SELECT ok(extensions.dblink_error_message('b') LIKE '%provider_suspended%', 'and then refuses provider_suspended');
+SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
+SELECT is(pg_temp.count_sql($$ SELECT count(*)::text FROM public.applications WHERE request_id = '00000000-0000-0000-0000-0000001500e4' $$),
+  '0', 'no application from a suspended provider');
 
 SELECT extensions.dblink_disconnect('a');
 SELECT extensions.dblink_disconnect('b');

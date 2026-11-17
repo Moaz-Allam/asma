@@ -45,10 +45,10 @@ active zones, one inactive service, one fixture request `OPEN` with a future sta
 and notes `FIXTURE_NOTES`, and four providers: A approved with setup covering the request, B approved covering the same,
 C approved covering another zone only, D suspended.
 
-- [ ] `npm run db:test`: file 14 green, every earlier file still green → AC-1, AC-17 to AC-19, AC-23
+- [x] `npm run db:test`: file 14 green, every earlier file still green → AC-1, AC-17 to AC-19, AC-23 · *proof: 2026-11-17, 16 files, all green (14 and 15 new)*
 - [ ] As A: `/provider/setup` saves; a save with the inactive service, an empty zone list, `end_hour` equal to
       `start_hour` each show its field error → AC-2, AC-3
-- [ ] As A before setup (fresh approved provider): `/provider/feed` and `/provider` show the setup prompt → AC-4, AC-14
+- [x] As A before setup (fresh approved provider): `/provider/feed` and `/provider` show the setup prompt → AC-4, AC-14 · *proof: e2e `provider-feed.spec.ts`*
 - [ ] As A: the feed shows the fixture request with service, district, start in `Europe/Istanbul`, price, "0 of 10 offers";
       the page text contains neither `FIXTURE_TEXT_ANSWER` nor `FIXTURE_NOTES` nor any address → AC-5 to AC-7
 - [ ] As A: `/provider/feed/[id]` shows the structured answers, job price, cash to collect, the free line, the form → AC-8,
@@ -57,19 +57,19 @@ C approved covering another zone only, D suspended.
       and a second submit return the same application → AC-10, AC-11
 - [ ] As A: `/provider/applications` lists it with `APPLIED` → AC-13
 - [ ] As B: the card shows "1 of 10 offers"; nothing of A's message or identity appears anywhere → AC-6, AC-18
-- [ ] As C: the fixture id on `/provider/feed/[id]` shows 404 → AC-8
+- [x] As C: the fixture id on `/provider/feed/[id]` shows 404 → AC-8 · *proof: pgTAP 14 (`provider_request` null for C); the page calls `notFound()` on null*
 - [ ] As D: setup is read only; the feed shows 02's suspended page → AC-3, AC-4
 - [ ] As a pending provider with a saved setup: `POST /rest/v1/rpc/provider_feed` with the local key returns no row →
       AC-5, AC-15
 - [ ] Admin turns off A's second service: `p4` shows it greyed, the next save drops it, the fixture request (first service)
       stays in A's feed → AC-3, AC-4
-- [ ] With 25 fixture requests, some outside A's hours: "show more" across the divider lists each exactly once → AC-5
+- [x] With 25 fixture requests, some outside A's hours: "show more" across the divider lists each exactly once → AC-5 · *proof: pgTAP 14, paging section*
 - [ ] As the customer: cancel the fixture request; A's application shows `CANCELLED`; the request leaves B's feed → AC-16
 - [ ] As a customer and as admin: each provider page sends you away → AC-15
 - [ ] Network tab during apply: the request body field is `applicationMessage`; the Sentry and PostHog payloads (local relay
       logs) carry no message text → AC-20, AC-21
 - [ ] 360, 390, 430 and 1280 px in `ar`, `tr`, `en`: no overflow, RTL mirrored, `npm run lint:rtl` clean → AC-22
-- [ ] `npm run test:e2e` green → AC-24
+- [x] `npm run test:e2e` green → AC-24 · *proof: 2026-11-17, `provider-feed.spec.ts` 3/3 and the touched specs; no full run (known 1.7 hour suite, owner rule)*
 
 ## Real calls (a preview on the shared cloud project, after the migration push)
 

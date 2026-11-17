@@ -88,7 +88,11 @@ Domain components. Path: `components/features/<domain>/`.
 | `RequestRow` | One request in "my requests": status chip, service, start, district, price, posted date; the whole card links to the detail (`components/features/requests/RequestRow.tsx`) | s10 | ✅ built (04) | ✅ | "Expired" is OPEN with a past start, a reading, not a state |
 | `RequestForm` | Customer: `/requests/new`, both steps, the 400 ms quote loop, publish with the expected figures (`components/features/requests/RequestForm.tsx`) | s4, s5 | ✅ built (04) | ✅ | A late quote never replaces a newer one; the client key is made once per form |
 | `RequestActions` | Customer: cancel while OPEN (a `ConfirmDialog` with reason chips) and repeat (`components/features/requests/RequestActions.tsx`) | s14 row 1, s9 repeat | ✅ built (04) | ✅ | |
-| `RequestShortCard` | **Provider's pre-unlock view** (feed row) | p10, p6 | 📋 planned | — | ⚠️ **PII free: service, size, district, date only. Must not query restricted fields** |
+| `RequestShortCard` | **Provider's pre-unlock view** (feed row) | p10, p6 | ↪ replaced by `FeedCard` (05) | — | ⚠️ **PII free: service, size, district, date only. Must not query restricted fields** |
+| `FeedCard` | Provider: one request in the feed: service, district and start, job price, "n of m offers", "You applied" chip, "Details and apply"; full requests greyed with no button (`components/features/provider-feed/FeedCard.tsx`) | p10 | ✅ built (05) | ✅ | Display only; strings from `provider_feed`, which never returns the customer, address, notes or a typed answer |
+| `ShortDetailsList` | Provider: the short details of one request as term and value rows, structured answers included (`components/features/provider-feed/ShortDetailsList.tsx`) | p8 | ✅ built (05) | ✅ | Rows built from `provider_request` only |
+| `ProviderSetupForm` | Provider `p4` at `/provider/setup`: services by category, districts, work days and hours, a summary card; inactive picks greyed and dropped on save; read only when suspended (`components/features/provider-feed/ProviderSetupForm.tsx`) | p4 | ✅ built (05) | ✅ | No "from" price and no tools tick (D152); a save never sends the file to review (D151) |
+| `StandingNotice` | Provider: 02's standing page in place of the feed when not approved (`components/features/provider-feed/StandingNotice.tsx`) | p6, p17 | ✅ built (05) | ✅ | Reuses `AccountStateBanner` |
 | `RequestTimeline` | Status progression with times | s15, s18 | 📋 planned | — | From canonical state machine |
 | `CancelRequestPanel` | Outcome by state at cancellation | s14 | 📋 planned | — | Matches `project-overview.md` cancellation table rows 1–12 |
 | `RepeatRequestAction` | Re-post a past request with the same answers | s9 | 📋 planned | — | D56, position 04 (scope override); the price is recomputed on the server |
@@ -97,7 +101,8 @@ Domain components. Path: `components/features/<domain>/`.
 
 | Component | Purpose | Design ref | Status | RTL | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `ApplicationForm` | Provider applies with message and structured answers; free, no price field | p8 | 📋 planned | — | ⚠️ Warns contact info is rejected **before** submit; live scan chip |
+| `ApplicationForm` | Provider applies with a message; free, no price field; a confirm restates the deal; a replay shows the stored status (`components/features/provider-feed/ApplicationForm.tsx`) | p8 | ✅ built (05) | ✅ | ⚠️ Warns contact info is rejected **before** submit; no live scan, no structured answers (D152, D153); a refusal keeps the message |
+| `ApplicationRow` | Provider: one application in "My applications": status chip, service, district and start, job price, applied date (`components/features/provider-feed/ApplicationRow.tsx`) | p13 (list) | ✅ built (05) | ✅ | Withdraw is position 12 |
 | `OfferList` | Customer compares applicants (was `ApplicantList`) | s6, s18 | 📋 planned | — | |
 | `OfferCard` | One applicant: initial, «أحمد س.», verified chip, stats chips, message, answers, reviews, choose | s6 | 📋 planned | — | Expanded and collapsed; no provider contact pre-unlock |
 | `ProviderProfileView` | Customer-facing profile with derived metrics | s8, p7 | 📋 planned | — | Legacy counts split from platform counts |

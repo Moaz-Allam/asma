@@ -12,7 +12,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(280);
+SELECT plan(282);
 
 -- ── ids ──────────────────────────────────────────────────────────────────────
 CREATE FUNCTION pg_temp.u(p text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$
@@ -425,6 +425,10 @@ SELECT is(pg_temp.ids(public.provider_feed(ARRAY[pg_temp.s(2)], NULL, NULL, NULL
 SELECT is(pg_temp.ids(public.provider_feed(ARRAY[pg_temp.s(3), pg_temp.s(9)], NULL, NULL, NULL, NULL, NULL, NULL)), '{}', 'a service outside the setup returns no row');
 SELECT is(pg_temp.ids(public.provider_feed(NULL, ARRAY[pg_temp.z(2)], NULL, NULL, NULL, NULL, NULL)), '{}', 'a district outside the setup returns no row: a filter never widens');
 SELECT is(pg_temp.ids(public.provider_feed('{}', NULL, NULL, NULL, NULL, NULL, NULL)), '{}', 'an empty filter list returns no row');
+SELECT is(pg_temp.ids(public.provider_feed(array_append((SELECT array_agg(gen_random_uuid()) FROM generate_series(1, 50)), pg_temp.s(1)), NULL, NULL, NULL, NULL, NULL, NULL)), '{}',
+  'a service filter longer than 50 is refused as empty, even with a covered id in it (review)');
+SELECT is(pg_temp.ids(public.provider_feed(NULL, array_append((SELECT array_agg(gen_random_uuid()) FROM generate_series(1, 100)), pg_temp.z(1)), NULL, NULL, NULL, NULL, NULL)), '{}',
+  'and a district filter longer than 100');
 SELECT is(pg_temp.ids(public.provider_feed(NULL, NULL, pg_temp.today() + 3, pg_temp.today() + 4, NULL, NULL, NULL)), ARRAY[pg_temp.r(2)]::text[],
   'a date range in the region''s days, end not included');
 SELECT is(pg_temp.ids(public.provider_feed(NULL, NULL, pg_temp.today() + 2, pg_temp.today() + 3, NULL, NULL, NULL)), ARRAY[pg_temp.r(1), pg_temp.r(4)]::text[],

@@ -1576,7 +1576,37 @@ Flags for: `funding_enabled`, `unlock_enabled`, `payouts_enabled`, `auto_release
 - **Doors.** `lib/requests/` wraps the four functions and the two reads; `actions/requests.ts` has the three
   actions. The scrubber treats `line`, `address_line`, `notes` and `answers` as personal.
 - **Review carry overs (D143, R10):** the SQL findings of the review round go into 05's first migration, because
-  `post_request` is in the cloud: see the tracker's R10.
+  `post_request` is in the cloud: see the tracker's R10. Done in `provider_feed_apply` (§39e).
+
+## 39e. Provider feed and apply (position 05, spec 0009)
+
+Migration `provider_feed_apply` (D146 to D155).
+
+- **Five tables.** `provider_services`, `provider_zones` (each pick holds the region in its keys to the provider,
+  the service or the zone), `provider_availability` (work days 0 to 6 as Postgres `dow`, whole hours
+  `[start, end)`), `applications` (one per request and provider, the twelve statuses of project-overview §22,
+  the message 20 to 600 code points), `apply_counters` (one hourly window per provider). `providers` gains
+  unique `(id, region)`.
+- **Writes only through definer functions.** `save_provider_setup` (locks the caller's providers row; refuses
+  `setup_invalid` with the field in the error detail) and `apply_to_request`, the only insert into
+  `applications` (D148). No API role holds a write grant on the five tables; the insert policy with
+  `provider_can_apply()` stays as defence in depth.
+- **Lock order** for every position that touches applications: the request row, then the caller's
+  `apply_counters` row, then `applications` rows. `cancel_request` (replaced) cancels the `APPLIED` rows under
+  the same request lock; 06's choose takes it first too.
+- **Reads.** `provider_feed` and `provider_request` are the only provider reads of a request. Both build the
+  row from named columns (`provider_short_details`), so a new column on `requests` stays hidden until added on
+  purpose; the structured answers skip `text` and `textarea` and return a value only in its own shape. A
+  request is visible when it is in the caller's feed (approved, setup complete, OPEN, future, covered) or the
+  caller applied to it. `provider_applications` and `provider_home_counts` complete the set.
+- **Settings.** `max_applicants_per_request` (1 to 50) and `applications_per_hour` (1 to 1000), each with a row
+  check; `apply_settings()` refuses `apply_settings_invalid`, which alerts.
+- **Guards.** `applications_guard` refuses delete, truncate, a change of identity, message or creation time,
+  and any move out of a final status. 04's carry overs: requests are never deleted or truncated, the status
+  move is checked (only `OPEN` to `CANCELLED` until 06), the commission is a whole multiple of its snapshot's
+  unit, a switched off region refuses, an engine refusal returns `refused` and counts against the quote limit.
+- **Doors.** `lib/provider-feed/` wraps the seven functions; `actions/provider-feed.ts` has `saveProviderSetup`
+  and `applyToRequest`. The scrubber treats `application_message` and `p_message` as personal.
 
 ## 40. Updated invariants
 

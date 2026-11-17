@@ -34,6 +34,10 @@ export const NUMBER = {
   requestCustomer: 18,
   requestOther: 19,
   requestProvider: 20,
+  // Position 05 (spec 0009 AC-24): two approved providers and the customer whose request they see.
+  feedProvider: 21,
+  feedRival: 22,
+  feedCustomer: 23,
 } as const;
 
 /**
