@@ -34,7 +34,8 @@ export type LogEvent =
   | 'payments_disabled'
   | 'psp_callback_unknown'
   | 'psp_webhook_invalid'
-  | 'reconcile_cut';
+  | 'reconcile_cut'
+  | 'relay_handler_failed';
 
 /** The only ids a record may carry: internal ids, never personal data. */
 export type LogIds = {
@@ -42,12 +43,15 @@ export type LogIds = {
   region?: Region;
   /** The internal user uuid, never an email or a phone. */
   user_id?: string;
+  /** A stable code such as `apply_fee_paid:invalid_state` or `handler:TypeError`, never a message (08). */
+  code?: string;
 };
 
 type Level = 'info' | 'warn' | 'error';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUEST_ID = /^[\w:.-]{1,128}$/;
+const CODE = /^[A-Za-z_][\w:]{0,79}$/;
 
 /** Keeps only well formed ids, whatever a caller passes at runtime. */
 function allowedIds(ids: LogIds): LogIds {
@@ -55,6 +59,7 @@ function allowedIds(ids: LogIds): LogIds {
   if (ids.request_id !== undefined && REQUEST_ID.test(ids.request_id)) out.request_id = ids.request_id;
   if (isRegion(ids.region)) out.region = ids.region;
   if (ids.user_id !== undefined && UUID.test(ids.user_id)) out.user_id = ids.user_id;
+  if (ids.code !== undefined && CODE.test(ids.code)) out.code = ids.code;
   return out;
 }
 

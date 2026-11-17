@@ -21,6 +21,7 @@ const KNOWN = [
   'payload_too_large',
   'forbidden',
   'journal_invalid',
+  'fake_payment_refused',
 ] as const;
 
 export type DbCode = (typeof KNOWN)[number] | 'db_error';

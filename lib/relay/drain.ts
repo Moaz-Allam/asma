@@ -26,8 +26,11 @@ import {
  */
 
 export const CLAIM_LIMIT = 5;
-export const DRAIN_DEADLINE_MS = 40_000;
-export const HANDLER_LIMIT_MS = 60_000;
+// Both fit inside the route's 60 second maxDuration (review 2026-11-17): the last claim at 25 seconds, and a
+// handler (at most two PSP calls of 15 seconds) cut at 30, so a row is left `outbox_unfinished` for its lease to
+// run out rather than killed with the function. Tighter than R-3's 40 and 60, which only fit the 2 minute lease.
+export const DRAIN_DEADLINE_MS = 25_000;
+export const HANDLER_LIMIT_MS = 30_000;
 
 export type DrainOptions = {
   db: Db;
@@ -68,9 +71,13 @@ async function runHandler(db: Db, psp: PspAdapter, row: OutboxRow): Promise<Outc
           region: isRegion(row.region) ? row.region : undefined,
         });
       }
+      log.warn('relay_handler_failed', { request_id: row.id, code: `${error.fn}:${error.code}` });
       return { ok: false, error: `${error.fn}:${error.code}` };
     }
-    return { ok: false, error: 'handler_error' };
+    // The class name only, never the message, which can carry values (review 2026-11-17).
+    const name = error instanceof Error ? error.name : 'unknown';
+    log.error('relay_handler_failed', { request_id: row.id, code: `handler:${name}` });
+    return { ok: false, error: `handler_error:${name}`.slice(0, 100) };
   }
 }
 

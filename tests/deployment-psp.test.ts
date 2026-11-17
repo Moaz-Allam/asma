@@ -83,6 +83,11 @@ describe('PSP_DRIVER=iyzico needs its keys', () => {
     expect(pspMissing({ ...iyzico, RELAY_SECRET: 'short' })).toEqual(['RELAY_SECRET']);
   });
 
+  it('refuses a second key on the browser project: the server project must be another one (security S9)', () => {
+    const sameProject = 'https://anotherkey@o4507000000000000.ingest.de.sentry.io/4507000000000001';
+    expect(pspMissing({ ...iyzico, SENTRY_SERVER_DSN: sameProject })).toEqual(['SENTRY_SERVER_DSN']);
+  });
+
   it('refuses a server DSN equal to the browser one, or outside the EU', () => {
     expect(pspMissing({ ...iyzico, SENTRY_SERVER_DSN: DSN })).toEqual(['SENTRY_SERVER_DSN']);
     expect(pspMissing({ ...iyzico, SENTRY_SERVER_DSN: 'https://k@o1.ingest.us.sentry.io/2' })).toEqual([

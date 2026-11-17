@@ -12,7 +12,7 @@ import {
 import type { Currency } from '@/lib/region';
 
 import { relayDb } from './db';
-import { fakeStore } from './psp';
+import { fakeStore, fakeWebhookSecret } from './psp';
 
 /**
  * The fake card page (spec 0011-08 AC-15). It exists only when `PSP_DRIVER=fake` and the deployment is not
@@ -44,13 +44,16 @@ export function isFakeOutcome(value: unknown): value is FakeOutcome {
 }
 
 /**
- * Stores the choice for the token, and for `webhook_only` posts the signed webhook to our own endpoint.
- * Returns false when the page is not available or the token belongs to no attempt.
+ * Stores the choice for the token, once: a token that already has an outcome refuses a second choice, so the
+ * fake never forgets a refund it made (security review S4). For `webhook_only` it posts the signed webhook to our
+ * own endpoint. Returns false when the page is not available, the token belongs to no attempt, or a choice exists.
  */
 export async function chooseFakeOutcome(token: string, outcome: FakeOutcome): Promise<boolean> {
   if (readFakeCheckout(token) === null) return false;
   try {
-    await fakeStore(relayDb()).set(token, { outcome, retrieves: 0, refunds: {} });
+    const store = fakeStore(relayDb());
+    if ((await store.get(token)) !== null) return false;
+    await store.set(token, { outcome, retrieves: 0, refunds: {} });
   } catch {
     return false;
   }
@@ -58,7 +61,10 @@ export async function chooseFakeOutcome(token: string, outcome: FakeOutcome): Pr
     const body = JSON.stringify({ eventId: `fake-${token}`.slice(0, 200), token, status: 'SUCCESS' });
     await fetch(`${appOrigin()}/api/psp/webhook`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', [FAKE_SIGNATURE_HEADER]: fakeSignature(body) },
+      headers: {
+        'content-type': 'application/json',
+        [FAKE_SIGNATURE_HEADER]: fakeSignature(body, fakeWebhookSecret()),
+      },
       body,
       signal: AbortSignal.timeout(10_000),
     }).catch(() => undefined);

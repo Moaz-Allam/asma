@@ -30,6 +30,8 @@ export type PspOptions = {
   origin: string;
   /** The fake's store; required with `fake`. */
   fakeStore?: FakeStore;
+  /** The fake's webhook secret for this deployment (security review S2); the test default when absent. */
+  fakeWebhookSecret?: string;
   timeoutMs?: number;
 };
 
@@ -59,7 +61,14 @@ export function createPsp(options: PspOptions): PspAdapter {
   const ms = options.timeoutMs ?? PSP_CALL_TIMEOUT_MS;
   if (options.driver === 'fake') {
     if (options.fakeStore === undefined) throw new Error('the fake PSP needs its store');
-    return bounded(createFakeAdapter({ store: options.fakeStore, origin: options.origin }), ms);
+    return bounded(
+      createFakeAdapter({
+        store: options.fakeStore,
+        origin: options.origin,
+        webhookSecret: options.fakeWebhookSecret,
+      }),
+      ms,
+    );
   }
   if (options.driver === 'iyzico') return bounded(createIyzicoAdapter(), ms);
   return bounded(createOffAdapter(), ms);

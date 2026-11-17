@@ -194,7 +194,13 @@ const REQUIREMENTS: readonly Requirement[] = [
     vercelOnly: false,
     when: withIyzico,
     expected: 'the server only EU Sentry DSN (owner step S32), never the browser one',
-    valid: (value, env) => parseEuSentryDsn(value) !== null && value !== read(env, 'NEXT_PUBLIC_SENTRY_DSN'),
+    // Another project, not only another key: a second key on the browser project would let a browser forge
+    // server alerts (security review S9).
+    valid: (value, env) => {
+      const server = parseEuSentryDsn(value);
+      const browser = parseEuSentryDsn(read(env, 'NEXT_PUBLIC_SENTRY_DSN') ?? '');
+      return server !== null && (browser === null || server.projectId !== browser.projectId);
+    },
   },
 ];
 

@@ -813,3 +813,12 @@ describe('spec 0011-08 AC-16: a full iyzico style answer leaves nothing personal
     expect(json).toContain('p-1');
   });
 });
+
+describe('spec 0011-08 S7: the fake card page path loses its token', () => {
+  it('replaces the token segment, keeping the rest of the URL', () => {
+    expect(scrubUrl('http://localhost:3100/tr/dev/fake-checkout/fk1_abc_def?chosen=success')).toBe(
+      'http://localhost:3100/tr/dev/fake-checkout/[token]',
+    );
+    expect(scrubUrl('/en/dev/fake-checkout/fk1_abc')).toBe('/en/dev/fake-checkout/[token]');
+  });
+});

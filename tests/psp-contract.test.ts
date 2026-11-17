@@ -63,7 +63,9 @@ function fakeHarness(now: () => number = Date.now): Harness {
   const { store } = memoryStore();
   return {
     adapter: createFakeAdapter({ store, origin: ORIGIN, now }),
-    pay: (token, outcome) => store.set(token, { outcome, retrieves: 0, refunds: {} }),
+    // The fake keys its state by the attempt id its token carries.
+    pay: (token, outcome) =>
+      store.set(parseFakeToken(token)?.attemptId ?? token, { outcome, retrieves: 0, refunds: {} }),
     webhook: (body, valid) => ({
       rawBody: body,
       headers: new Headers({ [FAKE_SIGNATURE_HEADER]: valid ? fakeSignature(body) : 'f'.repeat(64) }),

@@ -21,6 +21,8 @@ function isUrlProperty(key: string): boolean {
   return /url|referrer|pathname/i.test(key);
 }
 
+// The fake card page's path carries its checkout token (spec 0011-08, security review S7).
+const FAKE_CHECKOUT_TOKEN = /(\/dev\/fake-checkout\/)[^/?#]+/g;
 const UUID_SEGMENT = /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=[/?#]|$)/gi;
 
 /**
@@ -28,7 +30,7 @@ const UUID_SEGMENT = /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
  * only the pageview (spec 0008 AC-25; found by the 06 e2e on `provider_chosen`, 2026-11-18).
  */
 export function withoutIds(value: string): string {
-  return value.replace(UUID_SEGMENT, '/[id]');
+  return value.replace(FAKE_CHECKOUT_TOKEN, '$1[token]').replace(UUID_SEGMENT, '/[id]');
 }
 
 export function filterAnalyticsEvent<T extends Captured>(event: T | null, appEnv: AppEnv): T | null {

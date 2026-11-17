@@ -16,7 +16,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(109);
+SELECT plan(122);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -354,18 +354,31 @@ CREATE TEMP TABLE rp AS SELECT
   pg_temp.att(pg_temp.fee(14), 'failed', interval '90 minutes', interval '1 hour', 'payments_disabled') AS disabled,
   pg_temp.att(pg_temp.fee(15), 'abandoned', interval '5 hours', interval '3 hours', NULL, 'tok-15', '10.1.1.1') AS old_abandoned,
   pg_temp.att(pg_temp.fee(16), 'queued', interval '40 minutes') AS stuck_queued,
-  pg_temp.att(pg_temp.fee(17), 'queued', interval '40 minutes') AS slow_queued;
+  pg_temp.att(pg_temp.fee(17), 'queued', interval '40 minutes') AS slow_queued,
+  pg_temp.att(pg_temp.fee(18), 'ready', interval '27 hours', NULL, NULL, 'tok-18') AS stale_ready,
+  pg_temp.att(pg_temp.fee(19), 'ready', interval '3 hours', NULL, NULL, 'tok-19', '10.2.2.2') AS ready_with_ip;
 INSERT INTO public.outbox_events (region, kind, idempotency_key, payload, status, attempts, next_attempt_at)
 VALUES ('TR', 'checkout.initialize', 'checkout:' || (SELECT stuck_queued FROM rp) || ':init', '{}', 'failed', 6, NULL),
        ('TR', 'checkout.initialize', 'checkout:' || (SELECT slow_queued FROM rp) || ':init', '{}', 'pending', 2, now());
--- A row already under the open attempt's key with another payload: a conflict, counted, never aborting.
+-- A row already under the PSP failed attempt's key: left as it is, and nothing new queued under that key.
 INSERT INTO public.outbox_events (region, kind, idempotency_key, payload)
 VALUES ('TR', 'payment.verify',
         'checkout:' || (SELECT psp_failed FROM rp) || ':verify:reconcile:' || floor(extract(epoch FROM now()) / 900)::bigint || ':open',
         '{"other": true}');
 CREATE TEMP TABLE rp1 AS SELECT public.reconcile_pending() AS j;
-SELECT is((SELECT j - 'queued' FROM rp1), '{"failed": 1, "conflicts": 1, "cleared_ips": 1}'::jsonb,
-  'AC-12, R-8, R-10: one stuck attempt failed, one conflict counted, one old IP cleared');
+SELECT is((SELECT j - 'queued' FROM rp1), '{"failed": 1, "conflicts": 0, "cleared_ips": 2}'::jsonb,
+  'AC-12, R-8, R-10: one stuck attempt failed, no conflict, the IPs of an old finished and an old ready attempt cleared');
+SELECT is((SELECT payload FROM public.outbox_events
+            WHERE idempotency_key LIKE 'checkout:' || (SELECT psp_failed FROM rp) || ':verify:reconcile:%'),
+  '{"other": true}'::jsonb, 'R-10: a key already taken is left as it is');
+SELECT is((SELECT payload ->> 'origin' FROM public.outbox_events
+            WHERE idempotency_key LIKE 'checkout:' || (SELECT open_ready FROM rp) || ':verify:reconcile:%'),
+  'reconcile', 'review Major 1: a reconcile check says so, so a pending answer finishes it');
+SELECT ok(NOT EXISTS (SELECT 1 FROM public.outbox_events o WHERE o.kind = 'payment.verify'
+                       AND (o.payload ->> 'attempt_id')::uuid = (SELECT stale_ready FROM rp)),
+  'review Major 1: no check for an attempt ready more than 26 hours');
+SELECT is((SELECT payer_ip FROM public.checkout_attempts WHERE id = (SELECT ready_with_ip FROM rp)), NULL,
+  'security S6: the IP of an attempt started more than 2 hours ago is cleared, finished or not');
 SELECT results_eq(
   $$ SELECT o.payload ->> 'final', right(o.idempotency_key, 5)
        FROM public.outbox_events o
@@ -420,14 +433,19 @@ SELECT is(pg_temp.err($$ SELECT public.reconcile_daily_list('XX', '2026-11-11', 
 
 -- ══ AC-13, R-12: outbox_health ═════════════════════════════════════════════════
 UPDATE public.outbox_events SET alerted_at = now() WHERE status = 'failed';
+INSERT INTO public.fee_refunds (id, region, request_id, kind, psp_payment_id, amount, currency, reason)
+VALUES (pg_temp.u('d1'), 'TR', pg_temp.r(13), 'late', 'pay-health', 10000, 'TRY', 'late_payment');
 INSERT INTO public.outbox_events (region, kind, idempotency_key, payload, status, attempts, next_attempt_at, last_error)
-VALUES ('TR', 'refund.request', 'refund:health-1', '{"fee_refund_id": "x"}', 'failed', 6, NULL, 'boom'),
+VALUES ('TR', 'refund.request', 'refund:health-1', jsonb_build_object('fee_refund_id', pg_temp.u('d1')), 'failed', 6, NULL, 'boom'),
        ('TR', 'payment.verify', 'checkout:health:verify:1', '{"attempt_id": "y"}', 'pending', 1, now() - interval '10 minutes', NULL);
 CREATE TEMP TABLE h1 AS SELECT public.outbox_health() AS j;
 SELECT ok((SELECT (j ->> 'oldest_due_seconds')::bigint >= 600 FROM h1), 'AC-13: the oldest due row''s age in seconds');
 SELECT is((SELECT jsonb_agg(f - 'id') FROM h1, jsonb_array_elements(j -> 'failed') f),
-  '[{"kind": "refund.request", "region": "TR", "payload": {"fee_refund_id": "x"}}]'::jsonb,
+  jsonb_build_array(jsonb_build_object('kind', 'refund.request', 'region', 'TR', 'payload',
+                                       jsonb_build_object('fee_refund_id', pg_temp.u('d1')))),
   'R-12: a failed row not alerted yet is returned');
+SELECT is((SELECT status FROM public.fee_refunds WHERE id = pg_temp.u('d1')), 'failed',
+  'security S3: its refund is marked failed in the same transaction as the stamp');
 SELECT is((public.outbox_health() -> 'failed'), '[]'::jsonb, 'R-12: and only once');
 SELECT is(pg_temp.err($$ UPDATE public.outbox_events SET payload = '{}' WHERE idempotency_key = 'refund:health-1' $$),
   'outbox_immutable', 'R-12: stamping alerted_at leaves the payload guard in place');
@@ -441,6 +459,42 @@ SELECT public.fake_psp_set('tok-5', '{"outcome": "pending", "retrieves": 1}');
 SELECT is(public.fake_psp_get('tok-5'), '{"outcome": "pending", "retrieves": 1}'::jsonb, 'AC-15: set and get round trip');
 SELECT is((SELECT region FROM public.fake_psp_outcomes WHERE token = 'tok-5'), 'TR', 'AC-15: the row takes its attempt''s region');
 SELECT is(public.fake_psp_get('tok-none'), NULL, 'AC-15: an unknown token reads null');
+SELECT is(public.fake_psp_get((SELECT id FROM a5)::text), '{"outcome": "pending", "retrieves": 1}'::jsonb,
+  'security S7: the store is also read by the attempt id, which the fake payment ids carry');
+
+-- ══ security L1, G3: a fake payment books nothing unless the Vault switch says so ══
+DELETE FROM vault.secrets WHERE name = 'fake_psp_allowed';
+SELECT is(pg_temp.err($$ INSERT INTO public.fee_refunds (region, request_id, kind, psp_payment_id, amount, currency)
+                         VALUES ('TR', pg_temp.r(14), 'late', 'fp1_' || gen_random_uuid(), 100, 'TRY') $$),
+  'fake_payment_refused', 'security L1: without the switch a fake payment id is refused');
+SELECT is(pg_temp.err($$ UPDATE public.fee_payments SET status = 'paid', psp_payment_id = 'fp2_x', paid_at = now(), psp_fee_amount = 0
+                         WHERE request_id = pg_temp.r(15) $$),
+  'fake_payment_refused', 'security L1: nor can it settle a fee');
+SELECT is(pg_temp.err($$ INSERT INTO public.fee_refunds (region, request_id, kind, psp_payment_id, amount, currency)
+                         VALUES ('TR', pg_temp.r(14), 'late', 'pay-real-1', 100, 'TRY') $$),
+  'none', 'security L1: a real payment id is never fenced');
+SELECT vault.create_secret('true', 'fake_psp_allowed');
+SELECT is(pg_temp.err($$ INSERT INTO public.fee_refunds (region, request_id, kind, psp_payment_id, amount, currency)
+                         VALUES ('TR', pg_temp.r(15), 'late', 'fp1_allowed', 100, 'TRY') $$),
+  'none', 'security L1: with the switch on (the local seed) the fake books');
+
+-- ══ security S1: a replayed callback or webhook wakes nothing ══
+SELECT vault.create_secret('https://relay.example.test/api/relay', 'relay_url');
+SELECT vault.create_secret('relay-test-secret', 'relay_secret');
+CREATE TEMP TABLE q0 AS SELECT count(*) AS n FROM net.http_request_queue;
+SELECT public.psp_callback('tok-5', '{"again": true}');
+SELECT public.psp_webhook('evt-1', 'tok-5', NULL, '{}', 'TR');
+SELECT is((SELECT count(*) FROM net.http_request_queue), (SELECT n FROM q0),
+  'security S1: a callback in a minute already seen and a replayed webhook send no kick');
+SELECT public.psp_webhook('evt-new-kick', 'tok-5', NULL, '{}', 'TR');
+SELECT is((SELECT count(*) FROM net.http_request_queue), (SELECT n + 1 FROM q0), 'security S1: a new webhook event kicks once');
+DELETE FROM vault.secrets WHERE name IN ('relay_url', 'relay_secret');
+
+-- ══ security G2: the API roles cannot touch the schedules (pg_net's grants are Supabase's own, see the migration) ══
+SELECT results_eq(
+  $$ SELECT r, has_schema_privilege(r, 'cron', 'USAGE') FROM unnest(ARRAY['anon', 'authenticated']) r ORDER BY r $$,
+  $$ VALUES ('anon', false), ('authenticated', false) $$,
+  'security G2: no API role may read or change the schedules');
 
 -- ══ AC-20: who may call what ═════════════════════════════════════════════════════
 SELECT results_eq(
@@ -454,11 +508,14 @@ SELECT results_eq(
         AND p.proname IN ('checkout_context', 'mark_checkout_ready', 'mark_checkout_failed', 'abandon_checkout',
                           'psp_callback', 'psp_webhook', 'mark_refund_failed', 'reconcile_pending', 'reconcile_daily_list',
                           'outbox_health', 'fake_psp_set', 'fake_psp_get', 'relay_kick', 'payments_enabled',
-                          'checkout_settings', 'lock_attempt', 'fail_attempt', 'start_checkout', 'psp_payload_strip')
+                          'checkout_settings', 'lock_attempt', 'fail_attempt', 'start_checkout', 'psp_payload_strip',
+                          'fake_psp_token', 'fake_payment_fence')
       ORDER BY p.proname $$,
   $$ VALUES ('abandon_checkout', false, true, false, true), ('checkout_context', false, true, false, true),
             ('checkout_settings', false, false, false, false), ('fail_attempt', false, false, false, false),
+            ('fake_payment_fence', false, false, false, true),
             ('fake_psp_get', false, true, false, true), ('fake_psp_set', false, true, false, true),
+            ('fake_psp_token', false, false, false, false),
             ('lock_attempt', false, false, false, false), ('mark_checkout_failed', false, true, false, true),
             ('mark_checkout_ready', false, true, false, true), ('mark_refund_failed', false, true, false, true),
             ('outbox_health', false, true, false, true), ('payments_enabled', false, false, false, false),

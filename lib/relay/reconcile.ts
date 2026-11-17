@@ -51,10 +51,13 @@ export function previousLocalDay(now: number, timeZone: string): string {
   return new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10);
 }
 
-/** R-11: the run scheduled at 01:50 UTC is the day's last; it checks the books and what is left. */
+/**
+ * R-11: the run scheduled at 01:50 UTC is the day's last; it checks the books and what is left. A kick delayed
+ * past 02:00 still counts, so a late run never skips the books check (review 2026-11-17).
+ */
 export function isLastDailyRun(now: number): boolean {
   const at = new Date(now);
-  return at.getUTCHours() === 1 && at.getUTCMinutes() >= 50;
+  return (at.getUTCHours() === 1 && at.getUTCMinutes() >= 50) || at.getUTCHours() === 2;
 }
 
 /** R-14: what the PSP must say for one of our rows. Anything else, partially refunded included, alerts. */
@@ -88,12 +91,16 @@ export async function reconcileDaily(
   const started = now();
   const out = { compared: 0, mismatched: 0 };
   for (const { region, timeZone } of await activeRegions(db)) {
+    // A cut run does not start another region's compare (review 2026-11-17); the last run's checks still run.
+    const late = now() - started > DAILY_DEADLINE_MS;
     const day = previousLocalDay(started, timeZone);
-    const rows = await call<DailyRow[]>(db, 'reconcile_daily_list', {
-      p_region: region,
-      p_day: day,
-      p_limit: DAILY_CHUNK,
-    });
+    const rows = late
+      ? []
+      : await call<DailyRow[]>(db, 'reconcile_daily_list', {
+          p_region: region,
+          p_day: day,
+          p_limit: DAILY_CHUNK,
+        });
     for (const row of rows) {
       if (now() - started > DAILY_DEADLINE_MS) break;
       let found: RetrievePaymentResult;

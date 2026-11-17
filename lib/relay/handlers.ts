@@ -144,7 +144,7 @@ export async function initializeCheckout(db: Db, psp: PspAdapter, row: OutboxRow
       raiseAlert('psp_not_configured', { recordId: attemptId, region: ctx.region });
       return DONE;
     }
-    if (isPspError(error) && error.code === 'psp_bad_response') {
+    if (isPspError(error) && error.code === 'psp_bad_response' && row.attempts === 1) {
       raiseAlert('psp_bad_response', { recordId: attemptId, region: ctx.region });
     }
     return retry(isPspError(error) ? error.code : 'psp_error');
@@ -227,7 +227,10 @@ export async function verifyPayment(db: Db, psp: PspAdapter, row: OutboxRow): Pr
     if (final) await call(db, 'abandon_checkout', { p_attempt_id: attemptId });
     return DONE;
   }
-  return retry('pending');
+  // A reconcile check that finds the page still pending finishes: the next 15 minute window asks again, so its
+  // own retries would only turn every abandoned card page into failed rows and alerts (review Major 1). A callback
+  // or webhook check retries by the schedule.
+  return row.payload.origin === 'reconcile' ? DONE : retry('pending');
 }
 
 /**

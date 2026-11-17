@@ -17,7 +17,13 @@ type Found = { attempt_id: string; locale: string; region: string } | null;
 
 export async function handleCallback(db: Db, fields: Record<string, string>): Promise<string> {
   const token = fields.token;
-  if (typeof token !== 'string' || token.length < 1 || token.length > 500) {
+  // The database's own limits, checked first, so oversized junk never reaches it (security review S8).
+  if (
+    typeof token !== 'string' ||
+    token.length < 1 ||
+    token.length > 500 ||
+    JSON.stringify(fields).length > CALLBACK_LIMIT_BYTES
+  ) {
     log.warn('psp_callback_unknown');
     return '/';
   }
@@ -40,7 +46,7 @@ export async function handleCallback(db: Db, fields: Record<string, string>): Pr
 export function formFields(body: Uint8Array): Record<string, string> {
   const fields: Record<string, string> = {};
   for (const [key, value] of new URLSearchParams(new TextDecoder().decode(body))) {
-    if (key.length <= 100 && !(key in fields)) fields[key] = value;
+    if (key.length <= 100 && !Object.hasOwn(fields, key)) fields[key] = value;
   }
   return fields;
 }

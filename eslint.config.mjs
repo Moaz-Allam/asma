@@ -17,6 +17,9 @@ const PSP_DOOR = ['lib/psp/**'];
 // Spec 0011-08 AC-3: only modules under lib/ get the relay's rights. A route file, `app/api/relay` included,
 // only parses the request and calls lib/relay, so it may import neither lib/psp nor the service role.
 const RELAY = ['lib/**/relay/**', 'lib/**/outbox/**', 'lib/**/*relay*.ts'];
+// Spec 0011-08, security review G1: lib/relay hands out the service role client and the PSP, so only the
+// relay's own routes and the fake card page may import it.
+const RELAY_CALLERS = ['app/api/relay/**', 'app/api/psp/**', 'app/*/dev/fake-checkout/**'];
 const SERVICE_ROLE_USERS = ['lib/db/**', 'app/api/webhooks/**', 'lib/jobs/**', ...RELAY];
 const OBSERVABILITY_DOOR = ['lib/observability/**'];
 const ANALYTICS_DOOR = ['lib/analytics/**'];
@@ -39,6 +42,7 @@ function restrictedImports({
   admin = false,
   sentry = false,
   posthog = false,
+  relay = false,
 } = {}) {
   const paths = [];
   const patterns = [
@@ -64,6 +68,13 @@ function restrictedImports({
     patterns.push({
       group: ['@/lib/psp', '@/lib/psp/*'],
       message: 'Only the outbox relay calls lib/psp (rule 3). Write an outbox_events row instead.',
+    });
+  }
+  if (!relay) {
+    patterns.push({
+      group: ['@/lib/relay', '@/lib/relay/*'],
+      message:
+        'lib/relay holds the service role client and the PSP: only the relay route, the PSP routes and the fake card page call it (spec 0011-08).',
     });
   }
   if (!admin) {
@@ -266,7 +277,7 @@ const config = [
   {
     files: RELAY,
     rules: {
-      'no-restricted-imports': restrictedImports({ psp: true, admin: true }),
+      'no-restricted-imports': restrictedImports({ psp: true, admin: true, relay: true }),
       // The relay route's secret is checked inside lib/relay (spec 0011-08 AC-5).
       'no-restricted-syntax': restrictedSyntax({
         exempt: ['RELAY_SECRET'],
@@ -358,7 +369,8 @@ const config = [
   { files: [...TESTS, 'eslint.config.mjs'], rules: { 'no-restricted-syntax': 'off' } },
   // Spec 0011-08: the PSP contract suite and the relay's tests import lib/psp to test it. Every other import rule
   // still holds in tests.
-  { files: TESTS, rules: { 'no-restricted-imports': restrictedImports({ psp: true }) } },
+  { files: TESTS, rules: { 'no-restricted-imports': restrictedImports({ psp: true, relay: true }) } },
+  { files: RELAY_CALLERS, rules: { 'no-restricted-imports': restrictedImports({ relay: true }) } },
 ];
 
 export default config;

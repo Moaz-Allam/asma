@@ -20,6 +20,11 @@
 create extension if not exists pg_cron;
 create extension if not exists pg_net with schema extensions;
 
+-- Supabase's own admin role grants pg_net's functions to the API roles when the extension is created, and a
+-- migration (run as postgres) cannot revoke a grant it did not make. Accepted (security review L2): `net` is not
+-- an API schema, so no caller reaches it through PostgREST, and every function here pins its search path and runs
+-- no SQL built from input. supabase/tests/20 proves the API roles cannot reach the schedules (`cron`).
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 2. Settings (AC-18, R-16). payments_enabled is a JSON boolean (the existing `_enabled` check), seeded off
 --    in both regions: only the owner turns it on (S37). checkout_hold_minutes and psp_buyer_city are
@@ -340,7 +345,7 @@ begin
     into v_out
     from public.checkout_attempts a
     join public.fee_payments f on f.id = a.fee_payment_id
-    join public.profiles p on p.id = f.payer_id
+    left join public.profiles p on p.id = f.payer_id
     join public.regions g on g.code = a.region
    where a.id = p_attempt_id;
   if v_out is null then
@@ -443,6 +448,7 @@ create function public.psp_callback(p_token text, p_fields jsonb)
 as $$
 declare
   v_att     record;
+  v_event   jsonb;
   v_minute  text := to_char(now() at time zone 'UTC', 'YYYYMMDDHH24MI');
 begin
   if p_token is null or char_length(p_token) not between 1 and 500
@@ -455,10 +461,14 @@ begin
   if not found then
     return null;
   end if;
-  perform public.record_psp_event('callback', 'callback:' || v_att.id || ':' || v_minute, p_fields, v_att.region);
+  v_event := public.record_psp_event('callback', 'callback:' || v_att.id || ':' || v_minute, p_fields, v_att.region);
   perform public.enqueue_outbox('payment.verify', 'checkout:' || v_att.id || ':verify:callback:' || v_minute,
                                 jsonb_build_object('attempt_id', v_att.id, 'final', false), v_att.region);
-  perform public.relay_kick('drain');
+  -- The event and the check share the minute, so a new event means a new check: only then is the relay woken,
+  -- so a caller looping on a known token buys no relay runs (security review S1).
+  if (v_event ->> 'new')::boolean then
+    perform public.relay_kick('drain');
+  end if;
   return jsonb_build_object('attempt_id', v_att.id, 'locale', v_att.locale, 'region', v_att.region);
 end;
 $$;
@@ -503,7 +513,9 @@ begin
   if v_attempt is not null then
     perform public.enqueue_outbox('payment.verify', 'checkout:' || v_attempt || ':verify:webhook:' || (v_event ->> 'id'),
                                   jsonb_build_object('attempt_id', v_attempt, 'final', false), v_region);
-    perform public.relay_kick('drain');
+    if (v_event ->> 'new')::boolean then
+      perform public.relay_kick('drain');
+    end if;
   end if;
   return jsonb_build_object('psp_event_id', (v_event ->> 'id')::uuid, 'new', (v_event ->> 'new')::boolean,
                             'attempt_id', v_attempt);
@@ -549,11 +561,15 @@ $$;
 revoke all on function public.mark_refund_failed(uuid) from public, anon, authenticated, service_role;
 grant execute on function public.mark_refund_failed(uuid) to service_role;
 
--- AC-12, R-1, R-8, R-10: every 15 minutes. Queue a check for every attempt ready for more than 10 minutes
--- (final once it is older than 2 hours) and for every attempt failed by the PSP or abandoned less than 2
--- hours ago (a payment can still land on its token); fail every attempt queued for more than 30 minutes
--- whose initialize row failed; clear the payer's IP of every attempt finished more than 2 hours ago. Each
--- row in its own exception block: a conflict is counted, never aborting the rest.
+-- AC-12, R-1, R-8, R-10: every 15 minutes. Queue a check for every attempt ready for more than 10 minutes and
+-- less than 26 hours (final once it is older than 2 hours) and for every attempt failed by the PSP or abandoned
+-- less than 2 hours ago (a payment can still land on its token); fail every attempt queued for more than 30
+-- minutes whose initialize row failed; clear the payer's IP of every attempt started or finished more than 2
+-- hours ago, each through the D169 locks (security review S5, S6). Each row in its own exception block: a
+-- conflict is counted, never aborting the rest. A reconcile check carries `origin: reconcile`: on a pending
+-- answer it finishes rather than retrying, because the next window asks again (review 2026-11-17, Major 1);
+-- after 26 hours no check is queued at all, so an abandoned card page stops costing rows. Only new checks count
+-- as queued and wake the relay.
 create function public.reconcile_pending()
   returns jsonb
   language plpgsql
@@ -565,6 +581,7 @@ declare
   v_window     text := floor(extract(epoch from now()) / 900)::bigint::text;
   v_row        record;
   v_final      boolean;
+  v_key        text;
   v_queued     integer := 0;
   v_failed     integer := 0;
   v_conflicts  integer := 0;
@@ -572,18 +589,22 @@ declare
 begin
   for v_row in
     select a.id, a.region, a.status, a.started_at from public.checkout_attempts a
-     where (a.status = 'ready' and a.started_at < now() - interval '10 minutes')
+     where (a.status = 'ready' and a.started_at < now() - interval '10 minutes'
+            and a.started_at > now() - interval '26 hours')
         or (a.status in ('failed', 'abandoned') and a.finished_at > now() - interval '2 hours'
             and (a.status = 'abandoned' or a.failure_reason = 'psp_failed'))
      order by a.started_at, a.id
   loop
     v_final := v_row.status = 'ready' and v_row.started_at < now() - interval '2 hours';
+    v_key := 'checkout:' || v_row.id || ':verify:reconcile:' || v_window || ':'
+             || case when v_final then 'final' else 'open' end;
     begin
-      perform public.enqueue_outbox('payment.verify',
-                                    'checkout:' || v_row.id || ':verify:reconcile:' || v_window || ':'
-                                      || case when v_final then 'final' else 'open' end,
-                                    jsonb_build_object('attempt_id', v_row.id, 'final', v_final), v_row.region);
-      v_queued := v_queued + 1;
+      if not exists (select 1 from public.outbox_events o where o.idempotency_key = v_key) then
+        perform public.enqueue_outbox('payment.verify', v_key,
+                                      jsonb_build_object('attempt_id', v_row.id, 'final', v_final, 'origin', 'reconcile'),
+                                      v_row.region);
+        v_queued := v_queued + 1;
+      end if;
     exception when others then
       v_conflicts := v_conflicts + 1;
     end;
@@ -605,10 +626,22 @@ begin
     end;
   end loop;
 
-  update public.checkout_attempts
-     set payer_ip = null
-   where payer_ip is not null and finished_at is not null and finished_at < now() - interval '2 hours';
-  get diagnostics v_cleared = row_count;
+  for v_row in
+    select a.id from public.checkout_attempts a
+     where a.payer_ip is not null
+       and (a.started_at < now() - interval '2 hours' or a.finished_at < now() - interval '2 hours')
+     order by a.started_at, a.id
+  loop
+    begin
+      perform public.lock_attempt(v_row.id);
+      update public.checkout_attempts set payer_ip = null where id = v_row.id and payer_ip is not null;
+      if found then
+        v_cleared := v_cleared + 1;
+      end if;
+    exception when others then
+      v_conflicts := v_conflicts + 1;
+    end;
+  end loop;
 
   if v_queued > 0 then
     perform public.relay_kick('drain');
@@ -675,7 +708,8 @@ revoke all on function public.reconcile_daily_list(text, date, integer) from pub
 grant execute on function public.reconcile_daily_list(text, date, integer) to service_role;
 
 -- AC-13, R-12: how far behind the outbox is, and every failed row not alerted yet (stamped here, so each
--- alerts once).
+-- alerts once). A failed refund row's refund is marked failed in the same transaction, so a heartbeat cut
+-- before its alert never leaves a refund `queued` for good (security review S3).
 create function public.outbox_health()
   returns jsonb
   language plpgsql
@@ -686,6 +720,7 @@ as $$
 declare
   v_oldest  bigint;
   v_failed  jsonb;
+  v_row     jsonb;
 begin
   select coalesce(floor(extract(epoch from now() - min(o.next_attempt_at)))::bigint, 0) into v_oldest
     from public.outbox_events o
@@ -706,6 +741,16 @@ begin
     into v_failed
     from stamped s;
 
+  for v_row in select x from jsonb_array_elements(v_failed) x loop
+    if v_row ->> 'kind' = 'refund.request' then
+      begin
+        perform public.mark_refund_failed((v_row -> 'payload' ->> 'fee_refund_id')::uuid);
+      exception when others then
+        null;
+      end;
+    end if;
+  end loop;
+
   return jsonb_build_object('oldest_due_seconds', v_oldest, 'failed', v_failed);
 end;
 $$;
@@ -713,8 +758,24 @@ $$;
 revoke all on function public.outbox_health() from public, anon, authenticated, service_role;
 grant execute on function public.outbox_health() to service_role;
 
--- AC-15: the fake PSP's store. A token must belong to an attempt (its region is the row's). The value is
--- the fake's own state (its outcome, counters and refunds), a small JSON object.
+-- AC-15: the fake PSP's store, keyed by an attempt's token or its id (the fake's payment ids carry the attempt
+-- id, never the token: security review S7). The attempt gives the row its region. The value is the fake's own
+-- state (its outcome, counters and refunds), a small JSON object.
+create function public.fake_psp_token(p_key text)
+  returns text
+  language sql
+  stable
+  security invoker
+  set search_path = ''
+as $$
+  select coalesce(
+    (select a.psp_token from public.checkout_attempts a where a.psp_token = p_key),
+    (select a.psp_token from public.checkout_attempts a
+      where p_key ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' and a.id = p_key::uuid))
+$$;
+
+revoke all on function public.fake_psp_token(text) from public, anon, authenticated, service_role;
+
 create function public.fake_psp_set(p_token text, p_outcome jsonb)
   returns void
   language plpgsql
@@ -723,17 +784,19 @@ create function public.fake_psp_set(p_token text, p_outcome jsonb)
   set search_path = ''
 as $$
 declare
+  v_token   text;
   v_region  text;
 begin
   if p_token is null or char_length(p_token) not between 1 and 500
      or jsonb_typeof(p_outcome) is distinct from 'object' or octet_length(p_outcome::text) > 4096 then
     raise exception 'validation_failed';
   end if;
-  select a.region into v_region from public.checkout_attempts a where a.psp_token = p_token;
+  v_token := public.fake_psp_token(p_token);
+  select a.region into v_region from public.checkout_attempts a where a.psp_token = v_token;
   if v_region is null then
     raise exception 'not_found';
   end if;
-  insert into public.fake_psp_outcomes (token, region, outcome) values (p_token, v_region, p_outcome)
+  insert into public.fake_psp_outcomes (token, region, outcome) values (v_token, v_region, p_outcome)
   on conflict (token) do update set outcome = excluded.outcome, updated_at = now();
 end;
 $$;
@@ -748,11 +811,46 @@ create function public.fake_psp_get(p_token text)
   security definer
   set search_path = ''
 as $$
-  select o.outcome from public.fake_psp_outcomes o where o.token = p_token
+  select o.outcome from public.fake_psp_outcomes o where o.token = public.fake_psp_token(p_token)
 $$;
 
 revoke all on function public.fake_psp_get(text) from public, anon, authenticated, service_role;
 grant execute on function public.fake_psp_get(text) to service_role;
+
+-- The fence (security review L1, G3): a fake payment (`fp1_…`, `fp2_…`) never settles or books anything unless
+-- the Vault secret `fake_psp_allowed` is `true`. Only the local seed sets it; in the cloud the owner sets it for
+-- a deliberate fake check (S37) and deletes it after, so a fake preview on the shared database cannot pay a
+-- real fee once 09 and 10 accept payments.
+create function public.fake_payment_fence()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+declare
+  v_allowed  text;
+begin
+  if new.psp_payment_id is null or new.psp_payment_id !~ '^fp[12]_' then
+    return new;
+  end if;
+  begin
+    select s.decrypted_secret into v_allowed from vault.decrypted_secrets s where s.name = 'fake_psp_allowed';
+  exception when others then
+    v_allowed := null;
+  end;
+  if v_allowed is distinct from 'true' then
+    raise exception 'fake_payment_refused';
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.fake_payment_fence() from public, anon, authenticated, service_role;
+
+create trigger fee_payments_fake_fence before insert or update of psp_payment_id on public.fee_payments
+  for each row execute function public.fake_payment_fence();
+create trigger fee_refunds_fake_fence before insert or update of psp_payment_id on public.fee_refunds
+  for each row execute function public.fake_payment_fence();
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 7. start_checkout (07 AC-5), replaced to kick the relay after it queues its row (AC-6). The kick is sent

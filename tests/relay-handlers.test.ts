@@ -186,7 +186,7 @@ describe('payment.verify (AC-10, R-2, R-13)', () => {
       callbackUrl: 'x',
       buyer: { id: 'p', fullName: null, email: null, city: 'I', ip: null },
     });
-    states.set(page.token, { outcome, retrieves: 0, refunds: {} });
+    states.set(ATTEMPT, { outcome, retrieves: 0, refunds: {} });
     return { psp, token: page.token };
   }
   const verify = (final = false, attempts = 1) =>
@@ -201,11 +201,11 @@ describe('payment.verify (AC-10, R-2, R-13)', () => {
     });
     expect(await verifyPayment(db, psp, verify())).toEqual({ ok: true });
     expect(names()).toEqual(['checkout_context', 'record_psp_event', 'apply_fee_paid']);
-    expect(calls[1]?.args.p_event_key).toBe(`retrieve:${ATTEMPT}:paid:fp1_${token}`);
+    expect(calls[1]?.args.p_event_key).toBe(`retrieve:${ATTEMPT}:paid:fp1_${ATTEMPT}_10000_TRY`);
     expect(calls[2]?.args).toEqual({
       p_fee_payment_id: FEE,
       p_attempt_id: ATTEMPT,
-      p_psp_payment_id: `fp1_${token}`,
+      p_psp_payment_id: `fp1_${ATTEMPT}_10000_TRY`,
       p_amount: 10_000,
       p_currency: 'TRY',
       p_psp_fee: 300,
@@ -285,7 +285,7 @@ describe('refund.request (AC-11)', () => {
 
   async function paid() {
     const { psp, states } = fakePsp();
-    const page = await psp.initializeCheckout({
+    await psp.initializeCheckout({
       attemptId: ATTEMPT,
       feeId: FEE,
       feeKind: 'commission',
@@ -295,8 +295,8 @@ describe('refund.request (AC-11)', () => {
       callbackUrl: 'x',
       buyer: { id: 'p', fullName: null, email: null, city: 'I', ip: null },
     });
-    states.set(page.token, { outcome: 'success', retrieves: 0, refunds: {} });
-    return { psp, paymentId: `fp1_${page.token}` };
+    states.set(ATTEMPT, { outcome: 'success', retrieves: 0, refunds: {} });
+    return { psp, paymentId: `fp1_${ATTEMPT}_10000_TRY` };
   }
 
   it('refunds, then hands the refund id to apply_fee_refunded; a crash before it never refunds twice', async () => {
@@ -450,7 +450,7 @@ describe('drain (AC-0, R-3, AC-19)', () => {
       checkout_context: context(),
       finish_outbox: {},
     });
-    await runDrain({ db, psp: fakePsp().psp, worker: 'w', now: () => (t += 30_000) });
+    await runDrain({ db, psp: fakePsp().psp, worker: 'w', now: () => (t += 20_000) });
     expect(names().filter((n) => n === 'claim_outbox')).toHaveLength(1);
   });
 });

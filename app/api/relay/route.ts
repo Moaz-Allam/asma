@@ -23,6 +23,16 @@ export const maxDuration = 60;
 
 const notFound = () => new Response(null, { status: 404 });
 
+/** AC-5: every other method is a 404 too, so the route never shows it exists (security review S10). */
+export function GET() {
+  return notFound();
+}
+export const PUT = GET;
+export const PATCH = GET;
+export const DELETE = GET;
+export const OPTIONS = GET;
+export const HEAD = GET;
+
 export async function POST(request: Request) {
   if (!relaySecretMatches(request.headers.get(RELAY_SECRET_HEADER))) {
     log.warn('relay_refused');
