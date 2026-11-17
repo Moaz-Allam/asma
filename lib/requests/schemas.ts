@@ -156,3 +156,53 @@ export const RequestDetailRow = z.object({
   region_info: z.object({ timezone: z.string() }),
 });
 export type RequestDetailRow = z.infer<typeof RequestDetailRow>;
+
+/**
+ * One offer as the customer reads it (spec 0010 AC-2, AC-3): named fields only. A message the scanner of 06
+ * would refuse comes back null, with `message_hidden` (AC-13).
+ */
+export const Offer = z
+  .object({
+    application_id: z.string().uuid(),
+    display_name: z.string().nullable(),
+    first_name: z.string().nullable(),
+    approved_since: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable(),
+    message: z.string().nullable(),
+    message_hidden: z.boolean(),
+    created_at: z.string().min(1),
+  })
+  .strict();
+export type Offer = z.infer<typeof Offer>;
+
+/** `request_offers()` (AC-2): the offers while OPEN, the chosen one after a choose, and the dates. */
+export const RequestOffers = z
+  .object({
+    status: z.enum(REQUEST_STATUSES),
+    timezone: z.string(),
+    payment_window_hours: z.number().int().nullable(),
+    selected_at: z.string().nullable(),
+    payment_deadline: z.string().nullable(),
+    cancelled_at: z.string().nullable(),
+    offers: z.array(Offer),
+    chosen: Offer.extend({
+      status: z.string(),
+      suspended: z.boolean(),
+    })
+      .strict()
+      .nullable(),
+  })
+  .strict();
+export type RequestOffers = z.infer<typeof RequestOffers>;
+
+/** `choose_provider()` (AC-7): the same shape for a new choose and a replay. */
+export const ChooseResult = z
+  .object({
+    status: z.literal('ok'),
+    replayed: z.boolean(),
+    selected_at: z.string().min(1),
+    payment_deadline: z.string().min(1),
+  })
+  .strict();

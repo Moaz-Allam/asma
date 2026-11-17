@@ -66,11 +66,15 @@ export const RequestDetail = z
     closed: z.boolean(),
     timezone: z.string(),
     answers: z.array(StructuredAnswer),
+    // Spec 0010 AC-12: set only when the caller's own application is SELECTED.
+    payment_deadline: Instant.nullable(),
   })
   .strict();
 export type RequestDetail = z.infer<typeof RequestDetail>;
 
-export const ApplicationListRow = z.object({ ...ShortDetails, application: OwnApplication }).strict();
+export const ApplicationListRow = z
+  .object({ ...ShortDetails, application: OwnApplication, payment_deadline: Instant.nullable() })
+  .strict();
 export type ApplicationListRow = z.infer<typeof ApplicationListRow>;
 
 export const ApplicationsPage = z
@@ -110,7 +114,12 @@ export const ProviderSetup = z
 export type ProviderSetup = z.infer<typeof ProviderSetup>;
 
 export const HomeCounts = z
-  .object({ setup_complete: z.boolean(), open_requests: z.number().int(), applied: z.number().int() })
+  .object({
+    setup_complete: z.boolean(),
+    open_requests: z.number().int(),
+    applied: z.number().int(),
+    selected: z.number().int(),
+  })
   .strict();
 export type HomeCounts = z.infer<typeof HomeCounts>;
 

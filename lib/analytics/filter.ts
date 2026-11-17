@@ -21,6 +21,16 @@ function isUrlProperty(key: string): boolean {
   return /url|referrer|pathname/i.test(key);
 }
 
+const UUID_SEGMENT = /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=[/?#]|$)/gi;
+
+/**
+ * A URL or path with every uuid segment replaced by `[id]`, so no event carries a record id in its URL, not
+ * only the pageview (spec 0008 AC-25; found by the 06 e2e on `provider_chosen`, 2026-11-18).
+ */
+export function withoutIds(value: string): string {
+  return value.replace(UUID_SEGMENT, '/[id]');
+}
+
 export function filterAnalyticsEvent<T extends Captured>(event: T | null, appEnv: AppEnv): T | null {
   if (event === null) return null;
   try {
@@ -30,7 +40,7 @@ export function filterAnalyticsEvent<T extends Captured>(event: T | null, appEnv
     for (const [key, value] of Object.entries(event.properties)) {
       if (PERSON_PROPERTIES.has(key)) continue;
       if (!key.startsWith('$') && !SDK_FIELDS.has(key) && !typed.has(key)) continue;
-      properties[key] = typeof value === 'string' && isUrlProperty(key) ? scrubUrl(value) : value;
+      properties[key] = typeof value === 'string' && isUrlProperty(key) ? withoutIds(scrubUrl(value)) : value;
     }
     properties.app_env = appEnv;
     properties.$geoip_disable = true;

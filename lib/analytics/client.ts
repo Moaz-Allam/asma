@@ -1,7 +1,7 @@
 import type { CaptureResult, PostHog, PostHogConfig } from 'posthog-js';
 
 import type { AnalyticsEvent, AnalyticsEvents } from '@/lib/analytics/events';
-import { filterAnalyticsEvent } from '@/lib/analytics/filter';
+import { filterAnalyticsEvent, withoutIds } from '@/lib/analytics/filter';
 import { afterHydration } from '@/lib/browser/after-hydration';
 import { scrubUrl } from '@/lib/observability/scrub';
 import { appEnvOf } from '@/lib/observability/shared';
@@ -104,12 +104,7 @@ export function track<E extends AnalyticsEvent>(
   }
 }
 
-const UUID_SEGMENT = /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=\/|$)/gi;
-
-/** A path with every uuid segment replaced by `[id]`. */
-export function withoutIds(pathname: string): string {
-  return pathname.replace(UUID_SEGMENT, '/[id]');
-}
+export { withoutIds } from '@/lib/analytics/filter';
 
 /** One `$pageview` per page, its URL scrubbed (AC-3). Called on start and on every route change. */
 export function trackPageview(href: string): void {

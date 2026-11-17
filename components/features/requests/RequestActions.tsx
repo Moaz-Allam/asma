@@ -19,10 +19,13 @@ export function RequestActions({
   requestId,
   canCancel,
   canRepeat,
+  chosenNote = null,
 }: {
   requestId: string;
   canCancel: boolean;
   canRepeat: boolean;
+  /** Spec 0010 AC-11: in SELECTED, the dialog says the chosen provider's offer is cancelled. */
+  chosenNote?: string | null;
 }) {
   const t = useTranslations('Requests');
   const router = useRouter();
@@ -81,6 +84,7 @@ export function RequestActions({
         onConfirm={confirm}
         busy={busy}
       >
+        {chosenNote ? <p className="text-body-s text-text-primary">{chosenNote}</p> : null}
         <ChoiceChips
           name="cancel-reason"
           legend={t('cancel.reason')}

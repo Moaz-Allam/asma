@@ -93,7 +93,8 @@ Domain components. Path: `components/features/<domain>/`.
 | `ShortDetailsList` | Provider: the short details of one request as term and value rows, structured answers included (`components/features/provider-feed/ShortDetailsList.tsx`) | p8 | ✅ built (05) | ✅ | Rows built from `provider_request` only |
 | `ProviderSetupForm` | Provider `p4` at `/provider/setup`: services by category, districts, work days and hours, a summary card; inactive picks greyed and dropped on save; read only when suspended (`components/features/provider-feed/ProviderSetupForm.tsx`) | p4 | ✅ built (05) | ✅ | No "from" price and no tools tick (D152); a save never sends the file to review (D151) |
 | `StandingNotice` | Provider: 02's standing page in place of the feed when not approved (`components/features/provider-feed/StandingNotice.tsx`) | p6, p17 | ✅ built (05) | ✅ | Reuses `AccountStateBanner` |
-| `RequestTimeline` | Status progression with times | s15, s18 | 📋 planned | — | From canonical state machine |
+| `RequestTimeline` | Status progression with times: the steps that happened and the next one greyed, from stored columns only (`components/features/requests/RequestTimeline.tsx`) | s15, s18 | ✅ built (06) | ✅ | 09 to 11 add their steps from their own columns |
+| `NextStepPanel` | Customer after the choose: the commission online, the cash to the provider after the service, the stored deadline; the pay button slot for 09 (`components/features/requests/NextStepPanel.tsx`) | s6 (correction), s7 | ✅ built (06) | ✅ | Display only, stored minor units |
 | `CancelRequestPanel` | Outcome by state at cancellation | s14 | 📋 planned | — | Matches `project-overview.md` cancellation table rows 1–12 |
 | `RepeatRequestAction` | Re-post a past request with the same answers | s9 | 📋 planned | — | D56, position 04 (scope override); the price is recomputed on the server |
 
@@ -103,8 +104,8 @@ Domain components. Path: `components/features/<domain>/`.
 | --- | --- | --- | --- | --- | --- |
 | `ApplicationForm` | Provider applies with a message; free, no price field; a confirm restates the deal; a replay shows the stored status (`components/features/provider-feed/ApplicationForm.tsx`) | p8 | ✅ built (05) | ✅ | ⚠️ Warns contact info is rejected **before** submit; no live scan, no structured answers (D152, D153); a refusal keeps the message |
 | `ApplicationRow` | Provider: one application in "My applications": status chip, service, district and start, job price, applied date (`components/features/provider-feed/ApplicationRow.tsx`) | p13 (list) | ✅ built (05) | ✅ | Withdraw is position 12 |
-| `OfferList` | Customer compares applicants (was `ApplicantList`) | s6, s18 | 📋 planned | — | |
-| `OfferCard` | One applicant: initial, «أحمد س.», verified chip, stats chips, message, answers, reviews, choose | s6 | 📋 planned | — | Expanded and collapsed; no provider contact pre-unlock |
+| `OfferList` | Customer compares the offers on an OPEN request and chooses one behind a `ConfirmDialog` that restates the deal (`components/features/requests/OfferList.tsx`) | s6, s18 | ✅ built (06) | ✅ | Read only when the request expired; the exact deadline shows only after the choose |
+| `OfferCard` | One offer: letter avatar, first name and family initial («أحمد س.»), Verified and New chips, on the platform since, the message or "Message hidden" (`components/features/requests/OfferCard.tsx`) | s6 | ✅ built (06) | ✅ | No photo, full name or contact detail before both have paid (D159); ratings, job counts and reviews come in 17 and 19 |
 | `ProviderProfileView` | Customer-facing profile with derived metrics | s8, p7 | 📋 planned | — | Legacy counts split from platform counts |
 
 ### Money

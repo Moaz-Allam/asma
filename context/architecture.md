@@ -1608,6 +1608,28 @@ Migration `provider_feed_apply` (D146 to D155).
 - **Doors.** `lib/provider-feed/` wraps the seven functions; `actions/provider-feed.ts` has `saveProviderSetup`
   and `applyToRequest`. The scrubber treats `application_message` and `p_message` as personal.
 
+## 39f. Choose a provider (position 06, spec 0010)
+
+Migration `choose_provider` (D159 to D163). No new table.
+
+- **On the request.** `selected_application_id` (keyed to `applications (id, request_id)`), `selected_at`,
+  `payment_deadline`: null together, set together on `OPEN → SELECTED`, never changed after (`requests_guard`;
+  12 widens it for the reopen). `payment_deadline = least(now + payment_window_hours, start)`.
+- **Writes only through definer functions.** `choose_provider` (request lock, replay, state, setting, the
+  application read unlocked, its provider shared, the applications locked, standing again, then the moves and
+  one audit row) and `cancel_request`, now also for `SELECTED` (§36 row 2).
+- **Reads.** `request_offers` is the only customer read of applications: named fields, the display name from
+  `providers.approved_name`, offers of providers not approved now hidden, a message the new rule would refuse
+  hidden. Providers read the outcome through `provider_request` and `provider_applications` (the deadline only
+  for their own `SELECTED` row) and `provider_home_counts` (`selected`).
+- **Cap.** Every cap count reads `approved_applied_count`: a provider who is not approved now holds no slot.
+- **Scanner and blank class.** `message_has_contact_info` adds 10 or more digits for apply messages only.
+  `blank_class()` is the one source of whitespace and invisible marks; `blank_marks()` is the same without
+  whitespace, stripped by `contact_normalise`. `catalog_text_ok` is a definer function since 06, because the
+  catalog checks run as the writing admin and `catalog_trim` has no API grant.
+- **Doors.** `lib/requests/` adds `loadOffers` and `chooseProvider`; `actions/requests.ts` adds
+  `chooseProviderAction`.
+
 ## 40. Updated invariants
 
 > **G25 — every global aggregate below is scoped `GROUP BY (region, currency)`. Never bare.**

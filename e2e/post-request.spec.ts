@@ -223,7 +223,8 @@ test('a customer posts a request, sees it, repeats it and cancels it', async ({
   await expect(dialog).toContainText(m(locale, 'Requests.cancel.body'));
   await pick(dialog, m(locale, 'Requests.cancel.reason'), m(locale, 'Requests.cancel.reasons.plans_changed'));
   await dialog.getByRole('button', { name: m(locale, 'Requests.cancel.confirm') }).click();
-  await expect(page.getByText(m(locale, 'Requests.status.CANCELLED'), { exact: true })).toBeVisible({
+  // Since 06 the timeline also names the step, so the status chip is the first match.
+  await expect(page.getByText(m(locale, 'Requests.status.CANCELLED'), { exact: true }).first()).toBeVisible({
     timeout: 20_000,
   });
   await expect(page.getByRole('link', { name: m(locale, 'Requests.detail.repeat') })).toBeVisible();

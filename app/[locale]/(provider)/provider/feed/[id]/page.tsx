@@ -97,6 +97,7 @@ export default async function Page({ params }: Props) {
             application={request.application}
             state={state}
             timezone={request.timezone}
+            paymentDeadline={request.payment_deadline}
           />
         </div>
         <aside className="flex flex-col gap-3.5 lg:sticky lg:top-4">

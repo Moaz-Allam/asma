@@ -169,7 +169,14 @@ SELECT pg_temp.req(pg_temp.r(2), pg_temp.s(1), pg_temp.z(1), pg_temp.at(3, 20));
 SELECT pg_temp.req(pg_temp.r(3), pg_temp.s(1), pg_temp.z(2), pg_temp.at(2, 11));
 SELECT pg_temp.req(pg_temp.r(4), pg_temp.s(2), pg_temp.z(1), pg_temp.at(2, 12));
 SELECT pg_temp.req(pg_temp.r(5), pg_temp.s(1), pg_temp.z(1), pg_temp.at(2, 13), 'CANCELLED');
-SELECT pg_temp.req(pg_temp.r(6), pg_temp.s(1), pg_temp.z(1), pg_temp.at(2, 14), 'SELECTED');
+-- R6 is chosen the way 06 leaves a request: an offer from F (pending, so outside every feed) SELECTED.
+SELECT pg_temp.req(pg_temp.r(6), pg_temp.s(1), pg_temp.z(1), pg_temp.at(2, 14));
+INSERT INTO public.applications (region, request_id, provider_id, message, status)
+VALUES ('TR', pg_temp.r(6), pg_temp.u('a6'), 'A chosen offer, long enough to store.', 'SELECTED');
+UPDATE public.requests
+   SET status = 'SELECTED', selected_at = now(), payment_deadline = scheduled_start_at,
+       selected_application_id = (SELECT id FROM public.applications WHERE request_id = pg_temp.r(6))
+ WHERE id = pg_temp.r(6);
 SELECT pg_temp.req(pg_temp.r(7), pg_temp.s(1), pg_temp.z(1), now() - interval '1 hour');
 SELECT pg_temp.req(pg_temp.r(8), pg_temp.s(1), pg_temp.z(1), pg_temp.at(4, 10));
 INSERT INTO public.request_addresses (request_id, region, customer_id, line) VALUES (pg_temp.r(1), 'TR', pg_temp.u('c1'), 'FIXTURE_ADDRESS 5');
@@ -254,7 +261,7 @@ SELECT throws_ok($$ TRUNCATE public.requests CASCADE $$, 'P0001', 'request_immut
 SELECT throws_ok($$ TRUNCATE public.request_addresses $$, 'P0001', 'request_address_immutable', 'B3: nor are the addresses');
 -- A7: the status move.
 SELECT throws_ok($$ UPDATE public.requests SET status = 'SELECTED' WHERE id = pg_temp.r(2) $$,
-  'P0001', 'request_transition_invalid', 'A7: OPEN to SELECTED is not a move yet');
+  '23514', NULL, 'A7: OPEN to SELECTED without the choose columns is refused (a move since 06, held by the check)');
 SELECT throws_ok($$ UPDATE public.requests SET status = 'COMPLETED' WHERE id = pg_temp.r(6) $$,
   'P0001', 'request_transition_invalid', 'A7: nor SELECTED to COMPLETED');
 SELECT throws_ok($$ UPDATE public.requests SET status = 'OPEN', cancelled_at = NULL, cancelled_by = NULL WHERE id = pg_temp.r(5) $$,
@@ -415,7 +422,7 @@ SELECT is((SELECT j -> 'rows' -> 0 FROM feed_a),
     'service_name', '{"tr": "Ev temizliği", "en": "Home cleaning"}'::jsonb, 'zone_name', '{"tr": "Kadıköy"}'::jsonb,
     'addon_names', '[{"tr": "Cam"}, {"tr": "Fırın"}]'::jsonb, 'scheduled_start_at', pg_temp.at(2, 10),
     'scheduled_end_at', pg_temp.at(2, 15), 'fixed_price', 350000, 'cash_due', 315000, 'currency', 'TRY',
-    'applied_count', 1, 'cap', 10, 'full', false, 'outside_hours', false, 'application', NULL),
+    'applied_count', 0, 'cap', 10, 'full', false, 'outside_hours', false, 'application', NULL),
   'the fixture row: names from the snapshot, addons in order, the price, the cash, one offer of ten');
 SELECT ok((SELECT j::text !~* 'FIXTURE|multiplier|modifier|formula|commission|customer|client_key|notes|answers' FROM feed_a),
   'no notes, typed answer, address, customer, rival message, commission or pricing internals in the feed');
@@ -466,7 +473,7 @@ SELECT pg_temp.as_user('a1');
 CREATE TEMP TABLE one_a AS SELECT public.provider_request(pg_temp.r(1)) AS j;
 SELECT is((SELECT array_agg(k ORDER BY k) FROM one_a, jsonb_object_keys(j) k),
   ARRAY['addon_names', 'answers', 'application', 'applied_count', 'cap', 'cash_due', 'closed', 'currency', 'fixed_price', 'full', 'id',
-        'outside_hours', 'scheduled_end_at', 'scheduled_start_at', 'service_id', 'service_name', 'timezone', 'zone_id', 'zone_name'],
+        'outside_hours', 'payment_deadline', 'scheduled_end_at', 'scheduled_start_at', 'service_id', 'service_name', 'timezone', 'zone_id', 'zone_name'],
   'provider_request has exactly the allowed keys');
 SELECT is((SELECT j -> 'answers' FROM one_a),
   '[{"key": "rooms", "label": {"tr": "Oda", "en": "Rooms"}, "type": "number", "value": 3, "option_labels": null},
@@ -479,7 +486,7 @@ SELECT is((SELECT j -> 'answers' FROM one_a),
   'the structured answers in the snapshot''s order; no typed answer, no unanswered question, and a string under a date question stays in');
 SELECT ok((SELECT j::text !~* 'FIXTURE|multiplier|modifier|formula|commission|customer|client_key|notes' FROM one_a),
   'no notes, typed answer, address, customer, rival message, commission or pricing internals in the details');
-SELECT is((SELECT j - 'answers' FROM one_a), (SELECT (j -> 'rows' -> 0) || '{"closed": false, "timezone": "Europe/Istanbul"}' FROM feed_a),
+SELECT is((SELECT j - 'answers' FROM one_a), (SELECT (j -> 'rows' -> 0) || '{"closed": false, "timezone": "Europe/Istanbul", "payment_deadline": null}' FROM feed_a),
   'and otherwise the feed row, open, with the time zone');
 SELECT is(public.provider_request(pg_temp.r(3)), NULL, 'A: a request in a district A does not cover reads as nothing');
 SELECT is(public.provider_request(pg_temp.r(5)), NULL, 'A: a cancelled request A never applied to');
@@ -567,13 +574,13 @@ SELECT is(public.apply_to_request(pg_temp.r(1), NULL), (SELECT j || '{"replayed"
 SELECT results_eq($$ SELECT message, status, region, request_id FROM public.applications $$,
   $$ VALUES (pg_temp.clean(), 'APPLIED', 'TR', pg_temp.r(1)) $$, 'one row, the first message, trimmed, in the request''s region');
 SELECT is(public.provider_request(pg_temp.r(1)) -> 'application', (SELECT j -> 'application' FROM app_a), 'the details now carry the caller''s application');
-SELECT is((pg_temp.feed() -> 'rows' -> 0) - 'application', (SELECT (j -> 'rows' -> 0) - 'application' || '{"applied_count": 2}' FROM feed_a),
+SELECT is((pg_temp.feed() -> 'rows' -> 0) - 'application', (SELECT (j -> 'rows' -> 0) - 'application' || '{"applied_count": 1}' FROM feed_a),
   'and the feed row counts two offers');
 RESET ROLE;
 SELECT is((SELECT count FROM public.apply_counters WHERE provider_id = pg_temp.u('a1')), 8, 'the apply counted one attempt; the replays counted nothing');
 
 -- The cap (steps 8 and 9) and a setting that is missing.
-UPDATE public.platform_settings SET value = '2' WHERE region = 'TR' AND key = 'max_applicants_per_request';
+UPDATE public.platform_settings SET value = '1' WHERE region = 'TR' AND key = 'max_applicants_per_request';
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('a2');
 SELECT throws_ok($$ SELECT public.apply_to_request(pg_temp.r(1), pg_temp.clean()) $$, 'P0001', 'request_full', 'a request at the cap refuses');
@@ -606,7 +613,7 @@ SELECT is(public.apply_to_request(pg_temp.r(8), 'B: I can also take this one nex
 SELECT results_eq($$ SELECT provider_id FROM public.applications $$, $$ VALUES (pg_temp.u('a2')), (pg_temp.u('a2')) $$, 'B reads only B''s applications');
 SELECT is_empty($$ SELECT id FROM public.applications WHERE provider_id <> pg_temp.u('a2') $$, 'no row of A or D');
 SELECT ok(public.provider_request(pg_temp.r(1))::text !~ 'RIVAL|Saturday morning', 'and nothing of a rival''s message in the details');
-SELECT is(public.provider_request(pg_temp.r(1)) -> 'applied_count', '3', 'only the count: three offers');
+SELECT is(public.provider_request(pg_temp.r(1)) -> 'applied_count', '2', 'only the count: two offers (the suspended rival holds no slot since 06)');
 SELECT is_empty($$ SELECT id FROM public.requests $$, 'a provider token still reads no request row directly');
 SELECT is_empty($$ SELECT request_id FROM public.request_addresses $$, 'nor any address');
 SELECT is_empty($$ SELECT provider_id FROM public.provider_services WHERE provider_id <> pg_temp.u('a2') $$, 'nor another provider''s services');
@@ -705,7 +712,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('a3');
 SELECT pg_temp.as_user('a1');
 SELECT is(public.provider_request(pg_temp.r(8)) - 'answers' - 'applied_count' - 'cap' - 'full' - 'outside_hours' - 'addon_names' - 'service_name' - 'zone_name'
-            - 'scheduled_start_at' - 'scheduled_end_at' - 'fixed_price' - 'cash_due' - 'currency' - 'service_id' - 'zone_id' - 'timezone' #- '{application,id}' #- '{application,created_at}',
+            - 'scheduled_start_at' - 'scheduled_end_at' - 'fixed_price' - 'cash_due' - 'currency' - 'service_id' - 'zone_id' - 'timezone' - 'payment_deadline' #- '{application,id}' #- '{application,created_at}',
   jsonb_build_object('id', pg_temp.r(8), 'closed', true, 'application', '{"status": "CANCELLED"}'::jsonb),
   'A rereads the cancelled request: closed, the application CANCELLED');
 SELECT is(public.apply_to_request(pg_temp.r(8), pg_temp.clean()) #>> '{application,status}', 'CANCELLED', 'a replay shows the final status');
@@ -720,7 +727,7 @@ RESET ROLE;
 
 -- ── the applications guard (AC-17) ───────────────────────────────────────────
 SELECT throws_ok($$ DELETE FROM public.applications WHERE request_id = pg_temp.r(1) $$, 'P0001', 'application_immutable', 'an application is never deleted, even as postgres');
-SELECT throws_ok($$ TRUNCATE public.applications $$, 'P0001', 'application_immutable', 'nor truncated');
+SELECT throws_ok($$ TRUNCATE public.applications CASCADE $$, 'P0001', NULL, 'nor truncated (since 06 a request names its application, so with its requests)');
 SELECT throws_ok($$ UPDATE public.applications SET message = 'Another message, long enough to pass.' WHERE request_id = pg_temp.r(1) $$,
   'P0001', 'application_immutable', 'its message never changes');
 SELECT throws_ok($$ UPDATE public.applications SET provider_id = pg_temp.u('a3') WHERE request_id = pg_temp.r(1) AND provider_id = pg_temp.u('a1') $$,
@@ -818,7 +825,7 @@ CREATE TEMP TABLE apps2 AS
     FROM (SELECT j -> 'rows' -> 19 AS l FROM apps1) x;
 SELECT is((SELECT array_agg(k ORDER BY k) FROM apps1, jsonb_object_keys(j) k), ARRAY['has_more', 'rows', 'timezone'], 'the list returns exactly these keys');
 SELECT is((SELECT array_agg(k ORDER BY k) FROM apps1, jsonb_object_keys(j -> 'rows' -> 0) k),
-  ARRAY['addon_names', 'application', 'cash_due', 'currency', 'fixed_price', 'id', 'scheduled_end_at', 'scheduled_start_at', 'service_id',
+  ARRAY['addon_names', 'application', 'cash_due', 'currency', 'fixed_price', 'id', 'payment_deadline', 'scheduled_end_at', 'scheduled_start_at', 'service_id',
         'service_name', 'zone_id', 'zone_name'], 'a list row has the short details and the application, no message');
 SELECT is((SELECT pg_temp.ids(j) FROM apps1) || (SELECT pg_temp.ids(j) FROM apps2), (SELECT array_agg(m.id::text ORDER BY m.g) FROM many m WHERE m.g <= 20),
   'newest first, 20 a page, the 21st on the second page, none twice');
@@ -835,12 +842,12 @@ SELECT throws_ok($$ SELECT public.provider_applications(NULL, NULL) $$, 'P0001',
 -- ── the home counts (AC-14) ──────────────────────────────────────────────────
 SELECT throws_ok($$ SELECT public.provider_home_counts() $$, 'P0001', 'forbidden', 'nor read the home counts');
 SELECT pg_temp.as_user('a1');
-SELECT is(public.provider_home_counts(), '{"setup_complete": true, "open_requests": 2, "applied": 2}',
+SELECT is(public.provider_home_counts(), '{"setup_complete": true, "open_requests": 2, "applied": 2, "selected": 0}',
   'A: two open requests in the feed (R1, R2), two APPLIED applications (R1, R4); the cancelled one does not count');
 SELECT pg_temp.as_user('a9');
-SELECT is(public.provider_home_counts(), '{"setup_complete": false, "open_requests": 0, "applied": 0}', 'I: no complete setup, nothing counted');
+SELECT is(public.provider_home_counts(), '{"setup_complete": false, "open_requests": 0, "applied": 0, "selected": 0}', 'I: no complete setup, nothing counted');
 SELECT pg_temp.as_user('a4');
-SELECT is(public.provider_home_counts(), '{"setup_complete": true, "open_requests": 0, "applied": 0}', 'D, suspended: no open request counted');
+SELECT is(public.provider_home_counts(), '{"setup_complete": true, "open_requests": 0, "applied": 0, "selected": 0}', 'D, suspended: no open request counted');
 RESET ROLE;
 UPDATE public.platform_settings SET value = '2' WHERE region = 'TR' AND key = 'max_applicants_per_request';
 SET LOCAL ROLE authenticated;

@@ -34,6 +34,8 @@ export type AnalyticsEvents = {
   provider_setup_saved: { services: number; zones: number };
   /** A provider applied to a request (spec 0009 AC-21). Nothing else: no id, price or text. A replay sends none. */
   application_submitted: Record<string, never>;
+  /** A customer chose a provider (spec 0010 AC-16). Nothing else. A replay sends none. */
+  provider_chosen: Record<string, never>;
 };
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
@@ -52,6 +54,7 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'request_posted',
   'provider_setup_saved',
   'application_submitted',
+  'provider_chosen',
 ]);
 
 /** The typed property names per event: the only non `$` properties an event may carry. */
@@ -69,4 +72,5 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   request_posted: ['repeated'],
   provider_setup_saved: ['services', 'zones'],
   application_submitted: [],
+  provider_chosen: [],
 };

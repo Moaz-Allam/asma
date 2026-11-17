@@ -2,6 +2,11 @@
 
 Child of [0011](index.md). Follows the cross child contract there.
 
+> **Superseded by [0010](../0010-choose-a-provider/index.md) (D168, owner 2026-11-18).** Position 06 was built to spec 0010:
+> the others become `NOT_SELECTED` at the choose, no switch or withdraw in 06, three columns on `requests` instead of a
+> `selections` table, a timeline from stored dates instead of `request_events`, and a card with first name and family
+> initial. This file stays as the record of the survey answers; 07 to 12 are amended against 0010 before they are built.
+
 ## Summary
 
 The customer sees everyone who applied, oldest application first, with a card per provider, and chooses one. The request

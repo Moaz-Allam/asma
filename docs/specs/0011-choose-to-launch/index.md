@@ -17,7 +17,7 @@ outbox (a table of pending side effects that a background worker carries out) an
 
 | Child | Position | What it decides |
 | --- | --- | --- |
-| [0011-06-choose-provider.md](0011-06-choose-provider.md) | 06 | Applicant list, choose and switch, payment deadline, withdraw, status timeline |
+| [0011-06-choose-provider.md](0011-06-choose-provider.md) (superseded by [0010](../0010-choose-a-provider/index.md), D168) | 06 | Applicant list, choose and switch, payment deadline, withdraw, status timeline |
 | [0011-07-money-core.md](0011-07-money-core.md) | 07 | Fee rows, provider fee frozen at choose, fee floor, ledger and postings, outbox, PSP events, idempotency |
 | [0011-08-iyzico-relay.md](0011-08-iyzico-relay.md) | 08 | `lib/psp` door (fake and iyzico), relay route driven by `pg_cron`, callback and webhook, reconciliation, alerts, R5 fix |
 | [0011-09-commission-payment.md](0011-09-commission-payment.md) | 09 | Customer pays the commission, pending page, receipt |
@@ -55,6 +55,10 @@ leaves a slot for them (the reviews slot on the applicant card), the slot render
 - **Launch date.** This spec does not change it (owner, 2026-11-17).
 
 ## Cross child contract
+
+> **Note (D168, 2026-11-18).** Position 06 was built to spec 0010, not 0011-06. Where this contract names `selections`,
+> `active_selection_id`, `request_events`, switch or withdraw, the child that first needs them amends it through `/architect`
+> against what 05 (spec 0009) and 06 (spec 0010) built.
 
 Every child builds to this section. A child may add to it, never contradict it.
 

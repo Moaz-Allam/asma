@@ -9,7 +9,9 @@ import { decodeCursor, encodeCursor } from './cursor';
 import type { CancelReason, CreateRequestInput, QuoteRequestInput, RequestTab } from './input';
 import { prefillFrom as filterPrefill, type Prefill } from './prefill';
 import {
+  ChooseResult,
   CreateRequestResult,
+  RequestOffers,
   QuoteRequestResult,
   RequestCatalog,
   RequestDetailRow,
@@ -25,7 +27,7 @@ import {
  * anything else is thrown for `guardedAction` or the page to report.
  */
 
-export type { RequestCatalog, RequestQuote } from './schemas';
+export type { Offer, RequestCatalog, RequestOffers, RequestQuote } from './schemas';
 
 /** Every code the request functions raise. */
 export const REQUEST_DB_CODES = [
@@ -46,6 +48,10 @@ export const REQUEST_DB_CODES = [
   'not_found',
   'not_cancellable',
   'region_unavailable',
+  // Spec 0010 (06): choosing a provider.
+  'not_choosable',
+  'offer_unavailable',
+  'choose_settings_invalid',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -76,7 +82,11 @@ async function call(fn: string, args: Record<string, unknown>): Promise<{ data: 
  */
 function signal(code: RequestCode, recordId: string, context: Context): void {
   const region = context.region ?? undefined;
-  if (code === 'pricing_settings_invalid' || code === 'request_settings_invalid') {
+  if (
+    code === 'pricing_settings_invalid' ||
+    code === 'request_settings_invalid' ||
+    code === 'choose_settings_invalid'
+  ) {
     raiseAlert(code, { recordId, region });
   } else if (code === 'price_out_of_range') {
     log.warn('price_out_of_range', { region, user_id: context.userId });
@@ -160,7 +170,43 @@ export async function createRequest(input: CreateRequestInput, context: Context)
   return { ok: false, code: 'invalid', errors: parsed.errors };
 }
 
-/** Cancel while OPEN (AC-15). Already cancelled is ok. */
+/**
+ * The offers on the caller's own request (spec 0010 AC-2): null when the request is not theirs, unknown or
+ * malformed, so the page shows 404. The only customer read of applications.
+ */
+export async function loadOffers(id: string): Promise<RequestOffers | null> {
+  if (!UUID.test(id)) return null;
+  const result = await call('request_offers', { p_request_id: id });
+  if ('ok' in result) throw new Error(`request_offers refused: ${result.code}`);
+  return result.data === null ? null : RequestOffers.parse(result.data);
+}
+
+export type ChooseOutcome =
+  { ok: true; replayed: boolean; selectedAt: string; paymentDeadline: string } | Refused;
+
+/** Choose one offer (spec 0010 AC-7). A replay of the same offer returns the stored answer. */
+export async function chooseProvider(
+  input: { requestId: string; applicationId: string },
+  context: Context,
+): Promise<ChooseOutcome> {
+  const result = await call('choose_provider', {
+    p_request_id: input.requestId,
+    p_application_id: input.applicationId,
+  });
+  if ('ok' in result) {
+    signal(result.code, input.requestId, context);
+    return result;
+  }
+  const parsed = ChooseResult.parse(result.data);
+  return {
+    ok: true,
+    replayed: parsed.replayed,
+    selectedAt: parsed.selected_at,
+    paymentDeadline: parsed.payment_deadline,
+  };
+}
+
+/** Cancel while OPEN or SELECTED (0008 AC-15, 0010 AC-11). Already cancelled is ok. */
 export async function cancelRequest(
   requestId: string,
   reason: CancelReason | null,
