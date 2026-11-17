@@ -577,7 +577,7 @@ them.
 | S33 | **Relay secret (spec 0011-08).** Generate a long random value; set it as `RELAY_SECRET` in Vercel (both scopes) and your local env file, and in Supabase Vault as `relay_secret`, with `relay_url` (the deployment's `/api/relay` URL). Never in chat | Schedules the cron jobs; checks a run on the preview | 08 | ☐ |
 | S34 | **Staging project (spec 0011-21).** A second Supabase project (Free) in org `aldebyani`, `eu-central-1`, with iyzico sandbox keys; point Vercel Preview env at it; production keeps the live keys only | Pushes migrations there too; runs the restore drill and the load check there | 21, G3 | ☐ |
 | S35 | **Push the 06 migration (D159 to D164).** Done with 05's in one push from the 06 worktree (`--workdir`) | Unblocks the 06 merge and 06's real calls (AC-21) | P0 | ✅ 2026-11-18, owner; `list_migrations` lists `20261118090000_choose_provider` |
-| S36 | **Push the 07 migration (D169, D170).** `20261119090000_money_core`, dry run first, from the 07 worktree (`--workdir`) | Unblocks the 07 merge, and 08 to 12 | P0 | ☐ |
+| S36 | **Push the 07 migration (D169, D170).** `20261119090000_money_core`, dry run first, from the 07 worktree (`--workdir`) | Unblocks the 07 merge, and 08 to 12 | P0 | ✅ 2026-11-18, owner (no dry run); `list_migrations` lists `20261119090000_money_core`, security advisors list only the reviewed definer functions |
 
 ---
 
