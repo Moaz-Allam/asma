@@ -59,9 +59,10 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
 - 2026-11-18 · **06 merged** (spec 0010, PR #32, `5812073`): offers, choose, payment deadline, timeline; closes R11. Spec 0010
   supersedes the umbrella child 0011-06 (D168). Migration `20261118090000_choose_provider` in the cloud (S35). Local gate
   (D168). **AC-21 real calls owed.**
-- 2026-11-18 · **07 built** (spec 0011-07, D169, D170): the money core in Postgres, database only. Fee settings, one fee
-  formula, the commission floor, the fee frozen on the pick, seven money tables, the append only balanced ledger, the relay's
-  functions; pgTAP 18 and 19. Migration `20261119090000_money_core` owed to the cloud (S36) before the merge. Next: 08.
+- 2026-11-18 · **07 merged** (spec 0011-07, PR #35, `980eb5b`, D169, D170): the money core in Postgres, database only. Fee
+  settings, one fee formula, the commission floor, the fee frozen on the pick, seven money tables, the append only balanced
+  ledger, the relay's functions; pgTAP 18 and 19. Migration in the cloud (S36). Carry overs R13; owner answers D171, D172.
+  Next: 08 (adds `payments_enabled`, D172).
 
 ## Stack (pinned exactly)
 
