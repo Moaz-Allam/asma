@@ -3,18 +3,22 @@
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 
-import { payCommissionAction } from '@/actions/payments';
+import { payCommissionAction, payProviderFeeAction } from '@/actions/payments';
 import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics/client';
 import { useRouter } from '@/lib/i18n/navigation';
 
+/** What Pay pays: the customer's commission on a request, or the chosen provider's fee on its application. */
+export type PayTarget =
+  { kind: 'commission'; requestId: string } | { kind: 'provider_fee'; applicationId: string };
+
 /**
- * Pay (ui-registry `PayButton`, spec 0011-09 AC-4, AC-10, AC-14). Sends the request id only: the database
- * charges the stored commission (rule 1). A new attempt goes to the pay page, which waits for the card page; a
- * young one is reused; a commission of 0 settles at once and the page reloads. A refusal shows its catalogue
+ * Pay (ui-registry `PayButton`, spec 0011-09 AC-4, AC-10, AC-14; spec 0011-10 AC-8, AC-10). Sends an id only:
+ * the database charges the stored amount (rule 1). A new attempt goes to the pay page, which waits for the card
+ * page; a young one is reused; a fee of 0 settles at once and the page reloads. A refusal shows its catalogue
  * string.
  */
-export function PayButton({ requestId, label }: { requestId: string; label: string }) {
+export function PayButton({ target, label }: { target: PayTarget; label: string }) {
   const t = useTranslations('Requests');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +29,10 @@ export function PayButton({ requestId, label }: { requestId: string; label: stri
     start(async () => {
       let result: Awaited<ReturnType<typeof payCommissionAction>>;
       try {
-        result = await payCommissionAction({ requestId });
+        result =
+          target.kind === 'commission'
+            ? await payCommissionAction({ requestId: target.requestId })
+            : await payProviderFeeAction({ applicationId: target.applicationId });
       } catch {
         result = { success: false, error: 'action_failed' };
       }
@@ -38,7 +45,7 @@ export function PayButton({ requestId, label }: { requestId: string; label: stri
         router.refresh();
         return;
       }
-      if (!result.data.reused) track('payment_started', { fee: 'commission' }, { leaving: true });
+      if (!result.data.reused) track('payment_started', { fee: target.kind }, { leaving: true });
       router.push(`/pay/${result.data.attemptId}`);
     });
   }

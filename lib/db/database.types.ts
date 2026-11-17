@@ -129,6 +129,7 @@ export type Database = {
           request_id: string
           status: string
           status_changed_at: string
+          unlocked_at: string | null
         }
         Insert: {
           created_at?: string
@@ -141,6 +142,7 @@ export type Database = {
           request_id: string
           status?: string
           status_changed_at?: string
+          unlocked_at?: string | null
         }
         Update: {
           created_at?: string
@@ -153,6 +155,7 @@ export type Database = {
           request_id?: string
           status?: string
           status_changed_at?: string
+          unlocked_at?: string | null
         }
         Relationships: [
           {
@@ -1449,6 +1452,7 @@ export type Database = {
           cancelled_by: string | null
           cash_due: number
           client_key: string
+          closed_at: string | null
           commission_amount: number
           created_at: string
           currency: string
@@ -1477,6 +1481,7 @@ export type Database = {
           cancelled_by?: string | null
           cash_due: number
           client_key: string
+          closed_at?: string | null
           commission_amount: number
           created_at?: string
           currency: string
@@ -1505,6 +1510,7 @@ export type Database = {
           cancelled_by?: string | null
           cash_due?: number
           client_key?: string
+          closed_at?: string | null
           commission_amount?: number
           created_at?: string
           currency?: string
@@ -1805,6 +1811,10 @@ export type Database = {
         Returns: Json
       }
       commission_settled: { Args: { p_request_id: string }; Returns: string }
+      commission_side_settled: {
+        Args: { p_request_id: string }
+        Returns: boolean
+      }
       complete_onboarding: {
         Args: {
           p_accept_terms: boolean
@@ -1815,6 +1825,8 @@ export type Database = {
         Returns: Json
       }
       contact_normalise: { Args: { p_text: string }; Returns: string }
+      contact_settings: { Args: { p_region: string }; Returns: number }
+      contacts_visible: { Args: { p_request_id: string }; Returns: boolean }
       count_application: {
         Args: { p_limit: number; p_provider_id: string; p_region: string }
         Returns: number
@@ -1946,6 +1958,10 @@ export type Database = {
         Args: { p_locale: string; p_payer_ip: string; p_request_id: string }
         Returns: Json
       }
+      pay_provider_fee: {
+        Args: { p_application_id: string; p_locale: string; p_payer_ip: string }
+        Returns: Json
+      }
       payments_enabled: { Args: { p_region: string }; Returns: boolean }
       phone_region: { Args: { p_phone: string }; Returns: string }
       post_journal: {
@@ -2070,6 +2086,10 @@ export type Database = {
         Args: { p_price: number; p_region: string }
         Returns: number
       }
+      provider_fee_settled: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       provider_feed: {
         Args: {
           p_after_id: string
@@ -2115,6 +2135,10 @@ export type Database = {
         Returns: boolean
       }
       provider_home_counts: { Args: never; Returns: Json }
+      provider_jobs: {
+        Args: { p_after_changed_at: string; p_after_id: string; p_tab: string }
+        Returns: Json
+      }
       provider_may_store: {
         Args: { p_bucket: string; p_name: string }
         Returns: boolean
@@ -2262,6 +2286,7 @@ export type Database = {
       reinstate_provider: { Args: { p_provider_id: string }; Returns: Json }
       relay_kick: { Args: { p_task: string }; Returns: number }
       request_catalog: { Args: never; Returns: Json }
+      request_contacts: { Args: { p_request_id: string }; Returns: Json }
       request_offers: { Args: { p_request_id: string }; Returns: Json }
       request_settings: { Args: { p_region: string }; Returns: Json }
       review_provider_documents: {

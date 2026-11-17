@@ -148,7 +148,7 @@
     "catalog": "Catalog",
     "pricing": "Pricing rules",
     "feed": "Available requests",
-    "applications": "My applications",
+    "applications": "My jobs",
     "setup": "Services and districts"
   },
   "Login": {
@@ -1108,7 +1108,8 @@
       "cancelled": "Cancelled",
       "payment": "Commission payment",
       "commissionPaid": "Commission paid",
-      "providerFee": "Provider fee"
+      "providerFee": "Provider fee",
+      "contacts": "Contacts shared"
     },
     "cancelSelected": "The provider you chose will see that their offer is cancelled."
   },
@@ -1231,8 +1232,8 @@
       "closed": "This request is closed."
     },
     "applications": {
-      "title": "My applications",
-      "intro": "Every request you applied to, newest first.",
+      "title": "My jobs",
+      "intro": "Your applications and jobs, newest change first.",
       "open": "Open the request",
       "more": "Show more",
       "empty": {
@@ -1284,6 +1285,31 @@
       "line": "The customer is paying the commission by {date}. Your fee comes after that.",
       "notChosen": "The customer chose another provider.",
       "cancelled": "The customer cancelled."
+    },
+    "jobs": {
+      "tabs": "Job tabs",
+      "tab": {
+        "applied": "Applied",
+        "chosen": "Chosen",
+        "active": "Active",
+        "done": "Done"
+      },
+      "empty": {
+        "applied": "No open applications",
+        "chosen": "No job is waiting for your fee",
+        "active": "No active job yet",
+        "done": "Nothing finished yet"
+      },
+      "price": "Job price",
+      "fee": "Your fee, paid online now",
+      "cash": "Cash the customer pays you after the job",
+      "deadline": "Pay by {date}",
+      "cardEnglish": "The card page opens in English.",
+      "continue": "Continue",
+      "pay": "Pay {amount}",
+      "ended": "The payment time ended.",
+      "contactsHidden": "The contact details are no longer shown for this job.",
+      "changedOn": "Updated {date}"
     }
   },
   "DevFakeCheckout": {
@@ -1342,7 +1368,23 @@
       "service": "Service",
       "date": "Service date",
       "notInvoice": "This is a payment receipt, not a tax invoice.",
-      "toRequest": "Back to the request"
-    }
+      "toRequest": "Back to the request",
+      "toJobs": "Back to My jobs"
+    },
+    "toJobs": "Back to My jobs",
+    "successBodyFee": "Your fee is paid. The customer's contact details are on My jobs."
+  },
+  "Contacts": {
+    "titleProvider": "Your provider",
+    "titleCustomer": "Your customer",
+    "phone": "Phone",
+    "email": "Email",
+    "unconfirmed": "unconfirmed",
+    "address": "Address",
+    "when": "Start",
+    "notes": "Notes",
+    "call": "Call",
+    "whatsapp": "WhatsApp",
+    "emailAction": "Email"
   }
 }

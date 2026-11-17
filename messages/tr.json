@@ -148,7 +148,7 @@
     "catalog": "[tr] Catalog",
     "pricing": "[tr] Pricing rules",
     "feed": "[tr] Available requests",
-    "applications": "[tr] My applications",
+    "applications": "[tr] My jobs",
     "setup": "[tr] Services and districts"
   },
   "Login": {
@@ -1108,7 +1108,8 @@
       "cancelled": "[tr] Cancelled",
       "payment": "[tr] Commission payment",
       "commissionPaid": "[tr] Commission paid",
-      "providerFee": "[tr] Provider fee"
+      "providerFee": "[tr] Provider fee",
+      "contacts": "[tr] Contacts shared"
     },
     "cancelSelected": "[tr] The provider you chose will see that their offer is cancelled."
   },
@@ -1231,8 +1232,8 @@
       "closed": "[tr] This request is closed."
     },
     "applications": {
-      "title": "[tr] My applications",
-      "intro": "[tr] Every request you applied to, newest first.",
+      "title": "[tr] My jobs",
+      "intro": "[tr] Your applications and jobs, newest change first.",
       "open": "[tr] Open the request",
       "more": "[tr] Show more",
       "empty": {
@@ -1284,6 +1285,31 @@
       "line": "[tr] The customer is paying the commission by {date}. Your fee comes after that.",
       "notChosen": "[tr] The customer chose another provider.",
       "cancelled": "[tr] The customer cancelled."
+    },
+    "jobs": {
+      "tabs": "[tr] Job tabs",
+      "tab": {
+        "applied": "[tr] Applied",
+        "chosen": "[tr] Chosen",
+        "active": "[tr] Active",
+        "done": "[tr] Done"
+      },
+      "empty": {
+        "applied": "[tr] No open applications",
+        "chosen": "[tr] No job is waiting for your fee",
+        "active": "[tr] No active job yet",
+        "done": "[tr] Nothing finished yet"
+      },
+      "price": "[tr] Job price",
+      "fee": "[tr] Your fee, paid online now",
+      "cash": "[tr] Cash the customer pays you after the job",
+      "deadline": "[tr] Pay by {date}",
+      "cardEnglish": "[tr] The card page opens in English.",
+      "continue": "[tr] Continue",
+      "pay": "[tr] Pay {amount}",
+      "ended": "[tr] The payment time ended.",
+      "contactsHidden": "[tr] The contact details are no longer shown for this job.",
+      "changedOn": "[tr] Updated {date}"
     }
   },
   "DevFakeCheckout": {
@@ -1342,7 +1368,23 @@
       "service": "[tr] Service",
       "date": "[tr] Service date",
       "notInvoice": "[tr] This is a payment receipt, not a tax invoice.",
-      "toRequest": "[tr] Back to the request"
-    }
+      "toRequest": "[tr] Back to the request",
+      "toJobs": "[tr] Back to My jobs"
+    },
+    "toJobs": "[tr] Back to My jobs",
+    "successBodyFee": "[tr] Your fee is paid. The customer's contact details are on My jobs."
+  },
+  "Contacts": {
+    "titleProvider": "[tr] Your provider",
+    "titleCustomer": "[tr] Your customer",
+    "phone": "[tr] Phone",
+    "email": "[tr] Email",
+    "unconfirmed": "[tr] unconfirmed",
+    "address": "[tr] Address",
+    "when": "[tr] Start",
+    "notes": "[tr] Notes",
+    "call": "[tr] Call",
+    "whatsapp": "[tr] WhatsApp",
+    "emailAction": "[tr] Email"
   }
 }

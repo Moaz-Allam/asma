@@ -64,7 +64,9 @@ export type AlertReason =
   // Spec 0011-09 AC-1, R-2: a region's unlock window or fee window floor is missing or malformed, so a verified
   // commission cannot be applied (the relay retries) and a commission of 0 cannot settle. The record is the fee id
   // or the request id.
-  | 'unlock_settings_invalid';
+  | 'unlock_settings_invalid'
+  // Spec 0011-10: the contact window setting is missing or malformed.
+  | 'contact_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

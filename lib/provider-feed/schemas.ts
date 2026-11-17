@@ -77,6 +77,32 @@ export const ApplicationListRow = z
   .strict();
 export type ApplicationListRow = z.infer<typeof ApplicationListRow>;
 
+/** `provider_jobs()` (spec 0011-10 R-11): one job, no contact field (the parse refuses one). */
+export const JobRow = z
+  .object({
+    ...ShortDetails,
+    application_id: z.string().uuid(),
+    application_status: z.enum(APPLICATION_STATUSES),
+    status_changed_at: Instant,
+    provider_fee_amount: Minor.nonnegative().nullable(),
+    unlocked_at: Instant.nullable(),
+    payment_deadline: Instant.nullable(),
+    fee_deadline: Instant.nullable(),
+  })
+  .strict();
+export type JobRow = z.infer<typeof JobRow>;
+
+export const JobsPage = z
+  .object({ timezone: z.string(), now: Instant, has_more: z.boolean(), rows: z.array(JobRow) })
+  .strict();
+export type JobsPage = z.infer<typeof JobsPage>;
+
+/** `pay_provider_fee()` (spec 0011-10 AC-2): an attempt to wait on, or settled at once for a fee of 0. */
+export const PayFeeResult = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('settled') }).strict(),
+  z.object({ status: z.literal('checkout'), attempt_id: z.string().uuid(), reused: z.boolean() }).strict(),
+]);
+
 export const ApplicationsPage = z
   .object({ timezone: z.string(), has_more: z.boolean(), rows: z.array(ApplicationListRow) })
   .strict();

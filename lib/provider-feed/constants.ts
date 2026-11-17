@@ -29,8 +29,28 @@ export const PROVIDER_FEED_DB_CODES = [
   'too_many_applications',
   'message_invalid',
   'contact_info_in_message',
+  // Spec 0011-10 (10): the provider pays the provider fee.
+  'validation_failed',
+  'invalid_state',
+  'already_paid',
+  'deadline_passed',
+  'payments_disabled',
+  'too_many_checkouts',
+  'checkout_settings_invalid',
+  'unlock_settings_invalid',
 ] as const;
 export type ProviderFeedCode = (typeof PROVIDER_FEED_DB_CODES)[number];
+
+/** Spec 0011-10 R-11: the My jobs tabs, each a fixed set of application statuses in Postgres. */
+export const JOB_TABS = ['applied', 'chosen', 'active', 'done'] as const;
+export type JobTab = (typeof JOB_TABS)[number];
+
+/** `?tab=`, falling back to Applied. */
+export function parseJobTab(value: unknown): JobTab {
+  return typeof value === 'string' && (JOB_TABS as readonly string[]).includes(value)
+    ? (value as JobTab)
+    : 'applied';
+}
 
 /** The twelve application statuses of project-overview.md §22 (AC-17). */
 export const APPLICATION_STATUSES = [

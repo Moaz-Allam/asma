@@ -20,7 +20,8 @@ type Props = { params: Promise<{ locale: string; feeId: string }> };
 export default async function Page({ params }: Props) {
   const { locale, feeId } = await params;
   setRequestLocale(locale);
-  const user = await guardPage(['customer']);
+  // Spec 0011-10 AC-9, R-7: both payers; my_receipt keeps each to its own fees.
+  const user = await guardPage(['customer', 'provider']);
   const receipt = await loadReceipt(feeId);
   if (!receipt) notFound();
 
@@ -51,7 +52,15 @@ export default async function Page({ params }: Props) {
         {t('notInvoice')}
       </p>
       <Button asChild variant="outline" className="self-start">
-        <Link href={`/requests/${receipt.request_id}`}>{t('toRequest')}</Link>
+        <Link
+          href={
+            receipt.kind === 'commission'
+              ? `/requests/${receipt.request_id}`
+              : '/provider/applications?tab=active'
+          }
+        >
+          {receipt.kind === 'commission' ? t('toRequest') : t('toJobs')}
+        </Link>
       </Button>
     </div>
   );
