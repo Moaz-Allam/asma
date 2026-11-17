@@ -1,6 +1,6 @@
-# 0009-06. Choose a provider (position 06)
+# 0011-06. Choose a provider (position 06)
 
-Child of [0009](index.md). Follows the cross child contract there.
+Child of [0011](index.md). Follows the cross child contract there.
 
 ## Summary
 
@@ -110,7 +110,7 @@ only the kinds that concern them (`posted`, `chosen`, `switched`, `cancelled`, a
 | Applicant card | name, entity type, years, languages, bio | `providers.approved_name`, `providers.entity_type`, `provider_profiles` |
 | Applicant card | job count | count of `applications.status = 'CONFIRMED'` for that provider |
 | Applicant card | photo | `profile_photo` object of that provider, signed by the customer |
-| Choose | provider fee figure | `provider_fee_for(region, requests.fixed_price)` (05, defined in 0009-07) |
+| Choose | provider fee figure | `provider_fee_for(region, requests.fixed_price)` (05, defined in 0011-07) |
 | Choose | payment deadline | `payment_window_hours`, `min_window_minutes`, `scheduled_start_at` |
 | Choose dialog | commission to pay | `requests.commission_amount` |
 | Timeline | step times | `request_events.created_at`, shown in `regions.timezone` |

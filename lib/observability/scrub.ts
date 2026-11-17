@@ -64,6 +64,9 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'address_line',
   'notes',
   'answers',
+  // Spec 0009 AC-20: a provider's apply message, as the action names it and as the RPC argument.
+  'application_message',
+  'p_message',
   'description',
   'message',
   'body',

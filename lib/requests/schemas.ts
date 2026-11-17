@@ -71,12 +71,22 @@ export const RequestQuote = PricedResult.extend({
 });
 export type RequestQuote = z.infer<typeof RequestQuote>;
 
-export const QuoteRequestResult = z.discriminatedUnion('status', [RequestQuote, AnswerErrors]);
+/**
+ * A refusal the caller caused in the engine, returned instead of raised so it counts against the hourly
+ * limit (0009's migration, R10 A1).
+ */
+const EngineRefused = z.object({
+  status: z.literal('refused'),
+  code: z.enum(['service_unavailable', 'zone_unavailable', 'addon_unavailable', 'price_out_of_range']),
+});
+
+export const QuoteRequestResult = z.discriminatedUnion('status', [RequestQuote, AnswerErrors, EngineRefused]);
 
 export const CreateRequestResult = z.discriminatedUnion('status', [
   z.object({ status: z.literal('ok'), id: z.string().uuid() }),
   AnswerErrors,
   z.object({ status: z.literal('price_changed'), quote: RequestQuote }),
+  EngineRefused,
 ]);
 
 /** What a stored request's pricing snapshot holds (AC-9): names in every locale admin wrote. */

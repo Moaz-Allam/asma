@@ -1,6 +1,6 @@
-# 0009-08. iyzico door, relay, callbacks (position 08)
+# 0011-08. iyzico door, relay, callbacks (position 08)
 
-Child of [0009](index.md). Follows the cross child contract there. **High risk: PSP, secrets.**
+Child of [0011](index.md). Follows the cross child contract there. **High risk: PSP, secrets.**
 
 ## Summary
 
@@ -19,7 +19,7 @@ server only Sentry project so nobody can fake them (R5).
 - As the owner, I want to hear at once when money is stuck or wrong, from an alert nobody outside can fake.
 
 **Prerequisites**: 07 merged. Branch `feat/08-iyzico-relay`. S1 for the iyzico adapter's real calls (the fake covers
-the rest); S31 and S32 before the preview check.
+the rest); S32 and S33 before the preview check.
 
 **Acceptance criteria**:
 - **AC-1**: `lib/psp/types.ts` defines one adapter interface: `initializeCheckout`, `retrieveCheckout`,
@@ -113,8 +113,8 @@ webhook trusts nothing until the relay retrieves the same payment from iyzico.
 **Configuration required**:
 - `PSP_DRIVER`: `fake` or `iyzico`.
 - `IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL`: sandbox on previews (S1), live at G3 (S2).
-- `RELAY_SECRET`: shared with Vault (S32).
-- `SENTRY_SERVER_DSN`: the server only project (S31).
+- `RELAY_SECRET`: shared with Vault (S33).
+- `SENTRY_SERVER_DSN`: the server only project (S32).
 
 **Critical test scenarios**: a forged callback with a real token but a failed payment changes nothing (AC-8, AC-10); a
 webhook with a bad signature is refused (AC-9); a crash after `retrieveCheckout` and before `apply_fee_paid` is replayed
@@ -129,8 +129,8 @@ alerts (AC-13).
 3. Relay route and handlers, the migration for cron, net and Vault; satisfies **AC-5** to **AC-7**, **AC-10** to
    **AC-13**.
 4. Callback and webhook routes, exemptions; satisfies **AC-8**, **AC-9**, **AC-17**.
-5. Server only DSN and alert rules (with S31), scrubber keys; satisfies **AC-14**, **AC-16**.
-6. Owner: S31, S32, push the migration after a dry run; a sandbox payment on the preview; reviews with
+5. Server only DSN and alert rules (with S32), scrubber keys; satisfies **AC-14**, **AC-16**.
+6. Owner: S32, S33, push the migration after a dry run; a sandbox payment on the preview; reviews with
    `security-reviewer`; merge.
 
 ## Consequences

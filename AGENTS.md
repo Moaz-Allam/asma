@@ -48,8 +48,12 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   the cloud. Merged on local CI, which replaced GitHub CI (down). **AC-29 real calls are a hard gate before G1** (D133).
 - 2026-11-15 · **03 merged** (spec 0007, PR #27, `734517b`): catalog and pricing engine in Postgres, the
   admin pages `/admin/catalog` and `/admin/pricing`, `lib/pricing`, `lib/catalog`, `lib/money/parse.ts`. Security, slice and
-  `/check review` fixes folded in (D136, D137, R9). Its migration `20261115100000_catalog_pricing` is in the cloud (S29). Merged on local CI (D135); **AC-26 real calls are a hard gate before G1**.
-  AC-26 real calls are a hard gate before G1 (D135).
+  `/check review` fixes folded in (D136, D137, R9). Its migration `20261115100000_catalog_pricing` is in the cloud (S29). Merged on local CI (D135); **AC-26 real calls are a hard gate before G1** (D135).
+- 2026-11-16 · **04 merged** (spec 0008, PR #28, `1118a5b`): post a request. The form is built from a service's active
+  questions, Postgres computes the price, commission and cash due, the street line sits in its own PII table, and
+  `lib/requests/` is the customer's door. Its migration `20261116090000_post_request` is in the cloud (S30). Two Opus
+  security passes and a Sonnet cross review (D143 to D145); merged on local CI, because GitHub Actions fails at startup.
+  **AC-27 real calls are a hard gate before G1.** Its SQL review findings go into 05's first migration (R10).
 
 ## Stack (pinned exactly)
 
@@ -209,6 +213,7 @@ other module may be named that way.
 | PSP | `lib/psp/` | Only the outbox relay calls it (rule 3) |
 | Pricing | `lib/pricing/` | Admin's server only door to the engine in Postgres: `previewFormula`, `publishFormula` wrap `preview_pricing_formula`, `publish_pricing_formula` (spec 0007, D121). No function takes a price (rule 1). No lint rule yet; the SQL side is guarded by the tamper meta test in `supabase/tests/10_pricing_engine.test.sql`. Since 04, `quote_price` has no `authenticated` grant (spec 0008 AC-28) |
 | Requests | `lib/requests/` | The customer's server only door (spec 0008): `loadRequestCatalog`, `quoteRequest`, `createRequest`, `cancelRequest`, `listMyRequests`, `getMyRequest`, `prefillFrom` wrap `request_catalog`, `quote_request`, `create_request`, `cancel_request` and the RLS reads. The split and the stored figures are computed in Postgres; `create_request`'s two expected figures are compared, never stored (D140) |
+| Provider feed | `lib/provider-feed/` | The provider's server only door (spec 0009): `loadSetup`, `saveSetup`, `loadFeed`, `loadRequest`, `applyToRequest`, `listApplications`, `loadHomeCounts` wrap `provider_setup`, `save_provider_setup`, `provider_feed`, `provider_request`, `apply_to_request`, `provider_applications`, `provider_home_counts`. Strict schemas refuse a key the functions must never send. `apply_to_request` is the only write to `applications` (D148) |
 | Sentry | `lib/observability/` | `next.config.ts` may import only `withSentryConfig` from `@sentry/nextjs/config`. Server: `initServer`, `captureRequestError`, `log`, `raiseAlert`; browser: `initClient`, `reportClientError`, `routerTransitionStart`; routes: `createEnvelopeForwarder` (`/api/e`), `createCspReportForwarder` (`/api/csp`) in `forward.ts` (D83). One scrubber (`scrub.ts`) for every signal, CSP reports included |
 | PostHog | `lib/analytics/` | `initAnalytics`, `track`, `trackPageview`; events typed in `events.ts`, filtered again in `filter.ts`; route: `createPostHogForwarder` (`/api/a/*`) in `forward.ts`, its body parser in `capture-body.ts` (no `server-only`, so e2e runs real SDK bytes through it) (D83) |
 | Telemetry keys | the two doors, `lib/env.ts`, `lib/deployment.ts`, `next.config.ts` | `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`; `SENTRY_AUTH_TOKEN` in `next.config.ts` only. Others ask `sentryDsn()` or `posthogKey()` |

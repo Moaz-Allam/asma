@@ -35,6 +35,7 @@ export async function ProviderProfileView({
 }) {
   const t = await getTranslations('Provider.view');
   const tLang = await getTranslations('ProviderForm.languages');
+  const tNav = await getTranslations('Nav');
   const format = await getFormatter();
 
   const approved = standing === 'approved';
@@ -101,6 +102,10 @@ export async function ProviderProfileView({
           <p className="text-meta text-text-secondary">{t('replaceNote')}</p>
           <Link href="/provider/profile/documents" className="text-btn-sm text-link">
             {t('documentsLink')}
+          </Link>
+          {/* Spec 0009 AC-15: the services, districts and hours live on their own page. */}
+          <Link href="/provider/setup" className="text-btn-sm text-link">
+            {tNav('setup')}
           </Link>
         </section>
       </aside>

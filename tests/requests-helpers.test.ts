@@ -35,7 +35,8 @@ function ranges(cls: string): string[] {
 
 describe('the blank pattern', () => {
   const migration = readFileSync(
-    join(process.cwd(), 'supabase/migrations/20261116090000_post_request.sql'),
+    // The newest copy: 05's migration extended the class (R10 B5).
+    join(process.cwd(), 'supabase/migrations/20261117090000_provider_feed_apply.sql'),
     'utf8',
   );
   const sqlClasses = [...migration.matchAll(/'\^\[([^\]]+)\]\+\|\[([^\]]+)\]\+\$'/g)].flatMap((m) => [

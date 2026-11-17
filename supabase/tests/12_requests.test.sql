@@ -141,12 +141,12 @@ SELECT results_eq(
 SELECT throws_ok($$ INSERT INTO public.requests (region, customer_id, client_key, service_id, zone_id, answers, questions_snapshot,
                       pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at)
                     VALUES ('TR', '00000000-0000-0000-0000-0000001200c1', gen_random_uuid(), '00000000-0000-0000-0000-000000125001',
-                      '00000000-0000-0000-0000-000000122004', '{}', '[]', '{}', 100, 0, 100, 'TRY', now(), now() + interval '1 hour') $$,
+                      '00000000-0000-0000-0000-000000122004', '{}', '[]', '{"rounding_minor": 1}', 100, 0, 100, 'TRY', now(), now() + interval '1 hour') $$,
   '23503', NULL, 'a TR request cannot name a KSA zone, even as postgres (composite key)');
 SELECT throws_ok($$ INSERT INTO public.requests (region, customer_id, client_key, service_id, zone_id, answers, questions_snapshot,
                       pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at)
                     VALUES ('TR', '00000000-0000-0000-0000-0000001200c1', gen_random_uuid(), '00000000-0000-0000-0000-000000125001',
-                      '00000000-0000-0000-0000-000000122001', '{}', '[]', '{}', 100, 10, 100, 'TRY', now(), now() + interval '1 hour') $$,
+                      '00000000-0000-0000-0000-000000122001', '{}', '[]', '{"rounding_minor": 1}', 100, 10, 100, 'TRY', now(), now() + interval '1 hour') $$,
   '23514', NULL, 'cash_due must be the price less the commission');
 
 -- ── setting checks (AC-1) ────────────────────────────────────────────────────
@@ -320,8 +320,8 @@ SELECT ok((SELECT c::text !~* '(formula|modifier|affects_pricing|multiplier|fact
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200b1');
 SELECT is(public.request_catalog(), (SELECT c FROM cat), 'a provider gets the same tree');
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200d1');
-SELECT is(jsonb_path_query_array(public.request_catalog(), '$.categories[*].services[*].id'),
-  '["00000000-0000-0000-0000-000000125005"]', 'a KSA customer reads the KSA catalog only');
+SELECT throws_ok($$ SELECT public.request_catalog() $$, 'P0001', 'region_unavailable',
+  'a KSA customer reads no catalog while KSA is off (R10 A8; 14 proves the region filter)');
 SELECT pg_temp.as_user('00000000-0000-0000-0000-000000120000');
 SELECT throws_ok($$ SELECT public.request_catalog() $$, 'P0001', 'forbidden', 'no profile: forbidden');
 RESET ROLE;
@@ -345,8 +345,8 @@ SELECT is((SELECT jsonb_build_object('price', q -> 'price', 'commission_percent'
 SELECT is(public.quote_request('00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122001', NULL, '{"rooms": 3}'),
   '{"status": "invalid", "errors": [{"key": "bathrooms", "code": "answer_required"}, {"key": "has_pets", "code": "answer_required"}, {"key": "property_type", "code": "answer_required"}]}',
   'answer errors come back with no price');
-SELECT throws_ok($$ SELECT public.quote_request('00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122004', NULL, '{}') $$,
-  'P0001', 'zone_unavailable', 'a zone of another region refuses');
+SELECT is((public.quote_request('00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122004', NULL, '{}')) ->> 'code',
+  'zone_unavailable', 'a zone of another region refuses, now a refused status that counts (R10 A1)');
 SELECT throws_ok($$ SELECT public.quote_price('00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122001', NULL, '{}') $$,
   '42501', NULL, 'a customer token cannot call quote_price directly');
 RESET ROLE;
@@ -433,7 +433,7 @@ SELECT is((SELECT r ->> 'status' FROM public.create_request(gen_random_uuid(), '
 SELECT throws_ok($$ INSERT INTO public.requests (region, customer_id, client_key, service_id, zone_id, answers, questions_snapshot,
                       pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at)
                     VALUES ('TR', '00000000-0000-0000-0000-0000001200c1', gen_random_uuid(), '00000000-0000-0000-0000-000000125001',
-                      '00000000-0000-0000-0000-000000122001', '{}', '[]', '{}', 100, 0, 100, 'TRY', now(), now() + interval '1 hour') $$,
+                      '00000000-0000-0000-0000-000000122001', '{}', '[]', '{"rounding_minor": 1}', 100, 0, 100, 'TRY', now(), now() + interval '1 hour') $$,
   '42501', NULL, 'a customer token cannot insert a request');
 SELECT throws_ok($$ UPDATE public.requests SET fixed_price = 1 $$, '42501', NULL, 'nor update one');
 SELECT throws_ok($$ DELETE FROM public.requests $$, '42501', NULL, 'nor delete one');
@@ -501,15 +501,15 @@ SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c1');
 SELECT throws_ok($$ SELECT public.create_request(NULL, '00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122001', NULL,
                       pg_temp.ans(), pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 350000, 35000) $$,
   'P0001', 'validation_failed', 'a null client key');
-SELECT throws_ok($$ SELECT public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125002', '00000000-0000-0000-0000-000000122001', NULL,
-                      '{}', pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1) $$,
-  'P0001', 'service_unavailable', 'a service with no formula');
-SELECT throws_ok($$ SELECT public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122003', NULL,
-                      pg_temp.ans(), pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1) $$,
-  'P0001', 'zone_unavailable', 'an off zone');
-SELECT throws_ok($$ SELECT public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122001',
-                      ARRAY['00000000-0000-0000-0000-00000012a002']::uuid[], pg_temp.ans(), pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1) $$,
-  'P0001', 'addon_unavailable', 'an off addon');
+SELECT is((public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125002', '00000000-0000-0000-0000-000000122001', NULL,
+                      '{}', pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1)) ->> 'code',
+  'service_unavailable', 'a service with no formula, now a refused status that counts (R10 A1)');
+SELECT is((public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122003', NULL,
+                      pg_temp.ans(), pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1)) ->> 'code',
+  'zone_unavailable', 'an off zone, now a refused status that counts (R10 A1)');
+SELECT is((public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122001',
+                      ARRAY['00000000-0000-0000-0000-00000012a002']::uuid[], pg_temp.ans(), pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1)) ->> 'code',
+  'addon_unavailable', 'an off addon, now a refused status that counts (R10 A1)');
 RESET ROLE;
 
 -- The open cap (AC-7): five live, a sixth refused; an expired one and a cancelled one free a slot.
@@ -584,7 +584,7 @@ CREATE TEMP TABLE bare AS
   WITH ins AS (INSERT INTO public.requests (region, customer_id, client_key, service_id, zone_id, answers, questions_snapshot,
                  pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at)
                VALUES ('TR', '00000000-0000-0000-0000-0000001200c3', gen_random_uuid(), '00000000-0000-0000-0000-000000125001',
-                 '00000000-0000-0000-0000-000000122001', '{}', '[]', '{}', 100, 0, 100, 'TRY', now() + interval '1 day', now() + interval '2 days')
+                 '00000000-0000-0000-0000-000000122001', '{}', '[]', '{"rounding_minor": 1}', 100, 0, 100, 'TRY', now() + interval '1 day', now() + interval '2 days')
                RETURNING id)
   SELECT id FROM ins;
 SELECT throws_ok($$ INSERT INTO public.request_addresses (request_id, region, customer_id, line)
@@ -631,7 +631,10 @@ SELECT is((SELECT jsonb_build_object('old', old_value, 'new', new_value) FROM pu
             WHERE action = 'request.cancelled' AND entity_id = (SELECT r ->> 'id' FROM r1)),
   '{"old": {"status": "OPEN"}, "new": {"status": "CANCELLED", "fixed_price": 350000}}',
   'one audit row, with no notes and no address');
+-- A fixture state, not a move: since 05 the guard allows only OPEN to CANCELLED until 06 adds its own (R10 A7).
+ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
 UPDATE public.requests SET status = 'SELECTED' WHERE id = (SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 11);
+ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c4');
 SELECT throws_ok($$ SELECT public.cancel_request((SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 11), NULL) $$,

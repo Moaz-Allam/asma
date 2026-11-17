@@ -1,6 +1,6 @@
-# 0009-11. Work and close (position 11)
+# 0011-11. Work and close (position 11)
 
-Child of [0009](index.md). Follows the cross child contract there.
+Child of [0011](index.md). Follows the cross child contract there.
 
 ## Summary
 

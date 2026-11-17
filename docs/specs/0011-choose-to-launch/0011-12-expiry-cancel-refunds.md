@@ -1,6 +1,6 @@
-# 0009-12. Expiry, cancellation, fee refunds (position 12)
+# 0011-12. Expiry, cancellation, fee refunds (position 12)
 
-Child of [0009](index.md). Follows the cross child contract there. **High risk: money.**
+Child of [0011](index.md). Follows the cross child contract there. **High risk: money.**
 
 ## Summary
 

@@ -1,6 +1,6 @@
-# 0009-21. Launch hardening (position 21)
+# 0011-21. Launch hardening (position 21)
 
-Child of [0009](index.md). Follows the cross child contract there. **High risk: auth, security, data.**
+Child of [0011](index.md). Follows the cross child contract there. **High risk: auth, security, data.**
 
 ## Summary
 
@@ -15,7 +15,7 @@ written, the test data is wiped by the owner, and G3 is checked. There are no ki
 - As the owner, I want a stolen admin password or phone alone to be useless, so that money and documents stay safe.
 - As the owner, I want proof that I can restore the database and that the site holds launch traffic.
 
-**Prerequisites**: 16 merged; G2 passed. Branch `feat/21-launch-hardening`. Owner steps: Supabase Pro (D63), S33 staging,
+**Prerequisites**: 16 merged; G2 passed. Branch `feat/21-launch-hardening`. Owner steps: Supabase Pro (D63), S34 staging,
 Vercel Pro (D25), S23 firewall, S2 and iyzico live keys, S10 uptime, S16 periods.
 
 **Acceptance criteria**:
@@ -23,7 +23,7 @@ Vercel Pro (D25), S23 firewall, S2 and iyzico live keys, S10 uptime, S16 periods
   through `lib/auth`; every admin page's `guardPage` sends an `aal1` admin to a challenge page; `is_admin()` returns true
   only when the token's `aal` is `aal2`. pgTAP proves an `aal1` admin token is refused by every admin policy and
   function. The UI ships one deploy before the SQL change, so the first admin enrols first (runbook step).
-- **AC-2**: Staging is a second Supabase project (S33) with iyzico sandbox keys; Vercel Preview env points at it,
+- **AC-2**: Staging is a second Supabase project (S34) with iyzico sandbox keys; Vercel Preview env points at it,
   Production at the production project with live keys. `lib/deployment.ts` refuses a production deployment whose
   Supabase URL is the staging ref, and a preview whose URL is the production ref (the refs as env names). Ends R4.
 - **AC-3**: Restore drill: restore the latest daily backup of production (Supabase Pro) into a temporary new project, or
@@ -68,7 +68,7 @@ TOTP through Supabase's own MFA; staging as a separate project; a drill, not a p
 
 **Configuration required**:
 - `SUPABASE_STAGING_REF`, `SUPABASE_PRODUCTION_REF`: project refs (not secrets) for the deployment check.
-- Staging copies of every existing variable in Vercel Preview (S33).
+- Staging copies of every existing variable in Vercel Preview (S34).
 
 **Security model**: admin power needs two factors; previews can never reach production data; deletion jobs are the only
 writers that delete personal data, and they log counts only.
@@ -79,7 +79,7 @@ refuses to boot (AC-2); the restore drill passes pgTAP (AC-3).
 ## Build plan
 
 1. Admin MFA UI and `guardPage` change (deploy first), then the `is_admin()` migration with pgTAP; satisfies **AC-1**.
-2. Deployment ref check; with S33, previews to staging; satisfies **AC-2**.
+2. Deployment ref check; with S34, previews to staging; satisfies **AC-2**.
 3. Retention jobs migration; satisfies **AC-6**.
 4. Load script, explain plans, indexes; satisfies **AC-5**.
 5. Restore drill and runbooks; satisfies **AC-3**, **AC-4**.

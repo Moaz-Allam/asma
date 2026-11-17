@@ -23,6 +23,8 @@ export const CLIENT_NAMESPACES = [
   'CatalogErrors',
   // Spec 0008 AC-24: the request form, its price card and the cancel dialog of position 04.
   'Requests',
+  // Spec 0009 AC-22: the setup form and the apply form of position 05.
+  'ProviderFeed',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */

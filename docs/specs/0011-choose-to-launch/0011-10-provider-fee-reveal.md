@@ -1,6 +1,6 @@
-# 0009-10. Provider pays, mutual reveal (position 10)
+# 0011-10. Provider pays, mutual reveal (position 10)
 
-Child of [0009](index.md). Follows the cross child contract there. **High risk: money, personal data.**
+Child of [0011](index.md). Follows the cross child contract there. **High risk: money, personal data.**
 
 ## Summary
 

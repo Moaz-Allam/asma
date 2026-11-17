@@ -1,6 +1,6 @@
-# 0009-13. Transactional email (position 13)
+# 0011-13. Transactional email (position 13)
 
-Child of [0009](index.md). Follows the cross child contract there. **Touches personal data (email addresses).**
+Child of [0011](index.md). Follows the cross child contract there. **Touches personal data (email addresses).**
 
 ## Summary
 

@@ -1,7 +1,7 @@
-# 0009. From choosing a provider to launch (positions 06 to 16 and 21)
+# 0011. From choosing a provider to launch (positions 06 to 16 and 21)
 
 **Date**: 2026-11-17
-**Status**: Accepted (confirmed by the owner 2026-11-17, after a cross check on a second model; D146, D147). Not built:
+**Status**: Accepted (confirmed by the owner 2026-11-17, after a cross check on a second model; D165, D166). Not built:
 each child is built in its own position, in build plan order
 
 ## Summary
@@ -17,18 +17,18 @@ outbox (a table of pending side effects that a background worker carries out) an
 
 | Child | Position | What it decides |
 | --- | --- | --- |
-| [0009-06-choose-provider.md](0009-06-choose-provider.md) | 06 | Applicant list, choose and switch, payment deadline, withdraw, status timeline |
-| [0009-07-money-core.md](0009-07-money-core.md) | 07 | Fee rows, provider fee frozen at choose, fee floor, ledger and postings, outbox, PSP events, idempotency |
-| [0009-08-iyzico-relay.md](0009-08-iyzico-relay.md) | 08 | `lib/psp` door (fake and iyzico), relay route driven by `pg_cron`, callback and webhook, reconciliation, alerts, R5 fix |
-| [0009-09-commission-payment.md](0009-09-commission-payment.md) | 09 | Customer pays the commission, pending page, receipt |
-| [0009-10-provider-fee-reveal.md](0009-10-provider-fee-reveal.md) | 10 | Provider pays the fee, mutual reveal by RLS, My jobs page, contact lifetime |
-| [0009-11-work-and-close.md](0009-11-work-and-close.md) | 11 | Start, done, confirm, auto close, customer closes the job |
-| [0009-12-expiry-cancel-refunds.md](0009-12-expiry-cancel-refunds.md) | 12 | Expiry jobs, cancellation matrix, refunds, suspension effects, minimal admin request page |
-| [0009-13-transactional-email.md](0009-13-transactional-email.md) | 13 | `lib/email` door, templates in three locales, email confirmation link, event to email map |
-| [0009-14-report-problem.md](0009-14-report-problem.md) | 14 | Report a problem, photos, admin queue, warnings, the agreement statement goes live |
-| [0009-15-provider-history.md](0009-15-provider-history.md) | 15 | Read only jobs and fees history |
-| [0009-16-admin-operations.md](0009-16-admin-operations.md) | 16 | Request list, flag queue, manual actions, address view, revenue report and CSV |
-| [0009-21-launch-hardening.md](0009-21-launch-hardening.md) | 21 | Admin TOTP, staging, backups and restore drill, load check, retention jobs, security review, wipe |
+| [0011-06-choose-provider.md](0011-06-choose-provider.md) | 06 | Applicant list, choose and switch, payment deadline, withdraw, status timeline |
+| [0011-07-money-core.md](0011-07-money-core.md) | 07 | Fee rows, provider fee frozen at choose, fee floor, ledger and postings, outbox, PSP events, idempotency |
+| [0011-08-iyzico-relay.md](0011-08-iyzico-relay.md) | 08 | `lib/psp` door (fake and iyzico), relay route driven by `pg_cron`, callback and webhook, reconciliation, alerts, R5 fix |
+| [0011-09-commission-payment.md](0011-09-commission-payment.md) | 09 | Customer pays the commission, pending page, receipt |
+| [0011-10-provider-fee-reveal.md](0011-10-provider-fee-reveal.md) | 10 | Provider pays the fee, mutual reveal by RLS, My jobs page, contact lifetime |
+| [0011-11-work-and-close.md](0011-11-work-and-close.md) | 11 | Start, done, confirm, auto close, customer closes the job |
+| [0011-12-expiry-cancel-refunds.md](0011-12-expiry-cancel-refunds.md) | 12 | Expiry jobs, cancellation matrix, refunds, suspension effects, minimal admin request page |
+| [0011-13-transactional-email.md](0011-13-transactional-email.md) | 13 | `lib/email` door, templates in three locales, email confirmation link, event to email map |
+| [0011-14-report-problem.md](0011-14-report-problem.md) | 14 | Report a problem, photos, admin queue, warnings, the agreement statement goes live |
+| [0011-15-provider-history.md](0011-15-provider-history.md) | 15 | Read only jobs and fees history |
+| [0011-16-admin-operations.md](0011-16-admin-operations.md) | 16 | Request list, flag queue, manual actions, address view, revenue report and CSV |
+| [0011-21-launch-hardening.md](0011-21-launch-hardening.md) | 21 | Admin TOTP, staging, backups and restore drill, load check, retention jobs, security review, wipe |
 
 Out of this spec (P2, cut list): 17 ratings, 18 notification centre, 19 trust and quality, 20 invoicing. Where a child
 leaves a slot for them (the reviews slot on the applicant card), the slot renders nothing until they exist.
@@ -37,18 +37,18 @@ leaves a slot for them (the reviews slot on the applicant card), the slot render
 
 - **05 is built and merged first.** It has no spec yet. Besides its own scope it must carry: the R10 "04 review carry overs"
   section with pgTAP (D143); the fee settings (`provider_fee_kind`, `provider_fee_value`, `fee_min_minor`) and the SQL
-  function `provider_fee_for(region, price)` exactly as 0009-07 AC-1 and AC-2 define them, plus the commission floor in
-  `pricing_split` (0009-07 AC-3), because 05 already changes `pricing_split` for R10 B1 and shows the fee estimate in the
+  function `provider_fee_for(region, price)` exactly as 0011-07 AC-1 and AC-2 define them, plus the commission floor in
+  `pricing_split` (0011-07 AC-3), because 05 already changes `pricing_split` for R10 B1 and shows the fee estimate in the
   feed and on apply; the `applications` table with statuses `APPLIED` and `WITHDRAWN` and the column names this spec reads
   (`id`, `region`, `request_id`, `provider_id`, `status`, `message`, `created_at`); the Applied tab of the provider's My
-  jobs page (0009-10 extends it); apply allowed only while the request is `OPEN`; before the reveal a provider reads only
+  jobs page (0011-10 extends it); apply allowed only while the request is `OPEN`; before the reveal a provider reads only
   the short details of a request (no `notes`, no address); and **a provider needs a confirmed email to apply**, because
   the chosen provider has a 24 hour paid window and email is their only notice (13 confirms addresses; the account page
   asks for one). If 05 names things differently, its spec wins and this spec's children follow it.
 - **Owner steps.** S1 (iyzico sandbox) before 08's iyzico adapter leaves the fake; S2 and live keys before G3; S4 and S5
   before 13 sends a real email; S16 before 14's agreement text and the retention periods are final; S17 for every money
   value marked unconfirmed; S24 for the money screens (if it is late, they are built from tokens and old screens and get a
-  design pass later). New owner steps from this spec: S31 to S33 (see Follow-up). None of them blocks writing code: each
+  design pass later). New owner steps from this spec: S32 to S34 (see Follow-up). None of them blocks writing code: each
   child builds against the fake PSP and draft copy, and names the hard check its gate needs.
 - **Design source.** `claude_design` failed to connect on 2026-11-17 (`FIRST_PARTY_AUTH_REJECTED`). Run `/design-login`
   again before the first UI task; `docs/design/source/` is the fallback, said out loud when used (D110).
@@ -300,7 +300,7 @@ New tables (all with `id uuid` primary key, `region` FK `regions`, `created_at`)
 | `report_photos` | report_id, object_path, created_at | at most 3 per report | 14 |
 | `user_warnings` | user_id, report_id null, reason, created_by, acknowledged_at null | | 14 |
 
-The reveal has no table: a definer function returns the other side's contacts only when both fees are `paid` (0009-10).
+The reveal has no table: a definer function returns the other side's contacts only when both fees are `paid` (0011-10).
 
 ### Value sourcing (shared values)
 
@@ -320,7 +320,7 @@ The reveal has no table: a definer function returns the other side's contacts on
 - No service role in a user path; the relay route is the only server code with the service role besides webhooks and
   jobs (door rule).
 - Personal data under KVKK: phones, emails, street lines, report text and photos. Reads of contacts and street lines by
-  the other side or by admin are audited (0009-10, 0009-16).
+  the other side or by admin are audited (0011-10, 0011-16).
 
 ## Build plan
 
@@ -354,13 +354,13 @@ Each child's own build plan lists its tasks with the AC each satisfies. Every ch
 **Neutral**:
 - 05 must carry four items for this spec (fee settings, `provider_fee_for` and the commission floor; the fee estimate in
   the feed; the applications columns; the My jobs Applied tab).
-- Four new owner steps (S31 to S33) and new env vars (see 08, 13, 21).
+- Four new owner steps (S32 to S34) and new env vars (see 08, 13, 21).
 
 ## Follow-up
 
-- [ ] Add owner steps to the tracker: **S31** Sentry server only project and DSN (08, R5); **S32** `RELAY_SECRET` in Vercel
-  and Supabase Vault (08); **S33** staging Supabase project with iyzico sandbox keys, previews pointed at it (21).
-- [ ] Record the decisions of this spec in the tracker log (D146 onward) and the settings in the defaults table.
+- [ ] Add owner steps to the tracker: **S32** Sentry server only project and DSN (08, R5); **S33** `RELAY_SECRET` in Vercel
+  and Supabase Vault (08); **S34** staging Supabase project with iyzico sandbox keys, previews pointed at it (21).
+- [ ] Record the decisions of this spec in the tracker log (D165 onward) and the settings in the defaults table.
 - [ ] `build-plan.md`: link this spec on rows 06 to 16 and 21; row 08 says "Next route driven by `pg_cron`", row 21 drops
   kill switches (owner override).
 - [ ] Write spec 0010 for position 05 before building it, with the three items under Prerequisites.

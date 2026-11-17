@@ -27,9 +27,10 @@ const SDK_PROPS = {
 };
 
 describe('the allow list (AC-7)', () => {
-  it('names exactly the 00b events, the sign in events of spec 0005 and the onboarding events of spec 0006, and request_posted of spec 0008', () => {
+  it('names exactly the 00b events, the sign in events of spec 0005 and the onboarding events of spec 0006, request_posted of spec 0008, and the two of spec 0009', () => {
     expect([...ANALYTICS_EVENTS].sort()).toEqual([
       '$pageview',
+      'application_submitted',
       'code_limited',
       'code_requested',
       'code_verified',
@@ -39,6 +40,7 @@ describe('the allow list (AC-7)', () => {
       'phone_rejected',
       'provider_decided',
       'provider_file_submitted',
+      'provider_setup_saved',
       'request_posted',
     ]);
   });

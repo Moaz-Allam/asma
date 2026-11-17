@@ -1,6 +1,6 @@
-# 0009-09. Customer pays the commission (position 09)
+# 0011-09. Customer pays the commission (position 09)
 
-Child of [0009](index.md). Follows the cross child contract there. **High risk: money.**
+Child of [0011](index.md). Follows the cross child contract there. **High risk: money.**
 
 ## Summary
 

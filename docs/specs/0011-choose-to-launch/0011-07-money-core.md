@@ -1,6 +1,6 @@
-# 0009-07. Money core, database only (position 07)
+# 0011-07. Money core, database only (position 07)
 
-Child of [0009](index.md). Follows the cross child contract there. **High risk: money.**
+Child of [0011](index.md). Follows the cross child contract there. **High risk: money.**
 
 ## Summary
 
