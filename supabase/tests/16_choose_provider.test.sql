@@ -12,7 +12,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(93);
+SELECT plan(98);
 
 -- ── ids ──────────────────────────────────────────────────────────────────────
 CREATE FUNCTION pg_temp.u(p text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$
@@ -129,7 +129,8 @@ SELECT is_empty(
        ('call 0555 when you can, I am free on 123 most days, then 45 and 67 is fine'),
        ('0 5 5 5 hello there my friend 1 2 3 4 5 6 and more'),
        ('0555' || repeat(chr(10240), 25) || '123' || repeat(chr(12644), 25) || '4567'),
-       ('Numaram sıfır beş beş beş, sonra uzun bir ara 1234567 tamam')) c(t)
+       ('Numaram sıfır beş beş beş, sonra uzun bir ara 1234567 tamam'),
+       ('numaram 0532 olarak başlıyor, devamı ise 123 ve 45 ve sonra altı yedi')) c(t)
       WHERE NOT public.message_has_contact_info(t) $$,
   'every added must catch row is flagged');
 SELECT is_empty(
@@ -153,6 +154,8 @@ SELECT is(public.offer_display_name('Mehmet'), '{"display_name": "Mehmet", "firs
 SELECT is(public.offer_display_name('  İsmail   Işık  '), '{"display_name": "İsmail I.", "first_name": "İsmail"}', 'extra spaces, never case folded');
 SELECT is(public.offer_display_name('أحمد السيد') ->> 'display_name', 'أحمد ا.', 'an Arabic name, first code point of the last word');
 SELECT is(public.offer_display_name(chr(12644) || ' '), '{"display_name": null, "first_name": null}', 'a blank name is null');
+SELECT is(public.offer_display_name('Ayşe' || chr(12644) || 'Kaya') ->> 'display_name', 'Ayşe K.', 'an invisible mark between words splits them (review S3)');
+SELECT is(public.offer_display_name('Usta 0532 123 45 67') ->> 'display_name', NULL, 'a name the scanner flags shows as Provider (review S3)');
 
 -- ── the cap helper (AC-5) ────────────────────────────────────────────────────
 SELECT is(public.approved_applied_count(pg_temp.r(1)), 3, 'R1: a1, a2 and a5 hold slots; suspended a3 does not');
@@ -292,12 +295,20 @@ SELECT throws_ok($$ UPDATE public.requests SET status = 'OPEN' WHERE id = pg_tem
   'P0001', 'request_transition_invalid', 'SELECTED never goes back to OPEN in 06');
 SELECT throws_ok($$ UPDATE public.applications SET status = 'APPLIED' WHERE id = pg_temp.app(1, 'a2') $$,
   'P0001', 'application_final', 'a NOT_SELECTED offer stays final until 12');
+SELECT throws_ok($$ INSERT INTO public.applications (region, request_id, provider_id, message, status)
+                    VALUES ('TR', pg_temp.r(4), pg_temp.u('a2'), 'A second chosen offer, never allowed.', 'SELECTED') $$,
+  '23505', NULL, 'a request never has two SELECTED applications, even as postgres (review G1)');
+SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'requests_payment_deadline_after_choose'),
+  'the deadline is held after the choose time (review G2)');
 
 -- ── a suspension after the choose (AC-2, AC-9) ───────────────────────────────
 UPDATE public.providers SET status = 'suspended', suspension_reason = 'Repeated complaints from customers' WHERE id = pg_temp.u('a1');
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c1');
 SELECT is(public.request_offers(pg_temp.r(1)) -> 'chosen' -> 'suspended', 'true', 'the chosen card stays, flagged suspended');
+SELECT is((SELECT jsonb_build_object('message', j -> 'chosen' -> 'message', 'hidden', j -> 'chosen' -> 'message_hidden')
+             FROM (SELECT public.request_offers(pg_temp.r(1)) AS j) x),
+  '{"message": null, "hidden": true}', 'and its message is hidden from then on (review S2)');
 RESET ROLE;
 UPDATE public.providers SET status = 'approved', suspension_reason = NULL WHERE id = pg_temp.u('a1');
 

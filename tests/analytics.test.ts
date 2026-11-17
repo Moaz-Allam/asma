@@ -69,6 +69,21 @@ describe('the allow list (AC-7)', () => {
 });
 
 describe('what an allowed event carries (AC-3, AC-6)', () => {
+  it('a custom event carries no record id in any URL property (spec 0010, found by the 06 e2e)', () => {
+    const id = '00000000-0000-4000-8000-0006000e1001';
+    const out = filterAnalyticsEvent(
+      captured('provider_chosen', {
+        ...SDK_PROPS,
+        $current_url: `https://aldebyani.test/ar/requests/${id}?after=x`,
+        $pathname: `/ar/requests/${id}`,
+        $referrer: `https://aldebyani.test/tr/provider/feed/${id}/`,
+      }),
+      'preview',
+    );
+    expect(JSON.stringify(out)).not.toContain(id);
+    expect(out?.properties.$pathname).toBe('/ar/requests/[id]');
+  });
+
   it('a pageview: SDK $ properties, scrubbed URLs, app_env, nothing else', () => {
     const out = filterAnalyticsEvent(
       captured('$pageview', {

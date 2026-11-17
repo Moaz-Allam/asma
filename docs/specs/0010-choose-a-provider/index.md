@@ -117,9 +117,9 @@ messages, this position also closes the contact scanner gaps the 05 security rev
 - **AC-12**: The provider sees the outcome without a notification (13 and 18 add those): a chosen
   application reads "Chosen" with "The customer is paying the commission by {deadline}. Your fee comes after
   that." on `p8` and in My applications; a `NOT_SELECTED` one reads "Not chosen"; a `CANCELLED` one after a
-  `SELECTED` request reads "The customer cancelled". `provider_request` adds `payment_deadline`, set only
-  when the caller's own application is `SELECTED`, else null, and still reports `closed: true` after the
-  choose. `provider_home_counts` adds `selected`, shown as a third card "Chosen, waiting for the customer"
+  `SELECTED` request reads "The customer cancelled". `provider_request` and `provider_applications` add
+  `payment_deadline`, set only when the caller's own application is `SELECTED`, else null, and
+  `provider_request` still reports `closed: true` after the choose. `provider_home_counts` adds `selected`, shown as a third card "Chosen, waiting for the customer"
   when above 0. 05's strict schemas in `lib/provider-feed/schemas.ts` gain both keys, with unit tests.
 
 *Contact scanner (R11).*
@@ -239,7 +239,7 @@ The moves allowed become `OPEN → CANCELLED`, `OPEN → SELECTED` and `SELECTED
 | `offer_display_name(p_name text)` | invoker, immutable | none | AC-3 |
 | `message_digit_limit()`, `message_has_contact_info(p_text text)` | invoker, immutable | none | AC-13 |
 | `blank_class()`, `blank_marks()` | invoker, immutable | none | AC-14 |
-| `cancel_request`, `apply_to_request`, `provider_feed`, `provider_request`, `provider_home_counts`, `catalog_trim`, `catalog_text_ok`, `contact_normalise`, `requests_guard` | replaced | unchanged | AC-5, AC-11 to AC-14; the three blank function replacements are mechanical |
+| `cancel_request`, `apply_to_request`, `provider_feed`, `provider_request`, `provider_applications`, `provider_home_counts`, `catalog_trim`, `catalog_text_ok`, `contact_normalise`, `requests_guard` | replaced | unchanged | AC-5, AC-11 to AC-14; the three blank function replacements are mechanical; `catalog_text_ok` becomes a definer function (the catalog checks run as the writing admin, and `catalog_trim` has no API grant) |
 
 **API surface** (Server Actions in `actions/requests.ts`; reads in `lib/requests/` through `lib/db`):
 

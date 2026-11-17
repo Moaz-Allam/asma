@@ -135,9 +135,19 @@ create function public.message_has_contact_info(p_text text)
   security invoker
   set search_path = ''
 as $$
+  -- Figures plus spelled digit words count together, so 9 figures and 2 spelled digits are caught (06
+  -- security review S1). The everyday words for "one" (one, bir, واحد) do not count: they read as "a".
   select public.has_contact_info(p_text)
-      or char_length(regexp_replace(public.contact_normalise(p_text), '[^0-9]', '', 'g'))
+      or char_length(regexp_replace(t, '[^0-9]', '', 'g'))
+         + (select count(*)::integer
+              from regexp_split_to_table(t, '[^a-z0-9ء-ي]+') w
+             where w = any (array[
+               'zero', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+               'sifir', 'iki', 'uc', 'dort', 'bes', 'alti', 'yedi', 'sekiz', 'dokuz',
+               'صفر', 'اثنان', 'اثنين', 'اتنين', 'ثلاثه', 'ثلاث', 'تلاته', 'اربعه', 'اربع',
+               'خمسه', 'خمس', 'سته', 'ست', 'سبعه', 'سبع', 'ثمانيه', 'ثماني', 'ثمان', 'تمانيه', 'تسعه', 'تسع']))
          >= public.message_digit_limit()
+    from (select public.contact_normalise(p_text) as t) x
 $$;
 
 revoke all on function public.message_has_contact_info(text) from public, anon, authenticated, service_role;
@@ -200,9 +210,14 @@ alter table public.requests
     (selected_application_id is null) = (selected_at is null)
     and (selected_at is null) = (payment_deadline is null)),
   add constraint requests_selected_set check (status <> 'SELECTED' or selected_application_id is not null),
-  add constraint requests_payment_deadline_order check (payment_deadline is null or payment_deadline <= scheduled_start_at);
+  add constraint requests_payment_deadline_order check (payment_deadline is null or payment_deadline <= scheduled_start_at),
+  add constraint requests_payment_deadline_after_choose check (payment_deadline is null or payment_deadline > selected_at);
 
 create index requests_selected_application_idx on public.requests (selected_application_id, id);
+
+-- At most one SELECTED application per request, whoever writes it (06 security review G1): 09, 10 and 12
+-- add writers.
+create unique index applications_one_selected_idx on public.applications (request_id) where status = 'SELECTED';
 
 -- The frozen columns as before; the status moves of 04 and 06; the three choose columns written only on
 -- the move OPEN -> SELECTED, and never changed after.
@@ -266,13 +281,15 @@ create function public.offer_display_name(p_name text)
   security invoker
   set search_path = ''
 as $$
+  -- Words split on the whole blank class, not only spaces, so an invisible mark between words cannot keep a
+  -- full name whole; a name the scanner flags (a phone, a handle) shows as "Provider" (06 review S3).
   select case
-           when w is null then jsonb_build_object('display_name', null, 'first_name', null)
+           when w is null or public.has_contact_info(p_name) then jsonb_build_object('display_name', null, 'first_name', null)
            when cardinality(w) = 1 then jsonb_build_object('display_name', w[1], 'first_name', w[1])
            else jsonb_build_object('display_name', w[1] || ' ' || left(w[cardinality(w)], 1) || '.',
                                    'first_name', w[1])
          end
-    from (select regexp_split_to_array(nullif(public.catalog_trim(p_name), ''), '[[:space:]]+') as w) x
+    from (select regexp_split_to_array(nullif(public.catalog_trim(p_name), ''), '[' || public.blank_class() || ']+') as w) x
 $$;
 
 revoke all on function public.offer_display_name(text) from public, anon, authenticated, service_role;
@@ -346,6 +363,11 @@ begin
       into v_chosen
       from public.applications a
      where a.id = v_req.selected_application_id;
+    -- A provider suspended after the choose may have been suspended for that very message: it is hidden
+    -- from then on (06 security review S2).
+    if (v_chosen ->> 'suspended')::boolean then
+      v_chosen := v_chosen || jsonb_build_object('message', null, 'message_hidden', true);
+    end if;
   end if;
 
   return jsonb_build_object(

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -34,11 +34,14 @@ function ranges(cls: string): string[] {
 }
 
 describe('the blank pattern', () => {
-  const migration = readFileSync(
-    // Since 06 the class has one SQL source, blank_class(); blank_marks() is the same without whitespace.
-    join(process.cwd(), 'supabase/migrations/20261118090000_choose_provider.sql'),
-    'utf8',
-  );
+  // The newest migration that defines blank_class() is the SQL source; a later redefinition is read here too.
+  const dir = join(process.cwd(), 'supabase/migrations');
+  const newest = readdirSync(dir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort()
+    .reverse()
+    .find((f) => readFileSync(join(dir, f), 'utf8').includes('function public.blank_class()'));
+  const migration = readFileSync(join(dir, newest ?? ''), 'utf8');
   const literal = (name: string) =>
     new RegExp(`function public\\.${name}\\(\\)[\\s\\S]*?select '([^']+)'::text`).exec(migration)?.[1] ?? '';
 

@@ -38,6 +38,10 @@ export const NUMBER = {
   feedProvider: 21,
   feedRival: 22,
   feedCustomer: 23,
+  // Position 06 (spec 0010 AC-20): a customer who chooses, the chosen provider and the other.
+  chooseCustomer: 24,
+  chooseProvider: 25,
+  chooseRival: 26,
 } as const;
 
 /**

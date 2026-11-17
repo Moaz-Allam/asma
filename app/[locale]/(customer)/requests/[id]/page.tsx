@@ -81,7 +81,9 @@ export default async function Page({ params, searchParams }: Props) {
     offers.offers.map((o) => [o.application_id, monthYear(o.approved_since) ?? '']),
   );
   const chosen = offers.chosen;
-  const liveOpen = request.status === 'OPEN' && status === 'OPEN';
+  // One read decides every 06 branch: the offers' own status, so a choose or cancel between the two reads never mixes states.
+  const current = offers.status;
+  const liveOpen = current === 'OPEN' && status === 'OPEN';
   const timeline = [
     { key: 'posted', label: t('timeline.posted'), at: instantLabel(request.created_at, timezone, locale) },
     ...(offers.selected_at
@@ -164,7 +166,7 @@ export default async function Page({ params, searchParams }: Props) {
               </div>
             ))}
           </dl>
-          {request.status === 'OPEN' ? (
+          {current === 'OPEN' ? (
             offers.offers.length > 0 ? (
               <OfferList
                 requestId={request.id}
@@ -197,12 +199,18 @@ export default async function Page({ params, searchParams }: Props) {
                   since={monthYear(chosen.approved_since)}
                   message={chosen.message}
                   hidden={chosen.message_hidden ? t('offers.messageHidden') : null}
-                  flag={chosen.suspended && request.status === 'SELECTED' ? t('offers.unavailable') : null}
+                  flag={
+                    chosen.suspended && current === 'SELECTED'
+                      ? t('offers.unavailable')
+                      : chosen.status === 'CANCELLED'
+                        ? t('timeline.cancelled')
+                        : null
+                  }
                 />
               </ul>
             </section>
           ) : null}
-          {request.status === 'SELECTED' && offers.payment_deadline ? (
+          {current === 'SELECTED' && offers.payment_deadline ? (
             <NextStepPanel
               labels={{
                 title: t('next.title'),
@@ -221,9 +229,9 @@ export default async function Page({ params, searchParams }: Props) {
           <RequestTimeline title={t('timeline.title')} steps={timeline} />
           <RequestActions
             requestId={request.id}
-            canCancel={request.status === 'OPEN' || request.status === 'SELECTED'}
-            canRepeat={!liveOpen && request.status !== 'SELECTED'}
-            chosenNote={request.status === 'SELECTED' ? t('cancelSelected') : null}
+            canCancel={current === 'OPEN' || current === 'SELECTED'}
+            canRepeat={!liveOpen && current !== 'SELECTED'}
+            chosenNote={current === 'SELECTED' ? t('cancelSelected') : null}
           />
         </div>
         <aside className="flex flex-col gap-3.5 lg:sticky lg:top-4">
