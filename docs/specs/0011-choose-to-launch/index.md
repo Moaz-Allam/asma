@@ -59,6 +59,13 @@ leaves a slot for them (the reviews slot on the applicant card), the slot render
 > **Note (D168, 2026-11-18).** Position 06 was built to spec 0010, not 0011-06. Where this contract names `selections`,
 > `active_selection_id`, `request_events`, switch or withdraw, the child that first needs them amends it through `/architect`
 > against what 05 (spec 0009) and 06 (spec 0010) built.
+>
+> **The pick (D169, 2026-11-18).** The chosen application is the pick: read `selections` as the request's `SELECTED`
+> application (`requests.selected_application_id`), `selection_id` as `application_id`, `selections.provider_fee_amount`
+> and `provider_fee_kind` as the same columns on `applications` (frozen at the choose, 07 AC-0), and the lock order as
+> request, applications, fee_payments, fee_refunds. `payment_deadline` lives on `requests` (06); `fee_deadline` and the
+> extension times join `requests` or `applications` in the child that first needs them. `request_events` and
+> `failed_picks` come with the first child that needs them (12 or 13).
 
 Every child builds to this section. A child may add to it, never contradict it.
 
