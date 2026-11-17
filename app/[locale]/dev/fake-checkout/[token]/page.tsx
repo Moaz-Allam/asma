@@ -30,7 +30,8 @@ export default async function FakeCheckoutPage({ params, searchParams }: Props) 
   const amount = formatMoney(checkout.amount, checkout.currency, locale as Locale);
 
   return (
-    <div className="flex flex-col gap-6 pt-6.5">
+    // No site header or footer (a stand in for the PSP's own page), but the public layout's gutter and width.
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-6.5 lg:px-8.5">
       <PageHeader title={t('title')} />
       <p className="text-body text-text-secondary">{t('amount', { amount })}</p>
 
@@ -62,6 +63,6 @@ export default async function FakeCheckoutPage({ params, searchParams }: Props) 
           ))}
         </form>
       )}
-    </div>
+    </main>
   );
 }
