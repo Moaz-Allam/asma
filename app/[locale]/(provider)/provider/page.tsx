@@ -103,8 +103,18 @@ export default async function Page({ params }: Props) {
                 title: tFeed('home.applied'),
                 body: tFeed('home.appliedBody'),
               },
+              ...(counts.selected > 0
+                ? [
+                    {
+                      href: '/provider/applications',
+                      count: counts.selected,
+                      title: tFeed('home.selected'),
+                      body: tFeed('home.selectedBody'),
+                    },
+                  ]
+                : []),
             ].map((card) => (
-              <li key={card.href}>
+              <li key={card.title}>
                 <Link
                   href={card.href}
                   className="flex flex-col gap-2 rounded-panel bg-accent-light p-6.5 transition hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-ring"

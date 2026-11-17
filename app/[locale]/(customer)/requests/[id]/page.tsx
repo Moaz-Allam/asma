@@ -1,15 +1,20 @@
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { NextStepPanel } from '@/components/features/requests/NextStepPanel';
+import { OfferCard } from '@/components/features/requests/OfferCard';
+import { OfferList } from '@/components/features/requests/OfferList';
 import { RequestActions } from '@/components/features/requests/RequestActions';
 import { rowStatus, toneOf } from '@/components/features/requests/RequestRow';
+import { RequestTimeline } from '@/components/features/requests/RequestTimeline';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { PriceCard } from '@/components/shared/PriceCard';
 import { StatusChip } from '@/components/shared/StatusChip';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { Link } from '@/lib/i18n/navigation';
-import { getMyRequest } from '@/lib/requests';
-import { instantLabel, quoteLines, regionDefaultLocale } from '@/lib/requests/view';
+import { getMyRequest, loadOffers } from '@/lib/requests';
+import { instantLabel, NUMBER_LOCALE, quoteLines, regionDefaultLocale } from '@/lib/requests/view';
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -18,16 +23,17 @@ type Props = {
 
 /**
  * One of the caller's own requests (spec 0008 AC-14): the status, the review rows and the price card from the
- * stored snapshots, never the live catalog, Cancel while OPEN and Repeat unless live OPEN. Another customer's
- * id, an unknown id and a malformed id are all the 404 page. Position 06 adds the applicants here.
+ * stored snapshots, never the live catalog, Cancel while OPEN or SELECTED and Repeat unless live OPEN. Another
+ * customer's id, an unknown id and a malformed id are all the 404 page. Spec 0010 adds the offers and the
+ * choose while OPEN, the chosen provider and the next step once SELECTED, and the timeline.
  */
 export default async function Page({ params, searchParams }: Props) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const user = await guardPage(['customer', 'admin']);
   const query = await searchParams;
-  const found = await getMyRequest({ userId: user.id, id });
-  if (!found) notFound();
+  const [found, offers] = await Promise.all([getMyRequest({ userId: user.id, id }), loadOffers(id)]);
+  if (!found || !offers) notFound();
 
   const t = await getTranslations('Requests');
   const { request, addressLine, now } = found;
@@ -60,6 +66,44 @@ export default async function Page({ params, searchParams }: Props) {
     },
     { base: text(snapshot.service.name), adjustment: t('price.adjustment') },
   );
+
+  const monthYear = (date: string | null) =>
+    date
+      ? t('offers.since', {
+          date: new Intl.DateTimeFormat(NUMBER_LOCALE[locale] ?? locale, {
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'UTC',
+          }).format(new Date(`${date}T12:00:00Z`)),
+        })
+      : null;
+  const since = Object.fromEntries(
+    offers.offers.map((o) => [o.application_id, monthYear(o.approved_since) ?? '']),
+  );
+  const chosen = offers.chosen;
+  const liveOpen = request.status === 'OPEN' && status === 'OPEN';
+  const timeline = [
+    { key: 'posted', label: t('timeline.posted'), at: instantLabel(request.created_at, timezone, locale) },
+    ...(offers.selected_at
+      ? [
+          {
+            key: 'chosen',
+            label: t('timeline.chosen'),
+            at: instantLabel(offers.selected_at, timezone, locale),
+          },
+        ]
+      : []),
+    ...(offers.cancelled_at
+      ? [
+          {
+            key: 'cancelled',
+            label: t('timeline.cancelled'),
+            at: instantLabel(offers.cancelled_at, timezone, locale),
+          },
+        ]
+      : []),
+    ...(offers.status === 'SELECTED' ? [{ key: 'payment', label: t('timeline.payment'), at: null }] : []),
+  ];
 
   const rows: { term: string; value: string }[] = [
     {
@@ -120,10 +164,66 @@ export default async function Page({ params, searchParams }: Props) {
               </div>
             ))}
           </dl>
+          {request.status === 'OPEN' ? (
+            offers.offers.length > 0 ? (
+              <OfferList
+                requestId={request.id}
+                offers={offers.offers}
+                since={since}
+                commission={request.commission_amount}
+                cashDue={request.cash_due}
+                currency={request.currency}
+                windowHours={offers.payment_window_hours}
+                readOnly={!liveOpen}
+              />
+            ) : (
+              <EmptyState
+                lead={t('offers.emptyLead')}
+                title={t('offers.emptyTitle')}
+                body={liveOpen ? t('offers.emptyBody') : t('offers.expired')}
+              />
+            )
+          ) : null}
+          {chosen ? (
+            <section className="flex flex-col gap-3.5" aria-labelledby="chosen-title">
+              <h2 id="chosen-title" className="font-display text-title-s text-text-primary">
+                {t('offers.chosenTitle')}
+              </h2>
+              <ul className="flex flex-col gap-3.5">
+                <OfferCard
+                  name={chosen.display_name ?? t('offers.provider')}
+                  verified={t('offers.verified')}
+                  fresh={t('offers.new')}
+                  since={monthYear(chosen.approved_since)}
+                  message={chosen.message}
+                  hidden={chosen.message_hidden ? t('offers.messageHidden') : null}
+                  flag={chosen.suspended && request.status === 'SELECTED' ? t('offers.unavailable') : null}
+                />
+              </ul>
+            </section>
+          ) : null}
+          {request.status === 'SELECTED' && offers.payment_deadline ? (
+            <NextStepPanel
+              labels={{
+                title: t('next.title'),
+                commission: t('next.commission'),
+                cash: t('next.cash'),
+                deadline: t('next.deadline', {
+                  date: instantLabel(offers.payment_deadline, timezone, locale),
+                }),
+                soon: t('next.soon'),
+              }}
+              commission={request.commission_amount}
+              cashDue={request.cash_due}
+              currency={request.currency}
+            />
+          ) : null}
+          <RequestTimeline title={t('timeline.title')} steps={timeline} />
           <RequestActions
             requestId={request.id}
-            canCancel={request.status === 'OPEN'}
-            canRepeat={!(request.status === 'OPEN' && status === 'OPEN')}
+            canCancel={request.status === 'OPEN' || request.status === 'SELECTED'}
+            canRepeat={!liveOpen && request.status !== 'SELECTED'}
+            chosenNote={request.status === 'SELECTED' ? t('cancelSelected') : null}
           />
         </div>
         <aside className="flex flex-col gap-3.5 lg:sticky lg:top-4">

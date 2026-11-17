@@ -28,7 +28,10 @@ export type AlertReason =
   | 'request_settings_invalid'
   // Spec 0009 AC-1, AC-11: a region's applicant cap or hourly apply limit is missing or malformed, so no provider
   // there can apply or read the feed. The record is the database function that refused.
-  | 'apply_settings_invalid';
+  | 'apply_settings_invalid'
+  // Spec 0010 AC-8: a region's payment window is missing or malformed, so no customer there can choose. The
+  // record is the request id.
+  | 'choose_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

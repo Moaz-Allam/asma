@@ -49,6 +49,14 @@ export const CancelRequestInput = z.object({
   reason: z.enum(CANCEL_REASONS).nullable(),
 });
 
+/** Spec 0010 AC-7: two ids, nothing else. */
+export const ChooseProviderInput = z
+  .object({
+    requestId: Uuid,
+    applicationId: Uuid,
+  })
+  .strict();
+
 export const REQUEST_TABS = ['all', 'active', 'closed'] as const;
 export type RequestTab = (typeof REQUEST_TABS)[number];
 

@@ -1,14 +1,22 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
+
 import { fail, guardedAction } from '@/lib/auth/action';
 import {
   cancelRequest,
+  chooseProvider,
   createRequest,
   quoteRequest,
   REQUEST_DB_CODES,
   type RequestQuote,
 } from '@/lib/requests';
-import { CancelRequestInput, CreateRequestInput, QuoteRequestInput } from '@/lib/requests/input';
+import {
+  CancelRequestInput,
+  ChooseProviderInput,
+  CreateRequestInput,
+  QuoteRequestInput,
+} from '@/lib/requests/input';
 
 /**
  * The customer's request actions (spec 0008, API surface). Customers and admins may call them (AC-23);
@@ -61,5 +69,25 @@ export const cancelRequestAction = guardedAction(
     const outcome = await cancelRequest(input.requestId, input.reason);
     if (outcome.ok) return { status: 'ok' };
     return fail(KNOWN.includes(outcome.code) ? outcome.code : 'action_failed');
+  },
+);
+
+/** Choose one offer (spec 0010 AC-7, AC-8). Nothing is paid here; the page shows the next step. */
+export const chooseProviderAction = guardedAction(
+  { name: 'chooseProvider', access: ACCESS, schema: ChooseProviderInput },
+  async (
+    input,
+    user,
+  ): Promise<
+    { replayed: boolean; selectedAt: string; paymentDeadline: string } | ReturnType<typeof fail>
+  > => {
+    const outcome = await chooseProvider(input, { region: user.region, userId: user.id });
+    if (!outcome.ok) return fail(KNOWN.includes(outcome.code) ? outcome.code : 'action_failed');
+    if (!outcome.replayed) revalidatePath('/', 'layout');
+    return {
+      replayed: outcome.replayed,
+      selectedAt: outcome.selectedAt,
+      paymentDeadline: outcome.paymentDeadline,
+    };
   },
 );

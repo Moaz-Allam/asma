@@ -12,7 +12,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(92);
+SELECT plan(93);
 
 -- ── ids ──────────────────────────────────────────────────────────────────────
 CREATE FUNCTION pg_temp.u(p text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$
@@ -270,6 +270,8 @@ SELECT is((SELECT jsonb_build_object('status', j #>> '{application,status}', 'cl
   jsonb_build_object('status', 'SELECTED', 'closed', true, 'deadline', (SELECT j -> 'payment_deadline' FROM ch)),
   'the chosen provider reads SELECTED, closed, and the deadline');
 SELECT is(public.provider_home_counts() -> 'selected', '2', 'and counts two chosen applications (R1, R4)');
+SELECT is((SELECT x -> 'payment_deadline' FROM jsonb_array_elements(public.provider_applications(NULL, NULL) -> 'rows') x WHERE x ->> 'id' = pg_temp.r(1)::text),
+  (SELECT j -> 'payment_deadline' FROM ch), 'and My applications carries the deadline too');
 SELECT pg_temp.as_user('a2');
 SELECT is((SELECT jsonb_build_object('status', j #>> '{application,status}', 'deadline', j -> 'payment_deadline')
              FROM (SELECT public.provider_request(pg_temp.r(1)) AS j) x),

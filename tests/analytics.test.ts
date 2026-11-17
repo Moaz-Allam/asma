@@ -38,6 +38,7 @@ describe('the allow list (AC-7)', () => {
       'locale_changed',
       'onboarding_completed',
       'phone_rejected',
+      'provider_chosen',
       'provider_decided',
       'provider_file_submitted',
       'provider_setup_saved',

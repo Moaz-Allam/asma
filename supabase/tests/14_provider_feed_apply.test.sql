@@ -825,7 +825,7 @@ CREATE TEMP TABLE apps2 AS
     FROM (SELECT j -> 'rows' -> 19 AS l FROM apps1) x;
 SELECT is((SELECT array_agg(k ORDER BY k) FROM apps1, jsonb_object_keys(j) k), ARRAY['has_more', 'rows', 'timezone'], 'the list returns exactly these keys');
 SELECT is((SELECT array_agg(k ORDER BY k) FROM apps1, jsonb_object_keys(j -> 'rows' -> 0) k),
-  ARRAY['addon_names', 'application', 'cash_due', 'currency', 'fixed_price', 'id', 'scheduled_end_at', 'scheduled_start_at', 'service_id',
+  ARRAY['addon_names', 'application', 'cash_due', 'currency', 'fixed_price', 'id', 'payment_deadline', 'scheduled_end_at', 'scheduled_start_at', 'service_id',
         'service_name', 'zone_id', 'zone_name'], 'a list row has the short details and the application, no message');
 SELECT is((SELECT pg_temp.ids(j) FROM apps1) || (SELECT pg_temp.ids(j) FROM apps2), (SELECT array_agg(m.id::text ORDER BY m.g) FROM many m WHERE m.g <= 20),
   'newest first, 20 a page, the 21st on the second page, none twice');

@@ -174,6 +174,7 @@ describe('loadRequest (AC-8)', () => {
         closed: false,
         timezone: 'Europe/Istanbul',
         answers: [{ key: 'rooms', label: { tr: 'Oda' }, type: 'number', value: 3, option_labels: null }],
+        payment_deadline: null,
       },
       error: null,
     });
@@ -225,7 +226,10 @@ describe('applyToRequest and saveSetup (AC-3, AC-10)', () => {
             outside_hours: undefined,
             application: APPLICATION,
           },
-        ].map(({ applied_count: _a, cap: _c, full: _f, outside_hours: _o, ...rest }) => rest),
+        ].map(({ applied_count: _a, cap: _c, full: _f, outside_hours: _o, ...rest }) => ({
+          ...rest,
+          payment_deadline: null,
+        })),
       },
       error: null,
     });

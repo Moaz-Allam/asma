@@ -68,6 +68,15 @@ export default async function Page({ params, searchParams }: Props) {
               applied={t('form.appliedOn', {
                 date: instantLabel(row.application.created_at, timezone, locale),
               })}
+              note={
+                row.application.status === 'SELECTED' && row.payment_deadline
+                  ? t('chosen.line', { date: instantLabel(row.payment_deadline, timezone, locale) })
+                  : row.application.status === 'NOT_SELECTED'
+                    ? t('chosen.notChosen')
+                    : row.application.status === 'CANCELLED'
+                      ? t('chosen.cancelled')
+                      : null
+              }
               price={row.fixed_price}
               currency={row.currency}
             />

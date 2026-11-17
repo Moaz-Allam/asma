@@ -29,11 +29,14 @@ export function ApplicationForm({
   application,
   state,
   timezone,
+  paymentDeadline = null,
 }: {
   requestId: string;
   application: OwnApplication | null;
   state: Shown;
   timezone: string;
+  /** Spec 0010 AC-12: set only when the caller's own application is SELECTED. */
+  paymentDeadline?: string | null;
 }) {
   const t = useTranslations('ProviderFeed');
   const locale = useLocale();
@@ -61,6 +64,17 @@ export function ApplicationForm({
           <p role="status" className="text-body font-semibold text-text-primary">
             {t('form.applied')}
           </p>
+        ) : null}
+        {mine.status === 'SELECTED' && paymentDeadline ? (
+          <p className="text-body font-semibold text-text-primary">
+            {t('chosen.line', { date: instantLabel(paymentDeadline, timezone, locale) })}
+          </p>
+        ) : null}
+        {mine.status === 'NOT_SELECTED' ? (
+          <p className="text-body-s text-text-primary">{t('chosen.notChosen')}</p>
+        ) : null}
+        {mine.status === 'CANCELLED' ? (
+          <p className="text-body-s text-text-primary">{t('chosen.cancelled')}</p>
         ) : null}
         <p className="text-body-s text-text-secondary">
           {t('form.appliedOn', { date: instantLabel(mine.created_at, timezone, locale) })}

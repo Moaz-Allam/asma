@@ -1049,8 +1049,50 @@
       "not_found": "This request was not found.",
       "not_cancellable": "This request can no longer be cancelled here.",
       "region_unavailable": "Requests are not open in your region yet.",
-      "action_failed": "Something went wrong. Nothing was charged. Try again."
-    }
+      "action_failed": "Something went wrong. Nothing was charged. Try again.",
+      "not_choosable": "This request can no longer take a choice. The page shows where it stands now.",
+      "offer_unavailable": "That offer is no longer available. The list is updated.",
+      "choose_settings_invalid": "Choosing is not possible right now. Please try again later."
+    },
+    "offers": {
+      "title": "{count, plural, =0 {No offers yet} one {# offer on your request} other {# offers on your request}}",
+      "intro": "Read each offer and choose one provider. Nothing is paid until you choose, and contact details open only after both of you have paid.",
+      "emptyLead": "Soon",
+      "emptyTitle": "No offers yet",
+      "emptyBody": "Providers in your district can see your request.",
+      "expired": "This request has expired. You can no longer choose a provider.",
+      "verified": "Verified",
+      "new": "New",
+      "since": "On Aldebyani since {date}",
+      "provider": "Provider",
+      "messageHidden": "Message hidden",
+      "choose": "Choose {name}",
+      "unavailable": "Unavailable",
+      "confirmTitle": "Choose {name}?",
+      "confirmBody": "You choose this provider for your request.",
+      "confirmCommission": "Next, you pay the commission of {amount} online, within {hours} hours or before the start if that is sooner.",
+      "confirmCommissionNoWindow": "Next, you pay the commission of {amount} online.",
+      "confirmCash": "The rest, {amount}, you pay the provider in cash after the service.",
+      "confirmContact": "Contact details open after both of you have paid.",
+      "confirm": "Choose this provider",
+      "keep": "Back",
+      "chosenTitle": "Your provider"
+    },
+    "next": {
+      "title": "Next: pay the commission",
+      "commission": "Commission, online",
+      "cash": "To the provider in cash, after the service",
+      "deadline": "Pay by {date}",
+      "soon": "Payment opens here soon."
+    },
+    "timeline": {
+      "title": "Progress",
+      "posted": "Posted",
+      "chosen": "Provider chosen",
+      "cancelled": "Cancelled",
+      "payment": "Commission payment"
+    },
+    "cancelSelected": "The provider you chose will see that their offer is cancelled."
   },
   "ProviderFeed": {
     "days": {
@@ -1195,7 +1237,9 @@
       "error": {
         "title": "Your counts could not be loaded",
         "body": "Please try again in a moment."
-      }
+      },
+      "selected": "Chosen, waiting for the customer",
+      "selectedBody": "The customer is paying the commission."
     },
     "errors": {
       "forbidden": "This page is for providers.",
@@ -1217,6 +1261,11 @@
       "contact_info_in_message": "Your message has contact details. Remove phone numbers, emails, links and social handles.",
       "apply_settings_invalid": "Applying is not possible right now. Please try again later.",
       "action_failed": "Something went wrong. Nothing was sent. Try again."
+    },
+    "chosen": {
+      "line": "The customer is paying the commission by {date}. Your fee comes after that.",
+      "notChosen": "The customer chose another provider.",
+      "cancelled": "The customer cancelled."
     }
   }
 }

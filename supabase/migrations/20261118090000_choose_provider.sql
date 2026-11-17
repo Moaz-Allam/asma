@@ -508,9 +508,9 @@ grant execute on function public.cancel_request(uuid, text) to authenticated;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 9. 05's provider functions, replaced: every cap count reads approved_applied_count (AC-5);
---    apply_to_request scans the message with message_has_contact_info (AC-13); provider_request adds the
---    payment deadline for the provider whose application is SELECTED, and provider_home_counts the
---    selected count (AC-12). The rest of each body is 05's, unchanged.
+--    apply_to_request scans the message with message_has_contact_info (AC-13); provider_request and
+--    provider_applications add the payment deadline for the provider whose application is SELECTED, and
+--    provider_home_counts the selected count (AC-12). The rest of each body is 05's, unchanged.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 create or replace function public.provider_feed(
@@ -663,6 +663,48 @@ $$;
 
 revoke all on function public.provider_request(uuid) from public, anon, authenticated, service_role;
 grant execute on function public.provider_request(uuid) to authenticated;
+
+create or replace function public.provider_applications(p_after_created_at timestamptz, p_after_id uuid)
+  returns jsonb
+  language plpgsql
+  stable
+  security definer
+  set search_path = ''
+as $$
+declare
+  v_me    public.providers%rowtype;
+  v_tz    text;
+  v_rows  jsonb;
+  v_more  boolean;
+begin
+  v_me := public.provider_reader();
+  select g.timezone into v_tz from public.regions g where g.code = v_me.region;
+
+  select coalesce(jsonb_agg(x.j order by x.rn) filter (where x.rn <= 20), '[]'::jsonb), count(*) > 20
+    into v_rows, v_more
+    from (
+      select row_number() over (order by m.created_at desc, m.id desc) as rn,
+             public.provider_short_details(m.req) || jsonb_build_object(
+               'application', jsonb_build_object('id', m.id, 'status', m.status, 'created_at', m.created_at),
+               'payment_deadline', case when m.status = 'SELECTED' then (m.req).payment_deadline end) as j
+        from (
+          select a.id, a.status, a.created_at, r as req
+            from public.applications a
+            join public.requests r on r.id = a.request_id
+           where a.provider_id = v_me.id
+             and (p_after_created_at is null or p_after_id is null
+                  or (a.created_at, a.id) < (p_after_created_at, p_after_id))
+           order by a.created_at desc, a.id desc
+           limit 21
+        ) m
+    ) x;
+
+  return jsonb_build_object('timezone', v_tz, 'has_more', v_more, 'rows', v_rows);
+end;
+$$;
+
+revoke all on function public.provider_applications(timestamptz, uuid) from public, anon, authenticated, service_role;
+grant execute on function public.provider_applications(timestamptz, uuid) to authenticated;
 
 create or replace function public.provider_home_counts()
   returns jsonb

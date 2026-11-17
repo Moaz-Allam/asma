@@ -14,6 +14,7 @@ export function ApplicationRow({
   title,
   where,
   applied,
+  note = null,
   price,
   currency,
 }: {
@@ -23,6 +24,8 @@ export function ApplicationRow({
   title: string;
   where: string;
   applied: string;
+  /** Spec 0010 AC-12: the chosen, not chosen or cancelled line. */
+  note?: string | null;
   price: number;
   currency: 'TRY' | 'SAR';
 }) {
@@ -38,6 +41,7 @@ export function ApplicationRow({
         </div>
         <p className="font-display text-card break-words text-text-primary">{title}</p>
         <p className="text-body-s text-text-secondary">{where}</p>
+        {note ? <p className="text-body-s font-semibold text-text-primary">{note}</p> : null}
         <p className="text-meta text-text-secondary">{applied}</p>
       </Link>
     </li>
