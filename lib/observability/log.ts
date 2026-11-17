@@ -24,7 +24,17 @@ export type LogEvent =
   | 'document_view_audit_failed'
   // Spec 0007 AC-8: a customer's answers pushed a published formula past its ceiling. Logged, not alerted:
   // the customer's own answers can reach it, and other answers still price.
-  | 'price_out_of_range';
+  | 'price_out_of_range'
+  // Spec 0011-08: the relay. Each carries ids only (the outbox row in request_id, the region).
+  | 'relay_refused'
+  | 'relay_task_failed'
+  | 'outbox_stale'
+  | 'outbox_unfinished'
+  | 'outbox_retry'
+  | 'payments_disabled'
+  | 'psp_callback_unknown'
+  | 'psp_webhook_invalid'
+  | 'reconcile_cut';
 
 /** The only ids a record may carry: internal ids, never personal data. */
 export type LogIds = {

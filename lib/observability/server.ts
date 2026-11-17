@@ -1,16 +1,18 @@
 import 'server-only';
 
 import {
+  captureCheckIn,
   captureException,
   captureRequestError as sentryCaptureRequestError,
   flush,
+  getClient,
   init,
 } from '@sentry/nextjs';
 import type { Instrumentation } from 'next';
 import { after } from 'next/server';
 
 import { appEnv, appRelease } from '@/lib/deployment';
-import { sentryDsn } from '@/lib/env';
+import { sentryServerDsn } from '@/lib/env';
 import {
   ALLOWED_REQUEST_HEADERS,
   scrubBreadcrumb,
@@ -32,9 +34,13 @@ export const FLUSH_TIMEOUT_MS = 2000;
 
 let started = false;
 
-/** Runs once from register() in instrumentation.ts, after the environment checks. On only with a DSN. */
+/**
+ * Runs once from register() in instrumentation.ts, after the environment checks. On only with a DSN. With
+ * SENTRY_SERVER_DSN set, every server error, log and alert goes to that server only project, which no
+ * browser can send to, so nobody can forge an alert (spec 0011-08 AC-14, R5); without it, the public one.
+ */
 export function initServer(): void {
-  const dsn = sentryDsn();
+  const dsn = sentryServerDsn();
   if (started || !dsn) return;
   started = true;
   try {
@@ -124,5 +130,41 @@ export async function captureRequestError(
     await flush(FLUSH_TIMEOUT_MS);
   } catch {
     // Never let reporting an error raise another one.
+  }
+}
+
+/** The cron monitors the server checks in to (spec 0011-08 AC-13). Each is created by its first check in. */
+const MONITORS = {
+  'relay-drain': {
+    schedule: { type: 'crontab', value: '* * * * *' },
+    checkinMargin: 2,
+    maxRuntime: 2,
+    timezone: 'UTC',
+  },
+} as const;
+
+export type MonitorSlug = keyof typeof MONITORS;
+
+/**
+ * One check in to a Sentry cron monitor, so a schedule that stops (pg_cron, pg_net, the route) alerts too
+ * (spec 0011-08 AC-13). `in_progress` returns the id that the closing `ok` or `error` passes back. Never
+ * throws; without the SDK it does nothing.
+ */
+export function checkIn(
+  slug: MonitorSlug,
+  status: 'in_progress' | 'ok' | 'error',
+  id?: string,
+): string | undefined {
+  try {
+    if (getClient() === undefined) return undefined;
+    if (status !== 'in_progress' && id === undefined) return undefined;
+    const sent =
+      status === 'in_progress' || id === undefined
+        ? captureCheckIn({ monitorSlug: slug, status: 'in_progress' }, MONITORS[slug])
+        : captureCheckIn({ monitorSlug: slug, status, checkInId: id }, MONITORS[slug]);
+    if (status !== 'in_progress') flushSoon();
+    return sent;
+  } catch {
+    return undefined;
   }
 }

@@ -51,6 +51,23 @@ DELETE FROM public.applications;
 ALTER TABLE public.applications ENABLE TRIGGER applications_guard;
 DELETE FROM public.provider_services;
 DELETE FROM public.provider_zones;
+-- Since 08 an e2e run leaves money rows on the local stack (the relay journey); they go too, inside this
+-- rolled back transaction, past their append only guards.
+ALTER TABLE public.ledger_entries DISABLE TRIGGER USER;
+ALTER TABLE public.ledger_journals DISABLE TRIGGER USER;
+ALTER TABLE public.fee_refunds DISABLE TRIGGER USER;
+ALTER TABLE public.checkout_attempts DISABLE TRIGGER USER;
+ALTER TABLE public.fee_payments DISABLE TRIGGER USER;
+DELETE FROM public.ledger_entries;
+DELETE FROM public.ledger_journals;
+DELETE FROM public.fee_refunds;
+DELETE FROM public.checkout_attempts;
+DELETE FROM public.fee_payments;
+ALTER TABLE public.ledger_entries ENABLE TRIGGER USER;
+ALTER TABLE public.ledger_journals ENABLE TRIGGER USER;
+ALTER TABLE public.fee_refunds ENABLE TRIGGER USER;
+ALTER TABLE public.checkout_attempts ENABLE TRIGGER USER;
+ALTER TABLE public.fee_payments ENABLE TRIGGER USER;
 ALTER TABLE public.requests DISABLE TRIGGER requests_delete_guard;
 DELETE FROM public.requests;
 ALTER TABLE public.requests ENABLE TRIGGER requests_delete_guard;

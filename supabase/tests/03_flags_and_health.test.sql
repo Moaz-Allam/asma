@@ -20,15 +20,19 @@ SELECT is(
   true, 'TR stays active'
 );
 
--- ── the one flag left, per region (AC-14, AC-15; 07 deleted the four escrow flags, D95) ──
+-- ── the flags, per region (AC-14, AC-15; 07 deleted the four escrow flags, D95; 08 added
+--    payments_enabled, seeded off by its migration and turned on for TR by the local seed only, so its
+--    TR value is not pinned here: supabase/tests/20 proves the fail closed reading) ──
 SELECT results_eq(
-  $$ SELECT region, key, value
+  $$ SELECT region, key, CASE WHEN key = 'payments_enabled' AND region = 'TR' THEN 'null'::jsonb ELSE value END
        FROM public.platform_settings
       WHERE right(key, 8) = '_enabled'
       ORDER BY region, key $$,
   $$ VALUES ('KSA', 'notifications_enabled', 'false'::jsonb),
-            ('TR',  'notifications_enabled', 'true'::jsonb) $$,
-  'one money flag per region: TR on, KSA off'
+            ('KSA', 'payments_enabled', 'false'::jsonb),
+            ('TR',  'notifications_enabled', 'true'::jsonb),
+            ('TR',  'payments_enabled', 'null'::jsonb) $$,
+  'two money flags per region: notifications TR on, KSA off; payments KSA off'
 );
 
 SELECT is_empty(

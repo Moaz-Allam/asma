@@ -777,3 +777,39 @@ describe('breadcrumbs, logs and replay recordings', () => {
     ).toEqual({ type: 5, data: { tag: 'breadcrumb', payload: { category: 'console', message: '[email]' } } });
   });
 });
+
+describe('spec 0011-08 AC-16: a full iyzico style answer leaves nothing personal, no token and no card page', () => {
+  it('scrubs the buyer, the token, the card page and the IP at any depth', () => {
+    const answer = {
+      status: 'success',
+      paymentId: 'p-1',
+      token: 'tok-secret-1',
+      paymentPageUrl: 'https://pay.example.test/p/tok-secret-2',
+      checkoutFormContent: '<script src="https://pay.example.test/tok-secret-3"></script>',
+      buyer: {
+        id: 'b',
+        name: 'Ayşe',
+        surname: 'Yılmaz',
+        email: 'ayse@x.test',
+        identityNumber: '11111111111',
+        ip: '10.9.8.7',
+        gsmNumber: '+905551112233',
+      },
+      itemTransactions: [{ itemId: 'i', psp_token: 'tok-secret-4', payer_ip: '10.1.2.3' }],
+    };
+    const json = JSON.stringify(scrubEvent({ extra: { answer } }));
+    for (const secret of [
+      'tok-secret',
+      'Ayşe',
+      'Yılmaz',
+      'ayse@x.test',
+      '11111111111',
+      '10.9.8.7',
+      '10.1.2.3',
+      '5551112233',
+    ]) {
+      expect(json).not.toContain(secret);
+    }
+    expect(json).toContain('p-1');
+  });
+});

@@ -16,8 +16,9 @@ import { isRegion, type Region } from '@/lib/region';
  * off. The database refuses a non boolean under an `_enabled` key as well.
  */
 
-// 07 deleted the four escrow flags with the escrow model (D95, spec 0011-07 AC-15); one is left.
-export const MONEY_FLAGS = ['notifications_enabled'] as const;
+// 07 deleted the four escrow flags with the escrow model (D95, spec 0011-07 AC-15). 08 adds payments_enabled
+// (D172, spec 0011-08 AC-18): off stops new card pages only; the relay reads it once per checkout row.
+export const MONEY_FLAGS = ['notifications_enabled', 'payments_enabled'] as const;
 export type MoneyFlag = (typeof MONEY_FLAGS)[number];
 
 export const FLAG_READ_TIMEOUT_MS = 2000;

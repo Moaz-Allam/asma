@@ -126,6 +126,12 @@ const env = {
   NEXT_PUBLIC_POSTHOG_KEY: 'phc_e2e0000000000000000000000000000',
   // Cloudflare's always pass test key. The journeys stub the script anyway (e2e/fixtures.ts).
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+  // Spec 0011-08: the fake PSP, its card page on this server, the relay's secret (the journeys post to
+  // /api/relay with it), and a server only DSN the client bundles must never hold.
+  PSP_DRIVER: 'fake',
+  APP_ORIGIN: `http://localhost:${process.env.E2E_PORT || 3100}`,
+  RELAY_SECRET: 'e2e-relay-secret-0000000000000000000000',
+  SENTRY_SERVER_DSN: 'https://e2eserver0000000000000000000000@o1.ingest.de.sentry.io/1',
   ...localSupabase(),
   ...(indexable ? { APP_SITE_URL: 'https://aldebyani.example', VERCEL_ENV: 'production' } : {}),
 };

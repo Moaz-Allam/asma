@@ -84,6 +84,14 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'birth_date',
   'date_of_birth',
   'dob',
+  // Spec 0011-08 AC-16: the PSP's buyer, the checkout token (`token`, `psp_token` by suffix) and the card
+  // page, as iyzico names them (camelCase folds to these).
+  'buyer',
+  'payment_page_url',
+  'checkout_form_content',
+  'gsm_number',
+  'ip',
+  'payer_ip',
 ]);
 const PERSONAL_SUFFIXES = [
   // Spec 0008 (review A5): the request RPC arguments p_address_line, p_notes, p_answers.

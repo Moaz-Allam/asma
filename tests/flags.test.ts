@@ -86,8 +86,8 @@ describe('isEnabled reads the row live', () => {
     expect(calls).toHaveLength(2);
   });
 
-  it('knows exactly the one flag left (07 deleted the four escrow flags, D95)', () => {
-    expect([...MONEY_FLAGS]).toEqual(['notifications_enabled']);
+  it('knows exactly two flags (07 deleted the four escrow flags, D95; 08 added payments_enabled, D172)', () => {
+    expect([...MONEY_FLAGS]).toEqual(['notifications_enabled', 'payments_enabled']);
   });
 });
 

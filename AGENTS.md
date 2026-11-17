@@ -211,22 +211,25 @@ admin may refund by hand with a recorded reason. The cash is never part of any o
 Each risky system has one module that may import its SDK or read its key; everything else calls that
 door's functions. The rules also catch `import()`, `require()`, a destructured key, and a computed or
 spread `process.env` (D86). Every rule and exemption has a proof in `tests/lint/eslint-rules.test.ts`
-(architecture.md §42). A file named `*relay*` gets the outbox relay's rights (PSP, service role), so no
-other module may be named that way.
+(architecture.md §42). A file under `lib/` named `*relay*` (or under a `relay/` folder) gets the outbox relay's
+rights (PSP, service role), so no other module may be named that way; since 08 no route file gets them (spec 0011-08
+AC-3). Tests may import `lib/psp` (its contract suite).
 
 | System | Door | Notes |
 | --- | --- | --- |
 | Supabase | `lib/db/` | The service role client (`lib/db/admin.ts`) for webhooks, jobs and the relay only; `createAnonClient()` for machine endpoints; the `Db` type for callers |
 | Auth | `lib/auth/` | Only it calls `supabase.auth`, with one exemption, `lib/db/proxy.ts`, for the session refresh. `getSession()` is banned everywhere. Pages call `guardPage`, Server Actions `guardedAction` |
 | Storage | `lib/storage/` | Only it calls `supabase.storage` (spec 0006 AC-26). `client.ts` checks first bytes, downscales and uploads; `server.ts` signs links and removes, always as the signed in user. Bucket names, limits and the 60 second link live in `buckets.ts` |
-| PSP | `lib/psp/` | Only the outbox relay calls it (rule 3) |
+| PSP | `lib/psp/` | Only the outbox relay calls it (rule 3). Drivers `off` (default), `fake`, `iyzico` (a refusing slot until 08b, S1), picked by `PSP_DRIVER`; every call 15 s. `IYZICO_*` read only here (spec 0011-08) |
+| Relay | `lib/relay/` | The only caller of `lib/psp` and of the relay's service role functions (spec 0011-08): `drain`, `handlers` (initialize, verify, refund), `callback`, `webhook`, `reconcile`, `heartbeat`, `fake-checkout`, `task` (the `/api/relay` door, `RELAY_SECRET` read only here). Routes only parse and call it |
+| Card page URL | `lib/payments/` | `isAllowedCheckoutUrl(url, hosts)` and `checkout-hosts.ts`: the one URL check, no `lib/psp` import, so 09's redirect calls it too (AC-21, R-5) |
 | Pricing | `lib/pricing/` | Admin's server only door to the engine in Postgres: `previewFormula`, `publishFormula` wrap `preview_pricing_formula`, `publish_pricing_formula` (spec 0007, D121). No function takes a price (rule 1). No lint rule yet; the SQL side is guarded by the tamper meta test in `supabase/tests/10_pricing_engine.test.sql`. Since 04, `quote_price` has no `authenticated` grant (spec 0008 AC-28) |
 | Requests | `lib/requests/` | The customer's server only door (spec 0008): `loadRequestCatalog`, `quoteRequest`, `createRequest`, `cancelRequest`, `listMyRequests`, `getMyRequest`, `prefillFrom`, `loadOffers`, `chooseProvider` wrap `request_catalog`, `quote_request`, `create_request`, `cancel_request`, `request_offers`, `choose_provider` and the RLS reads. Customers read offers only through `request_offers` (spec 0010). The split and the stored figures are computed in Postgres; `create_request`'s two expected figures are compared, never stored (D140) |
 | Provider feed | `lib/provider-feed/` | The provider's server only door (spec 0009): `loadSetup`, `saveSetup`, `loadFeed`, `loadRequest`, `applyToRequest`, `listApplications`, `loadHomeCounts` wrap `provider_setup`, `save_provider_setup`, `provider_feed`, `provider_request`, `apply_to_request`, `provider_applications`, `provider_home_counts`. Strict schemas refuse a key the functions must never send. `apply_to_request` is the only write to `applications` (D148) |
 | Sentry | `lib/observability/` | `next.config.ts` may import only `withSentryConfig` from `@sentry/nextjs/config`. Server: `initServer`, `captureRequestError`, `log`, `raiseAlert`; browser: `initClient`, `reportClientError`, `routerTransitionStart`; routes: `createEnvelopeForwarder` (`/api/e`), `createCspReportForwarder` (`/api/csp`) in `forward.ts` (D83). One scrubber (`scrub.ts`) for every signal, CSP reports included |
 | PostHog | `lib/analytics/` | `initAnalytics`, `track`, `trackPageview`; events typed in `events.ts`, filtered again in `filter.ts`; route: `createPostHogForwarder` (`/api/a/*`) in `forward.ts`, its body parser in `capture-body.ts` (no `server-only`, so e2e runs real SDK bytes through it) (D83) |
 | Telemetry keys | the two doors, `lib/env.ts`, `lib/deployment.ts`, `next.config.ts` | `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`; `SENTRY_AUTH_TOKEN` in `next.config.ts` only. Others ask `sentryDsn()` or `posthogKey()` |
-| Public machine endpoints | `app/api/health`, `app/api/e`, `app/api/a/[...path]`, `app/api/csp` | No session, so no `requireRole()` (D71, D83); position 01's action guard meta test exempts exactly these by name |
+| Public machine endpoints | `app/api/health`, `app/api/e`, `app/api/a/[...path]`, `app/api/csp`, `app/api/relay` (secret header), `app/api/psp/callback`, `app/api/psp/webhook` (PSP signature) | No session, so no `requireRole()` (D71, D83, spec 0011-08 AC-17); position 01's action guard meta test exempts exactly these by name. Dev only: `app/api/psp/fake-checkout` and `/[locale]/dev/fake-checkout/<token>`, a 404 unless `PSP_DRIVER=fake` off production |
 
 ## Tooling gap scan (ask before adding)
 

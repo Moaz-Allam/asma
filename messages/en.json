@@ -1268,5 +1268,21 @@
       "notChosen": "The customer chose another provider.",
       "cancelled": "The customer cancelled."
     }
+  },
+  "DevFakeCheckout": {
+    "title": "Test card page",
+    "amount": "Amount: {amount}",
+    "choose": "Choose what the test bank answers.",
+    "chosen": "Chosen: {outcome}.",
+    "returnToShop": "Return to the shop",
+    "webhookSent": "The test PSP sent its webhook. You can close this page.",
+    "outcomes": {
+      "success": "Payment succeeds",
+      "failure": "Payment fails",
+      "pending": "Payment is pending, then succeeds",
+      "duplicate": "Paid twice",
+      "mismatch": "Paid one unit more",
+      "webhook_only": "Webhook only, no return"
+    }
   }
 }

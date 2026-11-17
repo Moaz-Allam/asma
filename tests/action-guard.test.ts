@@ -28,8 +28,22 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 const ACTIONS_DIR = 'actions';
 
-/** The only routes with no session (D71, D83). Anything else must refuse. */
-const MACHINE_ENDPOINTS = ['app/api/health', 'app/api/e', 'app/api/a/[...path]', 'app/api/csp'];
+/**
+ * The only routes with no session (D71, D83; spec 0011-08 AC-17: the relay, the PSP callback and webhook). Anything
+ * else must refuse.
+ */
+const MACHINE_ENDPOINTS = [
+  'app/api/health',
+  'app/api/e',
+  'app/api/a/[...path]',
+  'app/api/csp',
+  'app/api/relay',
+  'app/api/psp/callback',
+  'app/api/psp/webhook',
+];
+
+/** Dev only routes (spec 0011-08 AC-15, AC-17): a 404 unless PSP_DRIVER=fake, which this suite never sets. */
+const DEV_ONLY_ENDPOINTS = ['app/api/psp/fake-checkout'];
 
 function walk(dir: string, match: (name: string) => boolean): string[] {
   if (!existsSync(dir)) return [];
@@ -87,14 +101,35 @@ describe('the action guard', () => {
 });
 
 describe('the route guard', () => {
-  it('names exactly four machine endpoints, and each still exists', () => {
-    expect(MACHINE_ENDPOINTS).toHaveLength(4);
-    for (const route of MACHINE_ENDPOINTS) expect(routeFiles).toContain(`${route}/route.ts`);
+  it('names exactly seven machine endpoints and one dev only endpoint, and each still exists', () => {
+    expect(MACHINE_ENDPOINTS).toHaveLength(7);
+    expect(DEV_ONLY_ENDPOINTS).toHaveLength(1);
+    for (const route of [...MACHINE_ENDPOINTS, ...DEV_ONLY_ENDPOINTS])
+      expect(routeFiles).toContain(`${route}/route.ts`);
   });
 
-  const guarded = routeFiles.filter(
-    (file) => !MACHINE_ENDPOINTS.includes(file.replace(/\/route\.tsx?$/, '')),
-  );
+  const guarded = routeFiles.filter((file) => {
+    const route = file.replace(/\/route\.tsx?$/, '');
+    return !MACHINE_ENDPOINTS.includes(route) && !DEV_ONLY_ENDPOINTS.includes(route);
+  });
+
+  it.each(DEV_ONLY_ENDPOINTS)('%s is a 404 while the fake PSP is off', async (route) => {
+    const loaded = (await import(/* @vite-ignore */ `../${route}/route.ts`)) as Record<
+      string,
+      (request: NextRequest) => Promise<Response>
+    >;
+    const handlers = Object.entries(loaded).filter(([name]) => /^(GET|POST|PUT|PATCH|DELETE)$/.test(name));
+    expect(handlers.length).toBeGreaterThan(0);
+    for (const [, handler] of handlers) {
+      const response = await handler(
+        new NextRequest('http://localhost/api/x', {
+          method: 'POST',
+          body: 'token=t&outcome=success&locale=tr',
+        }),
+      );
+      expect(response.status, route).toBe(404);
+    }
+  });
 
   it.each(guarded)('%s refuses anyone anonymous', async (file) => {
     const loaded = (await import(/* @vite-ignore */ `../${file}`)) as Record<
