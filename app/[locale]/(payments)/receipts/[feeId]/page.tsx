@@ -56,7 +56,9 @@ export default async function Page({ params }: Props) {
           href={
             receipt.kind === 'commission'
               ? `/requests/${receipt.request_id}`
-              : '/provider/applications?tab=active'
+              : receipt.status === 'paid'
+                ? '/provider/applications?tab=active'
+                : '/provider/applications?tab=done'
           }
         >
           {receipt.kind === 'commission' ? t('toRequest') : t('toJobs')}

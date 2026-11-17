@@ -34,6 +34,8 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'email',
   'phone',
   'phone_number',
+  // Spec 0011-10 (S10-9): the wa.me link carries the phone digits.
+  'whatsapp',
   'contact',
   'address',
   'street',

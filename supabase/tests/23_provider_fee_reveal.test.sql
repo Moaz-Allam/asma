@@ -14,7 +14,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(93);
+SELECT plan(103);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -243,6 +243,34 @@ SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.platform_settings DISABLE TRIG
                               $$DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'checkout_hold_minutes'$$],
                         pg_temp.accept1()), 'checkout_settings_invalid', 'AC-3: a missing hold raises, never refunds');
 
+CREATE TEMP TABLE pay5 AS SELECT pg_temp.pay(5)::jsonb AS j;
+CREATE FUNCTION pg_temp.accept5() RETURNS text LANGUAGE sql AS $$
+  SELECT format('public.accept_provider_fee(%L, %L)', pg_temp.pfee(5), pg_temp.att(5)) $$;
+SELECT ok(public.accept_provider_fee(pg_temp.pfee(5), pg_temp.att(5)), 'S10-7: R5 is accepted as it stands');
+SELECT ok(NOT public.accept_provider_fee(pg_temp.pfee(5), pg_temp.att(1)), 'S10-7: not with an attempt of another fee');
+SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
+                              format($q$UPDATE public.requests SET selected_at = now() - interval '3 days', payment_deadline = now() - interval '2 days', fee_deadline = now() - interval '1 hour' WHERE id = %L$q$, pg_temp.r(5)),
+                              'ALTER TABLE public.checkout_attempts DISABLE TRIGGER USER',
+                              format($q$UPDATE public.checkout_attempts SET started_at = now() - interval '2 hours' WHERE id = %L$q$, pg_temp.att(5))],
+                        pg_temp.accept5()), 'false', 'S10-7: not after the fee window plus the hold');
+SELECT is(pg_temp.probe(ARRAY[format($q$INSERT INTO public.fee_refunds (region, request_id, kind, fee_payment_id, psp_payment_id, amount, currency, reason)
+                                       VALUES ('TR', %L, 'fee', %L, 'pay-23-r5', 5000, 'TRY', 'test')$q$, pg_temp.r(5), pg_temp.pfee(5))],
+                        pg_temp.accept5()), 'false', 'S10-7: not when a refund names the provider fee itself');
+SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.applications DISABLE TRIGGER applications_guard',
+                              format($q$UPDATE public.applications SET status = 'WITHDRAWN' WHERE id = %L$q$, pg_temp.app(5))],
+                        pg_temp.accept5()), 'false', 'S10-7: not when the pick is no longer AWAITING_FEE');
+-- S10-6: a suspend that lands first turns a verified payment late, refunded; nothing is revealed.
+SELECT is(pg_temp.probe(ARRAY[pg_temp.suspend('a1')],
+                        format($q$(public.apply_fee_paid(%L, %L, 'pay-23-s5', 5000, 'TRY', 150)) ->> 'status'$q$, pg_temp.pfee(5), pg_temp.att(5))),
+  'late', 'S10-6: a payment after a suspend is refunded, not revealed');
+-- A-6: an expired document does not hide a paid job's contacts; only suspension does. The standing function
+-- is swapped inside the probe (rolled back) to answer document_expired.
+SELECT is(pg_temp.probe(ARRAY[format($q$SELECT public.apply_fee_paid(%L, %L, 'pay-23-d5', 5000, 'TRY', 150)$q$, pg_temp.pfee(5), pg_temp.att(5)),
+                              $q$CREATE OR REPLACE FUNCTION public.provider_standing(p_provider_id uuid) RETURNS text
+                                   LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $f$ SELECT 'document_expired'::text $f$$q$],
+                        format('pg_temp.visible(%s, %L)', 5, 'a1')), 'true',
+  'A-6: a provider whose document expired after the reveal still sees the paid job');
+
 -- ══ AC-4: the verified payment reveals ═══════════════════════════════════════
 SELECT is(pg_temp.contacts(1, 'c1'), 'not_found', 'AC-5: no contacts for the customer before the fee');
 SELECT is(pg_temp.contacts(1, 'a1'), 'not_found', 'AC-5: nor for the provider');
@@ -279,6 +307,7 @@ SELECT is(pg_temp.visible(1, 'c2'), 'false', 'R-2: contacts_visible is false for
 SELECT is(pg_temp.visible(1, 'a1'), 'true', 'R-2: and true for the unlocked provider');
 SELECT is(pg_temp.contacts(1, 'anon'), '42501', 'AC-5: anon cannot call request_contacts');
 SELECT is(pg_temp.visible(1, 'anon'), '42501', 'R-2: nor contacts_visible');
+SELECT is(pg_temp.street(1, 'anon'), '42501', 'AC-6, S10-8: anon reads no address row');
 SELECT is(pg_temp.contacts(3, 'c1'), 'not_found', 'R-14: a never unlocked request gives the customer nothing');
 
 -- R-3: one audit row per side, however many reads.
@@ -362,6 +391,13 @@ SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER reque
                               format($q$UPDATE public.requests SET selected_at = now() - interval '3 hours', payment_deadline = now() - interval '2 hours', scheduled_start_at = now() - interval '1 minute', scheduled_end_at = now() + interval '1 hour' WHERE id = %L$q$, pg_temp.r(9))],
                         format('public.accept_provider_fee(%L, %L)', pg_temp.pfee(9), pg_temp.att(9))), 'false',
   'R-15: a payment in the overrun, after the start, is not accepted (07 refunds it)');
+
+SELECT ok((pg_temp.call_as('a1', format('SELECT public.my_checkout(%L)::text', pg_temp.att(9)))::jsonb ->> 'deadline')::timestamptz
+             = (SELECT scheduled_start_at FROM public.requests WHERE id = pg_temp.r(9)),
+  'S10-1: my_checkout gives the provider the window capped at the start');
+SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard', format($q$UPDATE public.requests SET selected_at = now() - interval '3 hours', payment_deadline = now() - interval '2 hours', scheduled_start_at = now() - interval '1 minute', scheduled_end_at = now() + interval '1 hour' WHERE id = %L$q$, pg_temp.r(5))],
+                        'pg_temp.pay(5)'), 'deadline_passed',
+  'S10-1: after the start no provider fee checkout opens, even inside the overrun');
 
 -- ══ R-5, R-6: the guards ═════════════════════════════════════════════════════
 SELECT is(pg_temp.err(format($q$UPDATE public.applications SET unlocked_at = now() WHERE id = %L$q$, pg_temp.app(6))),

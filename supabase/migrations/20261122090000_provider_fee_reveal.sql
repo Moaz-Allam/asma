@@ -398,8 +398,9 @@ begin
     raise exception 'invalid_state';
   end if;
 
-  -- 4. The fee window.
-  if now() >= v_req.fee_deadline then
+  -- 4. The fee window, capped at the job's start (security review S10-1, R-15): a payment after the start is
+  --    always refunded, so none is opened, and a fee of 0 never unlocks after it either.
+  if now() >= least(v_req.fee_deadline, v_req.scheduled_start_at) then
     raise exception 'deadline_passed';
   end if;
 
@@ -471,9 +472,10 @@ create function public.contacts_visible(p_request_id uuid)
   set search_path = ''
 as $$
 declare
-  v_uid  uuid := (select auth.uid());
-  v_req  public.requests%rowtype;
-  v_app  public.applications%rowtype;
+  v_uid     uuid := (select auth.uid());
+  v_req     public.requests%rowtype;
+  v_app     public.applications%rowtype;
+  v_closed  timestamptz;
 begin
   if v_uid is null then
     return false;
@@ -487,12 +489,24 @@ begin
   if not found then
     return false;
   end if;
+  -- A-5, A-6: a suspended provider loses the customer's contacts; an expired document does not (the job was paid).
   if not (v_req.customer_id = v_uid
-          or (v_app.provider_id = v_uid and public.provider_standing(v_uid) is not distinct from 'approved')) then
+          or (v_app.provider_id = v_uid
+              and exists (select 1 from public.providers pr where pr.id = v_uid and pr.status = 'approved'))) then
     return false;
   end if;
-  return v_req.closed_at is null
-      or v_req.closed_at > now() - make_interval(days => public.contact_settings(v_req.region));
+  -- S10-4: a cancel that forgot closed_at still closes the window.
+  v_closed := coalesce(v_req.closed_at, v_req.cancelled_at);
+  if v_closed is null then
+    return true;
+  end if;
+  -- F-7: inside the street line policy a missing setting must not break every address read; it hides, and
+  -- request_contacts names the refusal to the parties.
+  begin
+    return v_closed > now() - make_interval(days => public.contact_settings(v_req.region));
+  exception when raise_exception then
+    return false;
+  end;
 end;
 $$;
 
@@ -518,6 +532,15 @@ declare
   v_out   jsonb;
 begin
   if not public.contacts_visible(p_request_id) then
+    -- Only a party learns that the window setting is missing; anyone else gets not_found as always.
+    select r.* into v_req from public.requests r where r.id = p_request_id;
+    if found and coalesce(v_req.closed_at, v_req.cancelled_at) is not null
+       and (v_req.customer_id = v_uid
+            or exists (select 1 from public.applications a
+                        where a.id = v_req.selected_application_id and a.provider_id = v_uid
+                          and a.unlocked_at is not null)) then
+      perform public.contact_settings(v_req.region);
+    end if;
     raise exception 'not_found';
   end if;
   select r.* into v_req from public.requests r where r.id = p_request_id for share;
@@ -570,8 +593,12 @@ revoke all on function public.request_contacts(uuid) from public, anon, authenti
 grant execute on function public.request_contacts(uuid) to authenticated;
 
 -- AC-6: the unlocked, approved provider reads the street line under exactly the same condition.
+-- Security review S10-5: the cheap filter first (the caller's own unlocked applications), so a bare select
+-- never calls the definer function for every address row.
 create policy request_addresses_read_unlocked on public.request_addresses for select to authenticated
-  using (public.contacts_visible(request_id));
+  using (request_id in (select a.request_id from public.applications a
+                         where a.provider_id = (select auth.uid()) and a.unlocked_at is not null)
+         and public.contacts_visible(request_id));
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 7. my_checkout, replaced (R-1): the fee id (the payer's own receipt number), the amount, the deadline that
@@ -604,8 +631,11 @@ begin
            'locale', a.locale,
            'fee_id', f.id,
            'amount', f.amount,
-           'deadline', case f.kind when 'commission' then r.payment_deadline else r.fee_deadline end,
-           'application_id', case when f.kind = 'provider_fee' then r.selected_application_id end,
+           -- S10-1: a provider fee's window ends at the start too. S10-2: the fee's own application, never the
+           -- request's current pick (a later re-pick must not hand an old payer the new provider's ids).
+           'deadline', case f.kind when 'commission' then r.payment_deadline
+                                   else least(r.fee_deadline, r.scheduled_start_at) end,
+           'application_id', case when f.kind = 'provider_fee' then f.application_id end,
            -- R-3 of 09, narrowed by security review S09-1: a late refund of a payment made on this attempt.
            'late_refund', exists (select 1 from public.fee_refunds x
                                    join public.ledger_journals j

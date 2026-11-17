@@ -22,6 +22,9 @@ import { Link } from '@/lib/i18n/navigation';
 import { getMyRequest, loadCommissionFee, loadContacts, loadOffers } from '@/lib/requests';
 import { instantLabel, NUMBER_LOCALE, quoteLines, regionDefaultLocale } from '@/lib/requests/view';
 
+/** Spec 0011-10 AC-12, security review S10-12: contacts render here, so the route is never cached. */
+export const dynamic = 'force-dynamic';
+
 type Props = {
   params: Promise<{ locale: string; id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;

@@ -99,7 +99,7 @@ export async function ContactCard({
         </Button>
         {contacts.email ? (
           <Button asChild variant="outline">
-            <a href={`mailto:${contacts.email}`}>
+            <a href={`mailto:${encodeURIComponent(contacts.email)}`}>
               <Mail aria-hidden className="size-4" />
               {t('emailAction')}
             </a>

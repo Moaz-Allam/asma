@@ -31,7 +31,7 @@ const intlProxy = createIntlProxy(routing);
 
 // A locale, then one of the sections only a signed in user may open. The rest of the path is free.
 const PRIVATE_PAGE = new RegExp(
-  `^/(${routing.locales.join('|')})(/(?:requests|provider|admin|account|continue|onboarding)(?:/.*)?)$`,
+  `^/(${routing.locales.join('|')})(/(?:requests|provider|admin|account|continue|onboarding|pay|receipts)(?:/.*)?)$`,
 );
 
 /** Where a GET with no session goes, or null when the page is public or the locale is still to come. */

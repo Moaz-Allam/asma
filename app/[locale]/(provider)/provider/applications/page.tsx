@@ -20,6 +20,9 @@ import { loadContacts } from '@/lib/requests';
 import { instantLabel, regionDefaultLocale } from '@/lib/requests/view';
 import { cn } from '@/lib/utils';
 
+/** Spec 0011-10 AC-12, security review S10-12: contacts render here, so the route is never cached. */
+export const dynamic = 'force-dynamic';
+
 type Props = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
