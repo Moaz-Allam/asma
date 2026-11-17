@@ -687,7 +687,7 @@ begin
   -- The database clock, so the page decides an open window without reading its own clock.
   return jsonb_build_object('timezone', v_tz, 'now', now(), 'has_more', v_more, 'rows', v_rows);
 end;
-$;
+$$;
 
 revoke all on function public.provider_jobs(text, timestamptz, uuid) from public, anon, authenticated, service_role;
 grant execute on function public.provider_jobs(text, timestamptz, uuid) to authenticated;
