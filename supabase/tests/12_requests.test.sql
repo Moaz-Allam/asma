@@ -11,6 +11,10 @@ CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
 SELECT plan(176);
 
+-- 07's cross key check on the fee settings is deferred; this file rewrites the rounding unit and then
+-- lifts a trigger, which a pending deferred event forbids, so the check runs per statement here.
+SET CONSTRAINTS fee_settings_guard IMMEDIATE;
+
 -- ── fixtures ─────────────────────────────────────────────────────────────────
 -- c1, c2: customers; c3: the rate limit; c4: the open cap; b1: a provider; a1: an admin;
 -- d1: a KSA customer; u0: signed in with no profile.
@@ -221,8 +225,8 @@ SELECT is(public.pricing_split('TR', 125500) - 'commission_percent', '{"commissi
   '125.5 lira rounds up');
 SELECT is(public.pricing_split('TR', 125400) - 'commission_percent', '{"commission": 12500, "cash_due": 112900}',
   '125.4 lira rounds down');
-SELECT is(public.pricing_split('TR', 100) - 'commission_percent', '{"commission": 0, "cash_due": 100}',
-  'the smallest price: the commission can be 0');
+SELECT is(public.pricing_split('TR', 100) - 'commission_percent', '{"commission": 100, "cash_due": 0}',
+  'the smallest price: the floor capped at the price, a cash due of 0 (07 R-1)');
 UPDATE public.platform_settings SET value = '15' WHERE region = 'TR' AND key = 'commission_percent';
 SELECT is(public.pricing_split('TR', 320000), '{"commission_percent": "15", "commission": 48000, "cash_due": 272000}',
   'the design''s 3200 at its 15%');

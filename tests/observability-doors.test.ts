@@ -62,9 +62,9 @@ afterEach(() => {
 
 describe('raiseAlert (AC-11)', () => {
   it('sends one event tagged alert, fingerprinted by reason and record, flushed after the response', () => {
-    raiseAlert('flag_read_failed', { recordId: 'TR:funding_enabled', region: 'TR', cause: 'timeout' });
+    raiseAlert('flag_read_failed', { recordId: 'TR:notifications_enabled', region: 'TR', cause: 'timeout' });
     expect(sentry.tags).toEqual({ alert: 'flag_read_failed', region: 'TR', cause: 'timeout' });
-    expect(sentry.fingerprint).toEqual(['alert', 'flag_read_failed', 'TR:funding_enabled', 'local']);
+    expect(sentry.fingerprint).toEqual(['alert', 'flag_read_failed', 'TR:notifications_enabled', 'local']);
     expect(sentry.captureMessage).toHaveBeenCalledWith('alert flag_read_failed', 'error');
     expect(sentry.after).toHaveBeenCalledTimes(1);
   });
@@ -75,8 +75,8 @@ describe('raiseAlert (AC-11)', () => {
   ])('keeps a %s alert apart from every other environment (D84)', (vercelEnv, expected) => {
     vi.stubEnv('VERCEL_ENV', vercelEnv);
     try {
-      raiseAlert('flag_read_failed', { recordId: 'TR:funding_enabled' });
-      expect(sentry.fingerprint).toEqual(['alert', 'flag_read_failed', 'TR:funding_enabled', expected]);
+      raiseAlert('flag_read_failed', { recordId: 'TR:notifications_enabled' });
+      expect(sentry.fingerprint).toEqual(['alert', 'flag_read_failed', 'TR:notifications_enabled', expected]);
     } finally {
       vi.unstubAllEnvs();
     }
@@ -86,18 +86,18 @@ describe('raiseAlert (AC-11)', () => {
     sentry.after.mockImplementation(() => {
       throw new Error('after() was called outside a request scope');
     });
-    raiseAlert('flag_read_failed', { recordId: 'KSA:unlock_enabled' });
+    raiseAlert('flag_read_failed', { recordId: 'KSA:notifications_enabled' });
     expect(sentry.flush).toHaveBeenCalledWith(2000);
   });
 
   it('mirrors to the console without the SDK', () => {
     sentry.client = undefined;
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    raiseAlert('flag_read_failed', { recordId: 'TR:payouts_enabled', region: 'TR', cause: 'missing' });
+    raiseAlert('flag_read_failed', { recordId: 'TR:notifications_enabled', region: 'TR', cause: 'missing' });
     expect(sentry.captureMessage).not.toHaveBeenCalled();
     expect(JSON.parse(String(error.mock.calls[0]?.[0]))).toEqual({
       alert: 'flag_read_failed',
-      recordId: 'TR:payouts_enabled',
+      recordId: 'TR:notifications_enabled',
       region: 'TR',
       cause: 'missing',
     });
@@ -107,7 +107,7 @@ describe('raiseAlert (AC-11)', () => {
     sentry.captureMessage.mockImplementationOnce(() => {
       throw new Error('transport down');
     });
-    expect(() => raiseAlert('flag_read_failed', { recordId: 'TR:funding_enabled' })).not.toThrow();
+    expect(() => raiseAlert('flag_read_failed', { recordId: 'TR:notifications_enabled' })).not.toThrow();
   });
 });
 

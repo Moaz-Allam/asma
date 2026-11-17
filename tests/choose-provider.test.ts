@@ -119,7 +119,7 @@ describe('chooseProvider (AC-7, AC-8)', () => {
     });
   });
 
-  it('alerts on a missing window only', async () => {
+  it('alerts on a missing window or fee setting only', async () => {
     m.rpc.mockResolvedValue(refuse('choose_settings_invalid'));
     expect(
       await chooseProvider(
@@ -131,6 +131,15 @@ describe('chooseProvider (AC-7, AC-8)', () => {
       code: 'choose_settings_invalid',
     });
     expect(m.alert).toHaveBeenCalledWith('choose_settings_invalid', { recordId: REQUEST, region: 'TR' });
+    m.alert.mockClear();
+    m.rpc.mockResolvedValue(refuse('fee_settings_invalid'));
+    expect(
+      await chooseProvider(
+        { requestId: REQUEST, applicationId: APPLICATION },
+        { region: 'TR', userId: USER },
+      ),
+    ).toEqual({ ok: false, code: 'fee_settings_invalid' });
+    expect(m.alert).toHaveBeenCalledWith('fee_settings_invalid', { recordId: REQUEST, region: 'TR' });
     m.alert.mockClear();
     m.rpc.mockResolvedValue(refuse('offer_unavailable'));
     await chooseProvider({ requestId: REQUEST, applicationId: APPLICATION }, { region: 'TR', userId: USER });

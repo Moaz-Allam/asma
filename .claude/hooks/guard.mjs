@@ -57,12 +57,16 @@ const RULES = [
       'Corrections are new compensating postings; a rating can be hidden but never edited. See architecture.md §28.',
   },
   {
+    // D96 (position 07): the cash due (job price minus commission) is computed in one place. Postgres
+    // computes the stored figures (pricing_split); lib/pricing is the only TypeScript that may repeat it.
     id: 'commission-netted',
-    when: (p) => SOURCE.test(p),
+    when: (p) => SOURCE.test(p) && !/(?:^|[\\/])lib[\\/]pricing[\\/]/.test(p),
     find: /(?:price|amount|total)\s*[-−]\s*commission|commission\s*[-−]\s*(?:price|amount)/i,
     why:
-      'Rule 6: commission is its own ledger leg. Computing escrow as `price - commission` and posting one line is the classic ' +
-      'marketplace ledger bug — the fee gets netted but never posted. Post three legs. See architecture.md §30.',
+      'Rules 1 and 4 (D96): the cash due is the job price minus the commission, computed once, on the server: in Postgres ' +
+      '(pricing_split) and, in TypeScript, only in lib/pricing. A second copy elsewhere drifts from the stored figure the ' +
+      'customer and provider see. Read requests.cash_due or call lib/pricing. In the ledger the commission is its own leg ' +
+      '(revenue), never netted. See architecture.md §30.',
   },
 
   // ------------------------------------------------------------------ security

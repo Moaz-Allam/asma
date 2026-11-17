@@ -525,7 +525,7 @@ function errorEvent() {
     release: SHA,
     sdk: { name: 'sentry.javascript.nextjs', version: '10.75.2' },
     tags: { runtime: 'node', alert: 'flag_read_failed' },
-    fingerprint: ['alert', 'flag_read_failed', 'TR:funding_enabled'],
+    fingerprint: ['alert', 'flag_read_failed', 'TR:notifications_enabled'],
     user: { id: 'u1', email: 'ali@example.com', ip_address: '85.105.1.2' },
     message: 'Booking for ali@example.com failed from 85.105.1.2',
     exception: {

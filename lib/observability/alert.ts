@@ -31,12 +31,15 @@ export type AlertReason =
   | 'apply_settings_invalid'
   // Spec 0010 AC-8: a region's payment window is missing or malformed, so no customer there can choose. The
   // record is the request id.
-  | 'choose_settings_invalid';
+  | 'choose_settings_invalid'
+  // Spec 0011-07 AC-0, AC-1, R-3: a region's provider fee settings or fee floor is missing or malformed, so no
+  // customer there can choose, quote or post. The record is the request id, the service id, or `catalog`.
+  | 'fee_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 
 export type AlertDetail = {
-  /** The record the alert is about, such as `TR:funding_enabled`. An internal id, never personal data. */
+  /** The record the alert is about, such as `TR:notifications_enabled`. An internal id, never personal data. */
   recordId: string;
   region?: Region;
   cause?: AlertCause;

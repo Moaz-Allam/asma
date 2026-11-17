@@ -64,36 +64,30 @@ afterEach(() => {
 describe('isEnabled reads the row live', () => {
   it('returns the stored boolean for (region, key), asking only for the value', async () => {
     const on = fakeDb({ data: { value: true }, error: null });
-    await expect(isEnabled('funding_enabled', 'TR', on.db)).resolves.toBe(true);
+    await expect(isEnabled('notifications_enabled', 'TR', on.db)).resolves.toBe(true);
     expect(on.calls[0]).toMatchObject({
       table: 'platform_settings',
       columns: 'value',
       filters: [
         ['region', 'TR'],
-        ['key', 'funding_enabled'],
+        ['key', 'notifications_enabled'],
       ],
     });
     const off = fakeDb({ data: { value: false }, error: null });
-    await expect(isEnabled('payouts_enabled', 'KSA', off.db)).resolves.toBe(false);
+    await expect(isEnabled('notifications_enabled', 'KSA', off.db)).resolves.toBe(false);
     expect(doors.raiseAlert).not.toHaveBeenCalled();
     expect(doors.log).not.toHaveBeenCalled();
   });
 
   it('reads on every call: no cache, so flipping the row takes effect on the next read', async () => {
     const { db, calls } = fakeDb({ data: { value: true }, error: null });
-    await isEnabled('unlock_enabled', 'TR', db);
-    await isEnabled('unlock_enabled', 'TR', db);
+    await isEnabled('notifications_enabled', 'TR', db);
+    await isEnabled('notifications_enabled', 'TR', db);
     expect(calls).toHaveLength(2);
   });
 
-  it('knows exactly the five money flags', () => {
-    expect([...MONEY_FLAGS]).toEqual([
-      'funding_enabled',
-      'unlock_enabled',
-      'payouts_enabled',
-      'auto_release_enabled',
-      'notifications_enabled',
-    ]);
+  it('knows exactly the one flag left (07 deleted the four escrow flags, D95)', () => {
+    expect([...MONEY_FLAGS]).toEqual(['notifications_enabled']);
   });
 });
 
@@ -109,19 +103,19 @@ describe('isEnabled fails closed, logs, and raises flag_read_failed', () => {
     ['the number 1', { data: { value: 1 }, error: null }, 'not_boolean'],
     ['a null value', { data: { value: null }, error: null }, 'not_boolean'],
   ] as Array<[string, Answer, string]>)('%s', async (_name, answer, cause) => {
-    await expect(isEnabled('auto_release_enabled', 'TR', fakeDb(answer).db)).resolves.toBe(false);
+    await expect(isEnabled('notifications_enabled', 'TR', fakeDb(answer).db)).resolves.toBe(false);
     expect(doors.log).toHaveBeenCalledWith('flag_read_failed', { region: 'TR' });
     expect(doors.raiseAlert).toHaveBeenCalledWith('flag_read_failed', {
-      recordId: 'TR:auto_release_enabled',
+      recordId: 'TR:notifications_enabled',
       region: 'TR',
       cause,
     });
   });
 
   it('a client that throws', async () => {
-    await expect(isEnabled('funding_enabled', 'KSA', fakeDb('throw').db)).resolves.toBe(false);
+    await expect(isEnabled('notifications_enabled', 'KSA', fakeDb('throw').db)).resolves.toBe(false);
     expect(doors.raiseAlert).toHaveBeenCalledWith('flag_read_failed', {
-      recordId: 'KSA:funding_enabled',
+      recordId: 'KSA:notifications_enabled',
       region: 'KSA',
       cause: 'error',
     });
@@ -145,8 +139,8 @@ describe('isEnabled fails closed, logs, and raises flag_read_failed', () => {
 
 describe('a value no row could hold is a caller bug, not a failed read (review 2026-10-29)', () => {
   it.each([
-    ['an unknown region', 'funding_enabled', 'EG'],
-    ['a region in the wrong case', 'funding_enabled', 'tr'],
+    ['an unknown region', 'notifications_enabled', 'EG'],
+    ['a region in the wrong case', 'notifications_enabled', 'tr'],
     ['an unknown flag', 'wallet_enabled', 'TR'],
   ])('%s: off, logged, no alert and no query', async (_name, flag, region) => {
     const { db, calls } = fakeDb({ data: { value: true }, error: null });
