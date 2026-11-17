@@ -956,11 +956,14 @@ export type Database = {
           fixed_price: number
           id: string
           notes: string | null
+          payment_deadline: string | null
           pricing_snapshot: Json
           questions_snapshot: Json
           region: string
           scheduled_end_at: string
           scheduled_start_at: string
+          selected_application_id: string | null
+          selected_at: string | null
           service_id: string
           status: string
           zone_id: string
@@ -980,11 +983,14 @@ export type Database = {
           fixed_price: number
           id?: string
           notes?: string | null
+          payment_deadline?: string | null
           pricing_snapshot: Json
           questions_snapshot: Json
           region: string
           scheduled_end_at: string
           scheduled_start_at: string
+          selected_application_id?: string | null
+          selected_at?: string | null
           service_id: string
           status?: string
           zone_id: string
@@ -1004,11 +1010,14 @@ export type Database = {
           fixed_price?: number
           id?: string
           notes?: string | null
+          payment_deadline?: string | null
           pricing_snapshot?: Json
           questions_snapshot?: Json
           region?: string
           scheduled_end_at?: string
           scheduled_start_at?: string
+          selected_application_id?: string | null
+          selected_at?: string | null
           service_id?: string
           status?: string
           zone_id?: string
@@ -1027,6 +1036,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "regions"
             referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "requests_selected_application_fk"
+            columns: ["selected_application_id", "id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id", "request_id"]
           },
           {
             foreignKeyName: "requests_service_fk"
@@ -1231,6 +1247,12 @@ export type Database = {
         Args: { p_message: string; p_request_id: string }
         Returns: Json
       }
+      approved_applied_count: {
+        Args: { p_request_id: string }
+        Returns: number
+      }
+      blank_class: { Args: never; Returns: string }
+      blank_marks: { Args: never; Returns: string }
       cancel_request: {
         Args: { p_reason: string; p_request_id: string }
         Returns: Json
@@ -1241,6 +1263,11 @@ export type Database = {
       }
       catalog_trim: { Args: { p_text: string }; Returns: string }
       check_new_user: { Args: { event: Json }; Returns: Json }
+      choose_provider: {
+        Args: { p_application_id: string; p_request_id: string }
+        Returns: Json
+      }
+      choose_settings: { Args: { p_region: string }; Returns: number }
       complete_onboarding: {
         Args: {
           p_accept_terms: boolean
@@ -1292,6 +1319,16 @@ export type Database = {
         Args: { p_document_id: string; p_object_id: string }
         Returns: Json
       }
+      message_digit_limit: { Args: never; Returns: number }
+      message_has_contact_info: { Args: { p_text: string }; Returns: boolean }
+      offer_card: {
+        Args: {
+          p_application: Database["public"]["Tables"]["applications"]["Row"]
+          p_timezone: string
+        }
+        Returns: Json
+      }
+      offer_display_name: { Args: { p_name: string }; Returns: Json }
       phone_region: { Args: { p_phone: string }; Returns: string }
       preview_pricing_formula: {
         Args: {
@@ -1561,6 +1598,7 @@ export type Database = {
       }
       reinstate_provider: { Args: { p_provider_id: string }; Returns: Json }
       request_catalog: { Args: never; Returns: Json }
+      request_offers: { Args: { p_request_id: string }; Returns: Json }
       request_settings: { Args: { p_region: string }; Returns: Json }
       review_provider_documents: {
         Args: {

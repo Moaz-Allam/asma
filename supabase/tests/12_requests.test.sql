@@ -186,11 +186,10 @@ SELECT lives_ok($$ UPDATE public.platform_settings SET value = CASE key WHEN 're
 SET CONSTRAINTS request_settings_guard DEFERRED;
 
 -- ── 03's security Minors, fixed here (tracker Next, 2026-11-15) ──────────────
-SELECT is((SELECT (regexp_match(prosrc, '''(\^\[[^'']+\]\+\|\[[^'']+\]\+\$)'''))[1] FROM pg_proc WHERE proname = 'catalog_trim'), (SELECT (regexp_match(prosrc, '''(\^\[[^'']+\]\+\|\[[^'']+\]\+\$)'''))[1] FROM pg_proc WHERE proname = 'catalog_text_ok'),
-  'the two copies of the blank pattern are the same, both classes');
-SELECT ok((SELECT split_part(substr(x, 3), ']+|[', 1) = split_part(split_part(x, ']+|[', 2), ']+$', 1)
-             FROM (SELECT (regexp_match(prosrc, '''(\^\[[^'']+\]\+\|\[[^'']+\]\+\$)'''))[1] FROM pg_proc WHERE proname = 'catalog_trim') AS q(x)),
-  'and in each, the leading class equals the trailing class');
+SELECT ok((SELECT prosrc ~ 'public\.blank_class\(\)' FROM pg_proc WHERE proname = 'catalog_trim'),
+  'the blank pattern has one source since 06: catalog_trim reads blank_class()');
+SELECT ok((SELECT prosrc ~ 'public\.catalog_trim\(' FROM pg_proc WHERE proname = 'catalog_text_ok'),
+  'and catalog_text_ok trims with catalog_trim');
 SELECT is_empty(
   $$ SELECT to_hex(cp) FROM unnest(ARRAY[4447, 4448, 12644, 65440, 10240, 65024, 65039, 917505, 917536, 917631, 917760, 917999]) cp
       WHERE public.catalog_trim(chr(cp) || chr(cp)) <> ''
@@ -631,14 +630,14 @@ SELECT is((SELECT jsonb_build_object('old', old_value, 'new', new_value) FROM pu
             WHERE action = 'request.cancelled' AND entity_id = (SELECT r ->> 'id' FROM r1)),
   '{"old": {"status": "OPEN"}, "new": {"status": "CANCELLED", "fixed_price": 350000}}',
   'one audit row, with no notes and no address');
--- A fixture state, not a move: since 05 the guard allows only OPEN to CANCELLED until 06 adds its own (R10 A7).
+-- A fixture state, not a move: a request past SELECTED (09 adds COMMISSION_PAID). Since 06 a SELECTED one is cancellable.
 ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
-UPDATE public.requests SET status = 'SELECTED' WHERE id = (SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 11);
+UPDATE public.requests SET status = 'COMMISSION_PAID' WHERE id = (SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 11);
 ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c4');
 SELECT throws_ok($$ SELECT public.cancel_request((SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 11), NULL) $$,
-  'P0001', 'not_cancellable', 'a SELECTED request cannot be cancelled here');
+  'P0001', 'not_cancellable', 'a request past SELECTED cannot be cancelled here');
 SELECT is(public.cancel_request((SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 9), 'other'), '{"status": "ok"}',
   'an expired OPEN request can be cancelled');
 RESET ROLE;

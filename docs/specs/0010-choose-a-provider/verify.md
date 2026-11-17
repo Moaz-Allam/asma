@@ -24,7 +24,7 @@ Everything in 0009 `verify.md` (and through it 0006) still holds through `apply_
 | Turkish | `25 Kasım 09:00'da başlarım, 3 oda 2 banyo için 4 saat yeter.` (9 digits) |
 | Arabic | `أبدأ يوم 25 الساعة 9 مع 2 من الفريق، والعمل 3 ساعات.` (5 digits) |
 
-**Known false positives, accepted:** 10 or more digits refuse even when honest, such as `since 2015, 40 villas, 120 m2, 3 floors`
+**Known false positives, accepted:** 10 or more digits refuse even when honest, such as `In 2015 I started cleaning homes, by 2019 my team had grown, now we do 120 jobs`
 or a full date and time like `25.11.2026 saat 09:00`.
 The refusal copy already asks to remove numbers that look like a phone.
 

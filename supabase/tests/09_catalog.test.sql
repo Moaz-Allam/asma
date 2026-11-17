@@ -40,6 +40,12 @@ DELETE FROM public.request_addresses;
 ALTER TABLE public.request_addresses ENABLE TRIGGER request_addresses_guard;
 -- Since 05, applications and provider picks refer to requests, services and zones, and requests refuse
 -- a delete even as postgres; both guards are off for this rolled back clean up only.
+-- Since 06 a chosen request names its application: the choose columns are cleared first.
+ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
+UPDATE public.requests SET status = CASE WHEN status = 'SELECTED' THEN 'OPEN' ELSE status END,
+       selected_application_id = NULL, selected_at = NULL, payment_deadline = NULL
+ WHERE selected_application_id IS NOT NULL;
+ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
 ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
 DELETE FROM public.applications;
 ALTER TABLE public.applications ENABLE TRIGGER applications_guard;

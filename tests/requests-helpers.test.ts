@@ -35,18 +35,17 @@ function ranges(cls: string): string[] {
 
 describe('the blank pattern', () => {
   const migration = readFileSync(
-    // The newest copy: 05's migration extended the class (R10 B5).
-    join(process.cwd(), 'supabase/migrations/20261117090000_provider_feed_apply.sql'),
+    // Since 06 the class has one SQL source, blank_class(); blank_marks() is the same without whitespace.
+    join(process.cwd(), 'supabase/migrations/20261118090000_choose_provider.sql'),
     'utf8',
   );
-  const sqlClasses = [...migration.matchAll(/'\^\[([^\]]+)\]\+\|\[([^\]]+)\]\+\$'/g)].flatMap((m) => [
-    m[1],
-    m[2],
-  ]);
+  const literal = (name: string) =>
+    new RegExp(`function public\\.${name}\\(\\)[\\s\\S]*?select '([^']+)'::text`).exec(migration)?.[1] ?? '';
 
-  it('is written four times in the migration, every copy the same, and equal to the TypeScript copy', () => {
-    expect(sqlClasses).toHaveLength(4);
-    for (const cls of sqlClasses) expect(ranges(cls ?? '')).toEqual(ranges(BLANK_CLASS));
+  it('has one SQL source, equal to the TypeScript copy, and the marks are the class without whitespace', () => {
+    expect(ranges(literal('blank_class'))).toEqual(ranges(BLANK_CLASS));
+    expect(ranges(literal('blank_marks'))).toEqual(ranges(BLANK_CLASS).filter((r) => r !== 's'));
+    expect(migration.match(/'\^\[[^']*\]\+\|/g) ?? []).toHaveLength(0);
   });
 
   it('treats the invisible marks as blank', () => {
