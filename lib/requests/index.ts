@@ -3,14 +3,20 @@ import 'server-only';
 import { createSupabaseServer } from '@/lib/db/server';
 import { raiseAlert } from '@/lib/observability/alert';
 import { log } from '@/lib/observability/log';
+import { activeCheckoutHosts } from '@/lib/payments/checkout-hosts';
+import { isAllowedCheckoutUrl } from '@/lib/payments/checkout-url';
 import type { Region } from '@/lib/region';
 
 import { decodeCursor, encodeCursor } from './cursor';
 import type { CancelReason, CreateRequestInput, QuoteRequestInput, RequestTab } from './input';
 import { prefillFrom as filterPrefill, type Prefill } from './prefill';
 import {
+  CheckoutStatus,
   ChooseResult,
+  CommissionFee,
   CreateRequestResult,
+  PayResult,
+  Receipt,
   RequestOffers,
   QuoteRequestResult,
   RequestCatalog,
@@ -27,7 +33,15 @@ import {
  * anything else is thrown for `guardedAction` or the page to report.
  */
 
-export type { Offer, RequestCatalog, RequestOffers, RequestQuote } from './schemas';
+export type {
+  CheckoutStatus,
+  CommissionFee,
+  Offer,
+  Receipt,
+  RequestCatalog,
+  RequestOffers,
+  RequestQuote,
+} from './schemas';
 
 /** Every code the request functions raise. */
 export const REQUEST_DB_CODES = [
@@ -54,6 +68,15 @@ export const REQUEST_DB_CODES = [
   'choose_settings_invalid',
   // Spec 0011-07 (07): the fee settings, read by the split and the choose.
   'fee_settings_invalid',
+  // Spec 0011-09 (09): paying the commission, and cancel during a checkout.
+  'invalid_state',
+  'already_paid',
+  'deadline_passed',
+  'payments_disabled',
+  'too_many_checkouts',
+  'checkout_open',
+  'checkout_settings_invalid',
+  'unlock_settings_invalid',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -67,15 +90,29 @@ function refusalCode(error: unknown): RequestCode | null {
     : null;
 }
 
-async function call(fn: string, args: Record<string, unknown>): Promise<{ data: unknown } | Refused> {
+/** The refusal's hint: cancel says `checkout_settings_invalid` there when it failed safe (spec 0011-09 R-6). */
+function refusalHint(error: unknown): string | null {
+  const hint = typeof error === 'object' && error !== null && 'hint' in error ? error.hint : null;
+  return typeof hint === 'string' && hint.length > 0 ? hint : null;
+}
+
+async function invoke(
+  fn: string,
+  args: Record<string, unknown>,
+): Promise<{ data: unknown } | (Refused & { hint: string | null })> {
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase.rpc(fn, args);
   if (error) {
     const code = refusalCode(error);
-    if (code) return { ok: false, code };
+    if (code) return { ok: false, code, hint: refusalHint(error) };
     throw error;
   }
   return { data };
+}
+
+async function call(fn: string, args: Record<string, unknown>): Promise<{ data: unknown } | Refused> {
+  const result = await invoke(fn, args);
+  return 'ok' in result ? { ok: false, code: result.code } : result;
 }
 
 /**
@@ -88,7 +125,9 @@ function signal(code: RequestCode, recordId: string, context: Context): void {
     code === 'pricing_settings_invalid' ||
     code === 'request_settings_invalid' ||
     code === 'choose_settings_invalid' ||
-    code === 'fee_settings_invalid'
+    code === 'fee_settings_invalid' ||
+    code === 'checkout_settings_invalid' ||
+    code === 'unlock_settings_invalid'
   ) {
     raiseAlert(code, { recordId, region });
   } else if (code === 'price_out_of_range') {
@@ -209,13 +248,94 @@ export async function chooseProvider(
   };
 }
 
-/** Cancel while OPEN or SELECTED (0008 AC-15, 0010 AC-11). Already cancelled is ok. */
+/**
+ * Cancel while OPEN or SELECTED (0008 AC-15, 0010 AC-11). Already cancelled is ok. Since 09 a card page in use
+ * refuses `checkout_open` (spec 0011-09 AC-2); when that refusal came from a missing hold setting, alert (R-6).
+ */
 export async function cancelRequest(
   requestId: string,
   reason: CancelReason | null,
+  context?: Context,
 ): Promise<{ ok: true } | Refused> {
-  const result = await call('cancel_request', { p_request_id: requestId, p_reason: reason });
-  return 'ok' in result ? result : { ok: true };
+  const result = await invoke('cancel_request', { p_request_id: requestId, p_reason: reason });
+  if (!('ok' in result)) return { ok: true };
+  if (result.code === 'checkout_open' && result.hint === 'checkout_settings_invalid') {
+    raiseAlert('checkout_settings_invalid', { recordId: requestId, region: context?.region ?? undefined });
+  }
+  return { ok: false, code: result.code };
+}
+
+export type PayOutcome =
+  | { ok: true; status: 'settled' }
+  | { ok: true; status: 'checkout'; attemptId: string; reused: boolean }
+  | Refused;
+
+/**
+ * Pay the commission (spec 0011-09 AC-4, AC-9): one database function opens the fee and an attempt, or returns
+ * a young one, or settles a commission of 0 at once. The locale is the page's; the IP is the one Vercel saw, or
+ * null, and is never logged (R-10). No figure is sent: the database charges the stored commission (rule 1).
+ */
+export async function payCommission(
+  input: { requestId: string; locale: 'ar' | 'tr' | 'en'; payerIp: string | null },
+  context: Context,
+): Promise<PayOutcome> {
+  const result = await call('pay_commission', {
+    p_request_id: input.requestId,
+    p_locale: input.locale,
+    p_payer_ip: input.payerIp,
+  });
+  if ('ok' in result) {
+    signal(result.code, input.requestId, context);
+    return { ok: false, code: result.code };
+  }
+  const parsed = PayResult.parse(result.data);
+  if (parsed.status === 'settled') return { ok: true, status: 'settled' };
+  return { ok: true, status: 'checkout', attemptId: parsed.attempt_id, reused: parsed.reused };
+}
+
+/**
+ * One attempt as its payer reads it (spec 0011-09 AC-7, AC-9), or null: another's, unknown or malformed (R-13).
+ * The card page URL leaves the server only when it is on the active driver's hosts; else it is dropped and
+ * `checkout_url_refused` is logged with the attempt id only.
+ */
+export async function checkoutStatus(attemptId: string): Promise<CheckoutStatus | null> {
+  if (!UUID.test(attemptId)) return null;
+  const result = await call('my_checkout', { p_attempt_id: attemptId });
+  if ('ok' in result) {
+    if (result.code === 'not_found') return null;
+    throw new Error(`my_checkout refused: ${result.code}`);
+  }
+  const status = CheckoutStatus.parse(result.data);
+  if (status.url !== null && !isAllowedCheckoutUrl(status.url, activeCheckoutHosts())) {
+    log.warn('checkout_url_refused', { request_id: attemptId });
+    return { ...status, url: null };
+  }
+  return status;
+}
+
+/** A receipt of the caller's own paid fee (spec 0011-09 AC-13), or null (R-13). */
+export async function loadReceipt(feeId: string): Promise<Receipt | null> {
+  if (!UUID.test(feeId)) return null;
+  const result = await call('my_receipt', { p_receipt_id: feeId });
+  if ('ok' in result) {
+    if (result.code === 'not_found') return null;
+    throw new Error(`my_receipt refused: ${result.code}`);
+  }
+  return Receipt.parse(result.data);
+}
+
+/** The commission row of the caller's own request, read through RLS (spec 0011-09 AC-10), or null. */
+export async function loadCommissionFee(requestId: string): Promise<CommissionFee | null> {
+  if (!UUID.test(requestId)) return null;
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from('fee_payments')
+    .select('id, status, paid_at')
+    .eq('request_id', requestId)
+    .eq('kind', 'commission')
+    .maybeSingle();
+  if (error) throw error;
+  return data ? CommissionFee.parse(data) : null;
 }
 
 const PAGE = 20;
@@ -280,7 +400,7 @@ export async function listMyRequests(input: {
 export type MyRequest = { request: RequestDetailRow; addressLine: string | null; now: string };
 
 const DETAIL_COLUMNS =
-  'id, status, service_id, zone_id, addon_ids, answers, questions_snapshot, pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at, notes, cancelled_at, cancel_reason, created_at, region_info:regions(timezone)';
+  'id, status, service_id, zone_id, addon_ids, answers, questions_snapshot, pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at, notes, cancelled_at, cancel_reason, created_at, fee_deadline, region_info:regions(timezone)';
 
 /** One of the caller's own requests and its address, or null: another's, unknown or malformed (AC-14). */
 export async function getMyRequest(input: { userId: string; id: string }): Promise<MyRequest | null> {

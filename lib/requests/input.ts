@@ -57,6 +57,12 @@ export const ChooseProviderInput = z
   })
   .strict();
 
+/** Spec 0011-09 AC-9: Pay takes the request id only; the locale and the IP are read on the server. */
+export const PayCommissionInput = z.object({ requestId: Uuid }).strict();
+
+/** Spec 0011-09 AC-9: the pay and return pages ask about one attempt. */
+export const CheckoutStatusInput = z.object({ attemptId: Uuid }).strict();
+
 export const REQUEST_TABS = ['all', 'active', 'closed'] as const;
 export type RequestTab = (typeof REQUEST_TABS)[number];
 

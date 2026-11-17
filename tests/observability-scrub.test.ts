@@ -812,6 +812,20 @@ describe('spec 0011-08 AC-16: a full iyzico style answer leaves nothing personal
     }
     expect(json).toContain('p-1');
   });
+
+  it("drops pay_commission's IP argument and the attempt's IP column (spec 0011-09 R-10)", () => {
+    const json = JSON.stringify(
+      scrubEvent({
+        extra: {
+          rpc: { fn: 'pay_commission', p_request_id: 'r-1', p_locale: 'tr', p_payer_ip: '203.0.113.9' },
+          attempt: { id: 'a-1', payer_ip: '2001:db8::7' },
+        },
+      }),
+    );
+    expect(json).not.toContain('203.0.113.9');
+    expect(json).not.toContain('2001:db8::7');
+    expect(json).toContain('r-1');
+  });
 });
 
 describe('spec 0011-08 S7: the fake card page path loses its token', () => {

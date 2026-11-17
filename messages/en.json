@@ -1053,7 +1053,15 @@
       "not_choosable": "This request can no longer take a choice. The page shows where it stands now.",
       "offer_unavailable": "That offer is no longer available. The list is updated.",
       "choose_settings_invalid": "Choosing is not possible right now. Please try again later.",
-      "fee_settings_invalid": "Prices cannot be worked out right now. Please try again later."
+      "fee_settings_invalid": "Prices cannot be worked out right now. Please try again later.",
+      "invalid_state": "This request cannot be paid now. The page shows where it stands.",
+      "already_paid": "The commission is already paid.",
+      "deadline_passed": "The payment time ended.",
+      "payments_disabled": "Payments are paused. Try again later.",
+      "too_many_checkouts": "Too many payment tries. Try again within the hour.",
+      "checkout_open": "A card payment is in progress. Try again in a few minutes.",
+      "checkout_settings_invalid": "Payments are not possible right now. Please try again later.",
+      "unlock_settings_invalid": "Payments are not possible right now. Please try again later."
     },
     "offers": {
       "title": "{count, plural, =0 {No offers yet} one {# offer on your request} other {# offers on your request}}",
@@ -1081,17 +1089,26 @@
     },
     "next": {
       "title": "Next: pay the commission",
-      "commission": "Commission, online",
-      "cash": "To the provider in cash, after the service",
+      "price": "Job price",
+      "commission": "Pay now online",
+      "cash": "Pay in cash to the provider after the job",
       "deadline": "Pay by {date}",
-      "soon": "Payment opens here soon."
+      "pay": "Pay {amount}",
+      "continue": "Continue",
+      "cardEnglish": "The card page opens in English.",
+      "ended": "The payment time ended.",
+      "paidTitle": "Commission paid",
+      "waiting": "Waiting for the provider to pay their fee, until {date}.",
+      "receipt": "See the receipt"
     },
     "timeline": {
       "title": "Progress",
       "posted": "Posted",
       "chosen": "Provider chosen",
       "cancelled": "Cancelled",
-      "payment": "Commission payment"
+      "payment": "Commission payment",
+      "commissionPaid": "Commission paid",
+      "providerFee": "Provider fee"
     },
     "cancelSelected": "The provider you chose will see that their offer is cancelled."
   },
@@ -1283,6 +1300,49 @@
       "duplicate": "Paid twice",
       "mismatch": "Paid one unit more",
       "webhook_only": "Webhook only, no return"
+    }
+  },
+  "Payment": {
+    "agreement": "[draft] Before you pay: the platform may take legal action if one of the two parties does something wrong. Read the <terms>terms</terms>.",
+    "opening": "Opening the secure card page",
+    "openingBody": "Please wait. Keep this page open.",
+    "slow": "The card page is taking longer than usual. Try again in a few minutes.",
+    "openFailed": "The card page could not be opened.",
+    "tryAgain": "Try again",
+    "pendingTitle": "Checking your payment",
+    "pendingBody": "We are waiting for iyzico to confirm. This takes a few seconds.",
+    "pendingLong": "We will update this page when iyzico confirms.",
+    "refresh": "Refresh",
+    "successTitle": "Payment received",
+    "successBody": "Your commission is paid.",
+    "secondRefunded": "A second payment was refunded.",
+    "lateTitle": "Payment refunded",
+    "lateBody": "Your payment came after the time ended. It is refunded in full.",
+    "refundedBody": "This payment is refunded in full.",
+    "failedTitle": "Payment not completed",
+    "failedBody": "The payment did not go through.",
+    "ended": "The payment time ended.",
+    "toRequest": "Back to the request",
+    "toReceipt": "See the receipt",
+    "receipt": {
+      "title": "Receipt",
+      "number": "Receipt number",
+      "kind": "For",
+      "kinds": {
+        "commission": "Commission",
+        "provider_fee": "Provider fee"
+      },
+      "amount": "Amount",
+      "status": "Status",
+      "statuses": {
+        "paid": "Paid",
+        "refunded": "Refunded"
+      },
+      "paidAt": "Paid on",
+      "service": "Service",
+      "date": "Service date",
+      "notInvoice": "This is a payment receipt, not a tax invoice.",
+      "toRequest": "Back to the request"
     }
   }
 }

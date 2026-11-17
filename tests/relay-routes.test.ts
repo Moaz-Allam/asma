@@ -97,9 +97,9 @@ function db(answer: { data?: unknown; error?: { message: string } }) {
 }
 
 describe('the callback (AC-8, R-1)', () => {
-  it("sends the browser to the attempt's pay page in its locale", async () => {
+  it("sends the browser to the attempt's return page in its locale (spec 0011-09 AC-12)", async () => {
     const { db: d, rpc } = db({ data: { attempt_id: 'a-1', locale: 'en', region: 'TR' } });
-    expect(await handleCallback(d, { token: 't-1', status: 'success' })).toBe('/en/pay/a-1');
+    expect(await handleCallback(d, { token: 't-1', status: 'success' })).toBe('/en/pay/a-1/return');
     expect(rpc).toHaveBeenCalledWith('psp_callback', {
       p_token: 't-1',
       p_fields: { token: 't-1', status: 'success' },

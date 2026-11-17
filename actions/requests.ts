@@ -62,11 +62,14 @@ export const createRequestAction = guardedAction(
   },
 );
 
-/** Cancel while OPEN (AC-15). */
+/** Cancel while OPEN or SELECTED (AC-15); refused `checkout_open` during a card page (spec 0011-09 AC-2). */
 export const cancelRequestAction = guardedAction(
   { name: 'cancelRequest', access: ACCESS, schema: CancelRequestInput },
-  async (input): Promise<{ status: 'ok' } | ReturnType<typeof fail>> => {
-    const outcome = await cancelRequest(input.requestId, input.reason);
+  async (input, user): Promise<{ status: 'ok' } | ReturnType<typeof fail>> => {
+    const outcome = await cancelRequest(input.requestId, input.reason, {
+      region: user.region,
+      userId: user.id,
+    });
     if (outcome.ok) return { status: 'ok' };
     return fail(KNOWN.includes(outcome.code) ? outcome.code : 'action_failed');
   },

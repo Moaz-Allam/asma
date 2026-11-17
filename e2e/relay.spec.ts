@@ -10,15 +10,15 @@ import type { APIRequestContext } from '@playwright/test';
 import { expect, test } from './fixtures';
 
 /**
- * Spec 0011-08 on the real local stack with the fake PSP, at 390px, in every locale (A-4: until 09 and 10 replace
- * 07's accept checks, every payment goes the late path and is refunded):
+ * Spec 0011-08 on the real local stack with the fake PSP, at 390px, in every locale. The request here is never chosen,
+ * so 09's accept check refuses its commission (spec 0011-09 AC-5): every payment goes the late path and is refunded:
  *  - ar: a checkout is queued, the relay opens a fake card page on this server, the buyer pays and comes back
  *    through the callback, the relay retrieves the payment, books it late and refunds it, once; the books balance.
  *  - tr: the same payment arrives by a signed webhook only, with no callback.
  *  - en: the buyer's payment fails; the attempt fails with psp_failed and nothing is refunded.
  * Also: a wrong relay secret is a 404, and no client bundle holds the server only DSN (AC-14).
  *
- * The fee and its checkout are written as `postgres` the way 09's pay action will (start_checkout); the relay is
+ * The fee and its checkout are written as `postgres` through start_checkout, as 09's pay function does; the relay is
  * woken by posting to /api/relay with the e2e secret, as pg_net does on a deployment.
  */
 
@@ -70,7 +70,7 @@ function ids(locale: string) {
   };
 }
 
-/** A pending commission and its queued checkout, as 09's pay action will leave them. Returns the ids. */
+/** A pending commission on an OPEN request and its queued checkout. Returns the ids. */
 function startCheckout(locale: string): { fee: string; attempt: string } {
   const f = ids(locale);
   const request = randomUUID();
@@ -94,8 +94,7 @@ function startCheckout(locale: string): { fee: string; attempt: string } {
          '{"rounding_minor": 100}', 100000, 10000, 90000, 'TRY', now() + interval '3 days', now() + interval '3 days 2 hours');
        insert into public.fee_payments (id, region, request_id, kind, payer_id, amount, currency)
        values ('${fee}', 'TR', '${request}', 'commission', '${f.customer}', 10000, 'TRY');
-       v_attempt := public.start_checkout('${fee}');
-       update public.checkout_attempts set locale = '${locale}' where id = v_attempt;
+       v_attempt := public.start_checkout('${fee}', '${locale}', null);
      end $s$;`,
   );
   const [row] = sql(`select id from public.checkout_attempts where fee_payment_id = '${fee}';`);
@@ -119,7 +118,7 @@ async function untilRelay(request: APIRequestContext, query: string, expected: u
     .toEqual(expected);
 }
 
-test('a fake payment goes the late path end to end, once (AC-0, AC-7 to AC-11, AC-15, AC-21, A-4)', async ({
+test('a fake payment goes the late path end to end, once (AC-0, AC-7 to AC-11, AC-15, AC-21)', async ({
   page,
   request,
 }, testInfo) => {
@@ -154,9 +153,11 @@ test('a fake payment goes the late path end to end, once (AC-0, AC-7 to AC-11, A
       0,
     );
   } else {
-    // The callback stores and queues; it answers 303 to the pay page (09 builds it) and moves no money (AC-8).
+    // The callback stores and queues; it answers 303 to the return page (spec 0011-09 AC-12) and moves no money
+    // (AC-8). The browser here is not signed in, so the return page sends it on; the request for it is what counts.
+    const toReturn = page.waitForRequest(new RegExp(`/${locale}/pay/${attempt}/return$`));
     await page.getByRole('button', { name: m(locale, 'DevFakeCheckout.returnToShop') }).click();
-    await page.waitForURL(new RegExp(`/${locale}/pay/${attempt}$`));
+    await toReturn;
     expect(
       sql(
         `select count(*)::int as n from public.psp_events where source = 'callback' and event_key like 'callback:${attempt}:%';`,
@@ -181,7 +182,7 @@ test('a fake payment goes the late path end to end, once (AC-0, AC-7 to AC-11, A
     return;
   }
 
-  // Retrieved, booked late (07's stub accept checks), refunded once (AC-10, AC-11, A-4).
+  // Retrieved, booked late (the request was never chosen), refunded once (AC-10, AC-11).
   await untilRelay(
     request,
     `select f.status as fee, x.kind, x.status as refund, x.psp_refund_id like 'fr_fp1_%' as refund_id

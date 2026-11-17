@@ -42,6 +42,11 @@ export const NUMBER = {
   chooseCustomer: 24,
   chooseProvider: 25,
   chooseRival: 26,
+  // Position 09 (spec 0011-09 AC-15): the customer of each of the two payment tests, and another customer who
+  // gets 404 on the first one's pay, return and receipt pages. The provider is written by SQL: no sign in.
+  payCustomer: 27,
+  payOther: 28,
+  payCustomerB: 29,
 } as const;
 
 /**

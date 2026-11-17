@@ -22,6 +22,9 @@ const KNOWN = [
   'forbidden',
   'journal_invalid',
   'fake_payment_refused',
+  // Spec 0011-09 R-2: a setting 09's accept check or transition reads is missing; verifyPayment alerts and retries.
+  'checkout_settings_invalid',
+  'unlock_settings_invalid',
 ] as const;
 
 export type DbCode = (typeof KNOWN)[number] | 'db_error';

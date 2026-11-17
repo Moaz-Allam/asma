@@ -35,7 +35,10 @@ export type LogEvent =
   | 'psp_callback_unknown'
   | 'psp_webhook_invalid'
   | 'reconcile_cut'
-  | 'relay_handler_failed';
+  | 'relay_handler_failed'
+  // Spec 0011-09 AC-9: a card page URL off the active driver's hosts was kept from a payer. The attempt id rides
+  // in request_id.
+  | 'checkout_url_refused';
 
 /** The only ids a record may carry: internal ids, never personal data. */
 export type LogIds = {

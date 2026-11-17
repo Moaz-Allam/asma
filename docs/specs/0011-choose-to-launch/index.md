@@ -73,6 +73,13 @@ leaves a slot for them (the reviews slot on the applicant card), the slot render
 > checked for 2 hours after it finished. The alerts list gains `idempotency_conflict`, `outbox_failed`,
 > `psp_not_configured`, `psp_bad_response` and `checkout_settings_invalid`. `payments_enabled` (D172) and the settings
 > `checkout_hold_minutes` and `psp_buyer_city` land in 08. 09 and 10 set `checkout_attempts.locale` and `payer_ip`.
+>
+> **The commission (D175, 2026-11-17).** 0011-09 is amended to what 06 to 08 built. `fee_deadline` joins `requests`, set
+> by 09 on `SELECTED → COMMISSION_PAID` with the window rule below; `min_window_minutes`, `checkouts_per_fee_hour` and
+> `action_counters` land in 09. 06 built no switch, so the `SELECTED → SELECTED` row waits for a child that needs it, and
+> the open checkout guard sits on cancel (`checkout_open`). `request_events` still waits for 12 or 13; timelines read
+> their own columns. A payer reads attempts and receipts only through `my_checkout` and `my_receipt`, never a PSP payment
+> id. A commission of 0 (D171) moves the request with no fee row.
 
 Every child builds to this section. A child may add to it, never contradict it.
 

@@ -37,6 +37,8 @@ describe('the allow list (AC-7)', () => {
       'document_upload_failed',
       'locale_changed',
       'onboarding_completed',
+      'payment_started',
+      'payment_succeeded',
       'phone_rejected',
       'provider_chosen',
       'provider_decided',
@@ -82,6 +84,23 @@ describe('what an allowed event carries (AC-3, AC-6)', () => {
     );
     expect(JSON.stringify(out)).not.toContain(id);
     expect(out?.properties.$pathname).toBe('/ar/requests/[id]');
+  });
+
+  it('a payment event carries only which fee, and no attempt id from the pay pages (spec 0011-09 AC-14)', () => {
+    const id = '00000000-0000-4000-8000-0009000a1001';
+    const out = filterAnalyticsEvent(
+      captured('payment_succeeded', {
+        ...SDK_PROPS,
+        fee: 'commission',
+        attempt_id: id,
+        $current_url: `https://aldebyani.test/tr/pay/${id}/return`,
+        $pathname: `/tr/pay/${id}/return`,
+      }),
+      'preview',
+    );
+    expect(JSON.stringify(out)).not.toContain(id);
+    expect(out?.properties.fee).toBe('commission');
+    expect(out?.properties).not.toHaveProperty('attempt_id');
   });
 
   it('a pageview: SDK $ properties, scrubbed URLs, app_env, nothing else', () => {

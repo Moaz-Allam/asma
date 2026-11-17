@@ -216,7 +216,10 @@ test('a customer reads two offers and chooses one; each provider sees the outcom
   const next = page.getByRole('region', { name: m(locale, 'Requests.next.title') });
   await expect(next).toBeVisible({ timeout: 20_000 });
   await expect(next).toContainText(money(30000, locale));
-  await expect(next).toContainText(m(locale, 'Requests.next.soon'));
+  // Spec 0011-09 AC-10: the pay button stands where 06's "Payment opens here soon" stood.
+  await expect(
+    next.getByRole('button', { name: m(locale, 'Requests.next.pay', { amount: money(30000, locale) }) }),
+  ).toBeVisible();
   await expect(page.getByRole('region', { name: m(locale, 'Requests.timeline.title') })).toContainText(
     m(locale, 'Requests.timeline.chosen'),
   );

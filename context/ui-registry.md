@@ -53,6 +53,7 @@ Cross-feature building blocks. Path: `components/shared/`.
 
 | Component | Purpose | Spec (from the design) | Design ref | Status | RTL |
 | --- | --- | --- | --- | --- | --- |
+| `AgreementLine` | The agreement reminder above every payment button: one short line and a link to the terms (D92); draft wording until S16 (`components/shared/AgreementLine.tsx`) | — | s7, p11 (S24) | ✅ built (09) | ✅ |
 | `MoneyDisplay` | Money from server minor units + currency. **Never computes.** LTR-isolated, tabular figures | **`font-display`** always (Cairo has no `₺`); sizes: inline, row, XL 72px / L 66px with a smaller currency sign | s4, s7, p8, p9 | ✅ done (`components/shared/MoneyDisplay.tsx`, `lib/format/money.ts`) | ✅ |
 | `StatusChip` | Request and provider status from the canonical state machines. One definition, reused (was `StatusBadge`) | Pill 12px Cairo 700 `py-1.5 px-3`, colours from `ui-tokens.md` §4 only («ملغى» on `success-light`, «مرفوض» on `error-light`, D59) | s10, s15, p6, app-02, app-03 | ✅ built (02, §9) | — |
 | `Chip` | Static info chip and the verified chip | Pill 12px 700, `bg-surface-secondary` or `bg-accent-light` («موثّق») | s6, p10 | 📋 planned | — |
@@ -112,7 +113,10 @@ Domain components. Path: `components/features/<domain>/`.
 
 | Component | Purpose | Design ref | Status | RTL | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `PaymentPanel` | Customer pays the commission: the split and the agreement reminder | s7 (re-export, S24) | 📋 planned | — | Redirect ≠ proof of payment; v1 is the iyzico card page only (D57, D93) |
+| `PaymentPanel` | Customer pays the commission: the split and the agreement reminder | s7 (re-export, S24) | ✅ built (09) as `NextStepPanel` + `AgreementLine` + `PayButton` | ✅ | Redirect ≠ proof of payment; v1 is the iyzico card page only (D57, D93). Design pass owed after S24 |
+| `PayButton` | Pay: sends the request id only (rule 1); a new attempt goes to the pay page, a young one is reused, a commission of 0 settles and reloads; refusals show their catalogue string (`components/features/payments/PayButton.tsx`) | s7 (S24) | ✅ built (09) | ✅ | 10 reuses it for the provider fee |
+| `CheckoutWaiter` | Pay page and return page: polls the payer's own attempt (`open` 1 s for 15 s, `return` 2 s for 2 min, then Refresh); shows only what the relay verified; the card URL replaces the history entry (`components/features/payments/CheckoutWaiter.tsx`) | s7 (S24) | ✅ built (09) | ✅ | Spec 0011-09 AC-11, AC-12; never shows paid from a redirect |
+| Receipt page | `/[locale]/receipts/[feeId]`: our fee id as the number, kind, amount, status, paid time, service, date, "not a tax invoice" (`app/[locale]/(customer)/receipts/[feeId]/page.tsx`) | s7 (S24) | ✅ built (09) | ✅ | No PSP payment id (D175, R13); payer only, else 404 |
 | `ProviderFeePanel` | Chosen provider pays the provider fee; shows the cash to collect | p11 (re-export, S24) | 📋 planned | — | ⚠️ Idempotent; confirm dialog with amount; `CountdownCard` |
 | `FeeHistoryList` | Provider's jobs, fees paid and the cash each job was worth, with filters | p9 (re-export, S24) | 📋 planned | — | Read only. No balance, no withdrawal, no top up (D91) |
 | `PayoutRequestForm` | Request a payout of the available balance via the PSP | p9 | 📋 planned | — | Confirm dialog with amount |

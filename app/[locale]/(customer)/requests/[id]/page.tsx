@@ -1,19 +1,24 @@
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { PayButton } from '@/components/features/payments/PayButton';
 import { NextStepPanel } from '@/components/features/requests/NextStepPanel';
 import { OfferCard } from '@/components/features/requests/OfferCard';
 import { OfferList } from '@/components/features/requests/OfferList';
 import { RequestActions } from '@/components/features/requests/RequestActions';
 import { rowStatus, toneOf } from '@/components/features/requests/RequestRow';
 import { RequestTimeline } from '@/components/features/requests/RequestTimeline';
+import { AgreementLine } from '@/components/shared/AgreementLine';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PriceCard } from '@/components/shared/PriceCard';
 import { StatusChip } from '@/components/shared/StatusChip';
+import { Button } from '@/components/ui/button';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
+import { formatMoney } from '@/lib/format/money';
+import type { Locale } from '@/lib/i18n/direction';
 import { Link } from '@/lib/i18n/navigation';
-import { getMyRequest, loadOffers } from '@/lib/requests';
+import { getMyRequest, loadCommissionFee, loadOffers } from '@/lib/requests';
 import { instantLabel, NUMBER_LOCALE, quoteLines, regionDefaultLocale } from '@/lib/requests/view';
 
 type Props = {
@@ -32,7 +37,11 @@ export default async function Page({ params, searchParams }: Props) {
   setRequestLocale(locale);
   const user = await guardPage(['customer', 'admin']);
   const query = await searchParams;
-  const [found, offers] = await Promise.all([getMyRequest({ userId: user.id, id }), loadOffers(id)]);
+  const [found, offers, fee] = await Promise.all([
+    getMyRequest({ userId: user.id, id }),
+    loadOffers(id),
+    loadCommissionFee(id),
+  ]);
   if (!found || !offers) notFound();
 
   const t = await getTranslations('Requests');
@@ -84,6 +93,18 @@ export default async function Page({ params, searchParams }: Props) {
   // One read decides every 06 branch: the offers' own status, so a choose or cancel between the two reads never mixes states.
   const current = offers.status;
   const liveOpen = current === 'OPEN' && status === 'OPEN';
+  // Past SELECTED on the way to the reveal: the commission side is settled (paid, or 0, D171).
+  const paidOn = [
+    'COMMISSION_PAID',
+    'UNLOCKED',
+    'IN_PROGRESS',
+    'AWAITING_CONFIRMATION',
+    'COMPLETED',
+  ].includes(current);
+  const payOpen =
+    current === 'SELECTED' &&
+    offers.payment_deadline !== null &&
+    Date.parse(now) < Date.parse(offers.payment_deadline);
   const timeline = [
     { key: 'posted', label: t('timeline.posted'), at: instantLabel(request.created_at, timezone, locale) },
     ...(offers.selected_at
@@ -105,6 +126,21 @@ export default async function Page({ params, searchParams }: Props) {
         ]
       : []),
     ...(offers.status === 'SELECTED' ? [{ key: 'payment', label: t('timeline.payment'), at: null }] : []),
+    // Spec 0011-09 AC-10: the commission paid (its time from the fee row; a commission of 0 has none), then the
+    // provider's fee greyed while it is owed.
+    ...(paidOn
+      ? [
+          {
+            key: 'commission_paid',
+            label: t('timeline.commissionPaid'),
+            at: fee?.paid_at ? instantLabel(fee.paid_at, timezone, locale) : null,
+            done: true,
+          },
+        ]
+      : []),
+    ...(current === 'COMMISSION_PAID'
+      ? [{ key: 'provider_fee', label: t('timeline.providerFee'), at: null }]
+      : []),
   ];
 
   const rows: { term: string; value: string }[] = [
@@ -214,17 +250,65 @@ export default async function Page({ params, searchParams }: Props) {
             <NextStepPanel
               labels={{
                 title: t('next.title'),
+                price: t('next.price'),
                 commission: t('next.commission'),
                 cash: t('next.cash'),
-                deadline: t('next.deadline', {
-                  date: instantLabel(offers.payment_deadline, timezone, locale),
-                }),
-                soon: t('next.soon'),
+                deadline: payOpen
+                  ? t('next.deadline', {
+                      date: instantLabel(offers.payment_deadline, timezone, locale),
+                    })
+                  : undefined,
               }}
+              price={request.fixed_price}
               commission={request.commission_amount}
               cashDue={request.cash_due}
               currency={request.currency}
-            />
+            >
+              {payOpen ? (
+                <>
+                  <AgreementLine />
+                  {locale === 'ar' && request.commission_amount > 0 ? (
+                    <p className="text-body-s text-text-secondary">{t('next.cardEnglish')}</p>
+                  ) : null}
+                  <PayButton
+                    requestId={request.id}
+                    label={
+                      request.commission_amount === 0
+                        ? t('next.continue')
+                        : t('next.pay', {
+                            amount: formatMoney(
+                              request.commission_amount,
+                              request.currency,
+                              locale as Locale,
+                            ),
+                          })
+                    }
+                  />
+                </>
+              ) : (
+                <p role="status" className="rounded-block bg-surface p-4 text-body-s text-text-primary">
+                  {t('next.ended')}
+                </p>
+              )}
+            </NextStepPanel>
+          ) : null}
+          {current === 'COMMISSION_PAID' && request.fee_deadline ? (
+            <section
+              aria-labelledby="paid-title"
+              className="flex flex-col gap-3 rounded-panel bg-success-light p-5 lg:p-7.5"
+            >
+              <h2 id="paid-title" className="font-display text-title-s text-text-primary">
+                {t('next.paidTitle')}
+              </h2>
+              <p className="text-body text-text-primary">
+                {t('next.waiting', { date: instantLabel(request.fee_deadline, timezone, locale) })}
+              </p>
+              {fee && fee.status !== 'pending' ? (
+                <Button asChild variant="outline" className="self-start">
+                  <Link href={`/receipts/${fee.id}`}>{t('next.receipt')}</Link>
+                </Button>
+              ) : null}
+            </section>
           ) : null}
           <RequestTimeline title={t('timeline.title')} steps={timeline} />
           <RequestActions

@@ -153,6 +153,8 @@ export const RequestDetailRow = z.object({
   cancelled_at: z.string().nullable(),
   cancel_reason: z.enum(['plans_changed', 'found_elsewhere', 'price', 'other']).nullable(),
   created_at: z.string(),
+  /** Spec 0011-09 AC-6: the provider's fee window, set on SELECTED -> COMMISSION_PAID. */
+  fee_deadline: z.string().nullable(),
   region_info: z.object({ timezone: z.string() }),
 });
 export type RequestDetailRow = z.infer<typeof RequestDetailRow>;
@@ -196,6 +198,61 @@ export const RequestOffers = z
   })
   .strict();
 export type RequestOffers = z.infer<typeof RequestOffers>;
+
+/**
+ * `pay_commission()` (spec 0011-09 AC-4): settled at once for a commission of 0, else the attempt the pay page
+ * waits on, new or reused.
+ */
+export const PayResult = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('settled') }).strict(),
+  z.object({ status: z.literal('checkout'), attempt_id: z.string().uuid(), reused: z.boolean() }).strict(),
+]);
+
+export const ATTEMPT_STATUSES = ['queued', 'ready', 'succeeded', 'failed', 'abandoned'] as const;
+const FeeKind = z.enum(['commission', 'provider_fee']);
+const FeeStatus = z.enum(['pending', 'paid', 'refunded']);
+
+/**
+ * `my_checkout()` (spec 0011-09 AC-7, R-3): one attempt as its payer reads it. Strict: a token, an IP or a PSP
+ * payment id would fail the parse, never reach a page.
+ */
+export const CheckoutStatus = z
+  .object({
+    attempt_id: z.string().uuid(),
+    request_id: z.string().uuid(),
+    fee_kind: FeeKind,
+    fee_status: FeeStatus,
+    status: z.enum(ATTEMPT_STATUSES),
+    reason: z.enum(['late', 'paused', 'failed']).nullable(),
+    url: z.string().max(2000).nullable(),
+    locale: z.enum(['ar', 'tr', 'en']).nullable(),
+    late_refund: z.boolean(),
+  })
+  .strict();
+export type CheckoutStatus = z.infer<typeof CheckoutStatus>;
+
+/** `my_receipt()` (spec 0011-09 AC-13): our fee id is the receipt number; no PSP payment id. */
+export const Receipt = z
+  .object({
+    receipt_number: z.string().uuid(),
+    kind: FeeKind,
+    amount: Minor.nonnegative(),
+    currency: z.enum(['TRY', 'SAR']),
+    status: z.enum(['paid', 'refunded']),
+    paid_at: z.string().min(1),
+    timezone: z.string(),
+    request_id: z.string().uuid(),
+    service_name: Localized,
+    scheduled_start_at: z.string().min(1),
+  })
+  .strict();
+export type Receipt = z.infer<typeof Receipt>;
+
+/** The commission row of a request, as its payer reads it through RLS (spec 0011-09 AC-10). */
+export const CommissionFee = z
+  .object({ id: z.string().uuid(), status: FeeStatus, paid_at: z.string().nullable() })
+  .strict();
+export type CommissionFee = z.infer<typeof CommissionFee>;
 
 /** `choose_provider()` (AC-7): the same shape for a new choose and a replay. */
 export const ChooseResult = z
