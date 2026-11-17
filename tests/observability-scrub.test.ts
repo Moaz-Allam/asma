@@ -118,6 +118,10 @@ describe('isPersonalKey: the keys whose values never leave', () => {
     'p_address_line',
     'p_notes',
     'p_answers',
+    // Spec 0009 AC-20: the apply message.
+    'applicationMessage',
+    'application_message',
+    'p_message',
   ])('%s is personal', (key) => {
     expect(isPersonalKey(key)).toBe(true);
   });

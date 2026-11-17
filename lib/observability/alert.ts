@@ -25,7 +25,10 @@ export type AlertReason =
   | 'pricing_settings_invalid'
   // Spec 0008 AC-1b, AC-11: a region's schedule, open cap or quote limit setting is missing or malformed, so no
   // request can be posted there. The record is the service id being quoted, or `catalog` for the form read.
-  | 'request_settings_invalid';
+  | 'request_settings_invalid'
+  // Spec 0009 AC-1, AC-11: a region's applicant cap or hourly apply limit is missing or malformed, so no provider
+  // there can apply or read the feed. The record is the database function that refused.
+  | 'apply_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

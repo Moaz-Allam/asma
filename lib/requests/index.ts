@@ -45,6 +45,7 @@ export const REQUEST_DB_CODES = [
   'too_many_open_requests',
   'not_found',
   'not_cancellable',
+  'region_unavailable',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -112,6 +113,10 @@ export async function quoteRequest(input: QuoteRequestInput, context: Context): 
     return result;
   }
   const parsed = QuoteRequestResult.parse(result.data);
+  if (parsed.status === 'refused') {
+    signal(parsed.code, input.serviceId, context);
+    return { ok: false, code: parsed.code };
+  }
   return parsed.status === 'ok'
     ? { ok: true, quote: parsed }
     : { ok: false, code: 'invalid', errors: parsed.errors };
@@ -148,6 +153,10 @@ export async function createRequest(input: CreateRequestInput, context: Context)
   const parsed = CreateRequestResult.parse(result.data);
   if (parsed.status === 'ok') return { ok: true, id: parsed.id };
   if (parsed.status === 'price_changed') return { ok: false, code: 'price_changed', quote: parsed.quote };
+  if (parsed.status === 'refused') {
+    signal(parsed.code, input.serviceId, context);
+    return { ok: false, code: parsed.code };
+  }
   return { ok: false, code: 'invalid', errors: parsed.errors };
 }
 

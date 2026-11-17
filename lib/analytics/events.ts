@@ -30,6 +30,10 @@ export type AnalyticsEvents = {
   document_upload_failed: { reason: 'too_large' | 'wrong_type' | 'refused' | 'network' };
   /** A customer published a request (spec 0008 AC-25). Only whether it was a repeat: no id, price or text. */
   request_posted: { repeated: boolean };
+  /** A provider saved their services, districts and hours (spec 0009 AC-21). Only the two counts. */
+  provider_setup_saved: { services: number; zones: number };
+  /** A provider applied to a request (spec 0009 AC-21). Nothing else: no id, price or text. A replay sends none. */
+  application_submitted: Record<string, never>;
 };
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
@@ -46,6 +50,8 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'provider_decided',
   'document_upload_failed',
   'request_posted',
+  'provider_setup_saved',
+  'application_submitted',
 ]);
 
 /** The typed property names per event: the only non `$` properties an event may carry. */
@@ -61,4 +67,6 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   provider_decided: ['decision'],
   document_upload_failed: ['reason'],
   request_posted: ['repeated'],
+  provider_setup_saved: ['services', 'zones'],
+  application_submitted: [],
 };

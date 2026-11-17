@@ -146,7 +146,10 @@
     "faq": "Questions",
     "providers": "Providers",
     "catalog": "Catalog",
-    "pricing": "Pricing rules"
+    "pricing": "Pricing rules",
+    "feed": "Available requests",
+    "applications": "My applications",
+    "setup": "Services and districts"
   },
   "Login": {
     "title": "Welcome",
@@ -1045,7 +1048,175 @@
       "too_many_open_requests": "You already have 5 open requests. Cancel one or wait for it to start.",
       "not_found": "This request was not found.",
       "not_cancellable": "This request can no longer be cancelled here.",
+      "region_unavailable": "Requests are not open in your region yet.",
       "action_failed": "Something went wrong. Nothing was charged. Try again."
+    }
+  },
+  "ProviderFeed": {
+    "days": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "status": {
+      "APPLIED": "Applied",
+      "SELECTED": "Chosen",
+      "AWAITING_FEE": "Fee due",
+      "UNLOCKED": "Unlocked",
+      "STARTED": "Started",
+      "COMPLETED": "Done",
+      "CONFIRMED": "Confirmed",
+      "RATED": "Rated",
+      "NOT_SELECTED": "Not chosen",
+      "WITHDRAWN": "Withdrawn",
+      "EXPIRED": "Expired",
+      "CANCELLED": "Cancelled"
+    },
+    "setup": {
+      "title": "What you offer and where",
+      "intro": "You see requests for these services and districts only. Prices are set by the platform; you cannot offer a different one.",
+      "services": "Services",
+      "zones": "Districts you serve",
+      "days": "Work days",
+      "from": "Start from",
+      "to": "Until",
+      "inactive": "{name} (no longer offered)",
+      "inactiveNote": "A greyed pick is no longer offered. Saving drops it.",
+      "noReview": "Changing services, districts and hours never sends your file back to review.",
+      "summary": "Your picks",
+      "summaryServices": "{count, plural, one {# service} other {# services}}",
+      "summaryZones": "{count, plural, one {# district} other {# districts}}",
+      "summaryDays": "{count, plural, one {# work day} other {# work days}}",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved. Your feed now follows these picks.",
+      "readOnly": "Your account is suspended, so these settings cannot be changed.",
+      "noOptions": "Nothing is offered in your region yet.",
+      "error": {
+        "title": "Your settings could not be loaded",
+        "body": "Please try again in a moment."
+      }
+    },
+    "feed": {
+      "title": "Available requests",
+      "intro": "Requests that match your services and districts. Change them in Services and districts.",
+      "filters": "Filters",
+      "services": "Services",
+      "zones": "Districts",
+      "when": "When",
+      "whenAll": "All",
+      "whenWeek": "This week",
+      "whenNext": "Next week",
+      "outside": "Outside your working hours",
+      "offers": "{count} of {cap} offers",
+      "applied": "You applied",
+      "full": "Reached the limit",
+      "details": "Details and apply",
+      "more": "Show more",
+      "empty": {
+        "lead": "Nothing yet",
+        "title": "No open requests match",
+        "body": "New requests for your services and districts appear here."
+      },
+      "setupPrompt": {
+        "lead": "One step left",
+        "title": "Set up your services and districts",
+        "body": "Pick what you offer, where and when. Then matching requests appear here.",
+        "action": "Set up now"
+      },
+      "error": {
+        "title": "Requests could not be loaded",
+        "body": "Please try again in a moment."
+      }
+    },
+    "detail": {
+      "back": "Back to available requests",
+      "service": "Service",
+      "addons": "Extras",
+      "start": "Start",
+      "end": "Expected end",
+      "district": "District",
+      "address": "Address",
+      "addressHidden": "Exact address after both of you have paid",
+      "none": "None",
+      "yes": "Yes",
+      "no": "No",
+      "closed": "This request is closed.",
+      "privacy": "The customer's name, phone and exact address stay hidden until both of you have paid."
+    },
+    "price": {
+      "eyebrow": "Job price",
+      "cash": "Cash you collect from the customer after the service",
+      "free": "Applying is free. A provider fee is due only if you are chosen."
+    },
+    "form": {
+      "title": "Your message to the customer",
+      "warning": "Do not share phone numbers, emails, links or social handles. Messages with contact details are refused.",
+      "counter": "{count} / {max}",
+      "submit": "Apply, free",
+      "confirmTitle": "Send your offer?",
+      "confirmFree": "Applying costs nothing.",
+      "confirmFee": "A provider fee is due only if the customer chooses you.",
+      "confirmNow": "Your offer goes to the customer now.",
+      "confirmSend": "Send my offer",
+      "confirmBack": "Back",
+      "sending": "Sending…",
+      "applied": "You applied. The customer will see your offer.",
+      "appliedOn": "Applied on {date}",
+      "full": "This request has reached the limit of offers.",
+      "closed": "This request is closed."
+    },
+    "applications": {
+      "title": "My applications",
+      "intro": "Every request you applied to, newest first.",
+      "open": "Open the request",
+      "more": "Show more",
+      "empty": {
+        "lead": "Nothing yet",
+        "title": "You have not applied yet",
+        "body": "Find a request that fits you and apply for free.",
+        "action": "See available requests"
+      },
+      "error": {
+        "title": "Your applications could not be loaded",
+        "body": "Please try again in a moment."
+      }
+    },
+    "home": {
+      "open": "Open requests for you",
+      "openBody": "In your services and districts, not full yet.",
+      "applied": "Waiting for the customer",
+      "appliedBody": "Your applications still open.",
+      "links": "More",
+      "error": {
+        "title": "Your counts could not be loaded",
+        "body": "Please try again in a moment."
+      }
+    },
+    "errors": {
+      "forbidden": "This page is for providers.",
+      "unauthorized": "Please sign in again.",
+      "validation_failed": "Something in the form is not right. Check it and try again.",
+      "provider_suspended": "Your account is suspended.",
+      "setup_invalid_services": "Pick at least one service that is still offered.",
+      "setup_invalid_zones": "Pick at least one district that is still served.",
+      "setup_invalid_work_days": "Pick at least one work day.",
+      "setup_invalid_hours": "The end hour must come after the start hour.",
+      "setup_invalid": "Something in your picks is not right. Check them and try again.",
+      "not_approved": "Your file is not approved, so you cannot apply yet.",
+      "setup_incomplete": "Set up your services and districts first.",
+      "not_found": "This request is not available to you.",
+      "request_closed": "This request is closed.",
+      "request_full": "This request has reached the limit of offers.",
+      "too_many_applications": "Too many applications in the last hour. Try again later.",
+      "message_invalid": "Write between 20 and 600 characters.",
+      "contact_info_in_message": "Your message has contact details. Remove phone numbers, emails, links and social handles.",
+      "apply_settings_invalid": "Applying is not possible right now. Please try again later.",
+      "action_failed": "Something went wrong. Nothing was sent. Try again."
     }
   }
 }

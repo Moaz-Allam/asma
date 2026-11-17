@@ -7,7 +7,7 @@ import { InitialAvatar } from '@/components/shared/InitialAvatar';
 import { Button } from '@/components/ui/button';
 import type { Role } from '@/lib/auth/roles';
 import { Link } from '@/lib/i18n/navigation';
-import { PUBLIC_ANCHORS, menuFor } from '@/lib/navigation/menus';
+import { PUBLIC_ANCHORS, headerMenuFor } from '@/lib/navigation/menus';
 import { cn } from '@/lib/utils';
 
 /**
@@ -49,7 +49,7 @@ export async function SiteHeader({
 
       {user ? (
         <>
-          <div className="flex-1">{railFromLg ? null : <NavLinks items={menuFor(user.role)} />}</div>
+          <div className="flex-1">{railFromLg ? null : <NavLinks items={headerMenuFor(user.role)} />}</div>
           {badge}
           <Link href="/account" aria-label={t('account')}>
             <InitialAvatar name={user.name} className="text-label font-extrabold" />

@@ -6,6 +6,9 @@ import {
   LayoutDashboard,
   LayoutList,
   List,
+  Search,
+  Send,
+  SlidersHorizontal,
   UserRound,
   UsersRound,
   type LucideIcon,
@@ -25,6 +28,9 @@ const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
   providers: UsersRound,
   catalog: LayoutList,
   pricing: Calculator,
+  feed: Search,
+  applications: Send,
+  setup: SlidersHorizontal,
 };
 
 /**

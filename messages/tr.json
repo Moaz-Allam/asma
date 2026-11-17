@@ -146,7 +146,10 @@
     "faq": "[tr] Questions",
     "providers": "[tr] Providers",
     "catalog": "[tr] Catalog",
-    "pricing": "[tr] Pricing rules"
+    "pricing": "[tr] Pricing rules",
+    "feed": "[tr] Available requests",
+    "applications": "[tr] My applications",
+    "setup": "[tr] Services and districts"
   },
   "Login": {
     "title": "[tr] Welcome",
@@ -1045,7 +1048,175 @@
       "too_many_open_requests": "[tr] You already have 5 open requests. Cancel one or wait for it to start.",
       "not_found": "[tr] This request was not found.",
       "not_cancellable": "[tr] This request can no longer be cancelled here.",
+      "region_unavailable": "[tr] Requests are not open in your region yet.",
       "action_failed": "[tr] Something went wrong. Nothing was charged. Try again."
+    }
+  },
+  "ProviderFeed": {
+    "days": {
+      "0": "[tr] Sunday",
+      "1": "[tr] Monday",
+      "2": "[tr] Tuesday",
+      "3": "[tr] Wednesday",
+      "4": "[tr] Thursday",
+      "5": "[tr] Friday",
+      "6": "[tr] Saturday"
+    },
+    "status": {
+      "APPLIED": "[tr] Applied",
+      "SELECTED": "[tr] Chosen",
+      "AWAITING_FEE": "[tr] Fee due",
+      "UNLOCKED": "[tr] Unlocked",
+      "STARTED": "[tr] Started",
+      "COMPLETED": "[tr] Done",
+      "CONFIRMED": "[tr] Confirmed",
+      "RATED": "[tr] Rated",
+      "NOT_SELECTED": "[tr] Not chosen",
+      "WITHDRAWN": "[tr] Withdrawn",
+      "EXPIRED": "[tr] Expired",
+      "CANCELLED": "[tr] Cancelled"
+    },
+    "setup": {
+      "title": "[tr] What you offer and where",
+      "intro": "[tr] You see requests for these services and districts only. Prices are set by the platform; you cannot offer a different one.",
+      "services": "[tr] Services",
+      "zones": "[tr] Districts you serve",
+      "days": "[tr] Work days",
+      "from": "[tr] Start from",
+      "to": "[tr] Until",
+      "inactive": "[tr] {name} (no longer offered)",
+      "inactiveNote": "[tr] A greyed pick is no longer offered. Saving drops it.",
+      "noReview": "[tr] Changing services, districts and hours never sends your file back to review.",
+      "summary": "[tr] Your picks",
+      "summaryServices": "[tr] {count, plural, one {# service} other {# services}}",
+      "summaryZones": "[tr] {count, plural, one {# district} other {# districts}}",
+      "summaryDays": "[tr] {count, plural, one {# work day} other {# work days}}",
+      "save": "[tr] Save",
+      "saving": "[tr] Saving…",
+      "saved": "[tr] Saved. Your feed now follows these picks.",
+      "readOnly": "[tr] Your account is suspended, so these settings cannot be changed.",
+      "noOptions": "[tr] Nothing is offered in your region yet.",
+      "error": {
+        "title": "[tr] Your settings could not be loaded",
+        "body": "[tr] Please try again in a moment."
+      }
+    },
+    "feed": {
+      "title": "[tr] Available requests",
+      "intro": "[tr] Requests that match your services and districts. Change them in Services and districts.",
+      "filters": "[tr] Filters",
+      "services": "[tr] Services",
+      "zones": "[tr] Districts",
+      "when": "[tr] When",
+      "whenAll": "[tr] All",
+      "whenWeek": "[tr] This week",
+      "whenNext": "[tr] Next week",
+      "outside": "[tr] Outside your working hours",
+      "offers": "[tr] {count} of {cap} offers",
+      "applied": "[tr] You applied",
+      "full": "[tr] Reached the limit",
+      "details": "[tr] Details and apply",
+      "more": "[tr] Show more",
+      "empty": {
+        "lead": "[tr] Nothing yet",
+        "title": "[tr] No open requests match",
+        "body": "[tr] New requests for your services and districts appear here."
+      },
+      "setupPrompt": {
+        "lead": "[tr] One step left",
+        "title": "[tr] Set up your services and districts",
+        "body": "[tr] Pick what you offer, where and when. Then matching requests appear here.",
+        "action": "[tr] Set up now"
+      },
+      "error": {
+        "title": "[tr] Requests could not be loaded",
+        "body": "[tr] Please try again in a moment."
+      }
+    },
+    "detail": {
+      "back": "[tr] Back to available requests",
+      "service": "[tr] Service",
+      "addons": "[tr] Extras",
+      "start": "[tr] Start",
+      "end": "[tr] Expected end",
+      "district": "[tr] District",
+      "address": "[tr] Address",
+      "addressHidden": "[tr] Exact address after both of you have paid",
+      "none": "[tr] None",
+      "yes": "[tr] Yes",
+      "no": "[tr] No",
+      "closed": "[tr] This request is closed.",
+      "privacy": "[tr] The customer's name, phone and exact address stay hidden until both of you have paid."
+    },
+    "price": {
+      "eyebrow": "[tr] Job price",
+      "cash": "[tr] Cash you collect from the customer after the service",
+      "free": "[tr] Applying is free. A provider fee is due only if you are chosen."
+    },
+    "form": {
+      "title": "[tr] Your message to the customer",
+      "warning": "[tr] Do not share phone numbers, emails, links or social handles. Messages with contact details are refused.",
+      "counter": "{count} / {max}",
+      "submit": "[tr] Apply, free",
+      "confirmTitle": "[tr] Send your offer?",
+      "confirmFree": "[tr] Applying costs nothing.",
+      "confirmFee": "[tr] A provider fee is due only if the customer chooses you.",
+      "confirmNow": "[tr] Your offer goes to the customer now.",
+      "confirmSend": "[tr] Send my offer",
+      "confirmBack": "[tr] Back",
+      "sending": "[tr] Sending…",
+      "applied": "[tr] You applied. The customer will see your offer.",
+      "appliedOn": "[tr] Applied on {date}",
+      "full": "[tr] This request has reached the limit of offers.",
+      "closed": "[tr] This request is closed."
+    },
+    "applications": {
+      "title": "[tr] My applications",
+      "intro": "[tr] Every request you applied to, newest first.",
+      "open": "[tr] Open the request",
+      "more": "[tr] Show more",
+      "empty": {
+        "lead": "[tr] Nothing yet",
+        "title": "[tr] You have not applied yet",
+        "body": "[tr] Find a request that fits you and apply for free.",
+        "action": "[tr] See available requests"
+      },
+      "error": {
+        "title": "[tr] Your applications could not be loaded",
+        "body": "[tr] Please try again in a moment."
+      }
+    },
+    "home": {
+      "open": "[tr] Open requests for you",
+      "openBody": "[tr] In your services and districts, not full yet.",
+      "applied": "[tr] Waiting for the customer",
+      "appliedBody": "[tr] Your applications still open.",
+      "links": "[tr] More",
+      "error": {
+        "title": "[tr] Your counts could not be loaded",
+        "body": "[tr] Please try again in a moment."
+      }
+    },
+    "errors": {
+      "forbidden": "[tr] This page is for providers.",
+      "unauthorized": "[tr] Please sign in again.",
+      "validation_failed": "[tr] Something in the form is not right. Check it and try again.",
+      "provider_suspended": "[tr] Your account is suspended.",
+      "setup_invalid_services": "[tr] Pick at least one service that is still offered.",
+      "setup_invalid_zones": "[tr] Pick at least one district that is still served.",
+      "setup_invalid_work_days": "[tr] Pick at least one work day.",
+      "setup_invalid_hours": "[tr] The end hour must come after the start hour.",
+      "setup_invalid": "[tr] Something in your picks is not right. Check them and try again.",
+      "not_approved": "[tr] Your file is not approved, so you cannot apply yet.",
+      "setup_incomplete": "[tr] Set up your services and districts first.",
+      "not_found": "[tr] This request is not available to you.",
+      "request_closed": "[tr] This request is closed.",
+      "request_full": "[tr] This request has reached the limit of offers.",
+      "too_many_applications": "[tr] Too many applications in the last hour. Try again later.",
+      "message_invalid": "[tr] Write between 20 and 600 characters.",
+      "contact_info_in_message": "[tr] Your message has contact details. Remove phone numbers, emails, links and social handles.",
+      "apply_settings_invalid": "[tr] Applying is not possible right now. Please try again later.",
+      "action_failed": "[tr] Something went wrong. Nothing was sent. Try again."
     }
   }
 }

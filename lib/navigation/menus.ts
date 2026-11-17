@@ -5,7 +5,18 @@ import type { Role } from '@/lib/auth/roles';
 /** The role menu: only pages that exist (D99). A later position adds its own row with its page. */
 
 export type MenuItem = {
-  key: 'requests' | 'newRequest' | 'dashboard' | 'profile' | 'account' | 'providers' | 'catalog' | 'pricing';
+  key:
+    | 'requests'
+    | 'newRequest'
+    | 'dashboard'
+    | 'profile'
+    | 'account'
+    | 'providers'
+    | 'catalog'
+    | 'pricing'
+    | 'feed'
+    | 'applications'
+    | 'setup';
   href: string;
 };
 
@@ -15,10 +26,12 @@ const MENUS: Readonly<Record<Role, readonly MenuItem[]>> = {
     { key: 'newRequest', href: '/requests/new' },
     { key: 'account', href: '/account' },
   ],
+  // Spec 0009 AC-15: the phone tabs are the daily work. Setup, profile and account sit in the header from
+  // `lg` (`PROVIDER_NAV`) and as links on `/provider` below it (`PROVIDER_LINKS`), as the admin rail does.
   provider: [
     { key: 'dashboard', href: '/provider' },
-    { key: 'profile', href: '/provider/profile' },
-    { key: 'account', href: '/account' },
+    { key: 'feed', href: '/provider/feed' },
+    { key: 'applications', href: '/provider/applications' },
   ],
   // Spec 0006 AC-13: built pages only. Later positions add their rows.
   admin: [
@@ -30,6 +43,26 @@ const MENUS: Readonly<Record<Role, readonly MenuItem[]>> = {
 
 export function menuFor(role: Role): readonly MenuItem[] {
   return MENUS[role];
+}
+
+/** Every provider page, in the header from `lg` (spec 0009 AC-15). */
+export const PROVIDER_NAV: readonly MenuItem[] = [
+  { key: 'dashboard', href: '/provider' },
+  { key: 'feed', href: '/provider/feed' },
+  { key: 'applications', href: '/provider/applications' },
+  { key: 'setup', href: '/provider/setup' },
+  { key: 'profile', href: '/provider/profile' },
+  { key: 'account', href: '/account' },
+];
+
+/** The provider pages the bottom bar has no tab for, linked from `/provider` below `lg`. */
+export const PROVIDER_LINKS: readonly MenuItem[] = PROVIDER_NAV.filter(
+  (item) => !MENUS.provider.some((tab) => tab.key === item.key),
+);
+
+/** The header's menu from `lg`: every page of the role. */
+export function headerMenuFor(role: Role): readonly MenuItem[] {
+  return role === 'provider' ? PROVIDER_NAV : MENUS[role];
 }
 
 /**
