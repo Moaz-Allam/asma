@@ -42,6 +42,11 @@ export type AnalyticsEvents = {
   payment_succeeded: { fee: 'commission' | 'provider_fee' };
   /** A contact card first rendered for one side (spec 0011-10 AC-13). Only the side: no id, no contact field. */
   contacts_unlocked: { side: 'customer' | 'provider' };
+  /** The provider pressed Started or Done (spec 0011-11 AC-10). No id, no text. */
+  job_started: Record<string, never>;
+  job_done: Record<string, never>;
+  /** The customer closed the job: Confirm, or "Job done" without the provider (spec 0011-11 AC-10). */
+  job_confirmed: { by: 'confirm' | 'mark_done' };
 };
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
@@ -64,6 +69,9 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'payment_started',
   'payment_succeeded',
   'contacts_unlocked',
+  'job_started',
+  'job_done',
+  'job_confirmed',
 ]);
 
 /** The typed property names per event: the only non `$` properties an event may carry. */
@@ -85,4 +93,7 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   payment_started: ['fee'],
   payment_succeeded: ['fee'],
   contacts_unlocked: ['side'],
+  job_started: [],
+  job_done: [],
+  job_confirmed: ['by'],
 };

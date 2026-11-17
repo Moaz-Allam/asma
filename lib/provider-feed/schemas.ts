@@ -88,6 +88,12 @@ export const JobRow = z
     unlocked_at: Instant.nullable(),
     payment_deadline: Instant.nullable(),
     fee_deadline: Instant.nullable(),
+    // Spec 0011-11 R-5: the request's state, its work dates, and whether Started may be pressed now.
+    request_status: z.string(),
+    actual_started_at: Instant.nullable(),
+    confirm_deadline: Instant.nullable(),
+    closed_at: Instant.nullable(),
+    can_start: z.boolean(),
   })
   .strict();
 export type JobRow = z.infer<typeof JobRow>;
@@ -96,6 +102,9 @@ export const JobsPage = z
   .object({ timezone: z.string(), now: Instant, has_more: z.boolean(), rows: z.array(JobRow) })
   .strict();
 export type JobsPage = z.infer<typeof JobsPage>;
+
+/** `start_job()`, `finish_job()`, `confirm_job()`, `customer_mark_done()` (spec 0011-11 AC-2 to AC-5, R-3). */
+export const JobMoveResult = z.object({ status: z.literal('ok'), replayed: z.boolean() }).strict();
 
 /** `pay_provider_fee()` (spec 0011-10 AC-2): an attempt to wait on, or settled at once for a fee of 0. */
 export const PayFeeResult = z.discriminatedUnion('status', [

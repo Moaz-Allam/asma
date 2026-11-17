@@ -70,6 +70,12 @@ const JOB = {
   unlocked_at: null,
   payment_deadline: null,
   fee_deadline: '2026-11-18T09:00:00+00:00',
+  // Spec 0011-11 R-5.
+  request_status: 'COMMISSION_PAID',
+  actual_started_at: null,
+  confirm_deadline: null,
+  closed_at: null,
+  can_start: false,
 };
 const PROVIDER_SIDE = {
   side: 'provider',

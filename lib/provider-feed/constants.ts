@@ -38,6 +38,9 @@ export const PROVIDER_FEED_DB_CODES = [
   'too_many_checkouts',
   'checkout_settings_invalid',
   'unlock_settings_invalid',
+  // Spec 0011-11 (11): work and close.
+  'too_early',
+  'confirm_settings_invalid',
 ] as const;
 export type ProviderFeedCode = (typeof PROVIDER_FEED_DB_CODES)[number];
 

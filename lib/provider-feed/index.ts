@@ -22,6 +22,7 @@ import {
   ApplyResult,
   FeedPage,
   HomeCounts,
+  JobMoveResult,
   JobsPage,
   PayFeeResult,
   ProviderSetup,
@@ -78,7 +79,11 @@ async function call(
       raiseAlert('apply_settings_invalid', { recordId: fn, region: context.region ?? undefined });
     }
     // Spec 0011-10 AC-8: a missing checkout or window setting stops every provider fee in the region.
-    if (refused.code === 'checkout_settings_invalid' || refused.code === 'unlock_settings_invalid') {
+    if (
+      refused.code === 'checkout_settings_invalid' ||
+      refused.code === 'unlock_settings_invalid' ||
+      refused.code === 'confirm_settings_invalid'
+    ) {
       raiseAlert(refused.code, { recordId: fn, region: context.region ?? undefined });
     }
     return refused;
@@ -247,6 +252,24 @@ export async function listJobs(
       ? encodeCursor({ createdAt: last.status_changed_at, id: last.application_id })
       : null;
   return { ok: true, page, next };
+}
+
+/**
+ * Started and Done (spec 0011-11 AC-2, AC-3): the provider's word on the job, no money attached (D91). Only the
+ * selected, unlocked, approved provider; the start day is decided in Postgres. A second press is a replay.
+ */
+export async function moveJob(
+  move: 'start' | 'finish',
+  requestId: string,
+  context: Context,
+): Promise<{ ok: true; replayed: boolean } | Refused> {
+  const result = await call(
+    move === 'start' ? 'start_job' : 'finish_job',
+    { p_request_id: requestId },
+    context,
+  );
+  if ('ok' in result) return result;
+  return { ok: true, replayed: JobMoveResult.parse(result.data).replayed };
 }
 
 /** AC-14: the two counts of the provider home. */

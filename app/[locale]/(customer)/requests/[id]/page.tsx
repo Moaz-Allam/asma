@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { JobActionButton } from '@/components/features/jobs/JobActionButton';
 import { PayButton } from '@/components/features/payments/PayButton';
 import { NextStepPanel } from '@/components/features/requests/NextStepPanel';
 import { OfferCard } from '@/components/features/requests/OfferCard';
@@ -19,7 +20,7 @@ import { localized } from '@/lib/catalog/localized';
 import { formatMoney } from '@/lib/format/money';
 import type { Locale } from '@/lib/i18n/direction';
 import { Link } from '@/lib/i18n/navigation';
-import { getMyRequest, loadCommissionFee, loadContacts, loadOffers } from '@/lib/requests';
+import { getMyRequest, loadCloseInfo, loadCommissionFee, loadContacts, loadOffers } from '@/lib/requests';
 import { instantLabel, NUMBER_LOCALE, quoteLines, regionDefaultLocale } from '@/lib/requests/view';
 
 /** Spec 0011-10 AC-12, security review S10-12: contacts render here, so the route is never cached. */
@@ -108,6 +109,10 @@ export default async function Page({ params, searchParams }: Props) {
   // Spec 0011-10 AC-11: both fees settled; the contacts come from Postgres, which decides (rule 2).
   const revealed = ['UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION', 'COMPLETED'].includes(current);
   const contacts = revealed ? await loadContacts(request.id, { region: user.region, userId: user.id }) : null;
+  // Spec 0011-11 AC-8, R-2, R-5: whether the job closes by itself here, and whether "Job done" may be pressed now.
+  const working = ['UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION'].includes(current);
+  const closeInfo = working ? await loadCloseInfo(request.id) : null;
+  const tj = await getTranslations('Jobs');
   const payOpen =
     current === 'SELECTED' &&
     offers.payment_deadline !== null &&
@@ -154,6 +159,40 @@ export default async function Page({ params, searchParams }: Props) {
       ? [
           { key: 'provider_fee', label: t('timeline.providerFee'), at: null, done: true },
           { key: 'contacts', label: t('timeline.contacts'), at: null, done: true },
+        ]
+      : []),
+    // Spec 0011-11 AC-8, R-7: the work steps from the request's own columns. Started stays unlit when the
+    // customer closed without it; the close names who closed.
+    ...(request.actual_started_at
+      ? [
+          {
+            key: 'started',
+            label: t('timeline.started'),
+            at: instantLabel(request.actual_started_at, timezone, locale),
+          },
+        ]
+      : []),
+    ...(request.actual_completed_at && current !== 'COMPLETED'
+      ? [
+          {
+            key: 'done',
+            label: t('timeline.done'),
+            at: instantLabel(request.actual_completed_at, timezone, locale),
+          },
+        ]
+      : []),
+    ...(request.closed_at && current === 'COMPLETED'
+      ? [
+          {
+            key: 'closed',
+            label:
+              request.closed_by === 'auto'
+                ? t('timeline.closedAuto')
+                : request.actual_started_at
+                  ? t('timeline.confirmed')
+                  : t('timeline.closedByCustomer'),
+            at: instantLabel(request.closed_at, timezone, locale),
+          },
         ]
       : []),
   ];
@@ -324,6 +363,38 @@ export default async function Page({ params, searchParams }: Props) {
                 </Button>
               ) : null}
             </section>
+          ) : null}
+          {current === 'AWAITING_CONFIRMATION' && request.confirm_deadline ? (
+            <section
+              aria-labelledby="confirm-title"
+              className="flex flex-col gap-3 rounded-panel bg-accent-light p-5 lg:p-7.5"
+            >
+              <h2 id="confirm-title" className="font-display text-title-s text-text-primary">
+                {tj('confirmTitle')}
+              </h2>
+              <p className="text-body text-text-primary">
+                {closeInfo?.auto_close_enabled
+                  ? tj('closesOn', { date: instantLabel(request.confirm_deadline, timezone, locale) })
+                  : tj('confirmBy', { date: instantLabel(request.confirm_deadline, timezone, locale) })}
+              </p>
+              <JobActionButton
+                move="confirm"
+                requestId={request.id}
+                label={tj('confirm')}
+                title={tj('confirmDialogTitle')}
+                body={tj('confirmDialogBody')}
+              />
+            </section>
+          ) : null}
+          {(current === 'UNLOCKED' || current === 'IN_PROGRESS') && closeInfo?.can_mark_done ? (
+            <JobActionButton
+              move="mark_done"
+              requestId={request.id}
+              label={tj('markDone')}
+              title={tj('markDoneDialogTitle')}
+              body={tj('markDoneDialogBody')}
+              variant="outline"
+            />
           ) : null}
           {contacts ? (
             <ContactCard
