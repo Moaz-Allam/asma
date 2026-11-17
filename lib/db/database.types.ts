@@ -82,6 +82,97 @@ export type Database = {
           },
         ]
       }
+      applications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          provider_id: string
+          region: string
+          request_id: string
+          status: string
+          status_changed_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          provider_id: string
+          region: string
+          request_id: string
+          status?: string
+          status_changed_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          provider_id?: string
+          region?: string
+          request_id?: string
+          status?: string
+          status_changed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_provider_fk"
+            columns: ["provider_id", "region"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "applications_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "applications_request_fk"
+            columns: ["request_id", "region"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "region"]
+          },
+        ]
+      }
+      apply_counters: {
+        Row: {
+          count: number
+          provider_id: string
+          region: string
+          window_start: string
+        }
+        Insert: {
+          count: number
+          provider_id: string
+          region: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          provider_id?: string
+          region?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apply_counters_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: true
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apply_counters_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -341,6 +432,48 @@ export type Database = {
           },
         ]
       }
+      provider_availability: {
+        Row: {
+          end_hour: number
+          provider_id: string
+          region: string
+          start_hour: number
+          updated_at: string
+          work_days: number[]
+        }
+        Insert: {
+          end_hour: number
+          provider_id: string
+          region: string
+          start_hour: number
+          updated_at?: string
+          work_days: number[]
+        }
+        Update: {
+          end_hour?: number
+          provider_id?: string
+          region?: string
+          start_hour?: number
+          updated_at?: string
+          work_days?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_availability_provider_fk"
+            columns: ["provider_id", "region"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "provider_availability_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       provider_documents: {
         Row: {
           id: string
@@ -452,6 +585,92 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "regions"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      provider_services: {
+        Row: {
+          created_at: string
+          provider_id: string
+          region: string
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          provider_id: string
+          region: string
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          provider_id?: string
+          region?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_services_provider_fk"
+            columns: ["provider_id", "region"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "provider_services_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "provider_services_service_fk"
+            columns: ["service_id", "region"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "region"]
+          },
+        ]
+      }
+      provider_zones: {
+        Row: {
+          created_at: string
+          provider_id: string
+          region: string
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          provider_id: string
+          region: string
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          provider_id?: string
+          region?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_zones_provider_fk"
+            columns: ["provider_id", "region"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "provider_zones_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "provider_zones_zone_fk"
+            columns: ["zone_id", "region"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id", "region"]
           },
         ]
       }
@@ -1007,6 +1226,11 @@ export type Database = {
         Args: { p_name: string; p_object_id: string }
         Returns: boolean
       }
+      apply_settings: { Args: { p_region: string }; Returns: Json }
+      apply_to_request: {
+        Args: { p_message: string; p_request_id: string }
+        Returns: Json
+      }
       cancel_request: {
         Args: { p_reason: string; p_request_id: string }
         Returns: Json
@@ -1027,6 +1251,10 @@ export type Database = {
         Returns: Json
       }
       contact_normalise: { Args: { p_text: string }; Returns: string }
+      count_application: {
+        Args: { p_limit: number; p_provider_id: string; p_region: string }
+        Returns: number
+      }
       count_quote: {
         Args: { p_region: string; p_user_id: string }
         Returns: number
@@ -1120,6 +1348,10 @@ export type Database = {
         Returns: Json
       }
       promote_to_admin: { Args: { p_phone: string }; Returns: undefined }
+      provider_applications: {
+        Args: { p_after_created_at: string; p_after_id: string }
+        Returns: Json
+      }
       provider_back_to_review: {
         Args: {
           p_provider: Database["public"]["Tables"]["providers"]["Row"]
@@ -1167,6 +1399,18 @@ export type Database = {
         Returns: boolean
       }
       provider_ext_mime: { Args: { p_name: string }; Returns: string }
+      provider_feed: {
+        Args: {
+          p_after_id: string
+          p_after_outside: boolean
+          p_after_start: string
+          p_from: string
+          p_service_ids: string[]
+          p_to: string
+          p_zone_ids: string[]
+        }
+        Returns: Json
+      }
       provider_for_admin: {
         Args: { p_provider_id: string }
         Returns: {
@@ -1199,6 +1443,7 @@ export type Database = {
         Args: { p_region: string; p_user: string }
         Returns: boolean
       }
+      provider_home_counts: { Args: never; Returns: Json }
       provider_may_store: {
         Args: { p_bucket: string; p_name: string }
         Returns: boolean
@@ -1207,11 +1452,63 @@ export type Database = {
         Args: { p_bucket: string; p_name: string }
         Returns: string
       }
+      provider_outside_hours: {
+        Args: {
+          p_end_hour: number
+          p_start: string
+          p_start_hour: number
+          p_timezone: string
+          p_work_days: number[]
+        }
+        Returns: boolean
+      }
+      provider_reader: {
+        Args: never
+        Returns: {
+          approved_at: string | null
+          approved_name: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          entity_type: string | null
+          id: string
+          legal_name: string | null
+          region: string
+          rejection_code: string | null
+          rejection_note: string | null
+          review_reason: string | null
+          status: string
+          submitted_at: string | null
+          suspension_reason: string | null
+          tax_number: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "providers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      provider_request: { Args: { p_request_id: string }; Returns: Json }
       provider_required_types: { Args: { p_region: string }; Returns: string[] }
+      provider_setup: { Args: never; Returns: Json }
+      provider_setup_complete: {
+        Args: { p_provider_id: string }
+        Returns: boolean
+      }
+      provider_short_details: {
+        Args: { p_request: Database["public"]["Tables"]["requests"]["Row"] }
+        Returns: Json
+      }
       provider_standing: { Args: { p_provider_id: string }; Returns: string }
       provider_store_allowed: {
         Args: { p_bucket: string; p_name: string; p_provider: string }
         Returns: boolean
+      }
+      provider_structured_answers: {
+        Args: { p_answers: Json; p_questions: Json }
+        Returns: Json
       }
       provider_type_bucket: { Args: { p_type: string }; Returns: string }
       public_region_info: {
@@ -1288,11 +1585,22 @@ export type Database = {
         }
         Returns: Json
       }
+      save_provider_setup: {
+        Args: {
+          p_end_hour: number
+          p_service_ids: string[]
+          p_start_hour: number
+          p_work_days: number[]
+          p_zone_ids: string[]
+        }
+        Returns: Json
+      }
       submit_provider_file: { Args: never; Returns: Json }
       suspend_provider: {
         Args: { p_provider_id: string; p_reason: string }
         Returns: Json
       }
+      work_days_ok: { Args: { p_days: number[] }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

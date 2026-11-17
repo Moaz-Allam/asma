@@ -25,7 +25,9 @@ CREATE FUNCTION pg_temp.clean_up() RETURNS text LANGUAGE sql AS $fn$
     ALTER TABLE public.request_addresses DISABLE TRIGGER request_addresses_guard;
     DELETE FROM public.request_addresses WHERE customer_id::text LIKE '00000000-0000-0000-0000-0000001300%';
     ALTER TABLE public.request_addresses ENABLE TRIGGER request_addresses_guard;
+    ALTER TABLE public.requests DISABLE TRIGGER requests_delete_guard;
     DELETE FROM public.requests WHERE customer_id::text LIKE '00000000-0000-0000-0000-0000001300%';
+    ALTER TABLE public.requests ENABLE TRIGGER requests_delete_guard;
     DELETE FROM public.quote_counters WHERE user_id::text LIKE '00000000-0000-0000-0000-0000001300%';
     ALTER TABLE public.pricing_formulas DISABLE TRIGGER pricing_history_guard;
     DELETE FROM public.pricing_formulas WHERE service_id::text LIKE '00000000-0000-0000-0000-0000001300%';

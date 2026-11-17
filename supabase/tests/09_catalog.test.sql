@@ -38,7 +38,16 @@ DELETE FROM public.pricing_formulas;
 ALTER TABLE public.request_addresses DISABLE TRIGGER request_addresses_guard;
 DELETE FROM public.request_addresses;
 ALTER TABLE public.request_addresses ENABLE TRIGGER request_addresses_guard;
+-- Since 05, applications and provider picks refer to requests, services and zones, and requests refuse
+-- a delete even as postgres; both guards are off for this rolled back clean up only.
+ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
+DELETE FROM public.applications;
+ALTER TABLE public.applications ENABLE TRIGGER applications_guard;
+DELETE FROM public.provider_services;
+DELETE FROM public.provider_zones;
+ALTER TABLE public.requests DISABLE TRIGGER requests_delete_guard;
 DELETE FROM public.requests;
+ALTER TABLE public.requests ENABLE TRIGGER requests_delete_guard;
 ALTER TABLE public.pricing_modifiers ENABLE TRIGGER pricing_history_guard;
 ALTER TABLE public.pricing_formulas ENABLE TRIGGER pricing_history_guard;
 DELETE FROM public.addons;
