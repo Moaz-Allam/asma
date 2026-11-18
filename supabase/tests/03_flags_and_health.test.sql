@@ -28,8 +28,10 @@ SELECT results_eq(
        FROM public.platform_settings
       WHERE right(key, 8) = '_enabled'
       ORDER BY region, key $$,
-  $$ VALUES ('KSA', 'notifications_enabled', 'false'::jsonb),
+  $$ VALUES ('KSA', 'auto_close_enabled', 'false'::jsonb),
+            ('KSA', 'notifications_enabled', 'false'::jsonb),
             ('KSA', 'payments_enabled', 'false'::jsonb),
+            ('TR',  'auto_close_enabled', 'false'::jsonb),
             ('TR',  'notifications_enabled', 'true'::jsonb),
             ('TR',  'payments_enabled', 'null'::jsonb) $$,
   'two money flags per region: notifications TR on, KSA off; payments KSA off'

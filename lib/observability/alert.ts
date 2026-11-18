@@ -66,7 +66,9 @@ export type AlertReason =
   // or the request id.
   | 'unlock_settings_invalid'
   // Spec 0011-10: the contact window setting is missing or malformed.
-  | 'contact_settings_invalid';
+  | 'contact_settings_invalid'
+  // Spec 0011-11: the confirm window setting is missing or malformed.
+  | 'confirm_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

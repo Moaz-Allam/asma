@@ -1,5 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { Fragment } from 'react';
 
+import { JobActionButton } from '@/components/features/jobs/JobActionButton';
 import { PayButton } from '@/components/features/payments/PayButton';
 import { ApplicationRow } from '@/components/features/provider-feed/ApplicationRow';
 import { AgreementLine } from '@/components/shared/AgreementLine';
@@ -85,10 +87,18 @@ export default async function Page({ params, searchParams }: Props) {
   const { rows, timezone, now } = result.page;
   const where = (row: JobRow) =>
     `${text(row.zone_name)} · ${instantLabel(row.scheduled_start_at, timezone, locale)}`;
+  // Active, and a closed job in Done while the 14 day window lasts (spec 0011-11 A-3): Postgres decides (rule 2).
   const contacts =
-    tab === 'active'
-      ? await Promise.all(rows.map((row) => loadContacts(row.id, { region: user.region, userId: user.id })))
+    tab === 'active' || tab === 'done'
+      ? await Promise.all(
+          rows.map((row) =>
+            tab === 'active' || row.application_status === 'CONFIRMED'
+              ? loadContacts(row.id, { region: user.region, userId: user.id })
+              : null,
+          ),
+        )
       : [];
+  const tj = await getTranslations('Jobs');
 
   return (
     <>
@@ -185,33 +195,74 @@ export default async function Page({ params, searchParams }: Props) {
                     {t('jobs.contactsHidden')}
                   </p>
                 )}
+                {row.application_status === 'UNLOCKED' ? (
+                  row.can_start ? (
+                    <JobActionButton
+                      move="start"
+                      requestId={row.id}
+                      label={tj('start')}
+                      title={tj('startDialogTitle')}
+                      body={tj('startDialogBody')}
+                    />
+                  ) : (
+                    <p className="text-body-s text-text-secondary">
+                      {tj('startFrom', { date: instantLabel(row.scheduled_start_at, timezone, locale) })}
+                    </p>
+                  )
+                ) : row.application_status === 'STARTED' ? (
+                  <JobActionButton
+                    move="finish"
+                    requestId={row.id}
+                    label={tj('finish')}
+                    title={tj('finishDialogTitle')}
+                    body={tj('finishDialogBody')}
+                  />
+                ) : row.application_status === 'COMPLETED' && row.confirm_deadline ? (
+                  <p
+                    role="status"
+                    className="rounded-block bg-surface-secondary p-4 text-body-s text-text-primary"
+                  >
+                    {tj('waitingCustomer', { date: instantLabel(row.confirm_deadline, timezone, locale) })}
+                  </p>
+                ) : null}
               </li>
             );
           })}
         </ul>
       ) : (
         <ul className="flex flex-col gap-3.5">
-          {rows.map((row) => (
-            <ApplicationRow
-              key={row.application_id}
-              href={`/provider/feed/${row.id}`}
-              status={row.application_status}
-              statusLabel={t(`status.${row.application_status}`)}
-              title={text(row.service_name)}
-              where={where(row)}
-              applied={t('jobs.changedOn', { date: instantLabel(row.status_changed_at, timezone, locale) })}
-              note={
-                row.application_status === 'SELECTED' && row.payment_deadline
-                  ? t('chosen.line', { date: instantLabel(row.payment_deadline, timezone, locale) })
-                  : row.application_status === 'NOT_SELECTED'
-                    ? t('chosen.notChosen')
-                    : row.application_status === 'CANCELLED'
-                      ? t('chosen.cancelled')
-                      : null
-              }
-              price={row.fixed_price}
-              currency={row.currency}
-            />
+          {rows.map((row, index) => (
+            <Fragment key={row.application_id}>
+              <ApplicationRow
+                href={`/provider/feed/${row.id}`}
+                status={row.application_status}
+                statusLabel={t(`status.${row.application_status}`)}
+                title={text(row.service_name)}
+                where={where(row)}
+                applied={t('jobs.changedOn', { date: instantLabel(row.status_changed_at, timezone, locale) })}
+                note={
+                  row.application_status === 'SELECTED' && row.payment_deadline
+                    ? t('chosen.line', { date: instantLabel(row.payment_deadline, timezone, locale) })
+                    : row.application_status === 'NOT_SELECTED'
+                      ? t('chosen.notChosen')
+                      : row.application_status === 'CANCELLED'
+                        ? t('chosen.cancelled')
+                        : null
+                }
+                price={row.fixed_price}
+                currency={row.currency}
+              />
+              {contacts[index] ? (
+                <li>
+                  <ContactCard
+                    contacts={contacts[index]}
+                    requestId={row.id}
+                    locale={locale}
+                    fallbackLocale={fallback}
+                  />
+                </li>
+              ) : null}
+            </Fragment>
           ))}
         </ul>
       )}

@@ -1445,6 +1445,8 @@ export type Database = {
       }
       requests: {
         Row: {
+          actual_completed_at: string | null
+          actual_started_at: string | null
           addon_ids: string[]
           answers: Json
           cancel_reason: string | null
@@ -1453,7 +1455,9 @@ export type Database = {
           cash_due: number
           client_key: string
           closed_at: string | null
+          closed_by: string | null
           commission_amount: number
+          confirm_deadline: string | null
           created_at: string
           currency: string
           customer_id: string
@@ -1474,6 +1478,8 @@ export type Database = {
           zone_id: string
         }
         Insert: {
+          actual_completed_at?: string | null
+          actual_started_at?: string | null
           addon_ids?: string[]
           answers: Json
           cancel_reason?: string | null
@@ -1482,7 +1488,9 @@ export type Database = {
           cash_due: number
           client_key: string
           closed_at?: string | null
+          closed_by?: string | null
           commission_amount: number
+          confirm_deadline?: string | null
           created_at?: string
           currency: string
           customer_id: string
@@ -1503,6 +1511,8 @@ export type Database = {
           zone_id: string
         }
         Update: {
+          actual_completed_at?: string | null
+          actual_started_at?: string | null
           addon_ids?: string[]
           answers?: Json
           cancel_reason?: string | null
@@ -1511,7 +1521,9 @@ export type Database = {
           cash_due?: number
           client_key?: string
           closed_at?: string | null
+          closed_by?: string | null
           commission_amount?: number
+          confirm_deadline?: string | null
           created_at?: string
           currency?: string
           customer_id?: string
@@ -1786,6 +1798,8 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: number
       }
+      auto_close_enabled: { Args: { p_region: string }; Returns: boolean }
+      auto_close_jobs: { Args: never; Returns: number }
       blank_class: { Args: never; Returns: string }
       blank_marks: { Args: never; Returns: string }
       cancel_request: {
@@ -1810,6 +1824,10 @@ export type Database = {
         Args: { p_limit: number; p_worker: string }
         Returns: Json
       }
+      close_job: {
+        Args: { p_action: string; p_by: string; p_request_id: string }
+        Returns: undefined
+      }
       commission_settled: { Args: { p_request_id: string }; Returns: string }
       commission_side_settled: {
         Args: { p_request_id: string }
@@ -1824,6 +1842,8 @@ export type Database = {
         }
         Returns: Json
       }
+      confirm_job: { Args: { p_request_id: string }; Returns: Json }
+      confirm_settings: { Args: { p_region: string }; Returns: number }
       contact_normalise: { Args: { p_text: string }; Returns: string }
       contact_settings: { Args: { p_region: string }; Returns: number }
       contacts_visible: { Args: { p_request_id: string }; Returns: boolean }
@@ -1851,6 +1871,7 @@ export type Database = {
         }
         Returns: Json
       }
+      customer_mark_done: { Args: { p_request_id: string }; Returns: Json }
       decide_provider: {
         Args: {
           p_code: string
@@ -1888,6 +1909,7 @@ export type Database = {
         Args: { p_region: string; p_unit?: number }
         Returns: Json
       }
+      finish_job: { Args: { p_request_id: string }; Returns: Json }
       finish_outbox: {
         Args: {
           p_claim_token: string
@@ -1900,6 +1922,28 @@ export type Database = {
       has_contact_info: { Args: { p_text: string }; Returns: boolean }
       health_ping: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      job_for_provider: {
+        Args: { p_request_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          message: string
+          provider_fee_amount: number | null
+          provider_fee_kind: string | null
+          provider_id: string
+          region: string
+          request_id: string
+          status: string
+          status_changed_at: string
+          unlocked_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "applications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       ledger_check: { Args: { p_region: string }; Returns: Json }
       lock_attempt: {
         Args: { p_attempt_id: string }
@@ -2286,6 +2330,7 @@ export type Database = {
       reinstate_provider: { Args: { p_provider_id: string }; Returns: Json }
       relay_kick: { Args: { p_task: string }; Returns: number }
       request_catalog: { Args: never; Returns: Json }
+      request_close_info: { Args: { p_request_id: string }; Returns: Json }
       request_contacts: { Args: { p_request_id: string }; Returns: Json }
       request_offers: { Args: { p_request_id: string }; Returns: Json }
       request_settings: { Args: { p_region: string }; Returns: Json }
@@ -2330,6 +2375,8 @@ export type Database = {
         }
         Returns: string
       }
+      start_day_reached: { Args: { p_request_id: string }; Returns: boolean }
+      start_job: { Args: { p_request_id: string }; Returns: Json }
       submit_provider_file: { Args: never; Returns: Json }
       suspend_provider: {
         Args: { p_provider_id: string; p_reason: string }

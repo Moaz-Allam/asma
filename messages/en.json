@@ -1109,7 +1109,12 @@
       "payment": "Commission payment",
       "commissionPaid": "Commission paid",
       "providerFee": "Provider fee",
-      "contacts": "Contacts shared"
+      "contacts": "Contacts shared",
+      "started": "Started",
+      "done": "Done",
+      "confirmed": "Confirmed",
+      "closedByCustomer": "Closed by the customer",
+      "closedAuto": "Closed by itself"
     },
     "cancelSelected": "The provider you chose will see that their offer is cancelled."
   },
@@ -1386,5 +1391,36 @@
     "call": "Call",
     "whatsapp": "WhatsApp",
     "emailAction": "Email"
+  },
+  "Jobs": {
+    "cancel": "Cancel",
+    "start": "Started",
+    "finish": "Done",
+    "confirm": "Confirm the job",
+    "markDone": "Job done",
+    "startFrom": "You can press Started from {date}.",
+    "waitingCustomer": "Waiting for the customer to confirm, until {date}.",
+    "startDialogTitle": "Start the job?",
+    "startDialogBody": "The customer sees that you have started.",
+    "finishDialogTitle": "Mark the job done?",
+    "finishDialogBody": "The customer is asked to confirm. You can not undo this.",
+    "confirmTitle": "The provider marked the job done",
+    "confirmBy": "Please confirm by {date}.",
+    "closesOn": "If you do nothing, the job closes by itself on {date}.",
+    "confirmDialogTitle": "Confirm the job is done?",
+    "confirmDialogBody": "The job closes for good. Pay the provider the cash you agreed, if you have not yet.",
+    "markDoneDialogTitle": "Close the job as done?",
+    "markDoneDialogBody": "Use this when the work is finished but the provider did not mark it. The job closes for good.",
+    "errors": {
+      "action_failed": "Something went wrong. Please try again.",
+      "unauthorized": "Please sign in again.",
+      "forbidden": "You can not do this.",
+      "validation_failed": "Something went wrong. Please try again.",
+      "not_found": "This job could not be found.",
+      "invalid_state": "This job has already moved on. Refresh the page.",
+      "too_early": "This is possible from the start day.",
+      "provider_suspended": "Your account is suspended. Contact support.",
+      "confirm_settings_invalid": "This is not possible right now. Please try again later."
+    }
   }
 }

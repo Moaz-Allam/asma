@@ -332,23 +332,23 @@ SELECT is(pg_temp.probe(ARRAY[pg_temp.suspend('a1')], format('(pg_temp.contacts(
 
 -- The window: closed less than contact_visible_days ago shows; longer ago hides.
 SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
-                              format($q$UPDATE public.requests SET status = 'COMPLETED', closed_at = now() - interval '13 days' WHERE id = %L$q$, pg_temp.r(1))],
+                              format($q$UPDATE public.requests SET status = 'COMPLETED', closed_by = 'customer', closed_at = now() - interval '13 days' WHERE id = %L$q$, pg_temp.r(1))],
                         format('(pg_temp.contacts(%s, %L))::jsonb ->> %L', 1, 'c1', 'side')), 'customer',
   'AC-5: 13 days after the close the contacts still show');
 SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
-                              format($q$UPDATE public.requests SET status = 'COMPLETED', closed_at = now() - interval '15 days' WHERE id = %L$q$, pg_temp.r(1))],
+                              format($q$UPDATE public.requests SET status = 'COMPLETED', closed_by = 'customer', closed_at = now() - interval '15 days' WHERE id = %L$q$, pg_temp.r(1))],
                         format('pg_temp.contacts(%s, %L)', 1, 'a1')), 'not_found',
   'AC-5: 15 days after the close they are gone');
 SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
-                              format($q$UPDATE public.requests SET status = 'COMPLETED', closed_at = now() - interval '15 days' WHERE id = %L$q$, pg_temp.r(1))],
+                              format($q$UPDATE public.requests SET status = 'COMPLETED', closed_by = 'customer', closed_at = now() - interval '15 days' WHERE id = %L$q$, pg_temp.r(1))],
                         format('pg_temp.street(%s, %L)', 1, 'a1')), 'none',
   'AC-6: and so is the street line');
 SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
-                              format($q$UPDATE public.requests SET status = 'CANCELLED', cancelled_at = now() - interval '20 days', cancelled_by = 'admin', closed_at = now() - interval '20 days' WHERE id = %L$q$, pg_temp.r(1))],
+                              format($q$UPDATE public.requests SET status = 'CANCELLED', cancelled_at = now() - interval '20 days', cancelled_by = 'admin', closed_by = 'customer', closed_at = now() - interval '20 days' WHERE id = %L$q$, pg_temp.r(1))],
                         format('pg_temp.contacts(%s, %L)', 1, 'c1')), 'not_found',
   'R-14: a cancelled request closed long ago gives nothing');
 SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
-                              format($q$UPDATE public.requests SET status = 'COMPLETED', closed_at = now() - interval '1 day' WHERE id = %L$q$, pg_temp.r(1)),
+                              format($q$UPDATE public.requests SET status = 'COMPLETED', closed_by = 'customer', closed_at = now() - interval '1 day' WHERE id = %L$q$, pg_temp.r(1)),
                               'ALTER TABLE public.platform_settings DISABLE TRIGGER pricing_settings_guard',
                               $$DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'contact_visible_days'$$],
                         format('pg_temp.contacts(%s, %L)', 1, 'c1')), 'contact_settings_invalid',

@@ -27,6 +27,8 @@ export const CLIENT_NAMESPACES = [
   'ProviderFeed',
   // Spec 0011-09 AC-11, AC-12: the pay and return pages poll in the browser.
   'Payment',
+  // Spec 0011-11 AC-7, AC-8: the work and close buttons and their dialogs.
+  'Jobs',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */

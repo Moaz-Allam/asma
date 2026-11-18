@@ -38,7 +38,9 @@ export type LogEvent =
   | 'relay_handler_failed'
   // Spec 0011-09 AC-9: a card page URL off the active driver's hosts was kept from a payer. The attempt id rides
   // in request_id.
-  | 'checkout_url_refused';
+  | 'checkout_url_refused'
+  // Spec 0011-11 review F-6: the customer's close info could not be read.
+  | 'close_info_refused';
 
 /** The only ids a record may carry: internal ids, never personal data. */
 export type LogIds = {

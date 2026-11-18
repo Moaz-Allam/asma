@@ -155,6 +155,12 @@ export const RequestDetailRow = z.object({
   created_at: z.string(),
   /** Spec 0011-09 AC-6: the provider's fee window, set on SELECTED -> COMMISSION_PAID. */
   fee_deadline: z.string().nullable(),
+  // Spec 0011-11 AC-8: the work dates and who closed the job.
+  actual_started_at: z.string().nullable(),
+  actual_completed_at: z.string().nullable(),
+  confirm_deadline: z.string().nullable(),
+  closed_at: z.string().nullable(),
+  closed_by: z.enum(['customer', 'auto']).nullable(),
   region_info: z.object({ timezone: z.string() }),
 });
 export type RequestDetailRow = z.infer<typeof RequestDetailRow>;
@@ -281,6 +287,13 @@ export const Contacts = z.discriminatedUnion('side', [
     .strict(),
 ]);
 export type Contacts = z.infer<typeof Contacts>;
+
+/** `confirm_job()`, `customer_mark_done()` (spec 0011-11 AC-4, AC-5, R-3). */
+export const CloseResult = z.object({ status: z.literal('ok'), replayed: z.boolean() }).strict();
+
+/** `request_close_info()` (spec 0011-11 R-2, R-5): how the page words the close. */
+export const CloseInfo = z.object({ auto_close_enabled: z.boolean(), can_mark_done: z.boolean() }).strict();
+export type CloseInfo = z.infer<typeof CloseInfo>;
 
 /** The commission row of a request, as its payer reads it through RLS (spec 0011-09 AC-10). */
 export const CommissionFee = z

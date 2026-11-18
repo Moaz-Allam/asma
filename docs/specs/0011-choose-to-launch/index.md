@@ -74,6 +74,10 @@ leaves a slot for them (the reviews slot on the applicant card), the slot render
 > `psp_not_configured`, `psp_bad_response` and `checkout_settings_invalid`. `payments_enabled` (D172) and the settings
 > `checkout_hold_minutes` and `psp_buyer_city` land in 08. 09 and 10 set `checkout_attempts.locale` and `payer_ip`.
 >
+> **Work and close (D180, 2026-11-18).** 0011-11 is amended to what 06 to 10 built: job moves write `audit_log` rows
+> (no `request_events` yet), G1 is its own checklist, and the auto close ships off behind `auto_close_enabled` until 13
+> and 14 are live.
+
 > **The reveal (D178, 2026-11-17).** 0011-10 is amended to what 06 to 09 built. There is no `selections` table: the
 > reveal door is `applications.unlocked_at` on the selected application, with `requests.closed_at` and
 > `contact_visible_days` bounding it; 09's pay, return and receipt pages serve both payers from a `(payments)` group.

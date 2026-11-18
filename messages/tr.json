@@ -1109,7 +1109,12 @@
       "payment": "[tr] Commission payment",
       "commissionPaid": "[tr] Commission paid",
       "providerFee": "[tr] Provider fee",
-      "contacts": "[tr] Contacts shared"
+      "contacts": "[tr] Contacts shared",
+      "started": "[tr] Started",
+      "done": "[tr] Done",
+      "confirmed": "[tr] Confirmed",
+      "closedByCustomer": "[tr] Closed by the customer",
+      "closedAuto": "[tr] Closed by itself"
     },
     "cancelSelected": "[tr] The provider you chose will see that their offer is cancelled."
   },
@@ -1386,5 +1391,36 @@
     "call": "[tr] Call",
     "whatsapp": "[tr] WhatsApp",
     "emailAction": "[tr] Email"
+  },
+  "Jobs": {
+    "cancel": "[tr] Cancel",
+    "start": "[tr] Started",
+    "finish": "[tr] Done",
+    "confirm": "[tr] Confirm the job",
+    "markDone": "[tr] Job done",
+    "startFrom": "[tr] You can press Started from {date}.",
+    "waitingCustomer": "[tr] Waiting for the customer to confirm, until {date}.",
+    "startDialogTitle": "[tr] Start the job?",
+    "startDialogBody": "[tr] The customer sees that you have started.",
+    "finishDialogTitle": "[tr] Mark the job done?",
+    "finishDialogBody": "[tr] The customer is asked to confirm. You can not undo this.",
+    "confirmTitle": "[tr] The provider marked the job done",
+    "confirmBy": "[tr] Please confirm by {date}.",
+    "closesOn": "[tr] If you do nothing, the job closes by itself on {date}.",
+    "confirmDialogTitle": "[tr] Confirm the job is done?",
+    "confirmDialogBody": "[tr] The job closes for good. Pay the provider the cash you agreed, if you have not yet.",
+    "markDoneDialogTitle": "[tr] Close the job as done?",
+    "markDoneDialogBody": "[tr] Use this when the work is finished but the provider did not mark it. The job closes for good.",
+    "errors": {
+      "action_failed": "[tr] Something went wrong. Please try again.",
+      "unauthorized": "[tr] Please sign in again.",
+      "forbidden": "[tr] You can not do this.",
+      "validation_failed": "[tr] Something went wrong. Please try again.",
+      "not_found": "[tr] This job could not be found.",
+      "invalid_state": "[tr] This job has already moved on. Refresh the page.",
+      "too_early": "[tr] This is possible from the start day.",
+      "provider_suspended": "[tr] Your account is suspended. Contact support.",
+      "confirm_settings_invalid": "[tr] This is not possible right now. Please try again later."
+    }
   }
 }

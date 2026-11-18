@@ -13,6 +13,8 @@ import { prefillFrom as filterPrefill, type Prefill } from './prefill';
 import {
   CheckoutStatus,
   ChooseResult,
+  CloseInfo,
+  CloseResult,
   CommissionFee,
   Contacts,
   CreateRequestResult,
@@ -36,6 +38,7 @@ import {
 
 export type {
   CheckoutStatus,
+  CloseInfo,
   CommissionFee,
   Contacts,
   Offer,
@@ -81,6 +84,8 @@ export const REQUEST_DB_CODES = [
   'unlock_settings_invalid',
   // Spec 0011-10 (10): the contact window.
   'contact_settings_invalid',
+  // Spec 0011-11 (11): the customer's close.
+  'too_early',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -346,6 +351,34 @@ export async function loadContacts(requestId: string, context: Context): Promise
   return Contacts.parse(result.data);
 }
 
+/**
+ * The customer's close (spec 0011-11 AC-4, AC-5): Confirm after the provider's Done, or "Job done" from the start
+ * day. No money moves (D91). A second press is a replay; a job the auto close already closed is `invalid_state`.
+ */
+export async function closeJob(
+  move: 'confirm' | 'mark_done',
+  requestId: string,
+): Promise<{ ok: true; replayed: boolean } | Refused> {
+  if (!UUID.test(requestId)) return { ok: false, code: 'not_found' };
+  const result = await call(move === 'confirm' ? 'confirm_job' : 'customer_mark_done', {
+    p_request_id: requestId,
+  });
+  if ('ok' in result) return result;
+  return { ok: true, replayed: CloseResult.parse(result.data).replayed };
+}
+
+/** How the customer's page words the close (spec 0011-11 R-2, R-5), or null for anyone else's request. */
+export async function loadCloseInfo(requestId: string): Promise<CloseInfo | null> {
+  if (!UUID.test(requestId)) return null;
+  const result = await call('request_close_info', { p_request_id: requestId });
+  if ('ok' in result) {
+    // Review F-6: never break the request page over this read; the buttons simply do not show.
+    if (result.code !== 'not_found') log.warn('close_info_refused', { request_id: requestId });
+    return null;
+  }
+  return CloseInfo.parse(result.data);
+}
+
 /** The commission row of the caller's own request, read through RLS (spec 0011-09 AC-10), or null. */
 export async function loadCommissionFee(requestId: string): Promise<CommissionFee | null> {
   if (!UUID.test(requestId)) return null;
@@ -422,7 +455,7 @@ export async function listMyRequests(input: {
 export type MyRequest = { request: RequestDetailRow; addressLine: string | null; now: string };
 
 const DETAIL_COLUMNS =
-  'id, status, service_id, zone_id, addon_ids, answers, questions_snapshot, pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at, notes, cancelled_at, cancel_reason, created_at, fee_deadline, region_info:regions(timezone)';
+  'id, status, service_id, zone_id, addon_ids, answers, questions_snapshot, pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at, notes, cancelled_at, cancel_reason, created_at, fee_deadline, actual_started_at, actual_completed_at, confirm_deadline, closed_at, closed_by, region_info:regions(timezone)';
 
 /** One of the caller's own requests and its address, or null: another's, unknown or malformed (AC-14). */
 export async function getMyRequest(input: { userId: string; id: string }): Promise<MyRequest | null> {

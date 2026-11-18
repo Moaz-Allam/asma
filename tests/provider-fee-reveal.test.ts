@@ -70,6 +70,12 @@ const JOB = {
   unlocked_at: null,
   payment_deadline: null,
   fee_deadline: '2026-11-18T09:00:00+00:00',
+  // Spec 0011-11 R-5.
+  request_status: 'COMMISSION_PAID',
+  actual_started_at: null,
+  confirm_deadline: null,
+  closed_at: null,
+  can_start: false,
 };
 const PROVIDER_SIDE = {
   side: 'provider',
@@ -194,6 +200,20 @@ describe('listJobs (R-11)', () => {
       p_after_id: null,
     });
     expect(result.ok && result.next).toBeTruthy();
+  });
+
+  it('reads a row that is not the caller’s own unlocked pick, whose request state Postgres hides (S11-1)', async () => {
+    m.rpc.mockResolvedValue({
+      data: {
+        timezone: 'Europe/Istanbul',
+        now: '2026-11-17T10:00:00+00:00',
+        has_more: false,
+        rows: [{ ...JOB, application_status: 'APPLIED', fee_deadline: null, request_status: null }],
+      },
+      error: null,
+    });
+    const result = await listJobs('applied', null, CTX);
+    expect(result.ok && result.page.rows[0]?.request_status).toBeNull();
   });
 
   it('refuses a job row that carries a contact field', async () => {

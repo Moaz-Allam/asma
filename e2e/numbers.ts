@@ -52,6 +52,9 @@ export const NUMBER = {
   revealCustomer: 30,
   revealProvider: 31,
   revealRival: 32,
+  // Position 11 (spec 0011-11 AC-11): the customer and the provider of the work and close journeys.
+  workCustomer: 33,
+  workProvider: 34,
 } as const;
 
 /**
