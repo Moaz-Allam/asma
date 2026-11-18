@@ -994,7 +994,8 @@
       "answers": "Your answers",
       "cancel": "Cancel request",
       "repeat": "Repeat this request",
-      "cancelledBecause": "Cancelled: {reason}"
+      "cancelledBecause": "Cancelled: {reason}",
+      "postAgain": "Post again"
     },
     "cancel": {
       "title": "Cancel this request?",
@@ -1007,7 +1008,10 @@
         "found_elsewhere": "I found someone else",
         "price": "The price",
         "other": "Something else"
-      }
+      },
+      "bodyRefund": "The commission you paid, {amount}, comes back to your card. Providers will no longer see the request.",
+      "bodyNoRefund": "Contacts were already shared, so the commission does not come back by itself. Providers will no longer see the request.",
+      "refunded": "Cancelled. {amount} is on its way back to your card; banks can take a few days."
     },
     "answers": {
       "yes": "Yes",
@@ -1061,7 +1065,8 @@
       "too_many_checkouts": "Too many payment tries. Try again within the hour.",
       "checkout_open": "A card payment is in progress. Try again in a few minutes.",
       "checkout_settings_invalid": "Payments are not possible right now. Please try again later.",
-      "unlock_settings_invalid": "Payments are not possible right now. Please try again later."
+      "unlock_settings_invalid": "Payments are not possible right now. Please try again later.",
+      "provider_not_eligible": "This provider can no longer be chosen for this request."
     },
     "offers": {
       "title": "{count, plural, =0 {No offers yet} one {# offer on your request} other {# offers on your request}}",
@@ -1421,6 +1426,89 @@
       "too_early": "This is possible from the start day.",
       "provider_suspended": "Your account is suspended. Contact support.",
       "confirm_settings_invalid": "This is not possible right now. Please try again later."
+    }
+  },
+  "Cancel": {
+    "withdraw": "Withdraw",
+    "withdrawTitle": "Withdraw your application?",
+    "withdrawBody": {
+      "APPLIED": "The customer will no longer see your offer. You can still apply to other requests.",
+      "SELECTED": "The customer chose you. Withdrawing now reopens the request and counts as a cancellation on your profile.",
+      "AWAITING_FEE": "The customer has paid and is waiting for you. Withdrawing reopens the request for another provider."
+    },
+    "withdrawConfirm": "Withdraw",
+    "keep": "Keep it",
+    "cancelJob": "Cancel job",
+    "cancelJobTitle": "Cancel this job?",
+    "cancelJobBody": "The customer is told at once and can post the request again.",
+    "cancelJobConfirm": "Cancel job",
+    "customerTold": "The customer sees the job as cancelled by you.",
+    "noRefund": "The fee you paid does not come back.",
+    "countsAgainst": "It counts as a cancellation on your profile.",
+    "errors": {
+      "action_failed": "That did not work. Try again.",
+      "not_found": "This job is no longer yours.",
+      "invalid_state": "This cannot be done at this stage any more.",
+      "not_cancellable": "This job can no longer be cancelled.",
+      "checkout_open": "A payment page is open for this. Try again in a few minutes.",
+      "forbidden": "You cannot do this."
+    }
+  },
+  "AdminRequests": {
+    "title": "Request",
+    "intro": "Fees, refunds, ledger lines and history. The address is not shown here.",
+    "summary": "Summary",
+    "id": "Request id",
+    "status": "Status",
+    "service": "Service",
+    "start": "Starts",
+    "price": "Job price (cash)",
+    "commission": "Commission",
+    "failedPicks": "Failed picks",
+    "deadlines": "Deadlines",
+    "deadlineLine": "Commission by {pay} · provider fee by {fee}",
+    "cancelled": "Cancelled",
+    "closed": "Closed",
+    "applications": "Picks and applications",
+    "current": "current pick",
+    "none": "None",
+    "fees": "Fees",
+    "kind": {
+      "commission": "Commission",
+      "provider_fee": "Provider fee"
+    },
+    "paidAt": "Paid {date}",
+    "refund": "Refund by hand",
+    "refunds": "Refunds",
+    "byHand": "The payment provider refused this refund. Refund this payment by hand in the PSP panel, then record it here.",
+    "markDone": "Record as refunded by hand",
+    "ledger": "Ledger lines",
+    "flags": "Deadline flags",
+    "flag": {
+      "start_late": "Did not start on time",
+      "completion_late": "Did not finish on time"
+    },
+    "flagOpen": "open",
+    "timeline": "History",
+    "find": "Find request by id",
+    "findSubmit": "Open",
+    "findInvalid": "That is not a request id.",
+    "refundTitle": "Refund this fee?",
+    "refundBody": "The full fee goes back to the card that paid it. The reason is kept in the audit log.",
+    "refundConfirm": "Refund",
+    "doneTitle": "Record the refund as done by hand?",
+    "doneBody": "Only after you refunded it in the PSP panel. The ledger records the refund.",
+    "doneConfirm": "Record",
+    "keep": "Back",
+    "reason": "Reason",
+    "note": "Note (what you did in the PSP panel)",
+    "reasonHint": "{min} to {max} characters ({count} now)",
+    "errors": {
+      "forbidden": "Admins only.",
+      "not_found": "Not found.",
+      "invalid_state": "Not possible at this stage.",
+      "reason_required": "Write 10 to 500 characters.",
+      "action_failed": "That did not work. Try again."
     }
   }
 }

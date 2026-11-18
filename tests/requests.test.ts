@@ -197,7 +197,7 @@ describe('loadRequestCatalog and cancelRequest', () => {
 
   it('cancels, and maps not_found and not_cancellable', async () => {
     m.rpc.mockResolvedValue({ data: { status: 'ok' }, error: null });
-    expect(await cancelRequest(REQUEST, 'other')).toEqual({ ok: true });
+    expect(await cancelRequest(REQUEST, 'other')).toEqual({ ok: true, refund: null });
     expect(m.rpc).toHaveBeenCalledWith('cancel_request', { p_request_id: REQUEST, p_reason: 'other' });
     m.rpc.mockResolvedValue(refuse('not_cancellable'));
     expect(await cancelRequest(REQUEST, null)).toEqual({ ok: false, code: 'not_cancellable' });

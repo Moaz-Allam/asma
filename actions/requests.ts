@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { fail, guardedAction } from '@/lib/auth/action';
 import {
   cancelRequest,
+  type CancelRefund,
   chooseProvider,
   createRequest,
   quoteRequest,
@@ -62,27 +63,40 @@ export const createRequestAction = guardedAction(
   },
 );
 
-/** Cancel while OPEN or SELECTED (AC-15); refused `checkout_open` during a card page (spec 0011-09 AC-2). */
+/**
+ * Cancel (AC-15, spec 0011-12 AC-6): the matrix decides, and the refund queued, if any, comes back so the page can
+ * say so; refused `checkout_open` during a card page (spec 0011-09 AC-2).
+ */
 export const cancelRequestAction = guardedAction(
   { name: 'cancelRequest', access: ACCESS, schema: CancelRequestInput },
-  async (input, user): Promise<{ status: 'ok' } | ReturnType<typeof fail>> => {
+  async (input, user): Promise<{ status: 'ok'; refund: CancelRefund | null } | ReturnType<typeof fail>> => {
     const outcome = await cancelRequest(input.requestId, input.reason, {
       region: user.region,
       userId: user.id,
     });
-    if (outcome.ok) return { status: 'ok' };
+    if (outcome.ok) return { status: 'ok', refund: outcome.refund };
     return fail(KNOWN.includes(outcome.code) ? outcome.code : 'action_failed');
   },
 );
 
-/** Choose one offer (spec 0010 AC-7, AC-8). Nothing is paid here; the page shows the next step. */
+/**
+ * Choose one offer (spec 0010 AC-7, AC-8). Nothing is paid here; the page shows the next step. A paid commission
+ * carries to the new pick (spec 0011-12 AC-4).
+ */
 export const chooseProviderAction = guardedAction(
   { name: 'chooseProvider', access: ACCESS, schema: ChooseProviderInput },
   async (
     input,
     user,
   ): Promise<
-    { replayed: boolean; selectedAt: string; paymentDeadline: string } | ReturnType<typeof fail>
+    | {
+        replayed: boolean;
+        selectedAt: string;
+        paymentDeadline: string | null;
+        carried: boolean;
+        feeDeadline: string | null;
+      }
+    | ReturnType<typeof fail>
   > => {
     const outcome = await chooseProvider(input, { region: user.region, userId: user.id });
     if (!outcome.ok) return fail(KNOWN.includes(outcome.code) ? outcome.code : 'action_failed');
@@ -91,6 +105,8 @@ export const chooseProviderAction = guardedAction(
       replayed: outcome.replayed,
       selectedAt: outcome.selectedAt,
       paymentDeadline: outcome.paymentDeadline,
+      carried: outcome.carried,
+      feeDeadline: outcome.feeDeadline,
     };
   },
 );

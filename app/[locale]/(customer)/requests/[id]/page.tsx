@@ -20,7 +20,14 @@ import { localized } from '@/lib/catalog/localized';
 import { formatMoney } from '@/lib/format/money';
 import type { Locale } from '@/lib/i18n/direction';
 import { Link } from '@/lib/i18n/navigation';
-import { getMyRequest, loadCloseInfo, loadCommissionFee, loadContacts, loadOffers } from '@/lib/requests';
+import {
+  cancelPreview,
+  getMyRequest,
+  loadCloseInfo,
+  loadCommissionFee,
+  loadContacts,
+  loadOffers,
+} from '@/lib/requests';
 import { instantLabel, NUMBER_LOCALE, quoteLines, regionDefaultLocale } from '@/lib/requests/view';
 
 /** Spec 0011-10 AC-12, security review S10-12: contacts render here, so the route is never cached. */
@@ -42,10 +49,11 @@ export default async function Page({ params, searchParams }: Props) {
   setRequestLocale(locale);
   const user = await guardPage(['customer', 'admin']);
   const query = await searchParams;
-  const [found, offers, fee] = await Promise.all([
+  const [found, offers, fee, preview] = await Promise.all([
     getMyRequest({ userId: user.id, id }),
     loadOffers(id),
     loadCommissionFee(id),
+    cancelPreview(id),
   ]);
   if (!found || !offers) notFound();
 
@@ -408,8 +416,13 @@ export default async function Page({ params, searchParams }: Props) {
           <RequestTimeline title={t('timeline.title')} steps={timeline} />
           <RequestActions
             requestId={request.id}
-            canCancel={current === 'OPEN' || current === 'SELECTED'}
+            cancel={
+              preview?.can_cancel ? { outcome: preview.commission_outcome, refund: preview.refund } : null
+            }
             canRepeat={!liveOpen && current !== 'SELECTED'}
+            repeatLabel={
+              current === 'CANCELLED' && request.closed_by === 'provider' ? t('detail.postAgain') : null
+            }
             chosenNote={current === 'SELECTED' ? t('cancelSelected') : null}
           />
         </div>

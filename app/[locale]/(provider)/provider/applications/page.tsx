@@ -1,7 +1,9 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Fragment } from 'react';
 
+import { CancelJobButton } from '@/components/features/jobs/CancelJobButton';
 import { JobActionButton } from '@/components/features/jobs/JobActionButton';
+import { WithdrawButton } from '@/components/features/jobs/WithdrawButton';
 import { PayButton } from '@/components/features/payments/PayButton';
 import { ApplicationRow } from '@/components/features/provider-feed/ApplicationRow';
 import { AgreementLine } from '@/components/shared/AgreementLine';
@@ -16,7 +18,7 @@ import { localized } from '@/lib/catalog/localized';
 import { formatMoney } from '@/lib/format/money';
 import type { Locale } from '@/lib/i18n/direction';
 import { Link } from '@/lib/i18n/navigation';
-import { listJobs, type JobRow } from '@/lib/provider-feed';
+import { jobCancelPreview, listJobs, type JobRow } from '@/lib/provider-feed';
 import { JOB_TABS, parseJobTab, type JobTab } from '@/lib/provider-feed/constants';
 import { loadContacts } from '@/lib/requests';
 import { instantLabel, regionDefaultLocale } from '@/lib/requests/view';
@@ -34,7 +36,8 @@ type Props = {
  * My jobs (spec 0009 AC-13, spec 0011-10 AC-10, A-1, R-11): the provider's applications in four tabs, newest
  * change first, 20 a page. Chosen carries the fee frozen at the choose, its deadline and Pay (or Continue for a
  * fee of 0); Active carries the customer's contacts, which Postgres returns only after both fees (rule 2).
- * Withdraw is position 12.
+ * Withdraw on Applied and Chosen before the reveal, and the job's cancel on Active, follow the matrix (spec
+ * 0011-12 AC-5, AC-6, AC-14).
  */
 export default async function Page({ params, searchParams }: Props) {
   const { locale } = await params;
@@ -97,6 +100,11 @@ export default async function Page({ params, searchParams }: Props) {
               : null,
           ),
         )
+      : [];
+  // Spec 0011-12 AC-14: what the provider's cancel would do, from the matrix, for each active job.
+  const cancels =
+    tab === 'active'
+      ? await Promise.all(rows.map((row) => jobCancelPreview(row.id, { region: user.region })))
       : [];
   const tj = await getTranslations('Jobs');
 
@@ -171,6 +179,9 @@ export default async function Page({ params, searchParams }: Props) {
                     {t('jobs.ended')}
                   </p>
                 )}
+                {open && row.application_status === 'AWAITING_FEE' ? (
+                  <WithdrawButton applicationId={row.application_id} status="AWAITING_FEE" />
+                ) : null}
               </li>
             );
           })}
@@ -225,6 +236,13 @@ export default async function Page({ params, searchParams }: Props) {
                     {tj('waitingCustomer', { date: instantLabel(row.confirm_deadline, timezone, locale) })}
                   </p>
                 ) : null}
+                {cancels[index]?.can_cancel ? (
+                  <CancelJobButton
+                    requestId={row.id}
+                    feeKept={cancels[index]?.provider_fee_outcome !== 'not_paid'}
+                    countsAgainst={(cancels[index]?.counts_against ?? 'nobody').startsWith('provider_')}
+                  />
+                ) : null}
               </li>
             );
           })}
@@ -252,6 +270,12 @@ export default async function Page({ params, searchParams }: Props) {
                 price={row.fixed_price}
                 currency={row.currency}
               />
+              {tab === 'applied' &&
+              (row.application_status === 'APPLIED' || row.application_status === 'SELECTED') ? (
+                <li>
+                  <WithdrawButton applicationId={row.application_id} status={row.application_status} />
+                </li>
+              ) : null}
               {contacts[index] ? (
                 <li>
                   <ContactCard

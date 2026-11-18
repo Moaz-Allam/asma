@@ -41,6 +41,9 @@ export const PROVIDER_FEED_DB_CODES = [
   // Spec 0011-11 (11): work and close.
   'too_early',
   'confirm_settings_invalid',
+  // Spec 0011-12 (12): withdraw and the unlocked provider's cancel.
+  'not_cancellable',
+  'checkout_open',
 ] as const;
 export type ProviderFeedCode = (typeof PROVIDER_FEED_DB_CODES)[number];
 

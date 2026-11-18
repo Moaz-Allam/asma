@@ -160,7 +160,8 @@ export const RequestDetailRow = z.object({
   actual_completed_at: z.string().nullable(),
   confirm_deadline: z.string().nullable(),
   closed_at: z.string().nullable(),
-  closed_by: z.enum(['customer', 'auto']).nullable(),
+  // Spec 0011-12 AC-1, R-13: a cancel closes too, by whoever cancelled.
+  closed_by: z.enum(['customer', 'provider', 'platform', 'admin', 'auto']).nullable(),
   region_info: z.object({ timezone: z.string() }),
 });
 export type RequestDetailRow = z.infer<typeof RequestDetailRow>;
@@ -301,12 +302,77 @@ export const CommissionFee = z
   .strict();
 export type CommissionFee = z.infer<typeof CommissionFee>;
 
-/** `choose_provider()` (AC-7): the same shape for a new choose and a replay. */
-export const ChooseResult = z
+/**
+ * `choose_provider()` (AC-7): the same shape for a new choose and a replay. Since 12 (spec 0011-12 AC-4, R-3) a
+ * pick on a request whose commission is already paid carries it: no payment window, the provider's fee window
+ * instead. Strict either way, and only those two shapes.
+ */
+export const ChooseResult = z.union([
+  z
+    .object({
+      status: z.literal('ok'),
+      replayed: z.boolean(),
+      selected_at: z.string().min(1),
+      payment_deadline: z.string().min(1),
+    })
+    .strict(),
+  z
+    .object({
+      status: z.literal('ok'),
+      replayed: z.boolean(),
+      selected_at: z.string().min(1),
+      payment_deadline: z.null(),
+      carried: z.literal(true),
+      fee_deadline: z.string().min(1),
+    })
+    .strict(),
+]);
+
+const Currency = z.enum(['TRY', 'SAR']);
+
+/**
+ * `cancel_request()`, `provider_cancel_job()` (spec 0011-12 AC-6): ok, and the refund queued when the matrix says
+ * refund. The amount is the paid fee's own, never an input (AC-7).
+ */
+export const CancelResult = z
   .object({
     status: z.literal('ok'),
-    replayed: z.boolean(),
-    selected_at: z.string().min(1),
-    payment_deadline: z.string().min(1),
+    refund: z
+      .object({ fee_refund_id: z.string().uuid(), amount: Minor.nonnegative(), currency: Currency })
+      .strict()
+      .optional(),
   })
   .strict();
+
+export const CANCEL_ACTORS = ['customer', 'provider'] as const;
+export const COMMISSION_OUTCOMES = ['not_paid', 'refund', 'carry', 'none', 'by_hand'] as const;
+export const PROVIDER_FEE_OUTCOMES = ['not_paid', 'none', 'by_hand'] as const;
+export const COUNTS_AGAINST = [
+  'nobody',
+  'provider_cancellation',
+  'provider_fee_follow_through',
+  'customer_late_cancel',
+  'provider_no_show',
+  'admin_attribution',
+] as const;
+
+/**
+ * `cancel_preview()` (spec 0011-12 AC-14): what a cancel would do now, for the dialog. The outcomes are the
+ * matrix row's; the refund is the paid commission's own amount. Null outcomes once the request is cancelled.
+ */
+export const CancelPreview = z
+  .object({
+    actor: z.enum(CANCEL_ACTORS),
+    state: z.enum(REQUEST_STATUSES),
+    can_cancel: z.boolean(),
+    checkout_open: z.boolean(),
+    commission_outcome: z.enum(COMMISSION_OUTCOMES).nullable(),
+    provider_fee_outcome: z.enum(PROVIDER_FEE_OUTCOMES).nullable(),
+    counts_against: z.enum(COUNTS_AGAINST).nullable(),
+    refund: z
+      .object({ kind: z.literal('commission'), amount: Minor.nonnegative(), currency: Currency })
+      .strict()
+      .nullable(),
+  })
+  .strict();
+export type CancelPreview = z.infer<typeof CancelPreview>;

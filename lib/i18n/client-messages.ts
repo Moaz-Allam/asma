@@ -29,6 +29,9 @@ export const CLIENT_NAMESPACES = [
   'Payment',
   // Spec 0011-11 AC-7, AC-8: the work and close buttons and their dialogs.
   'Jobs',
+  // Spec 0011-12 AC-14, AC-12: Withdraw, the provider's cancel, and admin's refund dialogs.
+  'Cancel',
+  'AdminRequests',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */
