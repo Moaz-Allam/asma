@@ -40,7 +40,7 @@ function sql(query: string): string {
   writeFileSync(file, query);
   let last = '';
   for (let attempt = 0; attempt < 4; attempt += 1) {
-    const run = spawnSync('npx', ['supabase', 'db', 'query', '--local', '-f', file], {
+    const run = spawnSync('npx', ['supabase', 'db', 'query', '--local', '-o', 'json', '-f', file], {
       encoding: 'utf8',
       shell: true,
     });

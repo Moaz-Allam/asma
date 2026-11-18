@@ -50,20 +50,17 @@ function sql(query: string): Record<string, unknown>[] {
   writeFileSync(file, query);
   let last = '';
   for (let attempt = 0; attempt < 4; attempt += 1) {
-    const run = spawnSync('npx', ['supabase', 'db', 'query', '--local', '-f', file], {
+    const run = spawnSync('npx', ['supabase', 'db', 'query', '--local', '-o', 'json', '-f', file], {
       encoding: 'utf8',
       shell: true,
     });
     if (run.status === 0) {
-      const start = run.stdout.indexOf('{');
+      // `-o json` (D189): without it the CLI prints a table outside an agent session, as in CI. An array or `{ rows }`.
+      const start = run.stdout.search(/[[{]/);
       if (start < 0) return [];
-      return (
-        (
-          JSON.parse(run.stdout.slice(start)) as {
-            rows?: Record<string, unknown>[];
-          }
-        ).rows ?? []
-      );
+      const parsed = JSON.parse(run.stdout.slice(start)) as
+        Record<string, unknown>[] | { rows?: Record<string, unknown>[] };
+      return Array.isArray(parsed) ? parsed : (parsed.rows ?? []);
     }
     last = `${run.stdout}\n${run.stderr}`;
   }
@@ -81,7 +78,8 @@ const as = (subject: string) =>
 
 function ids(locale: string) {
   const d = { ar: '1', tr: '2', en: '3' }[locale] ?? '9';
-  const id = (kind: string) => `00000000-0000-4000-8000-0012000${kind}00${d}`;
+  // The last group is 12 hex digits: 0012, the kind padded to 7, the project digit.
+  const id = (kind: string) => `00000000-0000-4000-8000-0012${kind.padStart(7, '0')}${d}`;
   return {
     id,
     category: id('c1'),

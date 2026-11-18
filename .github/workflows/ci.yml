@@ -181,7 +181,8 @@ jobs:
   e2e:
     name: e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # D189: 141 tests at 2 workers ran past 25 minutes and the job was cancelled.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
