@@ -14,7 +14,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(183);
+SELECT plan(187);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -325,6 +325,18 @@ SELECT is(pg_temp.call_as('c1', format('SELECT public.choose_provider(%L, %L)::t
 SELECT pg_temp.choose(4, 'a2');
 SELECT is((pg_temp.paycom(4, false) ->> 'attempt_id') IS NOT NULL AND pg_temp.cfee(4) = (SELECT id FROM r4_fee), true,
   'R-9: the commission row is kept pending and reused by the next pick');
+-- Owner, 2026-11-18: a card page opened under the earlier pick is refused; the payment goes the late path.
+CREATE TEMP TABLE r4_att AS
+  SELECT (SELECT id FROM public.checkout_attempts WHERE fee_payment_id = pg_temp.cfee(4) ORDER BY started_at LIMIT 1) AS old_id,
+         (SELECT id FROM public.checkout_attempts WHERE fee_payment_id = pg_temp.cfee(4) ORDER BY started_at DESC LIMIT 1) AS new_id;
+SELECT ok(NOT public.accept_commission(pg_temp.cfee(4), (SELECT old_id FROM r4_att)),
+  'accept_commission: an attempt started before the current pick is refused');
+SELECT ok(public.accept_commission(pg_temp.cfee(4), (SELECT new_id FROM r4_att)),
+  'accept_commission: an attempt of the current pick is accepted');
+SELECT is(public.apply_fee_paid(pg_temp.cfee(4), (SELECT old_id FROM r4_att), 'pay-27-c4-old', 10000, 'TRY', 300) ->> 'status', 'late',
+  'accept_commission: the earlier pick''s payment is booked late, to be refunded');
+SELECT is((SELECT r.status || ' ' || f.status FROM public.requests r JOIN public.fee_payments f ON f.request_id = r.id AND f.kind = 'commission'
+            WHERE r.id = pg_temp.r(4)), 'SELECTED pending', 'accept_commission: the new pick and its commission are untouched');
 
 -- ══ §36 row 5: COMMISSION_PAID, the customer cancels; R-12 ════════════════════
 SELECT pg_temp.choose(5, 'a1');

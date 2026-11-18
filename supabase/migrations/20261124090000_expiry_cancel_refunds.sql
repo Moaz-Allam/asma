@@ -834,6 +834,61 @@ revoke all on function public.expire_windows() from public, anon, authenticated,
 select cron.schedule('requests-expire-windows', '* * * * *', $$select public.expire_windows()$$);
 
 -- ═══════════════════════════════════════════════════════════════════════════
+-- 9b. The commission's acceptance, replaced (owner, 2026-11-18). 09's rules, plus: the attempt must have started at or
+--     after the request's current selected_at. Once a pick ends and the customer picks again, a card page opened under
+--     the earlier pick is refused, so 07's late path refunds its payment rather than paying the new pick.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+create or replace function public.accept_commission(p_fee uuid, p_attempt uuid)
+  returns boolean
+  language plpgsql
+  stable
+  security invoker
+  set search_path = ''
+as $$
+declare
+  v_fee      public.fee_payments%rowtype;
+  v_req      public.requests%rowtype;
+  v_started  timestamptz;
+  v_hold     integer;
+begin
+  select f.* into v_fee from public.fee_payments f where f.id = p_fee;
+  if not found or v_fee.kind <> 'commission' or v_fee.status <> 'pending' then
+    return false;
+  end if;
+  if exists (select 1 from public.fee_refunds x where x.fee_payment_id = v_fee.id) then
+    return false;
+  end if;
+  select r.* into v_req from public.requests r where r.id = v_fee.request_id;
+  if v_req.status is distinct from 'SELECTED' or v_req.payment_deadline is null or v_req.selected_at is null then
+    return false;
+  end if;
+  if not exists (select 1 from public.applications a
+                  where a.id = v_req.selected_application_id
+                    and a.request_id = v_req.id
+                    and a.status = 'SELECTED'
+                    and public.provider_standing(a.provider_id) is not distinct from 'approved') then
+    return false;
+  end if;
+  select a.started_at into v_started from public.checkout_attempts a
+   where a.id = p_attempt and a.fee_payment_id = v_fee.id;
+  if not found or v_started > v_req.payment_deadline or v_started < v_req.selected_at then
+    return false;
+  end if;
+  if now() >= v_req.scheduled_start_at then
+    return false;
+  end if;
+  v_hold := (public.checkout_settings(v_req.region) ->> 'hold_minutes')::integer;
+  if v_hold is null then
+    raise exception 'checkout_settings_invalid';
+  end if;
+  return now() <= v_req.payment_deadline + make_interval(mins => v_hold);
+end;
+$$;
+
+revoke all on function public.accept_commission(uuid, uuid) from public, anon, authenticated, service_role;
+
+-- ═══════════════════════════════════════════════════════════════════════════
 -- 10. Choose, replaced (AC-4, R-3, R-4). 07's function in 07's order, plus: an application whose provider expired or
 --     withdrew on this request refuses provider_not_eligible; and on an OPEN request with a carried commission the
 --     pick moves straight to COMMISSION_PAID: the application APPLIED -> SELECTED (its fee frozen) -> AWAITING_FEE in
