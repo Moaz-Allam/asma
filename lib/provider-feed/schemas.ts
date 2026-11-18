@@ -89,7 +89,8 @@ export const JobRow = z
     payment_deadline: Instant.nullable(),
     fee_deadline: Instant.nullable(),
     // Spec 0011-11 R-5: the request's state, its work dates, and whether Started may be pressed now.
-    request_status: z.string(),
+    // Security review S11-1: the request's state only for the caller's own selected, unlocked application.
+    request_status: z.string().nullable(),
     actual_started_at: Instant.nullable(),
     confirm_deadline: Instant.nullable(),
     closed_at: Instant.nullable(),

@@ -239,7 +239,8 @@ test('a customer reads two offers and chooses one; each provider sees the outcom
     m(locale, 'ProviderFeed.chosen.line', { date: 'DATE' }).split('DATE')[0]?.trim() ?? '',
   );
   await axe(chosen);
-  await rival.goto(`/${locale}/provider/applications`);
+  // Since 10 a row that is no longer live sits in Done (spec 0011-10 AC-10).
+  await rival.goto(`/${locale}/provider/applications?tab=done`);
   await expect(rival.getByRole('link', { name: new RegExp(f.names.service) })).toContainText(
     m(locale, 'ProviderFeed.chosen.notChosen'),
   );

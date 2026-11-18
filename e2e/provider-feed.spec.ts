@@ -269,7 +269,8 @@ test('a provider sets up, sees the feed, applies; a rival sees only the count; a
       ` (select id from public.profiles where phone = '${testE164(locale, 'feedCustomer')}'), 'role', 'authenticated')::text, true);` +
       ` perform public.cancel_request('${f.request}', 'plans_changed');`,
   );
-  await page.goto(`/${locale}/provider/applications`);
+  // Since 10 a row that is no longer live sits in Done (spec 0011-10 AC-10).
+  await page.goto(`/${locale}/provider/applications?tab=done`);
   await expect(page.getByRole('link', { name: new RegExp(f.names.service) })).toContainText(
     m(locale, 'ProviderFeed.status.CANCELLED'),
   );
