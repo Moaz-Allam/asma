@@ -55,6 +55,10 @@ export const NUMBER = {
   // Position 11 (spec 0011-11 AC-11): the customer and the provider of the work and close journeys.
   workCustomer: 33,
   workProvider: 34,
+  // Position 12 (spec 0011-12 AC-14): the customer and the provider of the expiry and cancel journey; three more
+  // providers are written by SQL and never sign in.
+  cancelCustomer: 35,
+  cancelProvider: 36,
 } as const;
 
 /**

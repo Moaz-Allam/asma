@@ -14,7 +14,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(187);
+SELECT plan(193);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -223,7 +223,7 @@ SELECT is(pg_temp.err($$DELETE FROM public.platform_settings WHERE region = 'KSA
 
 -- ══ AC-1, R-15: the matrix and the flags, RLS ═════════════════════════════════
 SELECT results_eq($$ SELECT region, count(*)::int, count(*) FILTER (WHERE allowed)::int FROM public.cancellation_rules GROUP BY region ORDER BY region $$,
-  $$ VALUES ('KSA'::text, 24, 14), ('TR', 24, 14) $$, 'AC-1: the matrix is seeded for TR and KSA');
+  $$ VALUES ('KSA'::text, 25, 15), ('TR', 25, 15) $$, 'AC-1: the matrix is seeded for TR and KSA');
 SELECT results_eq($$ SELECT state, actor, allowed, commission_outcome, provider_fee_outcome, counts_against FROM public.cancellation_rules
                       WHERE region = 'TR' AND (state, actor) IN (('COMMISSION_PAID', 'customer'), ('COMMISSION_PAID', 'provider'),
                             ('COMMISSION_PAID', 'platform'), ('UNLOCKED', 'customer'), ('AWAITING_CONFIRMATION', 'customer')) ORDER BY state, actor $$,
@@ -233,11 +233,18 @@ SELECT results_eq($$ SELECT state, actor, allowed, commission_outcome, provider_
             ('COMMISSION_PAID', 'provider', true, 'carry', 'not_paid', 'provider_fee_follow_through'),
             ('UNLOCKED', 'customer', true, 'none', 'none', 'customer_late_cancel') $$,
   'AC-1: rows 5, 6, 7, 8 and 12 as §36 says');
+-- Review of 12 (2026-11-19): every (state, actor) a function reads has its row in both regions.
+SELECT is((SELECT count(*)::int FROM public.cancellation_rules c
+            WHERE (c.state, c.actor) IN (('OPEN', 'customer'), ('OPEN', 'platform'), ('SELECTED', 'customer'), ('SELECTED', 'provider'),
+                                         ('SELECTED', 'platform'), ('COMMISSION_PAID', 'customer'), ('COMMISSION_PAID', 'provider'),
+                                         ('COMMISSION_PAID', 'platform'), ('COMMISSION_PAID', 'admin'), ('UNLOCKED', 'customer'),
+                                         ('UNLOCKED', 'provider'), ('IN_PROGRESS', 'customer'), ('IN_PROGRESS', 'provider'))),
+  26, 'Review: each (state, actor) the functions read is seeded in TR and KSA');
 SELECT is(pg_temp.err($$INSERT INTO public.cancellation_rules VALUES ('TR', 'IN_PROGRESS', 'admin', true, 'refund', 'none', 'nobody') ON CONFLICT (region, state, actor) DO UPDATE SET commission_outcome = 'refund'$$),
   '23514', '§36 rule 1: no row may refund automatically after the reveal');
 SELECT is(pg_temp.err($$UPDATE public.cancellation_rules SET allowed = true WHERE state = 'AWAITING_CONFIRMATION' AND actor = 'customer'$$),
   '23514', '§36 row 12: AWAITING_CONFIRMATION can never be made cancellable');
-SELECT is(pg_temp.call_as('c2', 'SELECT count(*)::text FROM public.cancellation_rules'), '48', 'R-15: a signed in user reads the matrix');
+SELECT is(pg_temp.call_as('c2', 'SELECT count(*)::text FROM public.cancellation_rules'), '50', 'R-15: a signed in user reads the matrix');
 SELECT is(pg_temp.call_as('c1', $$UPDATE public.cancellation_rules SET allowed = true RETURNING 'x'$$), '42501', 'R-15: no API write on the matrix');
 SELECT is(pg_temp.call_as('ad', $$DELETE FROM public.cancellation_rules RETURNING 'x'$$), '42501', 'R-15: not even for admin');
 SELECT is(pg_temp.call_as('anon', 'SELECT count(*)::text FROM public.cancellation_rules'), '42501', 'R-15: anon reads nothing');
@@ -424,6 +431,42 @@ SELECT is(pg_temp.st(8) || ' ' || pg_temp.refunds(8), 'CANCELLED 3 EXPIRED EXPIR
   'row 7: CANCELLED, the commission refunded once, reason failed_picks');
 SELECT is((SELECT cancelled_by || ' ' || closed_by FROM public.requests WHERE id = pg_temp.r(8)), 'platform platform', 'R-13: by the platform');
 SELECT is(public.expire_request(pg_temp.r(8)), 'none', 'AC-3: a later run does nothing more');
+
+-- ══ AC-3 with a commission of 0 (D171; review of 12, 2026-11-19) ═════════════
+-- No fee row, so nothing carries: each pick settles 0 at once. The limit still cancels, through the expiry and
+-- through the last provider's withdraw, and nothing is refunded.
+SELECT pg_temp.req(21, 0);
+SELECT pg_temp.req(22, 0);
+SELECT pg_temp.choose(21, 'a1');
+SELECT pg_temp.paycom(21, false);
+SELECT pg_temp.age(21, 'fee');
+SELECT public.expire_request(pg_temp.r(21));
+SELECT pg_temp.choose(21, 'a2');
+SELECT pg_temp.paycom(21, false);
+SELECT pg_temp.age(21, 'fee');
+SELECT public.expire_request(pg_temp.r(21));
+SELECT pg_temp.choose(22, 'a1');
+SELECT pg_temp.paycom(22, false);
+SELECT pg_temp.age(22, 'fee');
+SELECT public.expire_request(pg_temp.r(22));
+SELECT pg_temp.choose(22, 'a2');
+SELECT pg_temp.paycom(22, false);
+SELECT pg_temp.age(22, 'fee');
+SELECT public.expire_request(pg_temp.r(22));
+SELECT pg_temp.choose(21, 'a3');
+SELECT pg_temp.paycom(21, false);
+SELECT pg_temp.age(21, 'fee');
+SELECT is(public.expire_request(pg_temp.r(21)), 'cancelled', 'AC-3, commission 0: the third failed pick cancels');
+SELECT is(pg_temp.st(21) || ' ' || pg_temp.refunds(21), 'CANCELLED 3 EXPIRED EXPIRED EXPIRED - 0',
+  'AC-3, commission 0: CANCELLED, nothing to refund');
+SELECT is((SELECT cancelled_by || ' ' || closed_by FROM public.requests WHERE id = pg_temp.r(21)), 'platform platform',
+  'AC-3, commission 0: by the platform');
+SELECT pg_temp.choose(22, 'a3');
+SELECT pg_temp.paycom(22, false);
+SELECT is(pg_temp.fn('a3', 'withdraw_application', pg_temp.app(22, 'a3')), '{"status": "ok", "replayed": false}',
+  'AC-5, commission 0: the provider at the limit may withdraw');
+SELECT is(pg_temp.st(22) || ' ' || pg_temp.refunds(22), 'CANCELLED 3 EXPIRED EXPIRED WITHDRAWN - 0',
+  'AC-3, commission 0: the withdraw that reaches the limit cancels, nothing refunded');
 
 -- ══ AC-2.3: the start edge ════════════════════════════════════════════════════
 SELECT pg_temp.choose(9, 'a1');

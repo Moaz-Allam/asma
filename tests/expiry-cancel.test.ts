@@ -96,6 +96,9 @@ describe('the customer door (AC-4, AC-6, AC-14)', () => {
     expect(m.rpc).toHaveBeenCalledWith('cancel_preview', { p_request_id: REQUEST });
     m.rpc.mockResolvedValue(refuse('not_found'));
     expect(await cancelPreview(REQUEST)).toBeNull();
+    // Review of 12: any other refusal hides the button rather than breaking the page.
+    m.rpc.mockResolvedValue(refuse('checkout_settings_invalid'));
+    expect(await cancelPreview(REQUEST)).toBeNull();
   });
 
   it('the preview parse is strict', async () => {
@@ -200,6 +203,8 @@ describe('the provider door (AC-5, AC-6, AC-14)', () => {
     m.rpc.mockResolvedValue(ok(preview));
     expect(await jobCancelPreview(REQUEST, { region: 'TR' })).toEqual(preview);
     m.rpc.mockResolvedValue(refuse('not_found'));
+    expect(await jobCancelPreview(REQUEST, { region: 'TR' })).toBeNull();
+    m.rpc.mockResolvedValue(refuse('checkout_settings_invalid'));
     expect(await jobCancelPreview(REQUEST, { region: 'TR' })).toBeNull();
   });
 });

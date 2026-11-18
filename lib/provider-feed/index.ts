@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createSupabaseServer } from '@/lib/db/server';
 import { raiseAlert } from '@/lib/observability/alert';
+import { log } from '@/lib/observability/log';
 import type { Region } from '@/lib/region';
 import { decodeCursor, encodeCursor } from '@/lib/requests/cursor';
 import { CancelPreview, CancelResult } from '@/lib/requests/schemas';
@@ -311,8 +312,9 @@ export async function jobCancelPreview(requestId: string, context: Context): Pro
   if (!UUID.test(requestId)) return null;
   const result = await call('cancel_preview', { p_request_id: requestId }, context);
   if ('ok' in result) {
-    if (result.code === 'not_found') return null;
-    throw new Error(`cancel_preview refused: ${result.code}`);
+    // Review of 12: never break My jobs over this read; the button simply does not show.
+    if (result.code !== 'not_found') log.warn('cancel_preview_refused', { request_id: requestId });
+    return null;
   }
   return CancelPreview.parse(result.data);
 }

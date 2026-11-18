@@ -314,8 +314,9 @@ export async function cancelPreview(requestId: string): Promise<CancelPreview | 
   if (!UUID.test(requestId)) return null;
   const result = await call('cancel_preview', { p_request_id: requestId });
   if ('ok' in result) {
-    if (result.code === 'not_found') return null;
-    throw new Error(`cancel_preview refused: ${result.code}`);
+    // Review of 12: never break the request page (contacts included) over this read; the button simply does not show.
+    if (result.code !== 'not_found') log.warn('cancel_preview_refused', { request_id: requestId });
+    return null;
   }
   return CancelPreview.parse(result.data);
 }

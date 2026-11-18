@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useId, useState, useTransition } from 'react';
 
 import { adminMarkRefundDoneAction, adminRefundFeeAction } from '@/actions/admin-requests';
@@ -9,25 +9,34 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { REASON_MAX, REASON_MIN, reasonLength } from '@/lib/admin-requests/constants';
+import { formatMoney } from '@/lib/format/money';
+import type { Locale } from '@/lib/i18n/direction';
 import { useRouter } from '@/lib/i18n/navigation';
 
 /**
  * Admin's two writes on a request's money trail (ui-registry `AdminReasonAction`, spec 0011-12 AC-8, AC-9): refund
  * a paid fee by hand with a reason, or record a refused refund as refunded by hand in the PSP panel with a note.
- * The dialog holds the text field; the length is counted as Postgres counts it and checked there again. No amount
- * is ever sent: the refund is the paid fee's own.
+ * The dialog states the exact amount and holds the text field; the length is counted as Postgres counts it and
+ * checked there again. The amount is shown, never sent: the refund is the paid fee's own.
  */
 export function AdminReasonAction({
   mode,
   targetId,
   label,
+  amount,
+  currency,
 }: {
   mode: 'refund' | 'done';
   /** The fee id for `refund`, the refund id for `done`. */
   targetId: string;
   label: string;
+  /** The fee's or the refund's own amount, shown in the dialog (review of 12). */
+  amount: number;
+  currency: 'TRY' | 'SAR';
 }) {
   const t = useTranslations('AdminRequests');
+  const locale = useLocale() as Locale;
+  const money = formatMoney(amount, currency, locale);
   const router = useRouter();
   const fieldId = useId();
   const [open, setOpen] = useState(false);
@@ -76,7 +85,7 @@ export function AdminReasonAction({
           if (!next) setError(null);
         }}
         title={mode === 'refund' ? t('refundTitle') : t('doneTitle')}
-        body={mode === 'refund' ? t('refundBody') : t('doneBody')}
+        body={mode === 'refund' ? t('refundBody', { amount: money }) : t('doneBody', { amount: money })}
         confirmLabel={mode === 'refund' ? t('refundConfirm') : t('doneConfirm')}
         cancelLabel={t('keep')}
         onConfirm={confirm}

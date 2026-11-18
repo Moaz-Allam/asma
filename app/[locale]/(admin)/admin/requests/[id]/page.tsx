@@ -169,7 +169,13 @@ export default async function Page({ params }: Props) {
                   {fee.psp_payment_id ? ` · ${fee.psp_payment_id}` : ''}
                 </p>
                 {canRefund(fee) ? (
-                  <AdminReasonAction mode="refund" targetId={fee.id} label={t('refund')} />
+                  <AdminReasonAction
+                    mode="refund"
+                    targetId={fee.id}
+                    label={t('refund')}
+                    amount={fee.amount}
+                    currency={fee.currency}
+                  />
                 ) : null}
               </li>
             ))}
@@ -210,7 +216,13 @@ export default async function Page({ params }: Props) {
                     >
                       {t('byHand')}
                     </p>
-                    <AdminReasonAction mode="done" targetId={refund.id} label={t('markDone')} />
+                    <AdminReasonAction
+                      mode="done"
+                      targetId={refund.id}
+                      label={t('markDone')}
+                      amount={refund.amount}
+                      currency={refund.currency}
+                    />
                   </>
                 ) : null}
               </li>

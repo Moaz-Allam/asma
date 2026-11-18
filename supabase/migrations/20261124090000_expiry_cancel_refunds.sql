@@ -191,6 +191,9 @@ select g.code, t.state, t.actor, t.allowed, t.commission_outcome, t.provider_fee
    ('SELECTED',              'customer', true,  'not_paid', 'not_paid', 'nobody'),                       -- 2
    ('SELECTED',              'provider', true,  'not_paid', 'not_paid', 'provider_cancellation'),        -- 3
    ('SELECTED',              'platform', true,  'not_paid', 'not_paid', 'nobody'),                       -- 4
+   -- Row 7 with a commission of 0 (D171): no fee row, so the request reads OPEN; the failed pick limit still cancels it
+   -- (security and code review of 12, 2026-11-19), and nothing comes back because nothing was paid.
+   ('OPEN',                  'platform', true,  'not_paid', 'not_paid', 'nobody'),                       -- 7, commission 0
    ('COMMISSION_PAID',       'customer', true,  'refund',   'not_paid', 'nobody'),                       -- 5
    ('COMMISSION_PAID',       'provider', true,  'carry',    'not_paid', 'provider_fee_follow_through'),  -- 6
    ('COMMISSION_PAID',       'platform', true,  'refund',   'not_paid', 'nobody'),                       -- 7
