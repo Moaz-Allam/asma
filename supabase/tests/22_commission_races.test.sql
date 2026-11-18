@@ -199,14 +199,14 @@ SELECT extensions.dblink_send_query('b', pg_temp.cancel_sql('4'));
 SELECT pg_sleep(0.3);
 SELECT is(extensions.dblink_is_busy('b'), 1, 'AC-2: the cancel waits on the request row');
 SELECT extensions.dblink_exec('a', 'COMMIT');
+SELECT is(pg_temp.result('b') ->> 'status', 'ok', 'AC-2, 12 AC-6: and then cancels the COMMISSION_PAID request (row 5)');
 SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
-SELECT ok(extensions.dblink_error_message('b') LIKE '%not_cancellable%', 'AC-2: and then refuses not_cancellable');
-SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
-SELECT is(pg_temp.one($$ SELECT r.status || ' ' || a.status || ' ' || f.status FROM public.requests r
+SELECT is(pg_temp.one($$ SELECT r.status || ' ' || a.status || ' ' || f.status || ' ' || x.status || ' ' || x.reason FROM public.requests r
                           JOIN public.applications a ON a.id = r.selected_application_id
                           JOIN public.fee_payments f ON f.request_id = r.id
+                          JOIN public.fee_refunds x ON x.fee_payment_id = f.id
                          WHERE r.id = '00000000-0000-0000-0000-0000002200e4' $$),
-  'COMMISSION_PAID AWAITING_FEE paid', 'AC-6: the request moved on, once');
+  'CANCELLED CANCELLED paid queued customer_cancel', 'AC-6, 12 AC-7: the request moved on once, then cancelled with one refund queued');
 
 -- ── a cancel first: the payment that waits goes late ─────────────────────────
 SELECT pg_temp.as_customer('a');

@@ -253,6 +253,44 @@ export type Database = {
         }
         Relationships: []
       }
+      cancellation_rules: {
+        Row: {
+          actor: string
+          allowed: boolean
+          commission_outcome: string
+          counts_against: string
+          provider_fee_outcome: string
+          region: string
+          state: string
+        }
+        Insert: {
+          actor: string
+          allowed: boolean
+          commission_outcome: string
+          counts_against: string
+          provider_fee_outcome: string
+          region: string
+          state: string
+        }
+        Update: {
+          actor?: string
+          allowed?: boolean
+          commission_outcome?: string
+          counts_against?: string
+          provider_fee_outcome?: string
+          region?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cancellation_rules_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       checkout_attempts: {
         Row: {
           created_at: string
@@ -310,6 +348,61 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "regions"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      deadline_flags: {
+        Row: {
+          cleared_at: string | null
+          cleared_by: string | null
+          id: string
+          kind: string
+          note: string | null
+          raised_at: string
+          region: string
+          request_id: string
+        }
+        Insert: {
+          cleared_at?: string | null
+          cleared_by?: string | null
+          id?: string
+          kind: string
+          note?: string | null
+          raised_at?: string
+          region: string
+          request_id: string
+        }
+        Update: {
+          cleared_at?: string | null
+          cleared_by?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          raised_at?: string
+          region?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deadline_flags_cleared_by_fkey"
+            columns: ["cleared_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deadline_flags_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "deadline_flags_request_fk"
+            columns: ["request_id", "region"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "region"]
           },
         ]
       }
@@ -1461,6 +1554,7 @@ export type Database = {
           created_at: string
           currency: string
           customer_id: string
+          failed_picks: number
           fee_deadline: string | null
           fixed_price: number
           id: string
@@ -1494,6 +1588,7 @@ export type Database = {
           created_at?: string
           currency: string
           customer_id: string
+          failed_picks?: number
           fee_deadline?: string | null
           fixed_price: number
           id?: string
@@ -1527,6 +1622,7 @@ export type Database = {
           created_at?: string
           currency?: string
           customer_id?: string
+          failed_picks?: number
           fee_deadline?: string | null
           fixed_price?: number
           id?: string
@@ -1768,12 +1864,22 @@ export type Database = {
         Args: { p_attempt: string; p_fee: string }
         Returns: boolean
       }
+      admin_mark_refund_done: {
+        Args: { p_note: string; p_refund_id: string }
+        Returns: Json
+      }
       admin_may_read: {
         Args: { p_name: string; p_object_id: string }
         Returns: boolean
       }
+      admin_refund_fee: {
+        Args: { p_payment_id: string; p_reason: string }
+        Returns: Json
+      }
+      admin_request_detail: { Args: { p_request_id: string }; Returns: Json }
       after_commission_paid: { Args: { p_fee: string }; Returns: undefined }
       after_provider_fee_paid: { Args: { p_fee: string }; Returns: undefined }
+      after_reopen: { Args: { p_request_id: string }; Returns: string }
       apply_fee_paid: {
         Args: {
           p_amount: number
@@ -1798,14 +1904,50 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: number
       }
+      attempt_open: {
+        Args: { p_fee_payment_id: string; p_region: string }
+        Returns: boolean
+      }
       auto_close_enabled: { Args: { p_region: string }; Returns: boolean }
       auto_close_jobs: { Args: never; Returns: number }
       blank_class: { Args: never; Returns: string }
       blank_marks: { Args: never; Returns: string }
+      cancel_by_rule: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_by: string
+          p_cancel_reason: string
+          p_refund_reason: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
+      cancel_preview: { Args: { p_request_id: string }; Returns: Json }
       cancel_request: {
         Args: { p_reason: string; p_request_id: string }
         Returns: Json
       }
+      cancel_rule: {
+        Args: { p_actor: string; p_region: string; p_state: string }
+        Returns: {
+          actor: string
+          allowed: boolean
+          commission_outcome: string
+          counts_against: string
+          provider_fee_outcome: string
+          region: string
+          state: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cancellation_rules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cancel_state: { Args: { p_request_id: string }; Returns: string }
+      carried_commission: { Args: { p_request_id: string }; Returns: string }
       catalog_text_ok: {
         Args: { p_max: number; p_region: string; p_value: Json }
         Returns: boolean
@@ -1823,6 +1965,10 @@ export type Database = {
       claim_outbox: {
         Args: { p_limit: number; p_worker: string }
         Returns: Json
+      }
+      clear_deadline_flags: {
+        Args: { p_kinds: string[]; p_request_id: string }
+        Returns: undefined
       }
       close_job: {
         Args: { p_action: string; p_by: string; p_request_id: string }
@@ -1882,6 +2028,14 @@ export type Database = {
         }
         Returns: Json
       }
+      end_pick: {
+        Args: {
+          p_application_status: string
+          p_failed: boolean
+          p_request_id: string
+        }
+        Returns: string
+      }
       enqueue_outbox: {
         Args: {
           p_key: string
@@ -1891,6 +2045,8 @@ export type Database = {
         }
         Returns: string
       }
+      expire_request: { Args: { p_request_id: string }; Returns: string }
+      expire_windows: { Args: never; Returns: number }
       fail_attempt: {
         Args: { p_attempt_id: string; p_reason: string }
         Returns: Json
@@ -1918,6 +2074,10 @@ export type Database = {
           p_ok: boolean
         }
         Returns: Json
+      }
+      grace_hours: {
+        Args: { p_key: string; p_region: string }
+        Returns: number
       }
       has_contact_info: { Args: { p_text: string }; Returns: boolean }
       health_ping: { Args: never; Returns: boolean }
@@ -2115,6 +2275,7 @@ export type Database = {
         }
       }
       provider_can_apply: { Args: { p_provider_id: string }; Returns: boolean }
+      provider_cancel_job: { Args: { p_request_id: string }; Returns: Json }
       provider_docs_consent_version: {
         Args: { p_region: string }
         Returns: string
@@ -2291,6 +2452,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      queue_fee_refund: {
+        Args: { p_by: string; p_fee_id: string; p_reason: string }
+        Returns: string
+      }
       quote_price: {
         Args: {
           p_addon_ids: string[]
@@ -2309,6 +2474,7 @@ export type Database = {
         }
         Returns: Json
       }
+      raise_deadline_flags: { Args: never; Returns: number }
       reconcile_daily_list: {
         Args: { p_day: string; p_limit: number; p_region: string }
         Returns: Json
@@ -2334,6 +2500,7 @@ export type Database = {
       request_contacts: { Args: { p_request_id: string }; Returns: Json }
       request_offers: { Args: { p_request_id: string }; Returns: Json }
       request_settings: { Args: { p_region: string }; Returns: Json }
+      reselection_limit: { Args: { p_region: string }; Returns: number }
       review_provider_documents: {
         Args: {
           p_code: string
@@ -2383,6 +2550,10 @@ export type Database = {
         Returns: Json
       }
       unlock_settings: { Args: { p_region: string }; Returns: Json }
+      withdraw_application: {
+        Args: { p_application_id: string }
+        Returns: Json
+      }
       work_days_ok: { Args: { p_days: number[] }; Returns: boolean }
     }
     Enums: {

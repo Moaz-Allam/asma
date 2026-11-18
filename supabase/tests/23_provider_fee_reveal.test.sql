@@ -344,7 +344,7 @@ SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER reque
                         format('pg_temp.street(%s, %L)', 1, 'a1')), 'none',
   'AC-6: and so is the street line');
 SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
-                              format($q$UPDATE public.requests SET status = 'CANCELLED', cancelled_at = now() - interval '20 days', cancelled_by = 'admin', closed_by = 'customer', closed_at = now() - interval '20 days' WHERE id = %L$q$, pg_temp.r(1))],
+                              format($q$UPDATE public.requests SET status = 'CANCELLED', cancelled_at = now() - interval '20 days', cancelled_by = 'admin', closed_by = 'admin', closed_at = now() - interval '20 days' WHERE id = %L$q$, pg_temp.r(1))],
                         format('pg_temp.contacts(%s, %L)', 1, 'c1')), 'not_found',
   'R-14: a cancelled request closed long ago gives nothing');
 SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',

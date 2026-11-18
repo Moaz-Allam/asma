@@ -632,16 +632,19 @@ SELECT results_eq(
   $$ VALUES ('CANCELLED', 'customer', 'plans_changed', true) $$, 'CANCELLED, by the customer, with the reason');
 SELECT is((SELECT jsonb_build_object('old', old_value, 'new', new_value) FROM public.audit_log
             WHERE action = 'request.cancelled' AND entity_id = (SELECT r ->> 'id' FROM r1)),
-  '{"old": {"status": "OPEN"}, "new": {"status": "CANCELLED", "fixed_price": 350000}}',
-  'one audit row, with no notes and no address');
--- A fixture state, not a move: a request past SELECTED (09 adds COMMISSION_PAID). Since 06 a SELECTED one is cancellable.
+  '{"old": {"status": "OPEN"}, "new": {"status": "CANCELLED", "rule_state": "OPEN", "fixed_price": 350000, "cancelled_by": "customer", "fee_refund_id": null, "counts_against": "nobody", "commission_outcome": "not_paid", "provider_fee_outcome": "not_paid"}}',
+  'one audit row, with no notes and no address (12: the rule it was cancelled under)');
+-- A fixture state, not a move: a request done and waiting for the customer (11). Since 12 everything before it is
+-- cancellable (§36); from AWAITING_CONFIRMATION on it is a report, not a cancel (row 12).
 ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
-UPDATE public.requests SET status = 'COMMISSION_PAID' WHERE id = (SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 11);
+UPDATE public.requests SET status = 'AWAITING_CONFIRMATION', actual_started_at = now(), actual_completed_at = now(),
+       confirm_deadline = now() + interval '1 day'
+ WHERE id = (SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 11);
 ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c4');
 SELECT throws_ok($$ SELECT public.cancel_request((SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 11), NULL) $$,
-  'P0001', 'not_cancellable', 'a request past SELECTED cannot be cancelled here');
+  'P0001', 'not_cancellable', 'a request done and waiting for the customer cannot be cancelled (row 12)');
 SELECT is(public.cancel_request((SELECT (r ->> 'id')::uuid FROM c4 WHERE h = 9), 'other'), '{"status": "ok"}',
   'an expired OPEN request can be cancelled');
 RESET ROLE;

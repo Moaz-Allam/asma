@@ -320,7 +320,7 @@ SELECT is(pg_temp.probe(ARRAY[format($$INSERT INTO public.fee_refunds (region, r
                         pg_temp.accept1()),
   'false', 'AC-5: not when a refund names the fee');
 SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
-                              format($$UPDATE public.requests SET status = 'CANCELLED', cancelled_at = now(), cancelled_by = 'customer' WHERE id = %L$$, pg_temp.r(1))],
+                              format($$UPDATE public.requests SET status = 'CANCELLED', cancelled_at = now(), cancelled_by = 'customer', closed_at = now(), closed_by = 'customer' WHERE id = %L$$, pg_temp.r(1))],
                         pg_temp.accept1()),
   'false', 'AC-5: not after a cancel');
 SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
@@ -372,8 +372,9 @@ SELECT results_eq(
   $$ VALUES ('late', 'succeeded') $$,
   'R-3: a second payment on the same attempt goes late; the attempt stays succeeded');
 SELECT is(pg_temp.pay(1), 'already_paid', 'AC-4 step 3: a paid commission is not paid again');
-SELECT is(pg_temp.call_as('c1', format('SELECT public.cancel_request(%L, NULL)::text', pg_temp.r(1))), 'not_cancellable',
-  'AC-2: COMMISSION_PAID is not cancellable until 12');
+SELECT is(pg_temp.probe(ARRAY[]::text[], format($q$(pg_temp.call_as('c1', %L))::jsonb #>> '{refund,amount}'$q$,
+                                                format('SELECT public.cancel_request(%L, NULL)::text', pg_temp.r(1)))),
+  '10000', 'AC-2, 12 AC-6: since 12 COMMISSION_PAID is cancellable, its commission refunded (row 5)');
 
 -- The start cap and the floor (A-1, R-8).
 CREATE FUNCTION pg_temp.pay_and_apply(p integer, p_psp text) RETURNS text LANGUAGE plpgsql AS $$
