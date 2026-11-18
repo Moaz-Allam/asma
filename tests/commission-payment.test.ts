@@ -53,6 +53,11 @@ const STATUS = {
   url: 'http://localhost:3100/en/dev/fake-checkout/fk1_x',
   locale: 'en',
   late_refund: false,
+  // Spec 0011-10 R-1.
+  fee_id: FEE,
+  amount: 10000,
+  deadline: '2026-11-20T10:00:00+00:00',
+  application_id: null,
 };
 const RECEIPT = {
   receipt_number: FEE,
@@ -241,13 +246,13 @@ describe('checkoutStatus (AC-7, AC-9, R-13)', () => {
     }
   });
 
-  it('the action answers not_found for another payer and asks for the customer role', async () => {
+  it('the action answers not_found for another payer and asks for either payer role (spec 0011-10 R-7)', async () => {
     m.rpc.mockResolvedValue(refuse('not_found'));
     expect(await checkoutStatusAction({ attemptId: ATTEMPT })).toEqual({
       success: false,
       error: 'not_found',
     });
-    expect(m.requireRole).toHaveBeenCalledWith('customer');
+    expect(m.requireRole).toHaveBeenCalledWith('customer', 'provider');
   });
 });
 

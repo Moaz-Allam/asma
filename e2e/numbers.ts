@@ -47,6 +47,11 @@ export const NUMBER = {
   payCustomer: 27,
   payOther: 28,
   payCustomerB: 29,
+  // Position 10 (spec 0011-10 AC-14): the customer, the chosen provider who pays the fee, and the rival who is
+  // not selected and gets 404 on the chosen one's pay pages.
+  revealCustomer: 30,
+  revealProvider: 31,
+  revealRival: 32,
 } as const;
 
 /**

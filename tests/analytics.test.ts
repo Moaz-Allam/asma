@@ -34,6 +34,7 @@ describe('the allow list (AC-7)', () => {
       'code_limited',
       'code_requested',
       'code_verified',
+      'contacts_unlocked',
       'document_upload_failed',
       'locale_changed',
       'onboarding_completed',

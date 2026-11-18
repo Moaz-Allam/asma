@@ -8,6 +8,7 @@ import { decodeCursor, encodeCursor } from '@/lib/requests/cursor';
 import {
   PROVIDER_FEED_DB_CODES,
   SETUP_FIELDS,
+  type JobTab,
   dateRange,
   todayIn,
   type ProviderFeedCode,
@@ -21,6 +22,8 @@ import {
   ApplyResult,
   FeedPage,
   HomeCounts,
+  JobsPage,
+  PayFeeResult,
   ProviderSetup,
   RequestDetail,
   type OwnApplication,
@@ -36,6 +39,7 @@ import {
 
 export type {
   ApplicationListRow,
+  JobRow,
   FeedRow,
   OwnApplication,
   ProviderSetup,
@@ -72,6 +76,10 @@ async function call(
     // The cap or the hourly limit is missing or malformed: nobody in the region can apply.
     if (refused.code === 'apply_settings_invalid') {
       raiseAlert('apply_settings_invalid', { recordId: fn, region: context.region ?? undefined });
+    }
+    // Spec 0011-10 AC-8: a missing checkout or window setting stops every provider fee in the region.
+    if (refused.code === 'checkout_settings_invalid' || refused.code === 'unlock_settings_invalid') {
+      raiseAlert(refused.code, { recordId: fn, region: context.region ?? undefined });
     }
     return refused;
   }
@@ -191,6 +199,52 @@ export async function listApplications(
   const next =
     page.has_more && last
       ? encodeCursor({ createdAt: last.application.created_at, id: last.application.id })
+      : null;
+  return { ok: true, page, next };
+}
+
+/**
+ * Pay the provider fee (spec 0011-10 AC-2, AC-8): one database function opens the fee and an attempt, or returns
+ * a young one, or settles a fee of 0 at once. The client sends the application id only; the database charges the
+ * fee frozen at the choose (rule 1). The IP is the one Vercel saw, or null, and is never logged.
+ */
+export async function payProviderFee(
+  input: { applicationId: string; locale: 'ar' | 'tr' | 'en'; payerIp: string | null },
+  context: Context,
+): Promise<
+  | { ok: true; status: 'settled' }
+  | { ok: true; status: 'checkout'; attemptId: string; reused: boolean }
+  | Refused
+> {
+  const result = await call(
+    'pay_provider_fee',
+    { p_application_id: input.applicationId, p_locale: input.locale, p_payer_ip: input.payerIp },
+    context,
+  );
+  if ('ok' in result) return result;
+  const parsed = PayFeeResult.parse(result.data);
+  if (parsed.status === 'settled') return { ok: true, status: 'settled' };
+  return { ok: true, status: 'checkout', attemptId: parsed.attempt_id, reused: parsed.reused };
+}
+
+/** Spec 0011-10 R-11: one My jobs tab, newest change first, 20 a page. No contact field. */
+export async function listJobs(
+  tab: JobTab,
+  after: string | null,
+  context: Context,
+): Promise<{ ok: true; page: JobsPage; next: string | null } | Refused> {
+  const cursor = decodeCursor(after);
+  const result = await call(
+    'provider_jobs',
+    { p_tab: tab, p_after_changed_at: cursor?.createdAt ?? null, p_after_id: cursor?.id ?? null },
+    context,
+  );
+  if ('ok' in result) return result;
+  const page = JobsPage.parse(result.data);
+  const last = page.rows.at(-1);
+  const next =
+    page.has_more && last
+      ? encodeCursor({ createdAt: last.status_changed_at, id: last.application_id })
       : null;
   return { ok: true, page, next };
 }

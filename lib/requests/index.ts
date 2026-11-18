@@ -14,6 +14,7 @@ import {
   CheckoutStatus,
   ChooseResult,
   CommissionFee,
+  Contacts,
   CreateRequestResult,
   PayResult,
   Receipt,
@@ -36,6 +37,7 @@ import {
 export type {
   CheckoutStatus,
   CommissionFee,
+  Contacts,
   Offer,
   Receipt,
   RequestCatalog,
@@ -77,6 +79,8 @@ export const REQUEST_DB_CODES = [
   'checkout_open',
   'checkout_settings_invalid',
   'unlock_settings_invalid',
+  // Spec 0011-10 (10): the contact window.
+  'contact_settings_invalid',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -127,7 +131,8 @@ function signal(code: RequestCode, recordId: string, context: Context): void {
     code === 'choose_settings_invalid' ||
     code === 'fee_settings_invalid' ||
     code === 'checkout_settings_invalid' ||
-    code === 'unlock_settings_invalid'
+    code === 'unlock_settings_invalid' ||
+    code === 'contact_settings_invalid'
   ) {
     raiseAlert(code, { recordId, region });
   } else if (code === 'price_out_of_range') {
@@ -322,6 +327,23 @@ export async function loadReceipt(feeId: string): Promise<Receipt | null> {
     throw new Error(`my_receipt refused: ${result.code}`);
   }
   return Receipt.parse(result.data);
+}
+
+/**
+ * The other side's contacts (spec 0011-10 AC-5), or null: before both fees, past the window, a suspended
+ * provider, anyone else (the database answers `not_found` alike). Postgres decides (rule 2); the first read
+ * of each side is audited there. A missing window setting alerts and reads as hidden.
+ */
+export async function loadContacts(requestId: string, context: Context): Promise<Contacts | null> {
+  if (!UUID.test(requestId)) return null;
+  const result = await call('request_contacts', { p_request_id: requestId });
+  if ('ok' in result) {
+    if (result.code === 'not_found') return null;
+    signal(result.code, requestId, context);
+    if (result.code === 'contact_settings_invalid') return null;
+    throw new Error(`request_contacts refused: ${result.code}`);
+  }
+  return Contacts.parse(result.data);
 }
 
 /** The commission row of the caller's own request, read through RLS (spec 0011-09 AC-10), or null. */

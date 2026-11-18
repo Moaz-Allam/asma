@@ -836,3 +836,44 @@ describe('spec 0011-08 S7: the fake card page path loses its token', () => {
     expect(scrubUrl('/en/dev/fake-checkout/fk1_abc')).toBe('/en/dev/fake-checkout/[token]');
   });
 });
+
+describe('spec 0011-10 AC-13, S10-9: a contacts answer leaves nothing personal', () => {
+  const sides = {
+    customer: {
+      side: 'customer',
+      name: 'Ayşe Usta',
+      phone: '+905559230003',
+      whatsapp: 'https://wa.me/905559230003',
+      email: 'ayse@example.test',
+      email_confirmed: false,
+    },
+    provider: {
+      side: 'provider',
+      name: 'Ece Müşteri',
+      phone: '+905559230001',
+      whatsapp: 'https://wa.me/905559230001',
+      email: 'ece@example.test',
+      email_confirmed: true,
+      street: 'Moda Cad. No 5',
+      notes: 'Ring twice, third floor',
+      zone: { tr: 'Moda' },
+      scheduled_start_at: '2026-11-20T07:00:00+00:00',
+      scheduled_end_at: '2026-11-20T09:00:00+00:00',
+      timezone: 'Europe/Istanbul',
+    },
+  } as const;
+
+  it.each(['name', 'phone', 'whatsapp', 'email', 'street', 'notes'])('%s is a personal key', (key) => {
+    expect(isPersonalKey(key)).toBe(true);
+  });
+
+  it.each(Object.entries(sides))(
+    'the %s side, in a log, keeps no phone, email, street line or note',
+    (_, contacts) => {
+      const out = JSON.stringify(scrubLog({ message: 'contacts', attributes: { contacts } } as never));
+      for (const secret of ['5559230', 'example.test', 'Moda Cad', 'Ring twice', 'Ayşe', 'Ece']) {
+        expect(out).not.toContain(secret);
+      }
+    },
+  );
+});

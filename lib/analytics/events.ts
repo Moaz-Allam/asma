@@ -40,6 +40,8 @@ export type AnalyticsEvents = {
   payment_started: { fee: 'commission' | 'provider_fee' };
   /** The return page first saw the fee paid (spec 0011-09 AC-14). Only which fee. */
   payment_succeeded: { fee: 'commission' | 'provider_fee' };
+  /** A contact card first rendered for one side (spec 0011-10 AC-13). Only the side: no id, no contact field. */
+  contacts_unlocked: { side: 'customer' | 'provider' };
 };
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
@@ -61,6 +63,7 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'provider_chosen',
   'payment_started',
   'payment_succeeded',
+  'contacts_unlocked',
 ]);
 
 /** The typed property names per event: the only non `$` properties an event may carry. */
@@ -81,4 +84,5 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   provider_chosen: [],
   payment_started: ['fee'],
   payment_succeeded: ['fee'],
+  contacts_unlocked: ['side'],
 };

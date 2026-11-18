@@ -530,6 +530,11 @@ CREATE OR REPLACE FUNCTION public.accept_provider_fee(p_fee uuid, p_attempt uuid
   SELECT EXISTS (SELECT 1 FROM public.fee_payments f JOIN public.requests r ON r.id = f.request_id
                   WHERE f.id = p_fee AND f.status = 'pending' AND r.status = 'COMMISSION_PAID') $$;
 REVOKE ALL ON FUNCTION public.accept_commission(uuid, uuid), public.accept_provider_fee(uuid, uuid) FROM public, anon, authenticated, service_role;
+-- 07's no op transition for the provider fee, inside this test only: 10 fills it (supabase/tests/23 proves the
+-- move); these cases prove the posting, on fixtures that do not hold a full pick.
+CREATE OR REPLACE FUNCTION public.after_provider_fee_paid(p_fee uuid) RETURNS void
+  LANGUAGE plpgsql VOLATILE SECURITY INVOKER SET search_path = '' AS $$ BEGIN NULL; END $$;
+REVOKE ALL ON FUNCTION public.after_provider_fee_paid(uuid) FROM public, anon, authenticated, service_role;
 
 SET LOCAL ROLE service_role;
 CREATE TEMP TABLE p2 AS SELECT public.apply_fee_paid((SELECT id FROM f5), (SELECT id FROM at5), 'pay-18-p2', 30000, 'TRY', 900) AS j;

@@ -8,6 +8,7 @@ import { OfferList } from '@/components/features/requests/OfferList';
 import { RequestActions } from '@/components/features/requests/RequestActions';
 import { rowStatus, toneOf } from '@/components/features/requests/RequestRow';
 import { RequestTimeline } from '@/components/features/requests/RequestTimeline';
+import { ContactCard } from '@/components/shared/ContactCard';
 import { AgreementLine } from '@/components/shared/AgreementLine';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PriceCard } from '@/components/shared/PriceCard';
@@ -18,8 +19,11 @@ import { localized } from '@/lib/catalog/localized';
 import { formatMoney } from '@/lib/format/money';
 import type { Locale } from '@/lib/i18n/direction';
 import { Link } from '@/lib/i18n/navigation';
-import { getMyRequest, loadCommissionFee, loadOffers } from '@/lib/requests';
+import { getMyRequest, loadCommissionFee, loadContacts, loadOffers } from '@/lib/requests';
 import { instantLabel, NUMBER_LOCALE, quoteLines, regionDefaultLocale } from '@/lib/requests/view';
+
+/** Spec 0011-10 AC-12, security review S10-12: contacts render here, so the route is never cached. */
+export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -101,6 +105,9 @@ export default async function Page({ params, searchParams }: Props) {
     'AWAITING_CONFIRMATION',
     'COMPLETED',
   ].includes(current);
+  // Spec 0011-10 AC-11: both fees settled; the contacts come from Postgres, which decides (rule 2).
+  const revealed = ['UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION', 'COMPLETED'].includes(current);
+  const contacts = revealed ? await loadContacts(request.id, { region: user.region, userId: user.id }) : null;
   const payOpen =
     current === 'SELECTED' &&
     offers.payment_deadline !== null &&
@@ -140,6 +147,14 @@ export default async function Page({ params, searchParams }: Props) {
       : []),
     ...(current === 'COMMISSION_PAID'
       ? [{ key: 'provider_fee', label: t('timeline.providerFee'), at: null }]
+      : []),
+    // Spec 0011-10 AC-11: the provider's fee settled and the contacts shared. The customer reads no provider
+    // fee row, so these steps carry no time.
+    ...(revealed
+      ? [
+          { key: 'provider_fee', label: t('timeline.providerFee'), at: null, done: true },
+          { key: 'contacts', label: t('timeline.contacts'), at: null, done: true },
+        ]
       : []),
   ];
 
@@ -271,7 +286,7 @@ export default async function Page({ params, searchParams }: Props) {
                     <p className="text-body-s text-text-secondary">{t('next.cardEnglish')}</p>
                   ) : null}
                   <PayButton
-                    requestId={request.id}
+                    target={{ kind: 'commission', requestId: request.id }}
                     label={
                       request.commission_amount === 0
                         ? t('next.continue')
@@ -309,6 +324,14 @@ export default async function Page({ params, searchParams }: Props) {
                 </Button>
               ) : null}
             </section>
+          ) : null}
+          {contacts ? (
+            <ContactCard
+              contacts={contacts}
+              requestId={request.id}
+              locale={locale}
+              fallbackLocale={fallback}
+            />
           ) : null}
           <RequestTimeline title={t('timeline.title')} steps={timeline} />
           <RequestActions

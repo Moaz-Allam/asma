@@ -74,6 +74,10 @@ leaves a slot for them (the reviews slot on the applicant card), the slot render
 > `psp_not_configured`, `psp_bad_response` and `checkout_settings_invalid`. `payments_enabled` (D172) and the settings
 > `checkout_hold_minutes` and `psp_buyer_city` land in 08. 09 and 10 set `checkout_attempts.locale` and `payer_ip`.
 >
+> **The reveal (D178, 2026-11-17).** 0011-10 is amended to what 06 to 09 built. There is no `selections` table: the
+> reveal door is `applications.unlocked_at` on the selected application, with `requests.closed_at` and
+> `contact_visible_days` bounding it; 09's pay, return and receipt pages serve both payers from a `(payments)` group.
+
 > **The commission (D175, 2026-11-17).** 0011-09 is amended to what 06 to 08 built. `fee_deadline` joins `requests`, set
 > by 09 on `SELECTED → COMMISSION_PAID` with the window rule below; `min_window_minutes`, `checkouts_per_fee_hour` and
 > `action_counters` land in 09. 06 built no switch, so the `SELECTED → SELECTED` row waits for a child that needs it, and

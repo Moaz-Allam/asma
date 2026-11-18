@@ -227,6 +227,12 @@ export const CheckoutStatus = z
     url: z.string().max(2000).nullable(),
     locale: z.enum(['ar', 'tr', 'en']).nullable(),
     late_refund: z.boolean(),
+    // Spec 0011-10 R-1: the payer's own receipt number, the amount, the deadline that applies, and for a
+    // provider fee the application the Try again button pays.
+    fee_id: z.string().uuid(),
+    amount: Minor.nonnegative(),
+    deadline: z.string().min(1).nullable(),
+    application_id: z.string().uuid().nullable(),
   })
   .strict();
 export type CheckoutStatus = z.infer<typeof CheckoutStatus>;
@@ -247,6 +253,34 @@ export const Receipt = z
   })
   .strict();
 export type Receipt = z.infer<typeof Receipt>;
+
+/**
+ * `request_contacts()` (spec 0011-10 AC-5): what one side reads of the other after both fees. Strict, per side:
+ * the customer never receives an address field, and nothing outside these keys reaches a page.
+ */
+const ContactBase = {
+  name: z.string().nullable(),
+  phone: z.string().min(1),
+  whatsapp: z.string().startsWith('https://wa.me/'),
+  email: z.string().nullable(),
+  email_confirmed: z.boolean(),
+};
+export const Contacts = z.discriminatedUnion('side', [
+  z.object({ side: z.literal('customer'), ...ContactBase }).strict(),
+  z
+    .object({
+      side: z.literal('provider'),
+      ...ContactBase,
+      street: z.string().nullable(),
+      notes: z.string().nullable(),
+      zone: Localized.nullable(),
+      scheduled_start_at: z.string().min(1),
+      scheduled_end_at: z.string().min(1),
+      timezone: z.string(),
+    })
+    .strict(),
+]);
+export type Contacts = z.infer<typeof Contacts>;
 
 /** The commission row of a request, as its payer reads it through RLS (spec 0011-09 AC-10). */
 export const CommissionFee = z

@@ -437,9 +437,9 @@ SELECT is(public.apply_fee_paid(pg_temp.fee(11), pg_temp.att(11), 'pay-21-p11', 
 CREATE FUNCTION pg_temp.checkout_as(p_user text, p_attempt uuid) RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.call_as(p_user, format('SELECT public.my_checkout(%L)::text', p_attempt)) $$;
 SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(pg_temp.checkout_as('c1', pg_temp.att(12))::jsonb) k),
-  ARRAY['attempt_id', 'fee_kind', 'fee_status', 'late_refund', 'locale', 'reason', 'request_id', 'status', 'url'],
+  ARRAY['amount', 'application_id', 'attempt_id', 'deadline', 'fee_id', 'fee_kind', 'fee_status', 'late_refund', 'locale', 'reason', 'request_id', 'status', 'url'],
   'AC-7: the named fields only: no token, no IP, no PSP payment id');
-SELECT is(pg_temp.checkout_as('c1', pg_temp.att(12))::jsonb - 'attempt_id',
+SELECT is(pg_temp.checkout_as('c1', pg_temp.att(12))::jsonb - 'attempt_id' - 'amount' - 'application_id' - 'deadline' - 'fee_id',
   jsonb_build_object('request_id', pg_temp.r(12), 'fee_kind', 'commission', 'fee_status', 'pending', 'status', 'queued',
                      'reason', NULL, 'url', NULL, 'locale', 'ar', 'late_refund', false),
   'AC-7: a queued attempt, with no URL yet');

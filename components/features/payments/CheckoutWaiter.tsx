@@ -4,7 +4,7 @@ import { CircleCheck, CircleX, LoaderCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
-import { checkoutStatusAction, payCommissionAction } from '@/actions/payments';
+import { checkoutStatusAction, payCommissionAction, payProviderFeeAction } from '@/actions/payments';
 import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics/client';
 import { Link, useRouter } from '@/lib/i18n/navigation';
@@ -52,7 +52,11 @@ export function CheckoutWaiter({
   const [busy, start] = useTransition();
   const left = useRef(false);
   const view = viewOf(mode, status, timedOut);
-  const requestHref = `/requests/${status.request_id}`;
+  // Spec 0011-10 AC-9, R-7: back to the request for a commission, to My jobs for a provider fee.
+  const requestHref =
+    status.fee_kind === 'commission'
+      ? `/requests/${status.request_id}`
+      : `/provider/applications?tab=${status.fee_status === 'paid' ? 'active' : 'chosen'}`;
 
   // Poll until a final view or the time limit; a new round restarts it.
   useEffect(() => {
@@ -124,7 +128,11 @@ export function CheckoutWaiter({
     start(async () => {
       let result: Awaited<ReturnType<typeof payCommissionAction>>;
       try {
-        result = await payCommissionAction({ requestId: status.request_id });
+        // Spec 0011-10 AC-9 (R14): Try again pays the fee this attempt was for.
+        result =
+          status.fee_kind === 'provider_fee' && status.application_id
+            ? await payProviderFeeAction({ applicationId: status.application_id })
+            : await payCommissionAction({ requestId: status.request_id });
       } catch {
         result = { success: false, error: 'action_failed' };
       }
@@ -136,7 +144,7 @@ export function CheckoutWaiter({
         router.replace(requestHref);
         return;
       }
-      if (!result.data.reused) track('payment_started', { fee: 'commission' }, { leaving: true });
+      if (!result.data.reused) track('payment_started', { fee: status.fee_kind }, { leaving: true });
       if (result.data.attemptId === status.attempt_id) {
         setTimedOut(false);
         setRound((r) => r + 1);
@@ -167,7 +175,7 @@ export function CheckoutWaiter({
     slow: t('slow'),
     openFailed: t('openFailed'),
     paused: tr('errors.payments_disabled'),
-    success: t('successBody'),
+    success: status.fee_kind === 'commission' ? t('successBody') : t('successBodyFee'),
     late: t('lateBody'),
     refunded: t('refundedBody'),
     failed: t('failedBody'),
@@ -221,7 +229,7 @@ export function CheckoutWaiter({
         ) : null}
         {!waiting ? (
           <Button asChild variant="outline">
-            <Link href={requestHref}>{t('toRequest')}</Link>
+            <Link href={requestHref}>{status.fee_kind === 'commission' ? t('toRequest') : t('toJobs')}</Link>
           </Button>
         ) : null}
       </div>
