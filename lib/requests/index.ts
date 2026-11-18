@@ -372,8 +372,9 @@ export async function loadCloseInfo(requestId: string): Promise<CloseInfo | null
   if (!UUID.test(requestId)) return null;
   const result = await call('request_close_info', { p_request_id: requestId });
   if ('ok' in result) {
-    if (result.code === 'not_found') return null;
-    throw new Error(`request_close_info refused: ${result.code}`);
+    // Review F-6: never break the request page over this read; the buttons simply do not show.
+    if (result.code !== 'not_found') log.warn('close_info_refused', { request_id: requestId });
+    return null;
   }
   return CloseInfo.parse(result.data);
 }

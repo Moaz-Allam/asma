@@ -76,7 +76,7 @@ arrives with 14.
 - **AC-9** (the doors and actions): `lib/provider-feed` gains `startJob`, `finishJob`; `lib/requests` gains
   `confirmJob`, `markJobDone`; `actions/jobs.ts` runs `guardedAction` with the provider role for the first two and the
   customer role for the last two. Codes map to typed results; `confirm_settings_invalid` alerts.
-- **AC-10** (analytics, D68): `job_started`, `job_done`, `job_confirmed: { by: 'customer' }` with no ids (no event
+- **AC-10** (analytics, D68): `job_started`, `job_done`, `job_confirmed: { by: 'confirm' | 'mark_done' }` (as built, D182) with no ids (no event
   carries an id, D68). The auto close is server side and sends no event; its count is the `audit_log` rows.
 - **AC-11** (tests): pgTAP `25_work_and_close` (each refusal in order for each function, replays, the time zone start
   day edge, `auto_close_jobs` with a locked row skipped and taken next run, the guard and checks, grants, a second

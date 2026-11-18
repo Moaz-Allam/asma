@@ -12,7 +12,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(62);
+SELECT plan(67);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -40,9 +40,11 @@ INSERT INTO public.zones (id, region, name, multiplier, active) VALUES (pg_temp.
 UPDATE public.platform_settings SET value = '0' WHERE region = 'TR' AND key IN ('provider_fee_value', 'fee_min_minor');
 
 -- The money tables as they stand, to prove no function here touches them (R-12).
-CREATE TEMP TABLE money_before AS
-  SELECT (SELECT count(*) FROM public.fee_payments) AS fees, (SELECT count(*) FROM public.ledger_journals) AS journals,
-         (SELECT count(*) FROM public.ledger_entries) AS entries, (SELECT count(*) FROM public.outbox_events) AS outbox;
+CREATE FUNCTION pg_temp.money_sum() RETURNS text LANGUAGE sql STABLE AS $$
+  SELECT md5(coalesce((SELECT string_agg(f::text, '|' ORDER BY f.id) FROM public.fee_payments f), '')
+          || coalesce((SELECT string_agg(j::text, '|' ORDER BY j.id) FROM public.ledger_journals j), '')
+          || coalesce((SELECT string_agg(e::text, '|' ORDER BY e.id) FROM public.ledger_entries e), '')
+          || coalesce((SELECT string_agg(o::text, '|' ORDER BY o.id) FROM public.outbox_events o), '')) $$;
 
 CREATE FUNCTION pg_temp.as_user(p_user text) RETURNS void LANGUAGE sql AS $$
   SELECT set_config('request.jwt.claims', jsonb_build_object('sub', pg_temp.u(p_user), 'role', 'authenticated')::text, true) $$;
@@ -127,6 +129,11 @@ CREATE FUNCTION pg_temp.status(p integer) RETURNS text LANGUAGE sql STABLE AS $$
 -- R1 untouched (UNLOCKED, starts in 3 days); R2 the provider's path; R3 the customer closes early (too early);
 -- R4 the customer closes on the day; R5 done, then the customer tries to close; R6 the auto close; R7 replays.
 SELECT pg_temp.req(g) FROM generate_series(1, 7) g;
+-- The money tables after the fixtures (fees of 0 write none), to prove the work functions touch none (R-12).
+CREATE TEMP TABLE money_before AS SELECT pg_temp.money_sum() AS sum;
+-- S11-1: a2 lost R2 (written as 10's unlock leaves a losing applicant).
+INSERT INTO public.applications (id, region, request_id, provider_id, message, status)
+VALUES ('00000000-0000-0000-0000-000000259002', 'TR', pg_temp.r(2), pg_temp.u('a2'), 'A losing offer for the work tests, long enough.', 'NOT_SELECTED');
 SELECT pg_temp.today(g) FROM unnest(ARRAY[2, 4, 5, 6, 7]) g;
 UPDATE public.platform_settings SET value = '5' WHERE region = 'TR' AND key = 'provider_fee_value';
 UPDATE public.platform_settings SET value = '1000' WHERE region = 'TR' AND key = 'fee_min_minor';
@@ -166,7 +173,11 @@ SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.platform_settings DISABLE TRIG
                               $$DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'confirm_window_hours'$$],
                         format('pg_temp.job(%L, %s, %L)', 'finish_job', 2, 'a1')), 'confirm_settings_invalid',
   'AC-1: a missing confirm window refuses');
+SELECT is(pg_temp.probe(ARRAY[format($q$UPDATE public.providers SET status = 'suspended', suspension_reason = 'A test of the work' WHERE id = %L$q$, pg_temp.u('a1'))],
+                        format('pg_temp.job(%L, %s, %L)', 'finish_job', 2, 'a1')), 'provider_suspended',
+  'R-1, S11-5: a provider suspended after Started cannot finish');
 SELECT is(pg_temp.job('finish_job', 2, 'a1'), '{"status": "ok", "replayed": false}', 'AC-3: done');
+SELECT ok((SELECT status_changed_at = now() FROM public.applications WHERE id = pg_temp.app(2)), 'R-6: Done sets status_changed_at');
 SELECT is(pg_temp.status(2), 'AWAITING_CONFIRMATION COMPLETED -', 'AC-3: AWAITING_CONFIRMATION, the application COMPLETED');
 SELECT ok((SELECT actual_completed_at = now() AND confirm_deadline = now() + interval '72 hours' FROM public.requests WHERE id = pg_temp.r(2)),
   'AC-3: actual_completed_at now, the confirm deadline 72 hours on');
@@ -207,6 +218,12 @@ SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER reque
                                      scheduled_end_at = (date_trunc('day', now() AT TIME ZONE 'Europe/Istanbul') + interval '1 day 2 hours') AT TIME ZONE 'Europe/Istanbul'
             WHERE id = %L$q$, pg_temp.r(1))], format('public.start_day_reached(%L)', pg_temp.r(1))), 'true',
   'R-8: 23:59 today local is the start day from 00:00');
+SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
+  format($q$UPDATE public.requests SET selected_at = now() - interval '2 days', payment_deadline = now() - interval '1 day 23 hours', fee_deadline = now() - interval '1 day 22 hours',
+                                     scheduled_start_at = (date_trunc('day', now() AT TIME ZONE 'Europe/Istanbul')) AT TIME ZONE 'Europe/Istanbul',
+                                     scheduled_end_at = (date_trunc('day', now() AT TIME ZONE 'Europe/Istanbul') + interval '2 hours') AT TIME ZONE 'Europe/Istanbul'
+            WHERE id = %L$q$, pg_temp.r(1))], format('public.start_day_reached(%L)', pg_temp.r(1))), 'true',
+  'R-8: a start at exactly 00:00 local is its own start day');
 
 -- ══ AC-6, R-2: the auto close ════════════════════════════════════════════════
 SELECT pg_temp.job('start_job', 6, 'a1');
@@ -250,13 +267,18 @@ SELECT ok((SELECT bool_or((x ->> 'application_id')::uuid = pg_temp.app(7) AND (x
 SELECT ok((SELECT bool_or((x ->> 'application_id')::uuid = pg_temp.app(2))
              FROM jsonb_array_elements((pg_temp.call_as('a1', $$SELECT public.provider_jobs('done', NULL, NULL)::text$$))::jsonb -> 'rows') x),
   'A-3: a confirmed job is in Done');
+SELECT is((SELECT jsonb_build_object('s', x -> 'request_status', 'a', x -> 'actual_started_at', 'd', x -> 'confirm_deadline', 'c', x -> 'closed_at', 'k', x -> 'can_start')
+             FROM jsonb_array_elements((pg_temp.call_as('a2', $$SELECT public.provider_jobs('done', NULL, NULL)::text$$))::jsonb -> 'rows') x
+            WHERE x ->> 'application_id' = '00000000-0000-0000-0000-000000259002'),
+  '{"a": null, "c": null, "d": null, "k": false, "s": null}'::jsonb,
+  'S11-1: the losing provider learns nothing of the winner''s job');
+SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.requests DISABLE TRIGGER requests_guard',
+                              format($q$UPDATE public.requests SET status = 'AWAITING_CONFIRMATION' WHERE id = %L$q$, pg_temp.r(1))], '1'), '23514',
+  'S11-4: AWAITING_CONFIRMATION needs its deadline (the check holds even with the guard aside)');
 
 -- ══ R-12: no money moved; grants ═════════════════════════════════════════════
-SELECT results_eq(
-  $$ SELECT (SELECT count(*) FROM public.fee_payments), (SELECT count(*) FROM public.ledger_journals),
-            (SELECT count(*) FROM public.ledger_entries), (SELECT count(*) FROM public.outbox_events) $$,
-  $$ SELECT fees, journals, entries, outbox FROM money_before $$,
-  'R-12, D91: no fee, journal, entry or outbox row was written by the work functions');
+SELECT is(pg_temp.money_sum(), (SELECT sum FROM money_before),
+  'R-12, D91, S11-5: no fee, journal, entry or outbox row was written or changed by the work functions');
 SELECT results_eq(
   $$ SELECT p.proname::text COLLATE "default", p.prosecdef, has_function_privilege('authenticated', p.oid, 'EXECUTE'),
             has_function_privilege('service_role', p.oid, 'EXECUTE'), has_function_privilege('anon', p.oid, 'EXECUTE')

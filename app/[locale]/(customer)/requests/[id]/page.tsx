@@ -172,7 +172,8 @@ export default async function Page({ params, searchParams }: Props) {
           },
         ]
       : []),
-    ...(request.actual_completed_at && current !== 'COMPLETED'
+    // Review F-3: the provider's Done is the one that set a confirm deadline; it stays lit after the close.
+    ...(request.actual_completed_at && request.confirm_deadline
       ? [
           {
             key: 'done',
@@ -188,7 +189,7 @@ export default async function Page({ params, searchParams }: Props) {
             label:
               request.closed_by === 'auto'
                 ? t('timeline.closedAuto')
-                : request.actual_started_at
+                : request.confirm_deadline
                   ? t('timeline.confirmed')
                   : t('timeline.closedByCustomer'),
             at: instantLabel(request.closed_at, timezone, locale),

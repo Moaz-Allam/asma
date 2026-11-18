@@ -97,7 +97,12 @@ alter table public.requests
   add constraint requests_closed_by_set check ((closed_by is null) = (closed_at is null)),
   add constraint requests_completed_closed check (status <> 'COMPLETED' or (closed_at is not null and closed_by is not null)),
   add constraint requests_confirm_after_done check (
-    confirm_deadline is null or (actual_completed_at is not null and confirm_deadline > actual_completed_at));
+    confirm_deadline is null or (actual_completed_at is not null and confirm_deadline > actual_completed_at)),
+  -- Security review S11-4: a state always carries its columns, so an AWAITING_CONFIRMATION row can always close.
+  add constraint requests_awaiting_has_deadline check (
+    status <> 'AWAITING_CONFIRMATION' or (confirm_deadline is not null and actual_completed_at is not null)),
+  add constraint requests_started_has_time check (
+    status not in ('IN_PROGRESS', 'AWAITING_CONFIRMATION') or actual_started_at is not null);
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 3. The guards (R-4).
@@ -262,8 +267,13 @@ declare
   v_req  public.requests%rowtype;
   v_app  public.applications%rowtype;
 begin
-  select r.* into v_req from public.requests r where r.id = p_request_id for update;
-  if not found or v_req.selected_application_id is null then
+  -- Security review S11-2: only the selected, unlocked provider can take the request's lock.
+  select r.* into v_req from public.requests r
+   where r.id = p_request_id
+     and exists (select 1 from public.applications a
+                  where a.id = r.selected_application_id and a.provider_id = v_uid and a.unlocked_at is not null)
+     for update of r;
+  if not found then
     raise exception 'not_found';
   end if;
   select a.* into v_app from public.applications a
@@ -372,6 +382,10 @@ declare
   v_req  public.requests%rowtype;
 begin
   select r.* into v_req from public.requests r where r.id = p_request_id;
+  -- Review: the callers check the state; this asserts it too.
+  if v_req.status not in ('UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION') then
+    raise exception 'invalid_state';
+  end if;
   perform 1 from public.applications a where a.id = v_req.selected_application_id for update;
   update public.requests
      set status = 'COMPLETED', closed_at = now(), closed_by = p_by,
@@ -507,8 +521,9 @@ begin
       perform public.close_job(v_id, 'auto', 'job.auto_closed');
       v_closed := v_closed + 1;
     exception when others then
-      -- One bad row never stops the rest; it is tried again next run.
-      null;
+      -- Security review S11-3: one bad row never stops the rest, and it is reported (the database log, with the
+      -- request id and the SQLSTATE only); it is tried again next run.
+      raise warning 'auto_close_failed request=% sqlstate=%', v_id, sqlstate;
     end;
   end loop;
   return v_closed;
@@ -563,13 +578,17 @@ begin
                'payment_deadline', case when m.status = 'SELECTED' then (m.req).payment_deadline end,
                'fee_deadline', case when m.status = 'AWAITING_FEE'
                                     then least((m.req).fee_deadline, (m.req).scheduled_start_at) end,
-               'request_status', (m.req).status,
-               'actual_started_at', (m.req).actual_started_at,
-               'confirm_deadline', (m.req).confirm_deadline,
-               'closed_at', (m.req).closed_at,
-               'can_start', m.status = 'UNLOCKED' and (m.req).status = 'UNLOCKED' and public.start_day_reached((m.req).id)) as j
+               -- Security review S11-1: the request's state and work dates only for the caller's own selected,
+               -- unlocked application; a losing or past pick learns nothing of the winner's job (rule 2).
+               'request_status', case when m.own then (m.req).status end,
+               'actual_started_at', case when m.own then (m.req).actual_started_at end,
+               'confirm_deadline', case when m.own then (m.req).confirm_deadline end,
+               'closed_at', case when m.own then (m.req).closed_at end,
+               'can_start', m.own and m.status = 'UNLOCKED' and (m.req).status = 'UNLOCKED'
+                            and public.start_day_reached((m.req).id)) as j
         from (
-          select a.id, a.status, a.status_changed_at, a.provider_fee_amount, a.unlocked_at, r as req
+          select a.id, a.status, a.status_changed_at, a.provider_fee_amount, a.unlocked_at, r as req,
+                 (a.id = r.selected_application_id and a.unlocked_at is not null) as own
             from public.applications a
             join public.requests r on r.id = a.request_id
            where a.provider_id = v_me.id
