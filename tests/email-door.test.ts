@@ -218,9 +218,23 @@ describe('the env schema and the deployment check (R-4, D192)', () => {
     expect(missing({ EMAIL_DRIVER: 'off' })).toEqual([]);
   });
 
-  it('fake is refused on production, allowed on a preview', () => {
-    expect(missing({ EMAIL_DRIVER: 'fake' })).toEqual([]);
+  it('fake is refused on every deployment, a preview included (security review item 6)', () => {
+    expect(missing({ EMAIL_DRIVER: 'fake' })).toEqual(['EMAIL_DRIVER']);
     expect(missing({ EMAIL_DRIVER: 'fake', VERCEL_ENV: 'production' })).toEqual(['EMAIL_DRIVER']);
+  });
+
+  it('the deployment check and the env schema agree on the sender (security review item 7)', () => {
+    for (const from of [
+      'Aldebyani <no-reply@example.com',
+      'no-reply@example.com>',
+      'a@b.co',
+      'Aldebyani <a@b.co>',
+    ]) {
+      const refused = missing({ EMAIL_DRIVER: 'resend', EMAIL_API_KEY: 'k', EMAIL_FROM: from }).includes(
+        'EMAIL_FROM',
+      );
+      expect(refused).toBe(!isEmailSender(from));
+    }
   });
 
   it('resend needs its key and its sender', () => {

@@ -13,7 +13,7 @@ import type { EmailDriver, OutgoingEmail, SendResult } from '@/lib/email';
 const mocks = vi.hoisted(() => ({ log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/observability/log', () => ({ log: mocks.log }));
 
-const { runEmail, EMAIL_SEND_INTERVAL_MS } = await import('@/lib/relay/email');
+const { runEmail, claimLimit, EMAIL_SEND_INTERVAL_MS } = await import('@/lib/relay/email');
 
 const ADDRESS = 'person-13@example.com';
 const REQUEST = '11111111-1111-4111-8111-111111111111';
@@ -116,7 +116,8 @@ describe('the email task (AC-8, R-12)', () => {
       sleep: c.sleep,
     });
     expect(result).toEqual({ sent: 2, skipped: 0, failed: 0, retried: 0 });
-    expect(rpc).toHaveBeenCalledWith('claim_email_outbox', { p_limit: 10, p_worker: 'w' });
+    // 50 seconds of budget at 15.5 seconds a row in the worst case: 3 rows (security review item 1).
+    expect(rpc).toHaveBeenCalledWith('claim_email_outbox', { p_limit: 3, p_worker: 'w' });
     expect(d.sent.map((m) => [m.key, m.to, m.template])).toEqual([
       [row(1).idempotency_key, ADDRESS, 'new_offer'],
       [row(2).idempotency_key, ADDRESS, 'job_started'],
@@ -223,6 +224,14 @@ describe('the email task (AC-8, R-12)', () => {
     await runEmail({ db, driver: driver(), worker: 'w', origin: 'o', now: c.now, sleep: c.sleep });
     expect(claims).toBe(1);
     expect(rpc.mock.calls.filter(([fn]) => fn === 'claim_email_outbox')).toHaveLength(1);
+  });
+
+  it('claims only as many rows as the time left lets finish, at least 1 and at most 10', () => {
+    expect(claimLimit(50_000)).toBe(3);
+    expect(claimLimit(31_000)).toBe(2);
+    expect(claimLimit(25_000)).toBe(1);
+    expect(claimLimit(1_000)).toBe(1);
+    expect(claimLimit(1_000_000)).toBe(10);
   });
 
   it('logs only the outbox id, the template and the outcome (AC-9)', async () => {

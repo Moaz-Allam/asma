@@ -15,7 +15,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(215);
+SELECT plan(217);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -283,12 +283,14 @@ SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid = 'public.email_confirm
 SELECT results_eq($$ SELECT polname::text, pg_get_expr(polqual, polrelid) FROM pg_policy WHERE polrelid = 'public.email_confirmations'::regclass $$,
   $$ VALUES ('email_confirmations_no_api'::text, 'false'::text) $$, 'R-9: one policy, and it denies');
 SELECT is_empty($$ SELECT grantee FROM information_schema.role_table_grants
-                    WHERE table_schema = 'public' AND table_name = 'email_confirmations' AND grantee IN ('anon', 'authenticated', 'service_role') $$,
+                    WHERE table_schema::text = 'public' AND table_name::text = 'email_confirmations'
+                      AND grantee::text IN ('anon', 'authenticated', 'service_role') $$,
   'R-9: no API role has a grant on email_confirmations');
 SELECT is(pg_temp.call_as('c1', 'SELECT count(*)::text FROM public.email_confirmations'), '42501', 'R-9: a signed in user reads nothing');
 SELECT is(pg_temp.call_as('anon', 'SELECT count(*)::text FROM public.email_confirmations'), '42501', 'R-9: nor anon');
 SELECT is_empty($$ SELECT column_name FROM information_schema.columns
-                    WHERE table_schema = 'public' AND table_name = 'email_confirmations' AND column_name LIKE '%token%' AND column_name <> 'token_hash' $$,
+                    WHERE table_schema::text = 'public' AND table_name::text = 'email_confirmations'
+                      AND column_name::text LIKE '%token%' AND column_name::text <> 'token_hash' $$,
   'R-9: only the digest of a token is stored');
 SELECT is(pg_temp.err($$INSERT INTO public.action_counters (region, subject_id, action, window_start, count)
                         VALUES ('TR', '00000000-0000-0000-0000-000000290099', 'mail', date_trunc('hour', now()), 1)$$), '23514',
@@ -810,6 +812,18 @@ SELECT results_eq(
             ('relay-email', '* * * * *', 'select public.relay_kick(''email'')') $$,
   'R-12, AC-6, R-9: the three jobs');
 SELECT is(public.relay_kick('email'), NULL, 'R-12: relay_kick takes the email task (no Vault here, so no call)');
+
+-- ══ R-1, R-6: what a payload may hold (security review 2026-11-19) ═════════
+SELECT is_empty($$ SELECT o.id FROM public.outbox_events o
+                    WHERE o.kind = 'email.send'
+                      AND NOT ((SELECT array_agg(k) FROM jsonb_object_keys(o.payload) k)
+                                 <@ ARRAY['template', 'recipient_id', 'request_id', 'entity_id', 'send_until', 'token']::text[]
+                               OR (SELECT array_agg(k) FROM jsonb_object_keys(o.payload) k)
+                                 <@ ARRAY['audit_id', 'application_id', 'sqlstate']::text[]) $$,
+  'R-1: a mail payload holds ids, the template, send_until and the token, or a queue failure''s id and SQLSTATE; never a value');
+SELECT is_empty($$ SELECT o.id FROM public.outbox_events o
+                    WHERE o.kind = 'email.send' AND o.payload ? 'token' AND o.payload ->> 'template' IS DISTINCT FROM 'confirm_email' $$,
+  'R-9: only confirm_email ever carries a token');
 
 SELECT * FROM finish();
 ROLLBACK;

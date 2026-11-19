@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { Db } from '@/lib/db/types';
 import {
+  EMAIL_CALL_TIMEOUT_MS,
   EmailContextSchema,
   EmailRenderError,
   renderEmail,
@@ -27,6 +28,15 @@ import { call } from './db';
 export const EMAIL_CLAIM_LIMIT = 10;
 export const EMAIL_DEADLINE_MS = 25_000;
 export const EMAIL_SEND_INTERVAL_MS = 500;
+// Security review 2026-11-19 (item 1): every claimed row must finish inside the route's 60 second maxDuration, even
+// if each send waits its full 15 second timeout, so a claim takes no more rows than the time left allows.
+export const EMAIL_RUN_BUDGET_MS = 50_000;
+const WORST_ROW_MS = EMAIL_CALL_TIMEOUT_MS + EMAIL_SEND_INTERVAL_MS;
+
+/** How many rows one claim may take with `left` milliseconds of the run's budget remaining: 1 to 10. */
+export function claimLimit(left: number): number {
+  return Math.max(1, Math.min(EMAIL_CLAIM_LIMIT, Math.floor(left / WORST_ROW_MS)));
+}
 // finish_email stores a detail only in this shape (D192); the relay sends nothing else.
 const SAFE_DETAIL = /^[a-z0-9_:]{1,100}$/;
 
@@ -64,13 +74,15 @@ async function finish(db: Db, row: EmailRow, outcome: FinishOutcome, detail?: st
 export async function runEmail(options: EmailRunOptions): Promise<EmailRunResult> {
   const now = options.now ?? Date.now;
   const sleep = options.sleep ?? defaultSleep;
-  const deadline = now() + (options.deadlineMs ?? EMAIL_DEADLINE_MS);
+  const start = now();
+  const deadline = start + (options.deadlineMs ?? EMAIL_DEADLINE_MS);
+  const budgetEnd = start + EMAIL_RUN_BUDGET_MS;
   const result: EmailRunResult = { sent: 0, skipped: 0, failed: 0, retried: 0 };
   let lastSend = Number.NEGATIVE_INFINITY;
 
   while (now() < deadline) {
     const rows = await call<EmailRow[]>(options.db, 'claim_email_outbox', {
-      p_limit: EMAIL_CLAIM_LIMIT,
+      p_limit: claimLimit(budgetEnd - now()),
       p_worker: options.worker,
     });
     if (!Array.isArray(rows) || rows.length === 0) break;

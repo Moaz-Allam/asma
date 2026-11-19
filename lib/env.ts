@@ -141,7 +141,7 @@ const EnvSchema = z.object({
   // ── The email door (lib/email, spec 0011-13 R-4, AC-1) ───────────────────
   // `off` (the default) sends nothing and ends each mail `email_off`; `fake` appends each mail as one JSON line
   // to EMAIL_FAKE_FILE (the e2e wrapper only); `resend` sends through Resend's REST API. Read only inside
-  // lib/email (lint). lib/deployment.ts refuses `fake` on production and `resend` without its key and sender.
+  // lib/email (lint). lib/deployment.ts refuses `fake` on any deployment and `resend` without its key and sender.
   EMAIL_DRIVER: z.enum(['off', 'fake', 'resend']).default('off'),
   // SECRET: the Resend sending key (owner step S5).
   EMAIL_API_KEY: z.string().min(1).optional(),
