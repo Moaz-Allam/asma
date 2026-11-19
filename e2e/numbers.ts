@@ -59,6 +59,9 @@ export const NUMBER = {
   // providers are written by SQL and never sign in.
   cancelCustomer: 35,
   cancelProvider: 36,
+  // Position 13 (spec 0011-13 AC-12): the customer who confirms an address, and the provider of the mail journey.
+  emailCustomer: 37,
+  emailProvider: 38,
 } as const;
 
 /**

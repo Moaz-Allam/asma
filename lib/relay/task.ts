@@ -3,12 +3,15 @@ import 'server-only';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 
 import { appRelease } from '@/lib/deployment';
+import { createEmailDriver } from '@/lib/email';
 import { getEnv } from '@/lib/env';
+import { appOrigin } from '@/lib/http/origin';
 import { log } from '@/lib/observability/log';
 import { checkIn } from '@/lib/observability/server';
 
 import { relayDb } from './db';
 import { runDrain } from './drain';
+import { runEmail } from './email';
 import { heartbeat } from './heartbeat';
 import { relayPsp } from './psp';
 import { reconcileDaily, reconcilePending } from './reconcile';
@@ -18,7 +21,8 @@ import { reconcileDaily, reconcilePending } from './reconcile';
  * secret and the body, answers 202 at once, and runs the task in `after()`. A run cut at any point is safe.
  */
 
-export const RELAY_TASKS = ['drain', 'reconcile_pending', 'reconcile_daily', 'heartbeat'] as const;
+// Spec 0011-13 R-12: `email` drains the mail lane (cron relay-email, every minute).
+export const RELAY_TASKS = ['drain', 'reconcile_pending', 'reconcile_daily', 'heartbeat', 'email'] as const;
 export type RelayTask = (typeof RELAY_TASKS)[number];
 export const RELAY_BODY_LIMIT_BYTES = 1024;
 export const RELAY_SECRET_HEADER = 'x-relay-secret';
@@ -62,6 +66,8 @@ export async function runTask(task: RelayTask): Promise<void> {
       await reconcilePending(db);
     } else if (task === 'reconcile_daily') {
       await reconcileDaily(db, relayPsp(db));
+    } else if (task === 'email') {
+      await runEmail({ db, driver: createEmailDriver(), worker: workerName(), origin: appOrigin() });
     } else {
       await heartbeat(db);
     }

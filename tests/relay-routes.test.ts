@@ -83,9 +83,9 @@ describe('/api/relay (AC-5, R-7)', () => {
     expect(mocks.runTask).not.toHaveBeenCalled();
   });
 
-  it('knows exactly the four tasks', () => {
+  it('knows exactly the five tasks (spec 0011-13 R-12 adds email)', () => {
     const enc = (task: string) => new TextEncoder().encode(JSON.stringify({ task }));
-    for (const task of ['drain', 'reconcile_pending', 'reconcile_daily', 'heartbeat'])
+    for (const task of ['drain', 'reconcile_pending', 'reconcile_daily', 'heartbeat', 'email'])
       expect(parseTask(enc(task))).toBe(task);
     expect(parseTask(enc('retention'))).toBeNull();
   });

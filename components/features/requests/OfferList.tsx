@@ -5,6 +5,7 @@ import { useState, useTransition } from 'react';
 
 import { chooseProviderAction } from '@/actions/requests';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { EmailNudge } from '@/components/shared/EmailNudge';
 import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics/client';
 import { formatMoney } from '@/lib/format/money';
@@ -29,6 +30,7 @@ export function OfferList({
   currency,
   windowHours,
   readOnly,
+  emailNudge = false,
 }: {
   requestId: string;
   offers: readonly Offer[];
@@ -38,6 +40,8 @@ export function OfferList({
   currency: 'TRY' | 'SAR';
   windowHours: number | null;
   readOnly: boolean;
+  /** Spec 0011-13 AC-4: no confirmed email while mail is on, so the deadlines would not reach the customer. */
+  emailNudge?: boolean;
 }) {
   const t = useTranslations('Requests');
   const locale = useLocale() as Locale;
@@ -136,6 +140,7 @@ export function OfferList({
           <li>{t('offers.confirmCash', { amount: money(cashDue) })}</li>
           <li>{t('offers.confirmContact')}</li>
         </ul>
+        {emailNudge ? <EmailNudge text={t('emailBanner.text')} linkLabel={t('emailBanner.link')} /> : null}
       </ConfirmDialog>
     </section>
   );

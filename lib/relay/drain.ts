@@ -54,7 +54,8 @@ async function handle(db: Db, psp: PspAdapter, row: OutboxRow): Promise<Outcome>
     case 'refund.request':
       return refundPayment(db, psp, row);
     default:
-      // email.send arrives with 13; until then such a row runs out of tries and alerts outbox_failed.
+      // claim_outbox leaves email.send rows to the mail lane (spec 0011-13 R-12), so only an unknown kind lands
+      // here; it runs out of tries and alerts outbox_failed.
       return { ok: false, error: 'kind_not_built' };
   }
 }

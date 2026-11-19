@@ -4,8 +4,10 @@ import { FeedCard } from '@/components/features/provider-feed/FeedCard';
 import { StandingNotice } from '@/components/features/provider-feed/StandingNotice';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
+import { EmailNudge } from '@/components/shared/EmailNudge';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
+import { needsEmailNudge } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { Link } from '@/lib/i18n/navigation';
@@ -41,8 +43,18 @@ export default async function Page({ params, searchParams }: Props) {
   const t = await getTranslations('ProviderFeed');
   const context = { region: user.region };
 
-  const [standing, file] = await Promise.all([getStanding(user.id), getProviderFile(user.id)]);
-  const header = <PageHeader title={t('feed.title')} intro={t('feed.intro')} />;
+  const [standing, file, emailNudge] = await Promise.all([
+    getStanding(user.id),
+    getProviderFile(user.id),
+    // Spec 0011-13 AC-4, R-10: while the apply gate is on, a provider without a confirmed email is told first.
+    needsEmailNudge(user.id, 'provider'),
+  ]);
+  const header = (
+    <>
+      <PageHeader title={t('feed.title')} intro={t('feed.intro')} />
+      {emailNudge ? <EmailNudge text={t('emailPrompt.text')} linkLabel={t('emailPrompt.link')} /> : null}
+    </>
+  );
   if (!standing || !file) {
     return (
       <>

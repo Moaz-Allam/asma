@@ -3,7 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { ContactEmailSchema, FullNameSchema, updateProfile } from '@/lib/account/profile';
+import {
+  ConfirmTokenSchema,
+  ContactEmailSchema,
+  FullNameSchema,
+  confirmEmailInDb,
+  requestEmailConfirmationInDb,
+  updateProfile,
+} from '@/lib/account/profile';
 import { fail, guardedAction } from '@/lib/auth/action';
 import { databaseCode } from '@/lib/provider/codes';
 import { getOwnStatus } from '@/lib/provider/queries';
@@ -72,6 +79,46 @@ export const updateLocale = guardedAction(
   { name: 'updateLocale', access: 'any_role', schema: z.object({ locale: LocaleSchema }) },
   async ({ locale }, user) => {
     await updateProfile(user.id, { locale });
+    return { done: true };
+  },
+);
+
+/** Spec 0011-13 AC-7: "Send link again". The database refuses each case by its code. */
+const REQUEST_LINK_CODES = ['no_email', 'already_confirmed', 'emails_off', 'rate_limited'] as const;
+
+export const requestEmailConfirmation = guardedAction(
+  { name: 'requestEmailConfirmation', access: 'any_role', schema: z.undefined() },
+  async () => {
+    try {
+      await requestEmailConfirmationInDb();
+    } catch (error) {
+      const code = databaseCode(error, REQUEST_LINK_CODES);
+      if (code) return fail(code);
+      throw error;
+    }
+    return { done: true };
+  },
+);
+
+/**
+ * Spec 0011-13 AC-7: the confirm page's one button, a POST, so a mail scanner that opens the link confirms
+ * nothing. Only the signed in owner of the link confirms it; every other case is one of three codes.
+ */
+const CONFIRM_CODES = ['invalid_link', 'link_expired', 'link_used'] as const;
+
+export const confirmEmail = guardedAction(
+  { name: 'confirmEmail', access: 'any_role', schema: z.object({ token: z.string().max(100) }) },
+  async ({ token }) => {
+    const parsed = ConfirmTokenSchema.safeParse(token);
+    if (!parsed.success) return fail('invalid_link');
+    try {
+      await confirmEmailInDb(parsed.data);
+    } catch (error) {
+      const code = databaseCode(error, CONFIRM_CODES);
+      if (code) return fail(code);
+      throw error;
+    }
+    revalidatePath('/', 'layout');
     return { done: true };
   },
 );

@@ -14,6 +14,8 @@ import tseslint from 'typescript-eslint';
 // Files that are allowed through a door. Paths are relative to the repo root.
 const DB_DOOR = ['lib/db/**'];
 const PSP_DOOR = ['lib/psp/**'];
+// Spec 0011-13 AC-1: the email door. Only the relay sends mail (umbrella U-4), so only it imports lib/email.
+const EMAIL_DOOR = ['lib/email/**'];
 // Spec 0011-08 AC-3: only modules under lib/ get the relay's rights. A route file, `app/api/relay` included,
 // only parses the request and calls lib/relay, so it may import neither lib/psp nor the service role.
 const RELAY = ['lib/**/relay/**', 'lib/**/outbox/**', 'lib/**/*relay*.ts'];
@@ -30,6 +32,9 @@ const sentryMessage =
   'Sentry is imported only in lib/observability/ (spec 0004 AC-8). Call its door functions instead.';
 const posthogMessage =
   'PostHog is imported only in lib/analytics/ (spec 0004 AC-8). Call track() or its other door functions.';
+const emailImportMessage =
+  'Only the outbox relay sends mail (spec 0011-13 AC-1, rule 3): lib/email is imported by lib/relay alone. ' +
+  'A move writes its audit row; a trigger queues the mail.';
 
 /**
  * Builds the import restrictions, minus whatever the door being configured may use.
@@ -43,6 +48,7 @@ function restrictedImports({
   sentry = false,
   posthog = false,
   relay = false,
+  email = false,
 } = {}) {
   const paths = [];
   const patterns = [
@@ -68,6 +74,12 @@ function restrictedImports({
     patterns.push({
       group: ['@/lib/psp', '@/lib/psp/*'],
       message: 'Only the outbox relay calls lib/psp (rule 3). Write an outbox_events row instead.',
+    });
+  }
+  if (!email) {
+    patterns.push({
+      group: ['@/lib/email', '@/lib/email/*'],
+      message: emailImportMessage,
     });
   }
   if (!relay) {
@@ -96,6 +108,7 @@ function restrictedModules({
   admin = false,
   sentry = false,
   posthog = false,
+  email = false,
 } = {}) {
   const modules = [];
   if (sentry === false) modules.push(['^@sentry.', sentryMessage]);
@@ -116,6 +129,7 @@ function restrictedModules({
       ],
     );
   }
+  if (!email) modules.push(['^@.lib.email(.|$)', emailImportMessage]);
   if (!admin) {
     modules.push([
       '^@.lib.db.admin$',
@@ -141,6 +155,15 @@ const TELEMETRY_KEYS = [
   'NEXT_PUBLIC_POSTHOG_KEY',
   'SENTRY_SERVER_DSN',
 ];
+// Spec 0011-13 AC-1: the email keys and Resend's host belong to lib/email (plus lib/env.ts and lib/deployment.ts,
+// which validate and check them). EMAIL_DRIVER is not a secret, but which driver runs is the door's to decide.
+const EMAIL_KEYS = ['EMAIL_API_KEY', 'EMAIL_FROM', 'EMAIL_DRIVER', 'EMAIL_FAKE_FILE'];
+const emailKeyMessage =
+  'The email keys are read only inside lib/email (spec 0011-13 AC-1), lib/env.ts and lib/deployment.ts. ' +
+  'Mail is sent by the relay through lib/email.';
+// Matched as a literal or template text anywhere outside the door, so no module calls Resend past it.
+const RESEND_HOST = 'api.resend.com';
+const resendMessage = 'Only lib/email calls Resend (spec 0011-13 AC-1). The relay sends mail through it.';
 const telemetryMessage =
   'This key is read only inside its door (lib/observability, lib/analytics), lib/env.ts, lib/deployment.ts or ' +
   'next.config.ts (spec 0004 AC-8). Call a door function, or sentryDsn() / posthogKey() from lib/env.ts.';
@@ -149,6 +172,7 @@ function secretSelectors(exempt) {
   for (const [all, message] of [
     [SECRETS, secretMessage],
     [TELEMETRY_KEYS, telemetryMessage],
+    [EMAIL_KEYS, emailKeyMessage],
   ]) {
     const names = all.filter((s) => !exempt.includes(s));
     if (names.length === 0) continue;
@@ -158,6 +182,12 @@ function secretSelectors(exempt) {
       { selector: `Literal[value=/^${alt}$/]`, message },
       { selector: `TemplateElement[value.raw=/${alt}/]`, message },
       { selector: `ObjectPattern > Property[key.name=/^${alt}$/]`, message },
+    );
+  }
+  if (!exempt.includes(RESEND_HOST)) {
+    selectors.push(
+      { selector: 'Literal[value=/api\\.resend\\.com/]', message: resendMessage },
+      { selector: 'TemplateElement[value.raw=/api\\.resend\\.com/]', message: resendMessage },
     );
   }
   return selectors;
@@ -277,13 +307,18 @@ const config = [
   {
     files: RELAY,
     rules: {
-      'no-restricted-imports': restrictedImports({ psp: true, admin: true, relay: true }),
+      'no-restricted-imports': restrictedImports({ psp: true, admin: true, relay: true, email: true }),
       // The relay route's secret is checked inside lib/relay (spec 0011-08 AC-5).
       'no-restricted-syntax': restrictedSyntax({
         exempt: ['RELAY_SECRET'],
-        modules: { psp: true, admin: true },
+        modules: { psp: true, admin: true, email: true },
       }),
     },
+  },
+  // ── The email door (spec 0011-13 AC-1): its keys and Resend's host. ──
+  {
+    files: EMAIL_DOOR,
+    rules: { 'no-restricted-syntax': restrictedSyntax({ exempt: [...EMAIL_KEYS, RESEND_HOST] }) },
   },
   {
     files: SERVICE_ROLE_USERS.filter((g) => !DB_DOOR.includes(g) && !RELAY.includes(g)),
@@ -339,7 +374,7 @@ const config = [
     // AC-2), as it names SENTRY_AUTH_TOKEN; it never passes a value on.
     rules: {
       'no-restricted-syntax': restrictedSyntax({
-        exempt: [...TELEMETRY_KEYS, 'IYZICO_[A-Z0-9_]+', 'RELAY_SECRET'],
+        exempt: [...TELEMETRY_KEYS, 'IYZICO_[A-Z0-9_]+', 'RELAY_SECRET', ...EMAIL_KEYS],
       }),
     },
   },
@@ -357,7 +392,7 @@ const config = [
     files: ['lib/env.ts'],
     rules: {
       'no-restricted-syntax': restrictedSyntax({
-        exempt: ['NEXT_PUBLIC_SENTRY_DSN', 'NEXT_PUBLIC_POSTHOG_KEY', 'SENTRY_SERVER_DSN'],
+        exempt: ['NEXT_PUBLIC_SENTRY_DSN', 'NEXT_PUBLIC_POSTHOG_KEY', 'SENTRY_SERVER_DSN', ...EMAIL_KEYS],
         envAccess: true,
       }),
     },
@@ -369,7 +404,10 @@ const config = [
   { files: [...TESTS, 'eslint.config.mjs'], rules: { 'no-restricted-syntax': 'off' } },
   // Spec 0011-08: the PSP contract suite and the relay's tests import lib/psp to test it. Every other import rule
   // still holds in tests.
-  { files: TESTS, rules: { 'no-restricted-imports': restrictedImports({ psp: true, relay: true }) } },
+  {
+    files: TESTS,
+    rules: { 'no-restricted-imports': restrictedImports({ psp: true, relay: true, email: true }) },
+  },
   { files: RELAY_CALLERS, rules: { 'no-restricted-imports': restrictedImports({ relay: true }) } },
 ];
 

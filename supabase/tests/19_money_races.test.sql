@@ -219,7 +219,7 @@ SELECT extensions.dblink_exec('a', 'RESET ROLE');
 SELECT extensions.dblink_exec('b', 'RESET ROLE');
 SELECT extensions.dblink_exec(pg_temp.conn(), $$
   BEGIN;
-  SELECT public.enqueue_outbox('email.send', 'race-19-o' || g, jsonb_build_object('n', g), 'TR') FROM generate_series(1, 4) g;
+  SELECT public.enqueue_outbox('payment.verify', 'race-19-o' || g, jsonb_build_object('n', g), 'TR') FROM generate_series(1, 4) g;
   COMMIT; $$);
 SELECT extensions.dblink_exec('a', 'SET ROLE service_role');
 SELECT extensions.dblink_exec('b', 'SET ROLE service_role');

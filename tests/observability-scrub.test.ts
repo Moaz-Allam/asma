@@ -61,6 +61,9 @@ const TRACE_ID = TRACE;
 // ── the key rule ─────────────────────────────────────────────────────────────────────────────
 describe('isPersonalKey: the keys whose values never leave', () => {
   it.each([
+    // Spec 0011-13 AC-9: a rendered mail's subject and HTML.
+    'subject',
+    'html',
     'name',
     'first_name',
     'Full-Name',
@@ -162,6 +165,14 @@ describe('scrubUrl: only utm_* and page stay (D85), every fragment goes', () => 
   it('drops a parameter named like a personal key, and one whose value holds an email or phone', () => {
     expect(scrubUrl('/en/x?name=Ali&city=Izmir&utm_source=mail&c=ali%40x.com&p=%2B905551234567')).toBe(
       '/en/x?utm_source=mail',
+    );
+  });
+
+  it('drops the confirmation token from the confirm link (spec 0011-13 AC-7)', () => {
+    const token = 'A'.repeat(20) + '_-' + 'b'.repeat(21);
+    expect(scrubUrl(`/ar/account/email/confirm?t=${token}`)).toBe('/ar/account/email/confirm');
+    expect(scrubUrl(`https://x.test/en/account/email/confirm?t=${token}&utm_source=mail`)).toBe(
+      'https://x.test/en/account/email/confirm?utm_source=mail',
     );
   });
 

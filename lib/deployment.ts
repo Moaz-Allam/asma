@@ -100,6 +100,16 @@ function pspDriverOf(env: DeploymentEnv): string {
 const withIyzico = (env: DeploymentEnv) => pspDriverOf(env) === 'iyzico';
 
 /**
+ * The email driver a deployment runs, `off` when unset (spec 0011-13 R-4). Read here, as PSP_DRIVER is: this
+ * module imports nothing from the app (D192), so it cannot ask lib/email.
+ */
+function emailDriverOf(env: DeploymentEnv): string {
+  return read(env, 'EMAIL_DRIVER') ?? 'off';
+}
+
+const withResend = (env: DeploymentEnv) => emailDriverOf(env) === 'resend';
+
+/**
  * Each key joins this list in the task that adds its door (spec 0004 build plan), so a preview never
  * demands a key whose code does not exist yet.
  */
@@ -201,6 +211,43 @@ const REQUIREMENTS: readonly Requirement[] = [
       const browser = parseEuSentryDsn(read(env, 'NEXT_PUBLIC_SENTRY_DSN') ?? '');
       return server !== null && (browser === null || server.projectId !== browser.projectId);
     },
+  },
+  // Spec 0011-13 R-4: the email door. `off` (unset) needs nothing, so merging 13 never stops a deployment
+  // before S5; the fake never runs on production; `resend` needs its key and its sender (S43).
+  {
+    name: 'EMAIL_DRIVER',
+    phases: ['runtime'],
+    vercelOnly: false,
+    optional: true,
+    expected: 'off, fake or resend; never fake on production',
+    valid: (value, env) =>
+      ['off', 'fake', 'resend'].includes(value) &&
+      !(value === 'fake' && read(env, 'VERCEL_ENV') === 'production'),
+  },
+  {
+    name: 'EMAIL_API_KEY',
+    phases: ['runtime'],
+    vercelOnly: false,
+    when: withResend,
+    expected: 'the Resend sending key (a secret, owner step S5)',
+    valid: (value) => value.trim() !== '',
+  },
+  {
+    name: 'EMAIL_FROM',
+    phases: ['runtime'],
+    vercelOnly: false,
+    when: withResend,
+    expected: 'the sender on the verified domain, such as Aldebyani <no-reply@domain> (owner steps S4, S43)',
+    valid: (value) => /^(?:[^<>"\r\n]{1,64} <)?[^@\s<>"]+@[^@\s<>"]+\.[^@\s<>"]+>?$/.test(value),
+  },
+  {
+    // The fake driver's file is the e2e wrapper's, on a developer's machine; a Vercel deployment never has one.
+    name: 'EMAIL_FAKE_FILE',
+    phases: ['runtime'],
+    vercelOnly: true,
+    optional: true,
+    expected: 'unset (the fake driver writes its file only on a developer machine)',
+    valid: () => false,
   },
 ];
 

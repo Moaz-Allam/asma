@@ -153,6 +153,9 @@ Domain components. Path: `components/features/<domain>/`.
 | --- | --- | --- | --- | --- | --- |
 | `BellMenu` | Bell with count badge and dropdown | s13, p15 | 📋 planned | — | `shadow-overlay`; each item opens its request |
 | `NotificationList` | Full page, grouped by day | s13, p15 | 📋 planned | — | Unread dot `bg-alert` |
+| `EmailNudge` | A quiet note asking for a confirmed email, linking to `/account`; never a block (`components/shared/EmailNudge.tsx`) | — (no design ref; `rounded-row bg-accent-light`, a white pill) | ✅ built (13) | ✅ | Spec 0011-13 AC-4: My requests and the choose dialog while mail is on; the feed and the apply page while the apply gate is on. Strings from the caller |
+| `EmailLinkButton` | "Send link again": a `type="button"` that calls `requestEmailConfirmation` and shows the sent line or the refusal (`components/features/account/EmailLinkButton.tsx`) | s12 | ✅ built (13) | ✅ | Inside the account form it never submits the form; shown only while mail is on |
+| `ConfirmEmailForm` | The confirm page's one button (a POST through `confirmEmail`), the done line, or one refusal (`invalid_link`, `link_expired`, `link_used`) with "Send link again" (`components/features/account/ConfirmEmailForm.tsx`) | — (s12 styles) | ✅ built (13) | ✅ | Opening the link changes nothing, so a mail scanner confirms no address (AC-7) |
 
 ### Admin
 

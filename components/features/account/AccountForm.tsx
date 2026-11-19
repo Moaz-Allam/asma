@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useHydrated } from '@/lib/browser/use-hydrated';
+import { useRouter } from '@/lib/i18n/navigation';
+
+import { EmailLinkButton } from './EmailLinkButton';
 
 /**
  * Name, the verified phone, the contact email and the language (`s12`, `p16`, AC-19, AC-32). `children` is the
@@ -20,6 +23,7 @@ export function AccountForm({
   phone,
   email,
   emailConfirmed,
+  emailsEnabled = false,
   warnBeforeRename = false,
   children,
 }: {
@@ -27,6 +31,8 @@ export function AccountForm({
   phone: string;
   email: string | null;
   emailConfirmed: boolean;
+  /** Spec 0011-13 AC-7: mail is on in the user's region, so "Send link again" can work. */
+  emailsEnabled?: boolean;
   /** An approved provider: a rename returns the file to review, so ask first (spec 0006 AC-12). */
   warnBeforeRename?: boolean;
   children: ReactNode;
@@ -38,6 +44,7 @@ export function AccountForm({
   const [confirm, setConfirm] = useState<FormData | null>(null);
   const [isPending, startTransition] = useTransition();
   const hydrated = useHydrated();
+  const router = useRouter();
 
   function save(form: FormData) {
     const typed = form.get('fullName');
@@ -50,8 +57,11 @@ export function AccountForm({
         // Set before the email step: if that step fails, the name was still saved and the file is in review.
         setBackToReview(account.data.backToReview);
         const contact = await updateEmail({ email: form.get('email') });
-        if (contact.success) setSaved(true);
-        else setError(contact.error === 'validation_failed' ? 'email' : contact.error);
+        if (contact.success) {
+          setSaved(true);
+          // A changed address is unconfirmed again and its link is on the way (spec 0011-13 R-9).
+          router.refresh();
+        } else setError(contact.error === 'validation_failed' ? 'email' : contact.error);
       } catch {
         setError('action_failed');
       }
@@ -106,8 +116,10 @@ export function AccountForm({
             onChange={() => setSaved(false)}
           />
           <p className="text-meta font-normal text-text-secondary">
-            {t('emailNote')} {email && !emailConfirmed ? t('emailNotConfirmed') : null}
+            {t('emailNote')} {email && emailConfirmed ? t('emailConfirmed') : null}
+            {email && !emailConfirmed ? t('emailNotConfirmed') : null}
           </p>
+          {email && !emailConfirmed && emailsEnabled ? <EmailLinkButton /> : null}
         </div>
         <div className="flex flex-col gap-2">
           <span className="text-body-s font-bold text-text-primary">{t('languageLabel')}</span>
