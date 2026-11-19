@@ -661,7 +661,9 @@ revoke all on function public.report_photo_allowed(text, boolean) from public, a
 grant execute on function public.report_photo_allowed(text, boolean) to authenticated;
 
 -- AC-2, X-5, X-25: register an uploaded photo. The reporter only, the report open, the object present with the
--- type and size Storage recorded (never the client's word), at most 3 under the report row lock.
+-- size Storage measured and the type Storage recorded (the upload's declared type, which the bucket also checks;
+-- the browser re-encodes every photo as JPEG, but the bytes themselves are not checked here: security review F-6),
+-- at most 3 under the report row lock.
 create function public.add_report_photo(p_report_id uuid, p_object_path text)
   returns jsonb
   language plpgsql
@@ -757,6 +759,7 @@ begin
   return jsonb_build_object(
     'can_report', v_can,
     'side', v_side,
+    'region', v_req.region,
     'report', case when v_rep.id is null then null
                    else jsonb_build_object('id', v_rep.id, 'status', v_rep.status, 'reason', v_rep.reason,
                                            'created_at', v_rep.created_at, 'handled_at', v_rep.handled_at,
@@ -1076,7 +1079,8 @@ begin
                     where f.id = p_refund_payment_id and f.request_id = v_rep.request_id) then
       raise exception 'invalid_refund';
     end if;
-    v_refund := public.admin_refund_fee(p_refund_payment_id, v_note);
+    -- Security review F-5: a fixed reason naming the report, so the note never reaches an audit row (R-12).
+    v_refund := public.admin_refund_fee(p_refund_payment_id, 'report:' || v_rep.id::text);
     -- X-20: a replay returns the first refund's id; it is stored the same way.
     v_ref_id := (v_refund ->> 'fee_refund_id')::uuid;
   end if;
@@ -1202,6 +1206,11 @@ begin
      limit 200
      for update skip locked
   loop
+    -- Security review F-2: a report committed after the loop's snapshot but before this row's lock is seen here,
+    -- in a fresh snapshot, so its job is never closed under it.
+    if exists (select 1 from public.problem_reports p where p.request_id = v_id and p.status = 'open') then
+      continue;
+    end if;
     begin
       perform public.close_job(v_id, 'auto', 'job.auto_closed');
       v_closed := v_closed + 1;

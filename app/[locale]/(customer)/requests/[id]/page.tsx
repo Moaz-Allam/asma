@@ -30,6 +30,7 @@ import {
   loadContacts,
   loadOffers,
 } from '@/lib/requests';
+import { reportServerError } from '@/lib/observability/server';
 import { myReport } from '@/lib/reports';
 import { instantLabel, NUMBER_LOCALE, quoteLines, regionDefaultLocale } from '@/lib/requests/view';
 
@@ -128,7 +129,13 @@ export default async function Page({ params, searchParams }: Props) {
   const tj = await getTranslations('Jobs');
   // Spec 0011-14 AC-3, AC-7: the customer's own report after the reveal (Postgres says whether one can be filed).
   const report =
-    user.role === 'customer' && (revealed || current === 'CANCELLED') ? await myReport(request.id) : null;
+    user.role === 'customer' && (revealed || current === 'CANCELLED')
+      ? await myReport(request.id).catch((error: unknown) => {
+          // Security review F-1: never break the request page over this read; the report entry simply hides.
+          reportServerError('requestReport', error);
+          return null;
+        })
+      : null;
   const tr = await getTranslations('Reports');
   const reportHref = `/requests/${request.id}/report`;
   const payOpen =

@@ -3,7 +3,6 @@ import { getTranslations } from 'next-intl/server';
 
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
-import type { RoleUser } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
 import { myReport } from '@/lib/reports';
 import { isReportReason } from '@/lib/reports/constants';
@@ -17,12 +16,10 @@ import { ReportForm } from './ReportForm';
  * (the customer's "Not done").
  */
 export async function ReportScreen({
-  user,
   requestId,
   backHref,
   reason,
 }: {
-  user: RoleUser;
   requestId: string;
   backHref: string;
   reason: string | string[] | undefined;
@@ -42,7 +39,7 @@ export async function ReportScreen({
       {report.can_report ? (
         <ReportForm
           requestId={requestId}
-          region={user.region ?? 'TR'}
+          region={report.region}
           side={report.side}
           backHref={backHref}
           initialReason={typeof reason === 'string' && isReportReason(reason) ? reason : null}

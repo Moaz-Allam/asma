@@ -14,7 +14,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(142);
+SELECT plan(143);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -460,7 +460,7 @@ SELECT is(pg_temp.handle('ad', pg_temp.rep(1, 'a1'), 'no_action'), 'no_action', 
 
 -- ══ AC-5, R-5, X-13, X-17, X-18: the return to work ═════════════════════════
 INSERT INTO public.deadline_flags (region, request_id, kind) VALUES ('TR', pg_temp.r(2), 'completion_late');
-SELECT is(pg_temp.probe(ARRAY[$$UPDATE public.providers SET status = 'suspended', suspension_reason = 'test' WHERE id = '00000000-0000-0000-0000-0000003000a1'$$],
+SELECT is(pg_temp.probe(ARRAY[$$UPDATE public.providers SET status = 'suspended', suspension_reason = 'Repeated complaints from customers' WHERE id = '00000000-0000-0000-0000-0000003000a1'$$],
                         format($q$pg_temp.handle('ad', %L, 'returned_to_work')$q$, pg_temp.rep(2, 'c1'))),
   'provider_not_approved', 'X-17: a return needs an active provider');
 SELECT is(pg_temp.handle('ad', pg_temp.rep(2, 'c1'), 'returned_to_work', 'The tiles are missing, back to work.'), 'returned_to_work',
@@ -512,6 +512,9 @@ SELECT is(pg_temp.handle('ad', pg_temp.rep(6, 'c1'), 'no_action', 'Refund the co
 SELECT is((SELECT x.reason || ' ' || (x.id = p.fee_refund_id)::text FROM public.problem_reports p JOIN public.fee_refunds x ON x.id = p.fee_refund_id
             WHERE p.id = pg_temp.rep(6, 'c1')),
   'admin_refund true', 'R-11: the refund is queued through 12 and kept on the report');
+SELECT is((SELECT new_value ->> 'reason' FROM public.audit_log WHERE action = 'fee.refund_by_admin'
+             AND new_value ->> 'request_id' = pg_temp.r(6)::text ORDER BY id DESC LIMIT 1),
+  'report:' || pg_temp.rep(6, 'c1'), 'R-12, review F-5: the refund''s audit row names the report, never the note');
 
 -- ══ R-10, X-1, X-2, X-14: a suspension ══════════════════════════════════════
 SELECT is(pg_temp.report('c1', 7, 'no_show', 'The provider never came on the day at all.'), 'ok', 'R-10: a report on b1''s job');

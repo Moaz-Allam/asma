@@ -38,7 +38,8 @@ export const openReportAction = guardedAction(
   async (input): Promise<{ reportId: string } | ReturnType<typeof fail>> => {
     const outcome = await openReport(input);
     if (!outcome.ok) return fail(KNOWN.includes(outcome.code) ? outcome.code : 'action_failed');
-    revalidatePath('/', 'layout');
+    // Review F1: no revalidate here. The report page re-rendered would see the open report and swap the form (its
+    // "sent" panel and the photo retry, X-25) for the "already open" notice; every page that shows it is dynamic.
     return { reportId: outcome.reportId };
   },
 );

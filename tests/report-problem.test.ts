@@ -113,10 +113,13 @@ describe('the parties door and actions (AC-1, AC-2, AC-6, AC-7)', () => {
       handled_at: '2026-11-19T11:00:00Z',
       photos: 0,
     };
-    m.rpc.mockResolvedValue({ data: { can_report: true, side: 'customer', report }, error: null });
+    m.rpc.mockResolvedValue({
+      data: { can_report: true, side: 'customer', region: 'TR', report },
+      error: null,
+    });
     expect((await myReport(REQUEST))?.report?.status).toBe('handled');
     m.rpc.mockResolvedValue({
-      data: { can_report: true, side: 'customer', report: { ...report, outcome: 'warned' } },
+      data: { can_report: true, side: 'customer', region: 'TR', report: { ...report, outcome: 'warned' } },
       error: null,
     });
     await expect(myReport(REQUEST)).rejects.toThrow();

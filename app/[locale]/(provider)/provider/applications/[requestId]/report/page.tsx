@@ -14,14 +14,9 @@ type Props = {
 export default async function Page({ params, searchParams }: Props) {
   const { locale, requestId } = await params;
   setRequestLocale(locale);
-  const user = await guardPage(['provider']);
+  await guardPage(['provider']);
   const query = await searchParams;
   return (
-    <ReportScreen
-      user={user}
-      requestId={requestId}
-      backHref="/provider/applications?tab=active"
-      reason={query.reason}
-    />
+    <ReportScreen requestId={requestId} backHref="/provider/applications?tab=active" reason={query.reason} />
   );
 }

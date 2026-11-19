@@ -20,6 +20,8 @@ export const MyReport = z
   .object({
     can_report: z.boolean(),
     side: z.enum(['customer', 'provider']),
+    // The request's own region (rule 10): the photo path is built from it.
+    region: z.enum(['TR', 'KSA']),
     report: z
       .object({
         id: Id,

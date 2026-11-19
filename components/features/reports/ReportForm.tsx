@@ -9,7 +9,7 @@ import { FormField } from '@/components/shared/FormField';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { track } from '@/lib/analytics/client';
-import { Link, useRouter } from '@/lib/i18n/navigation';
+import { Link } from '@/lib/i18n/navigation';
 import {
   REPORT_REASONS,
   REPORT_TEXT_MAX,
@@ -48,7 +48,6 @@ export function ReportForm({
   initialReason?: ReportReason | null;
 }) {
   const t = useTranslations('Reports');
-  const router = useRouter();
   const textId = useId();
   const fileRef = useRef<HTMLInputElement>(null);
   const [reason, setReason] = useState<ReportReason | null>(initialReason);
@@ -127,7 +126,6 @@ export function ReportForm({
       track('report_opened', { reason, side });
       setReportId(result.data.reportId);
       await sendPhotos(result.data.reportId, photos);
-      router.refresh();
     });
   }
 
@@ -135,7 +133,6 @@ export function ReportForm({
     if (!reportId) return;
     start(async () => {
       await sendPhotos(reportId, photos);
-      router.refresh();
     });
   }
 
@@ -216,7 +213,13 @@ export function ReportForm({
                   </p>
                 ) : null}
                 {reportId === null ? (
-                  <Button type="button" size="sm" variant="secondary" onClick={() => remove(photo.key)}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="min-h-11"
+                    onClick={() => remove(photo.key)}
+                  >
                     {t('form.removePhoto', { number: index + 1 })}
                   </Button>
                 ) : null}
@@ -233,6 +236,8 @@ export function ReportForm({
               multiple
               className="sr-only"
               id={`${textId}-photos`}
+              aria-label={t('form.addPhoto')}
+              tabIndex={-1}
               onChange={(event) => pick(event.target.files)}
             />
             <Button type="button" variant="secondary" onClick={() => fileRef.current?.click()}>
