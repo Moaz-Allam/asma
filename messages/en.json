@@ -149,7 +149,8 @@
     "pricing": "Pricing rules",
     "feed": "Available requests",
     "applications": "My jobs",
-    "setup": "Services and districts"
+    "setup": "Services and districts",
+    "reports": "Reports"
   },
   "Login": {
     "title": "Welcome",
@@ -1647,6 +1648,168 @@
     "closes_soon": {
       "subject": "[draft] The job for {service} closes soon",
       "lead": "[draft] If you do nothing, the job closes by itself on {deadline}. Confirm it, or tell us about a problem before then."
+    },
+    "report_received": {
+      "subject": "[draft] We received your report about {service}",
+      "lead": "[draft] Thank you for telling us. Our team will look at your report and email you when it has been reviewed."
+    },
+    "report_handled": {
+      "subject": "[draft] Your report about {service} was reviewed",
+      "lead": "[draft] Our team has reviewed your report. Thank you for helping keep Aldebyani safe."
+    },
+    "report_new_admin": {
+      "subject": "[draft] New problem report: {service}",
+      "lead": "[draft] A customer or provider reported a problem. Open the report to review it.",
+      "action": "[draft] Open the report"
+    }
+  },
+  "Reports": {
+    "reasons": {
+      "no_show": "Did not show up",
+      "did_not_pay_cash": "Did not pay the cash",
+      "poor_work": "Poor or unfinished work",
+      "safety_or_behaviour": "Safety or behaviour",
+      "asked_money_off_platform": "Asked for money outside Aldebyani",
+      "other": "Something else"
+    },
+    "warning": {
+      "no_show": "We received a report that you did not show up for a job. Please keep every booking you accept.",
+      "did_not_pay_cash": "We received a report that the cash for a job was not paid. Please pay the provider in person after the work.",
+      "poor_work": "We received a report about the quality of a job. Please finish every job to the agreed standard.",
+      "safety_or_behaviour": "We received a report about safety or behaviour on a job. Please treat everyone with respect.",
+      "asked_money_off_platform": "We received a report that money was asked for outside Aldebyani. Our fees are paid only on Aldebyani.",
+      "other": "We received a report about one of your jobs. Please follow the terms of Aldebyani."
+    },
+    "cta": "Report a problem",
+    "notDone": "Not done, report a problem",
+    "closeWaits": "You reported a problem. The job stays open until our team has looked at it.",
+    "statusOpen": "You reported a problem on {date}. Our team is looking at it.",
+    "statusHandled": "Our team reviewed your report.",
+    "form": {
+      "title": "Report a problem",
+      "lead": "Tell us what went wrong. Only our team reads this; the other side is not told.",
+      "back": "Back",
+      "reason": "What went wrong?",
+      "text": "What happened",
+      "textHint": "{count} of 1000 characters, at least 20.",
+      "photos": "Photos (optional)",
+      "photosHint": "Up to three photos. We remove the location from each photo.",
+      "addPhoto": "Add a photo",
+      "removePhoto": "Remove photo {number}",
+      "photoAlt": "Photo {number}",
+      "submit": "Send the report",
+      "sending": "Sending…",
+      "photoFailed": "Photo {number} was not added.",
+      "retry": "Try again",
+      "sentTitle": "Report sent",
+      "sentBody": "Thank you. Our team will look at it and email you when it has been reviewed.",
+      "done": "Back to the job",
+      "cash": "We never handle the cash for a job. Our team can act on accounts and on our own fees."
+    },
+    "banner": {
+      "title": "A note from our team",
+      "acknowledge": "I understand"
+    },
+    "errors": {
+      "not_allowed": "You can not report a problem on this job now.",
+      "validation_failed": "Please write between 20 and 1000 characters and pick a reason.",
+      "report_open": "You already have a report open on this job. Our team will look at it.",
+      "report_limit": "You have already sent two reports on this job.",
+      "too_many_reports": "You have sent many reports today. Please try again tomorrow.",
+      "report_settings_invalid": "Reports are not available right now. Please try again later.",
+      "too_many_photos": "A report can have up to three photos.",
+      "file_invalid": "This photo could not be added. Please try another one.",
+      "not_found": "This was not found.",
+      "action_failed": "Something went wrong. Please try again.",
+      "file_too_large": "This photo is too large.",
+      "file_type_refused": "Please choose a JPEG or PNG photo.",
+      "upload_refused": "This photo could not be uploaded.",
+      "network": "The connection dropped. Please try again.",
+      "image_unreadable": "This photo could not be read. Please choose another one."
+    }
+  },
+  "AdminReports": {
+    "title": "Reports",
+    "lead": "Problems reported by customers and providers after the reveal.",
+    "tabs": {
+      "open": "Open",
+      "handled": "Handled"
+    },
+    "emptyOpen": "No open reports.",
+    "emptyHandled": "No handled reports yet.",
+    "openCount": "{count} open",
+    "byCustomer": "By the customer",
+    "byProvider": "By the provider",
+    "reportedOn": "Reported {date}",
+    "handledOn": "Handled {date}",
+    "open": "Open report",
+    "prev": "Previous",
+    "next": "Next",
+    "page": "Page {page} of {pages}",
+    "back": "All reports",
+    "reason": "Reason",
+    "text": "What they wrote",
+    "dates": "Dates",
+    "request": "Request",
+    "openRequest": "Open the request",
+    "status": "Status",
+    "start": "Start",
+    "closed": "Closed",
+    "closedBy": "Closed by {by}",
+    "fees": "Fees",
+    "noFees": "No fee rows.",
+    "parties": "The two sides",
+    "reporter": "Reporter",
+    "reported": "Reported",
+    "counts": "{filed} filed · {against} against · {warnings} warnings",
+    "photos": "Photos",
+    "noPhotos": "No photos.",
+    "show": "Show photo {number}",
+    "photoGone": "The link could not be made.",
+    "handled": "Handled: {outcome}",
+    "note": "Admin note",
+    "handleTitle": "Handle this report",
+    "outcome": "Outcome",
+    "outcomes": {
+      "no_action": "No action",
+      "warned": "Warn the other side",
+      "suspended": "Suspend the provider",
+      "returned_to_work": "Send the job back to work",
+      "job_closed": "Close the job"
+    },
+    "warningReason": "Warning reason",
+    "noteLabel": "Note (10 to 500 characters, admin only)",
+    "refund": "Refund a fee (optional)",
+    "noRefund": "No refund",
+    "refundOption": "{kind} paid by {payer}: {amount}",
+    "kinds": {
+      "commission": "Commission",
+      "provider_fee": "Provider fee"
+    },
+    "payers": {
+      "customer": "the customer",
+      "provider": "the provider"
+    },
+    "submit": "Save the decision",
+    "confirmTitle": "Save this decision?",
+    "confirmBody": "A report is handled once. This can not be undone.",
+    "confirm": "Save",
+    "cancel": "Back",
+    "saved": "Saved.",
+    "errors": {
+      "forbidden": "Only admin can do this.",
+      "not_found": "This report was not found.",
+      "already_handled": "This report was already handled.",
+      "invalid_outcome": "This outcome does not fit this report.",
+      "invalid_state": "The job is not in a state that allows this.",
+      "already_suspended": "The provider is not an active provider.",
+      "invalid_refund": "That fee does not belong to this request.",
+      "provider_not_approved": "The provider is not active, so the job can not go back to work.",
+      "validation_failed": "Please write a note of 10 to 500 characters.",
+      "file_missing": "The photo file is missing.",
+      "confirm_settings_invalid": "The confirm window setting is broken. Fix it in the settings first.",
+      "reason_required": "Please write a note of 10 to 500 characters.",
+      "action_failed": "Something went wrong. Please try again."
     }
   }
 }

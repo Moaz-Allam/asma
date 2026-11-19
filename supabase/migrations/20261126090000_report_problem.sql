@@ -817,7 +817,8 @@ grant execute on function public.acknowledge_warning(uuid) to authenticated;
 -- 6. Admin (AC-4, AC-5, X-21, X-22). is_admin() inside each.
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- X-21: the queue, 20 a page. Open oldest first; handled newest handled first.
+-- X-21: the queue, 20 a page. Open oldest first; handled newest handled first. Each row carries its region's time
+-- zone, so the page words the dates in it.
 create function public.admin_reports(p_tab text, p_page integer)
   returns jsonb
   language plpgsql
@@ -840,7 +841,9 @@ begin
   select coalesce(jsonb_agg(t.row_json order by t.ord), '[]'::jsonb) into v_rows
     from (
       select jsonb_build_object(
-               'id', x.id, 'created_at', x.created_at, 'region', x.region, 'reason', x.reason, 'side', x.side,
+               'id', x.id, 'created_at', x.created_at, 'region', x.region,
+               'timezone', (select g.timezone from public.regions g where g.code = x.region),
+               'reason', x.reason, 'side', x.side,
                'request_id', x.request_id,
                'service', (select s.name from public.requests r join public.services s on s.id = r.service_id
                             where r.id = x.request_id),

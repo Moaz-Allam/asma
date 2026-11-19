@@ -48,6 +48,8 @@ describe('the allow list (AC-7)', () => {
       'provider_decided',
       'provider_file_submitted',
       'provider_setup_saved',
+      'report_handled',
+      'report_opened',
       'request_posted',
     ]);
   });

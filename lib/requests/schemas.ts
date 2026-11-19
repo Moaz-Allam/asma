@@ -292,8 +292,10 @@ export type Contacts = z.infer<typeof Contacts>;
 /** `confirm_job()`, `customer_mark_done()` (spec 0011-11 AC-4, AC-5, R-3). */
 export const CloseResult = z.object({ status: z.literal('ok'), replayed: z.boolean() }).strict();
 
-/** `request_close_info()` (spec 0011-11 R-2, R-5): how the page words the close. */
-export const CloseInfo = z.object({ auto_close_enabled: z.boolean(), can_mark_done: z.boolean() }).strict();
+/** `request_close_info()` (spec 0011-11 R-2, R-5; 0011-14 AC-3: the caller's own report open): how the page words the close. */
+export const CloseInfo = z
+  .object({ auto_close_enabled: z.boolean(), can_mark_done: z.boolean(), my_report_open: z.boolean() })
+  .strict();
 export type CloseInfo = z.infer<typeof CloseInfo>;
 
 /** The commission row of a request, as its payer reads it through RLS (spec 0011-09 AC-10). */

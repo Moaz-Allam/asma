@@ -10,6 +10,9 @@ import {
   MAX_SIDE_PX,
   objectPath,
   RAW_IMAGE_LIMIT_BYTES,
+  REPORT_PHOTO_MAX_SIDE_PX,
+  reportPhotoPath,
+  REPORTS_BUCKET,
   storedAs,
   type DocumentType,
 } from './buckets';
@@ -88,6 +91,31 @@ export async function uploadProviderFile(
     const { error } = await createSupabaseBrowser()
       .storage.from(bucket)
       .upload(path, body, { upsert: false, contentType, cacheControl: '0' });
+    if (error) return { ok: false, code: uploadErrorCode(error) };
+    return { ok: true, path };
+  } catch (error) {
+    return { ok: false, code: uploadErrorCode(error) };
+  }
+}
+
+/**
+ * One report photo (spec 0011-14 AC-2, X-5, X-25): a JPEG or PNG by its first bytes, decoded with its EXIF
+ * rotation, downscaled and re-encoded as JPEG (which drops EXIF, location included), then uploaded with upsert
+ * off under the open report's own folder. The caller registers the path through a Server Action
+ * (`add_report_photo`), which reads the size and type Storage recorded. Never throws.
+ */
+export async function uploadReportPhoto(region: string, reportId: string, file: File): Promise<UploadResult> {
+  try {
+    const kind = sniff(await firstBytes(file));
+    if (kind !== 'jpeg' && kind !== 'png') return { ok: false, code: 'file_type_refused' };
+    if (file.size > RAW_IMAGE_LIMIT_BYTES) return { ok: false, code: 'file_too_large' };
+    const body = await reencode(file, REPORT_PHOTO_MAX_SIDE_PX);
+    if (!body) return { ok: false, code: 'image_unreadable' };
+    if (body.size > BUCKET_LIMIT_BYTES[REPORTS_BUCKET]) return { ok: false, code: 'file_too_large' };
+    const path = reportPhotoPath(region, reportId, crypto.randomUUID());
+    const { error } = await createSupabaseBrowser()
+      .storage.from(REPORTS_BUCKET)
+      .upload(path, body, { upsert: false, contentType: 'image/jpeg', cacheControl: '0' });
     if (error) return { ok: false, code: uploadErrorCode(error) };
     return { ok: true, path };
   } catch (error) {

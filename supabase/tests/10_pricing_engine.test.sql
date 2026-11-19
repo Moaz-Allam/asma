@@ -542,6 +542,18 @@ SELECT set_eq(
             ('public.cancel_preview(uuid)'),
             ('public.provider_cancel_job(uuid)'),
             ('public.withdraw_application(uuid)'),
+            -- Spec 0011-14: the parties' report functions, admin's report functions and the storage check.
+            ('public.acknowledge_warning(uuid)'),
+            ('public.add_report_photo(uuid, text)'),
+            ('public.admin_report_detail(uuid)'),
+            ('public.admin_reports(text, integer)'),
+            ('public.admin_reports_open_count()'),
+            ('public.handle_report(uuid, text, text, uuid, text)'),
+            ('public.log_report_photo_view(uuid)'),
+            ('public.my_report(uuid)'),
+            ('public.my_warning()'),
+            ('public.open_report(uuid, text, text)'),
+            ('public.report_photo_allowed(text, boolean)'),
             -- Spec 0011-13 AC-7: the signed in owner asks for a link and confirms an address.
             ('public.request_email_confirmation()'),
             ('public.confirm_email(text)'),

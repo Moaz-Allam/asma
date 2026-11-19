@@ -1928,6 +1928,35 @@ export type Database = {
         Returns: Json
       }
       admin_request_detail: { Args: { p_request_id: string }; Returns: Json }
+      acknowledge_warning: { Args: { p_warning_id: string }; Returns: Json }
+      add_report_photo: {
+        Args: { p_object_path: string; p_report_id: string }
+        Returns: Json
+      }
+      admin_report_detail: { Args: { p_report_id: string }; Returns: Json }
+      admin_reports: { Args: { p_page: number; p_tab: string }; Returns: Json }
+      admin_reports_open_count: { Args: never; Returns: number }
+      handle_report: {
+        Args: {
+          p_note: string
+          p_outcome: string
+          p_refund_payment_id?: string | null
+          p_report_id: string
+          p_warning_reason?: string | null
+        }
+        Returns: Json
+      }
+      log_report_photo_view: { Args: { p_photo_id: string }; Returns: Json }
+      my_report: { Args: { p_request_id: string }; Returns: Json }
+      my_warning: { Args: never; Returns: Json }
+      open_report: {
+        Args: { p_reason: string; p_request_id: string; p_text: string }
+        Returns: Json
+      }
+      report_photo_allowed: {
+        Args: { p_name: string; p_write: boolean }
+        Returns: boolean
+      }
       after_commission_paid: { Args: { p_fee: string }; Returns: undefined }
       after_provider_fee_paid: { Args: { p_fee: string }; Returns: undefined }
       after_reopen: { Args: { p_request_id: string }; Returns: string }

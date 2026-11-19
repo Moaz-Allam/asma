@@ -22,10 +22,13 @@ export function isDocumentType(value: unknown): value is DocumentType {
 
 export const DOCUMENTS_BUCKET = 'provider-documents';
 export const PHOTOS_BUCKET = 'provider-photos';
-export type Bucket = typeof DOCUMENTS_BUCKET | typeof PHOTOS_BUCKET;
+/** Report photos (spec 0011-14 AC-2, X-5): private, JPEG only, `<region>/<report id>/<uuid>.jpg`. */
+export const REPORTS_BUCKET = 'report-photos';
+export type ProviderBucket = typeof DOCUMENTS_BUCKET | typeof PHOTOS_BUCKET;
+export type Bucket = ProviderBucket | typeof REPORTS_BUCKET;
 
 /** The photo has its own bucket, so position 06 can open photos without any rule touching IDs. */
-export function bucketFor(type: DocumentType): Bucket {
+export function bucketFor(type: DocumentType): ProviderBucket {
   return type === 'profile_photo' ? PHOTOS_BUCKET : DOCUMENTS_BUCKET;
 }
 
@@ -33,6 +36,7 @@ export function bucketFor(type: DocumentType): Bucket {
 export const BUCKET_LIMIT_BYTES: Readonly<Record<Bucket, number>> = {
   [DOCUMENTS_BUCKET]: 10 * 1024 * 1024,
   [PHOTOS_BUCKET]: 2 * 1024 * 1024,
+  [REPORTS_BUCKET]: 10 * 1024 * 1024,
 };
 
 /** An image larger than this is refused before it is decoded (AC-7): a phone camera stays well under. */
@@ -84,4 +88,14 @@ export function storedAs(kind: FileKind): {
 /** `{userId}/{type}/{uuid}.{ext}`, the one shape `provider_may_store` allows. Lower case uuids only. */
 export function objectPath(userId: string, type: DocumentType, id: string, ext: 'jpg' | 'pdf'): string {
   return `${userId.toLowerCase()}/${type}/${id.toLowerCase()}.${ext}`;
+}
+
+/** Spec 0011-14 AC-2: at most three photos per report; the database caps it again (`add_report_photo`). */
+export const REPORT_PHOTO_MAX = 3;
+/** A report photo's longest side after the re-encode: enough to read a receipt or a crack in a tile. */
+export const REPORT_PHOTO_MAX_SIDE_PX = 2048;
+
+/** `<region>/<report id>/<uuid>.jpg`, the one shape `report_photo_allowed` admits (X-5). Lower case uuids only. */
+export function reportPhotoPath(region: string, reportId: string, id: string): string {
+  return `${region}/${reportId.toLowerCase()}/${id.toLowerCase()}.jpg`;
 }

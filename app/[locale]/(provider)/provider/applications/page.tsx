@@ -5,6 +5,7 @@ import { CancelJobButton } from '@/components/features/jobs/CancelJobButton';
 import { JobActionButton } from '@/components/features/jobs/JobActionButton';
 import { WithdrawButton } from '@/components/features/jobs/WithdrawButton';
 import { PayButton } from '@/components/features/payments/PayButton';
+import { ReportStatus } from '@/components/features/reports/ReportStatus';
 import { ApplicationRow } from '@/components/features/provider-feed/ApplicationRow';
 import { AgreementLine } from '@/components/shared/AgreementLine';
 import { ContactCard } from '@/components/shared/ContactCard';
@@ -20,6 +21,8 @@ import type { Locale } from '@/lib/i18n/direction';
 import { Link } from '@/lib/i18n/navigation';
 import { jobCancelPreview, listJobs, type JobRow } from '@/lib/provider-feed';
 import { JOB_TABS, parseJobTab, type JobTab } from '@/lib/provider-feed/constants';
+import { myReport } from '@/lib/reports';
+import { reportServerError } from '@/lib/observability/server';
 import { loadContacts } from '@/lib/requests';
 import { instantLabel, regionDefaultLocale } from '@/lib/requests/view';
 import { cn } from '@/lib/utils';
@@ -107,6 +110,19 @@ export default async function Page({ params, searchParams }: Props) {
       ? await Promise.all(rows.map((row) => jobCancelPreview(row.id, { region: user.region })))
       : [];
   const tj = await getTranslations('Jobs');
+  // Spec 0011-14 AC-7: the provider's own report on each revealed job (null where they are not a party).
+  const reports =
+    tab === 'active' || tab === 'done'
+      ? await Promise.all(
+          rows.map((row) =>
+            myReport(row.id).catch((error: unknown) => {
+              reportServerError('providerReports', error);
+              return null;
+            }),
+          ),
+        )
+      : [];
+  const reportHref = (requestId: string) => `/provider/applications/${requestId}/report`;
 
   return (
     <>
@@ -236,6 +252,12 @@ export default async function Page({ params, searchParams }: Props) {
                     {tj('waitingCustomer', { date: instantLabel(row.confirm_deadline, timezone, locale) })}
                   </p>
                 ) : null}
+                <ReportStatus
+                  report={reports[index] ?? null}
+                  href={reportHref(row.id)}
+                  timezone={timezone}
+                  locale={locale}
+                />
                 {cancels[index]?.can_cancel ? (
                   <CancelJobButton
                     requestId={row.id}
@@ -274,6 +296,16 @@ export default async function Page({ params, searchParams }: Props) {
               (row.application_status === 'APPLIED' || row.application_status === 'SELECTED') ? (
                 <li>
                   <WithdrawButton applicationId={row.application_id} status={row.application_status} />
+                </li>
+              ) : null}
+              {reports[index]?.report || reports[index]?.can_report ? (
+                <li>
+                  <ReportStatus
+                    report={reports[index] ?? null}
+                    href={reportHref(row.id)}
+                    timezone={timezone}
+                    locale={locale}
+                  />
                 </li>
               ) : null}
               {contacts[index] ? (

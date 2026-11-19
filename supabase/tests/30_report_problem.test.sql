@@ -405,8 +405,9 @@ SELECT is((SELECT count(*)::int FROM public.outbox_events WHERE idempotency_key 
 SELECT is((SELECT count(*)::int FROM public.outbox_events
             WHERE idempotency_key = 'email:' || pg_temp.r(9) || ':closes_soon:' || floor(extract(epoch from now() + interval '2 hours'))::bigint), 1,
   'X-7: the key carries the deadline');
-SELECT is((SELECT public.email_context(public.queue_email('email:' || pg_temp.r(2) || ':closes_soon:test', 'closes_soon', pg_temp.u('c1'), pg_temp.r(2),
-                                                          pg_temp.app(2, 'a1'), now() + interval '1 hour', 'TR')) ->> 'reason'),
+SELECT public.queue_email('email:' || pg_temp.r(2) || ':closes_soon:test', 'closes_soon', pg_temp.u('c1'), pg_temp.r(2),
+                          pg_temp.app(2, 'a1'), now() + interval '1 hour', 'TR');
+SELECT is((SELECT public.email_context(id) ->> 'reason' FROM public.outbox_events WHERE idempotency_key = 'email:' || pg_temp.r(2) || ':closes_soon:test'),
   'condition', 'R-7: a closes_soon row already queued skips at send time');
 UPDATE public.platform_settings SET value = 'false' WHERE region = 'TR' AND key = 'auto_close_enabled';
 

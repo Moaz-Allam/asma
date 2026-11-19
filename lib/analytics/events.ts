@@ -47,6 +47,22 @@ export type AnalyticsEvents = {
   job_done: Record<string, never>;
   /** The customer closed the job: Confirm, or "Job done" without the provider (spec 0011-11 AC-10). */
   job_confirmed: { by: 'confirm' | 'mark_done' };
+  /**
+   * A party opened a problem report (spec 0011-14 AC-9). The reason code and the reporter's side only: no request
+   * id (D194: no event carries an id), no text, no photo.
+   */
+  report_opened: {
+    reason:
+      | 'no_show'
+      | 'did_not_pay_cash'
+      | 'poor_work'
+      | 'safety_or_behaviour'
+      | 'asked_money_off_platform'
+      | 'other';
+    side: 'customer' | 'provider';
+  };
+  /** Admin handled a report (AC-9). The outcome only: no report id (D194), no note. */
+  report_handled: { outcome: 'no_action' | 'warned' | 'suspended' | 'returned_to_work' | 'job_closed' };
 };
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
@@ -72,6 +88,8 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'job_started',
   'job_done',
   'job_confirmed',
+  'report_opened',
+  'report_handled',
 ]);
 
 /** The typed property names per event: the only non `$` properties an event may carry. */
@@ -96,4 +114,6 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   job_started: [],
   job_done: [],
   job_confirmed: ['by'],
+  report_opened: ['reason', 'side'],
+  report_handled: ['outcome'],
 };
