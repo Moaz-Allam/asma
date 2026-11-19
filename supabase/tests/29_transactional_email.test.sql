@@ -15,7 +15,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(217);
+SELECT plan(218);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -280,8 +280,10 @@ SELECT is(public.emails_enabled('KSA'), false, 'R-3: off in KSA');
 
 -- ══ R-9: email_confirmations, RLS, the policy, no grant ═══════════════════════
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid = 'public.email_confirmations'::regclass), 'R-9: RLS on');
-SELECT results_eq($$ SELECT polname::text COLLATE "default", pg_get_expr(polqual, polrelid) FROM pg_policy WHERE polrelid = 'public.email_confirmations'::regclass $$,
-  $$ VALUES ('email_confirmations_no_api'::text, 'false'::text) $$, 'R-9: one policy, and it denies');
+SELECT ok((SELECT count(*) = 1 AND bool_and(polname = 'email_confirmations_no_api') FROM pg_policy
+            WHERE polrelid = 'public.email_confirmations'::regclass), 'R-9: one policy');
+SELECT ok((SELECT pg_get_expr(polqual, polrelid) COLLATE "C" = 'false' COLLATE "C" FROM pg_policy
+            WHERE polrelid = 'public.email_confirmations'::regclass), 'R-9: and it denies every row');
 SELECT is_empty($$ SELECT grantee FROM information_schema.role_table_grants
                     WHERE table_schema::text = 'public' AND table_name::text = 'email_confirmations'
                       AND grantee::text IN ('anon', 'authenticated', 'service_role') $$,
@@ -787,14 +789,14 @@ SELECT ok((SELECT bool_and(p.prosecdef) FROM pg_proc p JOIN pg_namespace n ON n.
 
 -- ══ AC-3: the trigger's when list is the map ═════════════════════════════════
 SELECT is(
-  (SELECT array_agg(m[1] ORDER BY m[1] COLLATE "C")
+  (SELECT array_to_string(array_agg(m[1] ORDER BY m[1] COLLATE "C"), ',') COLLATE "default"
      FROM pg_trigger t, regexp_matches(pg_get_triggerdef(t.oid), '''([a-z_]+\.[a-z_]+)''', 'g') AS m
     WHERE t.tgname = 'audit_log_email' AND t.tgrelid = 'public.audit_log'::regclass),
-  ARRAY['fee.late', 'fee.refund_done_by_hand', 'fee.refunded', 'job.auto_closed', 'job.confirmed', 'job.customer_closed', 'job.done',
+  array_to_string(ARRAY['fee.late', 'fee.refund_done_by_hand', 'fee.refunded', 'job.auto_closed', 'job.confirmed', 'job.customer_closed', 'job.done',
         'job.started', 'profile.email_changed', 'provider.approved', 'provider.reinstated', 'provider.rejected', 'provider.suspended',
         'request.cancelled', 'request.commission_paid', 'request.failed_picks_limit', 'request.fee_expired', 'request.no_paid_pick',
         'request.pick_dropped', 'request.pick_expired', 'request.provider_cancelled', 'request.provider_chosen', 'request.provider_withdrew',
-        'request.unlocked'],
+        'request.unlocked'], ','),
   'AC-3: the trigger fires on exactly the map''s actions');
 SELECT results_eq(
   $$ SELECT tgname::text COLLATE "default" FROM pg_trigger WHERE tgrelid IN ('public.applications'::regclass, 'public.outbox_events'::regclass)
