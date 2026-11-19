@@ -262,6 +262,7 @@ Dated bullets, newest at the bottom.
 
 ---
 - **2026-11-19** · **13 merged** (PR #45, `fab75be`; spec 0011-13, D192): migration `20261125090000_transactional_email` pushed with the CLI (dry run first) and checked (mail and the apply gate off in both regions, the three cron jobs, no mail rows); pgTAP 29 (218), `lib/email`, the relay's `email` task, the confirm page, the nudges, e2e `transactional-email`. Reviews: security ship (items 1, 6, 7 fixed, the rest R18), Sonnet code review (2 Blockers and 1 Major in the tests, fixed). Seven CI rounds: four pgTAP collation and snapshot mistakes, then two flaky e2e runs traced to the mail journey's polling load (eased). Owner: local typecheck, lint and unit tests before each push from now on. `docs/launch-setup.md` added.
+- **2026-11-19** · **Analytics fix merged** (PR #47, `0b86995`): `track()` dropped every event fired before PostHog started (it starts after the load event and an idle moment), so `payment_started` and `payment_succeeded` were lost on slow pages, for users and in 09's e2e. Events now wait in a queue of at most 20; `before_send` drops the SDK's `$pageview_id` and `$prev_pageview_id`. The flaky 09 commission journey traced to this.
 
 ## 2. Blockers and risks
 
