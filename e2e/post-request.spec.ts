@@ -121,6 +121,22 @@ async function pick(scope: Page | Locator, group: string, option: string | 'firs
   await expect(label.getByRole('radio')).toBeChecked();
 }
 
+/**
+ * The district: chips up to eight zones, a select past that (`MAX_ZONE_CHIPS` in RequestForm). Every spec seeds
+ * its own zones in region TR, in parallel, so either can show.
+ */
+async function pickDistrict(page: Page, locale: string, zone: string) {
+  const legend = m(locale, 'Requests.form.district');
+  const select = page.locator('select#district');
+  await expect(select.or(page.getByRole('group', { name: legend, exact: true }))).toBeVisible();
+  if ((await select.count()) > 0) {
+    await select.selectOption({ label: zone });
+    await expect(select.locator('option:checked')).toHaveText(zone);
+  } else {
+    await pick(page, legend, zone);
+  }
+}
+
 const money = (amount: number, locale: string) => formatMoney(amount, 'TRY', locale as Locale);
 
 test('a customer posts a request, sees it, repeats it and cancels it', async ({
@@ -138,17 +154,18 @@ test('a customer posts a request, sees it, repeats it and cancels it', async ({
 
   // The form, step one (AC-6, AC-19): the card says what is missing until the inputs are set.
   const card = page.getByRole('region', { name: m(locale, 'Requests.price.eyebrow') });
+  // The URL changes while the skeleton still shows, and a count does not wait: wait for the form first.
+  await expect(card).toContainText(m(locale, 'Requests.price.needService'));
   // Category chips show only when more than one category is bookable; the projects seed in parallel.
   const categories = page.getByRole('group', { name: m(locale, 'Requests.form.category'), exact: true });
   if ((await categories.count()) > 0) await pick(page, m(locale, 'Requests.form.category'), names.category);
-  await expect(card).toContainText(m(locale, 'Requests.price.needService'));
   await page.locator('label').filter({ hasText: names.service }).click();
   await expect(card).toContainText(m(locale, 'Requests.price.needAnswers'));
   await pick(page, 'Oda', '3');
   await pick(page, 'Evcil hayvan', m(locale, 'Requests.answers.yes'));
   await expect(card).toContainText(m(locale, 'Requests.price.needDistrict'));
   await page.locator('label').filter({ hasText: names.addon }).click();
-  await pick(page, m(locale, 'Requests.form.district'), names.zone);
+  await pickDistrict(page, locale, names.zone);
 
   // The server's figures and the split (AC-20).
   await expect(card).toContainText(money(300000, locale), { timeout: 20_000 });

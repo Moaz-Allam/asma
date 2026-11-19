@@ -417,7 +417,11 @@ export default async function Page({ params, searchParams }: Props) {
           <RequestActions
             requestId={request.id}
             cancel={
-              preview?.can_cancel ? { outcome: preview.commission_outcome, refund: preview.refund } : null
+              // While a card page is open the button still shows, and the server's `checkout_open` refusal says
+              // why to wait (spec 0011-09 AC-2; R17), rather than the button silently disappearing.
+              preview && (preview.can_cancel || preview.checkout_open)
+                ? { outcome: preview.commission_outcome, refund: preview.refund }
+                : null
             }
             canRepeat={!liveOpen && current !== 'SELECTED'}
             repeatLabel={

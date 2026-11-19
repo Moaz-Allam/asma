@@ -33,7 +33,10 @@ export function RequestActions({
   chosenNote = null,
 }: {
   requestId: string;
-  /** Null when the customer may not cancel now. */
+  /**
+   * Null when the customer may not cancel now. A card page in use still passes an offer, so the server's
+   * `checkout_open` refusal tells the customer to wait (spec 0011-09 AC-2).
+   */
   cancel: CancelOffer | null;
   canRepeat: boolean;
   /** Spec 0011-12 AC-14: "Post again" after the provider cancelled. */

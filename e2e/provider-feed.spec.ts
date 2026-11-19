@@ -68,7 +68,10 @@ function seed(locale: string) {
   return { names, service: id('51'), zone: id('21'), request: id('e1') };
 }
 
-/** The fixture request, as create_request leaves it, with a typed answer, notes and an address to hide. */
+/**
+ * The fixture request, as create_request leaves it, with a typed answer, notes and an address to hide. The
+ * snapshot names the category too: the customer is later sent to their own list, which parses it.
+ */
 function postFixture(locale: string, f: ReturnType<typeof seed>) {
   const customer = `(select id from public.profiles where phone = '${testE164(locale, 'feedCustomer')}')`;
   script(
@@ -78,7 +81,8 @@ function postFixture(locale: string, f: ReturnType<typeof seed>) {
       ` '{"e2e_rooms": 3, "e2e_details": "FIXTURE_TEXT_ANSWER"}',` +
       ` '[{"key": "e2e_rooms", "type": "number", "label": {"tr": "Oda"}, "options": null, "required": true},` +
       `   {"key": "e2e_details", "type": "textarea", "label": {"tr": "Ayrıntı"}, "options": null, "required": false}]',` +
-      ` '{"service": {"id": "${f.service}", "name": {"tr": "${f.names.service}"}}, "rounding_minor": 100,` +
+      ` '{"service": {"id": "${f.service}", "name": {"tr": "${f.names.service}"}, "category_name": {"tr": "Akış ${locale}"}},` +
+      `   "rounding_minor": 100,` +
       `   "breakdown": {"addons": [], "zone": {"id": "${f.zone}", "name": {"tr": "${f.names.zone}"}}, "rounding_minor": 100}}',` +
       ` 300000, 30000, 270000, 'TRY', ((now() at time zone 'Europe/Istanbul')::date + 2 + time '10:00') at time zone 'Europe/Istanbul',` +
       ` ((now() at time zone 'Europe/Istanbul')::date + 2 + time '13:00') at time zone 'Europe/Istanbul', 'FIXTURE_NOTES'` +
