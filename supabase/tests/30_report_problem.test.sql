@@ -14,7 +14,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(143);
+SELECT plan(145);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -320,7 +320,7 @@ SELECT is(pg_temp.upload('c1', pg_temp.ph(pg_temp.rep(1, 'c1'), 2, 'TR', 'png'))
 SELECT is(pg_temp.upload('c1', 'TR/' || pg_temp.rep(1, 'c1') || '/../x.jpg'), '42501', 'X-5: a climbing name');
 SELECT is(pg_temp.as_service(format($q$INSERT INTO storage.objects (bucket_id, name) VALUES ('report-photos', %L) RETURNING id::text$q$,
                                     pg_temp.ph(pg_temp.rep(1, 'c1'), 3))),
-  '42501', 'X-4: a service role write is refused by the trigger');
+  '42501', 'X-4: a service role write with no owner is refused by the trigger');
 SELECT ok(pg_temp.upload('c1', pg_temp.ph(pg_temp.rep(1, 'c1'), 2)) ~ '^[0-9a-f-]{36}$'
           AND pg_temp.upload('c1', pg_temp.ph(pg_temp.rep(1, 'c1'), 3)) ~ '^[0-9a-f-]{36}$', 'AC-2: a second and a third photo');
 SELECT is(pg_temp.upload('c1', pg_temp.ph(pg_temp.rep(1, 'c1'), 4)), '42501', 'AC-2: Storage refuses a fourth object (X-6: unregistered ones count)');
@@ -336,6 +336,13 @@ INSERT INTO storage.objects (bucket_id, name, metadata)
 VALUES ('report-photos', pg_temp.ph(pg_temp.rep(1, 'a1'), 1), '{"mimetype": "image/png", "size": 2048}');
 SELECT is(pg_temp.call_as('a1', format('SELECT public.add_report_photo(%L, %L) ->> ''status''', pg_temp.rep(1, 'a1'), pg_temp.ph(pg_temp.rep(1, 'a1'), 1))),
   'file_invalid', 'X-5: the type Storage recorded must be JPEG');
+-- Storage writes the final row as service role with the caller as owner (the session still carries c1's claims here).
+SELECT is(pg_temp.as_service(format($q$INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('report-photos', %L, %L) RETURNING 'stored'$q$,
+                                    pg_temp.ph(pg_temp.rep(1, 'a1'), 2), pg_temp.u('c2'))),
+  '42501', 'X-4: a service role write is checked against its owner, so a stranger''s is refused');
+SELECT is(pg_temp.as_service(format($q$INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('report-photos', %L, %L) RETURNING 'stored'$q$,
+                                    pg_temp.ph(pg_temp.rep(1, 'a1'), 2), pg_temp.u('a1'))),
+  'stored', 'X-4: Storage''s own write for the reporter, as service role with the reporter as owner, is stored');
 SELECT is(pg_temp.call_as('c1', format('SELECT string_agg(public.add_report_photo(%L, n) ->> ''status'', '','') FROM unnest(ARRAY[%L, %L]) n',
                                        pg_temp.rep(1, 'c1'), pg_temp.ph(pg_temp.rep(1, 'c1'), 2), pg_temp.ph(pg_temp.rep(1, 'c1'), 3))),
   'ok,ok', 'AC-2: up to three rows');

@@ -1147,6 +1147,7 @@ as $$
 declare
   v_role  text := coalesce(current_setting('role', true), '');
   v_id    text;
+  v_user  uuid;
 begin
   if v_role not in ('authenticated', 'service_role', 'anon') then
     return case when tg_op = 'DELETE' then old else new end;
@@ -1160,9 +1161,15 @@ begin
       -- X-4: one upload at a time per report, so two cannot both pass the count.
       perform pg_advisory_xact_lock(hashtextextended('report-photos:' || v_id, 14));
     end if;
-    -- Only the reporter, signed in: a service role write carries no user.
-    if v_role <> 'authenticated'
-       or not public.report_photo_store_allowed((select auth.uid()), new.name) then
+    -- Only the reporter. A direct upload arrives as authenticated and is checked against the signed in user.
+    -- Storage (v1.96) first runs the caller's policies and this trigger in a probe as the caller, then writes the
+    -- row as service_role with `owner` taken from the caller's token: that write is checked against its owner.
+    -- A service role write with no owner carries no user and is refused; anon is always refused.
+    v_user := case v_role when 'authenticated' then (select auth.uid())
+                          when 'service_role'  then new.owner
+              end;
+    if v_user is null
+       or not public.report_photo_store_allowed(v_user, new.name) then
       raise exception 'upload_refused' using errcode = '42501';
     end if;
     return new;
