@@ -40,7 +40,9 @@ export type LogEvent =
   // in request_id.
   | 'checkout_url_refused'
   // Spec 0011-11 review F-6: the customer's close info could not be read.
-  | 'close_info_refused';
+  | 'close_info_refused'
+  // Spec 0011-12, review: a cancel preview refused; the page hides the cancel button instead of failing.
+  | 'cancel_preview_refused';
 
 /** The only ids a record may carry: internal ids, never personal data. */
 export type LogIds = {

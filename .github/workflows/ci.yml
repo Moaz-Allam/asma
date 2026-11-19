@@ -167,6 +167,10 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.114.0 # same as the devDependency in package.json
+      # R8, D188: pin Storage to the cloud project's version, as a linked local stack does from supabase/.temp
+      # (gitignored); the CLI's default image lacks the archived_at column pgTAP 07 needs.
+      - name: Pin the Storage version
+        run: mkdir -p supabase/.temp && echo v1.96.4 > supabase/.temp/storage-version
       - run: supabase db start
       - name: pgTAP suite
         run: supabase test db
@@ -177,7 +181,8 @@ jobs:
   e2e:
     name: e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # D189: 141 tests at 2 workers ran past 25 minutes and the job was cancelled.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -186,6 +191,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # R8, D188: pin Storage to the cloud project's version, as a linked local stack does from supabase/.temp
+      # (gitignored); the CLI's default image lacks the archived_at column pgTAP 07 needs.
+      - name: Pin the Storage version
+        run: mkdir -p supabase/.temp && echo v1.96.4 > supabase/.temp/storage-version
       - name: End to end at 390px in ar, tr, en
         run: npm run test:e2e
       - uses: actions/upload-artifact@v4

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { fail, guardedAction } from '@/lib/auth/action';
-import { moveJob } from '@/lib/provider-feed';
+import { moveJob, providerCancelJob, withdrawApplication } from '@/lib/provider-feed';
 import { PROVIDER_FEED_DB_CODES } from '@/lib/provider-feed/constants';
 import { closeJob, REQUEST_DB_CODES } from '@/lib/requests';
 
@@ -15,6 +15,7 @@ import { closeJob, REQUEST_DB_CODES } from '@/lib/requests';
  */
 
 const JobInput = z.object({ requestId: z.string().uuid() }).strict();
+const WithdrawInput = z.object({ applicationId: z.string().uuid() }).strict();
 const PROVIDER = ['provider'] as const;
 const CUSTOMER = ['customer'] as const;
 const KNOWN_PROVIDER: readonly string[] = PROVIDER_FEED_DB_CODES;
@@ -54,3 +55,31 @@ export const finishJobAction = providerAction('finish', 'finishJob');
 export const confirmJobAction = customerAction('confirm', 'confirmJob');
 /** "Job done" without the provider (AC-5): from the start day. */
 export const markJobDoneAction = customerAction('mark_done', 'markJobDone');
+
+/**
+ * Withdraw (spec 0011-12 AC-5): the provider's own application, before the reveal. The application id only; the
+ * database finds the request, holds the matrix and refuses after the reveal.
+ */
+export const withdrawApplicationAction = guardedAction(
+  { name: 'withdrawApplication', access: PROVIDER, schema: WithdrawInput },
+  async (input, user): Promise<JobMoveData | ReturnType<typeof fail>> => {
+    const outcome = await withdrawApplication(input.applicationId, { region: user.region });
+    if (!outcome.ok) return fail(KNOWN_PROVIDER.includes(outcome.code) ? outcome.code : 'action_failed');
+    revalidatePath('/', 'layout');
+    return { replayed: outcome.replayed };
+  },
+);
+
+/**
+ * The unlocked provider cancels the job (spec 0011-12 AC-6, §36 row 9). The request id only; no fee comes back by
+ * itself after the reveal.
+ */
+export const providerCancelJobAction = guardedAction(
+  { name: 'providerCancelJob', access: PROVIDER, schema: JobInput },
+  async (input, user): Promise<{ status: 'ok' } | ReturnType<typeof fail>> => {
+    const outcome = await providerCancelJob(input.requestId, { region: user.region });
+    if (!outcome.ok) return fail(KNOWN_PROVIDER.includes(outcome.code) ? outcome.code : 'action_failed');
+    revalidatePath('/', 'layout');
+    return { status: 'ok' };
+  },
+);

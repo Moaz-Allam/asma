@@ -535,7 +535,13 @@ SELECT set_eq(
         AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
         AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e') $$,
   $$ VALUES ('public.accept_provider_docs_consent(text)'),
+            ('public.admin_mark_refund_done(uuid, text)'),
             ('public.admin_may_read(uuid, text)'),
+            ('public.admin_refund_fee(uuid, text)'),
+            ('public.admin_request_detail(uuid)'),
+            ('public.cancel_preview(uuid)'),
+            ('public.provider_cancel_job(uuid)'),
+            ('public.withdraw_application(uuid)'),
             ('public.apply_to_request(uuid, text)'),
             ('public.choose_provider(uuid, uuid)'),
             ('public.provider_applications(timestamp with time zone, uuid)'),

@@ -44,14 +44,17 @@ function sql(query: string): Record<string, unknown>[] {
   writeFileSync(file, query);
   let last = '';
   for (let attempt = 0; attempt < 4; attempt += 1) {
-    const run = spawnSync('npx', ['supabase', 'db', 'query', '--local', '-f', file], {
+    const run = spawnSync('npx', ['supabase', 'db', 'query', '--local', '-o', 'json', '-f', file], {
       encoding: 'utf8',
       shell: true,
     });
     if (run.status === 0) {
-      const start = run.stdout.indexOf('{');
+      // `-o json` (D189): without it the CLI prints a table outside an agent session, as in CI. An array or `{ rows }`.
+      const start = run.stdout.search(/[[{]/);
       if (start < 0) return [];
-      return (JSON.parse(run.stdout.slice(start)) as { rows?: Record<string, unknown>[] }).rows ?? [];
+      const parsed = JSON.parse(run.stdout.slice(start)) as
+        Record<string, unknown>[] | { rows?: Record<string, unknown>[] };
+      return Array.isArray(parsed) ? parsed : (parsed.rows ?? []);
     }
     last = `${run.stdout}\n${run.stderr}`;
   }

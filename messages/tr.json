@@ -994,7 +994,8 @@
       "answers": "[tr] Your answers",
       "cancel": "[tr] Cancel request",
       "repeat": "[tr] Repeat this request",
-      "cancelledBecause": "[tr] Cancelled: {reason}"
+      "cancelledBecause": "[tr] Cancelled: {reason}",
+      "postAgain": "[tr] Post again"
     },
     "cancel": {
       "title": "[tr] Cancel this request?",
@@ -1007,7 +1008,10 @@
         "found_elsewhere": "[tr] I found someone else",
         "price": "[tr] The price",
         "other": "[tr] Something else"
-      }
+      },
+      "bodyRefund": "[tr] The commission you paid, {amount}, comes back to your card. Providers will no longer see the request.",
+      "bodyNoRefund": "[tr] Contacts were already shared, so the commission does not come back by itself. Providers will no longer see the request.",
+      "refunded": "[tr] Cancelled. {amount} is on its way back to your card; banks can take a few days."
     },
     "answers": {
       "yes": "[tr] Yes",
@@ -1061,7 +1065,8 @@
       "too_many_checkouts": "[tr] Too many payment tries. Try again within the hour.",
       "checkout_open": "[tr] A card payment is in progress. Try again in a few minutes.",
       "checkout_settings_invalid": "[tr] Payments are not possible right now. Please try again later.",
-      "unlock_settings_invalid": "[tr] Payments are not possible right now. Please try again later."
+      "unlock_settings_invalid": "[tr] Payments are not possible right now. Please try again later.",
+      "provider_not_eligible": "[tr] This provider can no longer be chosen for this request."
     },
     "offers": {
       "title": "[tr] {count, plural, =0 {No offers yet} one {# offer on your request} other {# offers on your request}}",
@@ -1421,6 +1426,89 @@
       "too_early": "[tr] This is possible from the start day.",
       "provider_suspended": "[tr] Your account is suspended. Contact support.",
       "confirm_settings_invalid": "[tr] This is not possible right now. Please try again later."
+    }
+  },
+  "Cancel": {
+    "withdraw": "[tr] Withdraw",
+    "withdrawTitle": "[tr] Withdraw your application?",
+    "withdrawBody": {
+      "APPLIED": "[tr] The customer will no longer see your offer. You can still apply to other requests.",
+      "SELECTED": "[tr] The customer chose you. Withdrawing now reopens the request and counts as a cancellation on your profile.",
+      "AWAITING_FEE": "[tr] The customer has paid and is waiting for you. Withdrawing reopens the request for another provider."
+    },
+    "withdrawConfirm": "[tr] Withdraw",
+    "keep": "[tr] Keep it",
+    "cancelJob": "[tr] Cancel job",
+    "cancelJobTitle": "[tr] Cancel this job?",
+    "cancelJobBody": "[tr] The customer is told at once and can post the request again.",
+    "cancelJobConfirm": "[tr] Cancel job",
+    "customerTold": "[tr] The customer sees the job as cancelled by you.",
+    "noRefund": "[tr] The fee you paid does not come back.",
+    "countsAgainst": "[tr] It counts as a cancellation on your profile.",
+    "errors": {
+      "action_failed": "[tr] That did not work. Try again.",
+      "not_found": "[tr] This job is no longer yours.",
+      "invalid_state": "[tr] This cannot be done at this stage any more.",
+      "not_cancellable": "[tr] This job can no longer be cancelled.",
+      "checkout_open": "[tr] A payment page is open for this. Try again in a few minutes.",
+      "forbidden": "[tr] You cannot do this."
+    }
+  },
+  "AdminRequests": {
+    "title": "[tr] Request",
+    "intro": "[tr] Fees, refunds, ledger lines and history. The address is not shown here.",
+    "summary": "[tr] Summary",
+    "id": "[tr] Request id",
+    "status": "[tr] Status",
+    "service": "[tr] Service",
+    "start": "[tr] Starts",
+    "price": "[tr] Job price (cash)",
+    "commission": "[tr] Commission",
+    "failedPicks": "[tr] Failed picks",
+    "deadlines": "[tr] Deadlines",
+    "deadlineLine": "[tr] Commission by {pay} · provider fee by {fee}",
+    "cancelled": "[tr] Cancelled",
+    "closed": "[tr] Closed",
+    "applications": "[tr] Picks and applications",
+    "current": "[tr] current pick",
+    "none": "[tr] None",
+    "fees": "[tr] Fees",
+    "kind": {
+      "commission": "[tr] Commission",
+      "provider_fee": "[tr] Provider fee"
+    },
+    "paidAt": "[tr] Paid {date}",
+    "refund": "[tr] Refund by hand",
+    "refunds": "[tr] Refunds",
+    "byHand": "[tr] This refund did not finish. It may still have reached the card: first look for an existing refund of this payment in the PSP panel. Only if there is none, refund it there by hand, then record it here.",
+    "markDone": "[tr] Record as refunded by hand",
+    "ledger": "[tr] Ledger lines",
+    "flags": "[tr] Deadline flags",
+    "flag": {
+      "start_late": "[tr] Did not start on time",
+      "completion_late": "[tr] Did not finish on time"
+    },
+    "flagOpen": "[tr] open",
+    "timeline": "[tr] History",
+    "find": "[tr] Find request by id",
+    "findSubmit": "[tr] Open",
+    "findInvalid": "[tr] That is not a request id.",
+    "refundTitle": "[tr] Refund this fee?",
+    "refundBody": "[tr] {amount} goes back to the card that paid it. The reason is kept in the audit log.",
+    "refundConfirm": "[tr] Refund",
+    "doneTitle": "[tr] Record the refund as done by hand?",
+    "doneBody": "[tr] Record {amount} as refunded only after you refunded it in the PSP panel. The ledger records the refund.",
+    "doneConfirm": "[tr] Record",
+    "keep": "[tr] Back",
+    "reason": "[tr] Reason",
+    "note": "[tr] Note (what you did in the PSP panel)",
+    "reasonHint": "[tr] {min} to {max} characters ({count} now)",
+    "errors": {
+      "forbidden": "[tr] Admins only.",
+      "not_found": "[tr] Not found.",
+      "invalid_state": "[tr] Not possible at this stage.",
+      "reason_required": "[tr] Write 10 to 500 characters.",
+      "action_failed": "[tr] That did not work. Try again."
     }
   }
 }

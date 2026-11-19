@@ -125,7 +125,7 @@ $$;
 CREATE FUNCTION pg_temp.req(p_id uuid, p_service uuid, p_zone uuid, p_start timestamptz, p_status text DEFAULT 'OPEN') RETURNS uuid LANGUAGE sql AS $$
   INSERT INTO public.requests (id, region, customer_id, client_key, service_id, zone_id, status, answers, questions_snapshot,
     pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at, notes,
-    cancelled_at, cancelled_by)
+    cancelled_at, cancelled_by, closed_at, closed_by)
   VALUES (p_id, 'TR', pg_temp.u('c1'), gen_random_uuid(), p_service, p_zone, p_status,
     '{"rooms": 3, "property_type": "villa", "extras": ["windows", "oven"], "has_pets": true, "visit_date": "2026-12-01",
       "visit_time": "09:30", "details": "FIXTURE_TEXT_ANSWER", "door_code": "FIXTURE_TEXT_SHORT", "sneaky": "FIXTURE_SNEAKY"}',
@@ -148,6 +148,7 @@ CREATE FUNCTION pg_temp.req(p_id uuid, p_service uuid, p_zone uuid, p_start time
                     "zone": {"id": "00000000-0000-0000-0000-000000142001", "name": {"tr": "Kadıköy"}, "multiplier": "1.15"}},
       "rounding_minor": 100, "price": 350000, "currency": "TRY", "commission_percent": "10", "formula_id": null, "formula_version": 1}',
     350000, 35000, 315000, 'TRY', p_start, p_start + interval '5 hours', 'FIXTURE_NOTES',
+    CASE WHEN p_status = 'CANCELLED' THEN now() END, CASE WHEN p_status = 'CANCELLED' THEN 'customer' END,
     CASE WHEN p_status = 'CANCELLED' THEN now() END, CASE WHEN p_status = 'CANCELLED' THEN 'customer' END)
   RETURNING id $$;
 

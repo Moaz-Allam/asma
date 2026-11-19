@@ -11,6 +11,8 @@ import { decodeCursor, encodeCursor } from './cursor';
 import type { CancelReason, CreateRequestInput, QuoteRequestInput, RequestTab } from './input';
 import { prefillFrom as filterPrefill, type Prefill } from './prefill';
 import {
+  CancelPreview,
+  CancelResult,
   CheckoutStatus,
   ChooseResult,
   CloseInfo,
@@ -37,6 +39,7 @@ import {
  */
 
 export type {
+  CancelPreview,
   CheckoutStatus,
   CloseInfo,
   CommissionFee,
@@ -86,6 +89,8 @@ export const REQUEST_DB_CODES = [
   'contact_settings_invalid',
   // Spec 0011-11 (11): the customer's close.
   'too_early',
+  // Spec 0011-12 (12): a provider whose pick on this request ended is never picked again.
+  'provider_not_eligible',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -234,9 +239,22 @@ export async function loadOffers(id: string): Promise<RequestOffers | null> {
 }
 
 export type ChooseOutcome =
-  { ok: true; replayed: boolean; selectedAt: string; paymentDeadline: string } | Refused;
+  | {
+      ok: true;
+      replayed: boolean;
+      selectedAt: string;
+      /** Null when the paid commission carried to this pick (spec 0011-12 AC-4): no payment step. */
+      paymentDeadline: string | null;
+      carried: boolean;
+      /** The provider's fee window, set on a carried pick only. */
+      feeDeadline: string | null;
+    }
+  | Refused;
 
-/** Choose one offer (spec 0010 AC-7). A replay of the same offer returns the stored answer. */
+/**
+ * Choose one offer (spec 0010 AC-7). A replay of the same offer returns the stored answer. Since 12 a pick on a
+ * request whose commission is paid carries it (spec 0011-12 AC-4, R-3).
+ */
 export async function chooseProvider(
   input: { requestId: string; applicationId: string },
   context: Context,
@@ -250,29 +268,57 @@ export async function chooseProvider(
     return result;
   }
   const parsed = ChooseResult.parse(result.data);
+  const carried = 'carried' in parsed;
   return {
     ok: true,
     replayed: parsed.replayed,
     selectedAt: parsed.selected_at,
     paymentDeadline: parsed.payment_deadline,
+    carried,
+    feeDeadline: carried ? parsed.fee_deadline : null,
   };
 }
 
+export type CancelRefund = { amount: number; currency: 'TRY' | 'SAR' };
+
 /**
- * Cancel while OPEN or SELECTED (0008 AC-15, 0010 AC-11). Already cancelled is ok. Since 09 a card page in use
- * refuses `checkout_open` (spec 0011-09 AC-2); when that refusal came from a missing hold setting, alert (R-6).
+ * Cancel (0008 AC-15, 0010 AC-11, spec 0011-12 AC-6): the matrix decides whether the caller may cancel now and
+ * whether the paid commission comes back; the refund named here is the one queued, its amount the fee's own.
+ * Already cancelled is ok. Since 09 a card page in use refuses `checkout_open` (spec 0011-09 AC-2); when that
+ * refusal came from a missing hold setting, alert (R-6).
  */
 export async function cancelRequest(
   requestId: string,
   reason: CancelReason | null,
   context?: Context,
-): Promise<{ ok: true } | Refused> {
+): Promise<{ ok: true; refund: CancelRefund | null } | Refused> {
   const result = await invoke('cancel_request', { p_request_id: requestId, p_reason: reason });
-  if (!('ok' in result)) return { ok: true };
+  if (!('ok' in result)) {
+    const parsed = CancelResult.parse(result.data);
+    return {
+      ok: true,
+      refund: parsed.refund ? { amount: parsed.refund.amount, currency: parsed.refund.currency } : null,
+    };
+  }
   if (result.code === 'checkout_open' && result.hint === 'checkout_settings_invalid') {
     raiseAlert('checkout_settings_invalid', { recordId: requestId, region: context?.region ?? undefined });
   }
   return { ok: false, code: result.code };
+}
+
+/**
+ * What a cancel would do now (spec 0011-12 AC-14), for the dialog: whether the caller may cancel and the exact
+ * refund. Null for a malformed id or anyone else's request (the database answers `not_found` alike).
+ */
+export async function cancelPreview(requestId: string): Promise<CancelPreview | null> {
+  if (!UUID.test(requestId)) return null;
+  const result = await call('cancel_preview', { p_request_id: requestId });
+  if ('ok' in result) {
+    // Review of 12: never break the request page (contacts included) over this read; the button simply does not show.
+    if (result.code !== 'not_found') log.warn('cancel_preview_refused', { request_id: requestId });
+    return null;
+  }
+  return CancelPreview.parse(result.data);
 }
 
 export type PayOutcome =

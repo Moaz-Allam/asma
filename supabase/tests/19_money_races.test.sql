@@ -188,13 +188,14 @@ SELECT extensions.dblink_send_query('b', $$ SELECT public.cancel_request('000000
 SELECT pg_sleep(0.3);
 SELECT is(extensions.dblink_is_busy('b'), 1, 'AC-14: the cancel waits on the request row');
 SELECT extensions.dblink_exec('a', 'COMMIT');
+SELECT is(pg_temp.result('b') ->> 'status', 'ok',
+  'AC-14, 12 AC-6: and then cancels the COMMISSION_PAID request, in one order, with no deadlock');
 SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
-SELECT ok(extensions.dblink_error_message('b') LIKE '%not_cancellable%',
-  'AC-14: and then refuses not_cancellable, in one order, with no deadlock (09: the request is COMMISSION_PAID; 12 adds its refund path)');
-SELECT count(*) FROM extensions.dblink_get_result('b', false) AS t(r text);
-SELECT is(pg_temp.one($$ SELECT r.status || ' ' || f.status FROM public.requests r JOIN public.fee_payments f ON f.request_id = r.id
+SELECT is(pg_temp.one($$ SELECT r.status || ' ' || f.status || ' ' || x.status || ' ' || (x.amount = f.amount)::text
+                          FROM public.requests r JOIN public.fee_payments f ON f.request_id = r.id
+                          JOIN public.fee_refunds x ON x.fee_payment_id = f.id
                           WHERE r.id = '00000000-0000-0000-0000-0000001900e4' $$),
-  'COMMISSION_PAID paid', 'AC-14: the request moved to COMMISSION_PAID and its commission is paid');
+  'CANCELLED paid queued true', 'AC-14, 12 AC-7: the commission was paid once and its one refund, of its amount, is queued');
 
 -- ── one PSP payment for two fees on two requests at once: never booked twice ─
 SELECT extensions.dblink_exec('b', 'RESET ROLE');

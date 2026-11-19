@@ -116,6 +116,8 @@ describe('chooseProvider (AC-7, AC-8)', () => {
       replayed: false,
       selectedAt: CHOSEN.selected_at,
       paymentDeadline: CHOSEN.payment_deadline,
+      carried: false,
+      feeDeadline: null,
     });
   });
 

@@ -2,8 +2,10 @@ import 'server-only';
 
 import { createSupabaseServer } from '@/lib/db/server';
 import { raiseAlert } from '@/lib/observability/alert';
+import { log } from '@/lib/observability/log';
 import type { Region } from '@/lib/region';
 import { decodeCursor, encodeCursor } from '@/lib/requests/cursor';
+import { CancelPreview, CancelResult } from '@/lib/requests/schemas';
 
 import {
   PROVIDER_FEED_DB_CODES,
@@ -270,6 +272,51 @@ export async function moveJob(
   );
   if ('ok' in result) return result;
   return { ok: true, replayed: JobMoveResult.parse(result.data).replayed };
+}
+
+/**
+ * Withdraw (spec 0011-12 AC-5): the caller's own application, before the reveal only. From APPLIED nothing else
+ * moves; from SELECTED or AWAITING_FEE the request reopens and the matrix decides what counts. A provider fee
+ * page in use refuses `checkout_open`; after the reveal it is `invalid_state` (a cancel, not a withdraw).
+ */
+export async function withdrawApplication(
+  applicationId: string,
+  context: Context,
+): Promise<{ ok: true; replayed: boolean } | Refused> {
+  if (!UUID.test(applicationId)) return { ok: false, code: 'not_found' };
+  const result = await call('withdraw_application', { p_application_id: applicationId }, context);
+  if ('ok' in result) return result;
+  return { ok: true, replayed: JobMoveResult.parse(result.data).replayed };
+}
+
+/**
+ * The unlocked provider cancels the job (spec 0011-12 AC-6, §36 row 9): UNLOCKED or IN_PROGRESS only. No fee
+ * comes back by itself after the reveal; the matrix holds that, and the parse refuses any other key.
+ */
+export async function providerCancelJob(
+  requestId: string,
+  context: Context,
+): Promise<{ ok: true } | Refused> {
+  if (!UUID.test(requestId)) return { ok: false, code: 'not_found' };
+  const result = await call('provider_cancel_job', { p_request_id: requestId }, context);
+  if ('ok' in result) return result;
+  CancelResult.parse(result.data);
+  return { ok: true };
+}
+
+/**
+ * What the provider's cancel would do now (spec 0011-12 AC-14), or null: not the unlocked provider of this
+ * request, or a malformed id.
+ */
+export async function jobCancelPreview(requestId: string, context: Context): Promise<CancelPreview | null> {
+  if (!UUID.test(requestId)) return null;
+  const result = await call('cancel_preview', { p_request_id: requestId }, context);
+  if ('ok' in result) {
+    // Review of 12: never break My jobs over this read; the button simply does not show.
+    if (result.code !== 'not_found') log.warn('cancel_preview_refused', { request_id: requestId });
+    return null;
+  }
+  return CancelPreview.parse(result.data);
 }
 
 /** AC-14: the two counts of the provider home. */
