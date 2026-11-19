@@ -280,7 +280,7 @@ SELECT is(public.emails_enabled('KSA'), false, 'R-3: off in KSA');
 
 -- ══ R-9: email_confirmations, RLS, the policy, no grant ═══════════════════════
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid = 'public.email_confirmations'::regclass), 'R-9: RLS on');
-SELECT results_eq($$ SELECT polname::text, pg_get_expr(polqual, polrelid) FROM pg_policy WHERE polrelid = 'public.email_confirmations'::regclass $$,
+SELECT results_eq($$ SELECT polname::text COLLATE "default", pg_get_expr(polqual, polrelid) FROM pg_policy WHERE polrelid = 'public.email_confirmations'::regclass $$,
   $$ VALUES ('email_confirmations_no_api'::text, 'false'::text) $$, 'R-9: one policy, and it denies');
 SELECT is_empty($$ SELECT grantee FROM information_schema.role_table_grants
                     WHERE table_schema::text = 'public' AND table_name::text = 'email_confirmations'
@@ -762,7 +762,7 @@ SELECT is((SELECT count(*)::int FROM public.email_confirmations WHERE profile_id
 
 -- ══ Grants (AC-12) ═══════════════════════════════════════════════════════════
 SELECT results_eq(
-  $$ SELECT p.proname::text, has_function_privilege('anon', p.oid, 'EXECUTE'), has_function_privilege('authenticated', p.oid, 'EXECUTE'),
+  $$ SELECT p.proname::text COLLATE "default", has_function_privilege('anon', p.oid, 'EXECUTE'), has_function_privilege('authenticated', p.oid, 'EXECUTE'),
             has_function_privilege('service_role', p.oid, 'EXECUTE')
        FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
       WHERE n.nspname = 'public'
@@ -797,7 +797,7 @@ SELECT is(
         'request.unlocked'],
   'AC-3: the trigger fires on exactly the map''s actions');
 SELECT results_eq(
-  $$ SELECT tgname::text FROM pg_trigger WHERE tgrelid IN ('public.applications'::regclass, 'public.outbox_events'::regclass)
+  $$ SELECT tgname::text COLLATE "default" FROM pg_trigger WHERE tgrelid IN ('public.applications'::regclass, 'public.outbox_events'::regclass)
        AND tgname IN ('applications_offer_email', 'applications_need_email', 'outbox_strip_token') ORDER BY 1 COLLATE "C" $$,
   $$ VALUES ('applications_need_email'::text), ('applications_offer_email'), ('outbox_strip_token') $$,
   'R-1, R-9, R-10: the other three triggers');
