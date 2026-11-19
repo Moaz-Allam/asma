@@ -59,6 +59,27 @@ const CONFIG: Partial<PostHogConfig> = {
 let sdk: PostHog | undefined;
 let loading = false;
 
+// PostHog starts only after the load event and an idle moment (AC-6), so an event fired earlier (Pay pressed on
+// a page still loading, the return page's first sight of a paid fee) waits here and goes once it starts. Bounded,
+// so a page whose SDK never starts holds at most this many in memory. Found by 09's e2e (2026-11-19).
+export const PENDING_LIMIT = 20;
+type Pending = { event: string; properties: Record<string, unknown>; options?: { leaving: boolean } };
+const pending: Pending[] = [];
+
+function capture(event: string, properties: Record<string, unknown>, options?: { leaving: boolean }): void {
+  if (!sdk) return;
+  try {
+    sdk.capture(
+      event,
+      properties,
+      options?.leaving ? { send_instantly: true, transport: 'sendBeacon' } : undefined,
+    );
+  } catch (error) {
+    // Analytics never breaks the page; the console says why an event was lost.
+    console.warn('[analytics] event not captured', error instanceof Error ? error.message : 'unknown');
+  }
+}
+
 function inactive(): boolean {
   return !KEY || process.env.NODE_ENV === 'test';
 }
@@ -74,6 +95,7 @@ export function initAnalytics(): void {
         posthog.init(key, CONFIG);
         sdk = posthog;
         trackPageview(window.location.href);
+        for (const queued of pending.splice(0)) capture(queued.event, queued.properties, queued.options);
       })
       .catch((error: unknown) => {
         // Analytics never breaks the page; the console says why it is off.
@@ -91,17 +113,13 @@ export function track<E extends AnalyticsEvent>(
   properties: AnalyticsEvents[E],
   options?: { leaving: boolean },
 ): void {
-  if (!sdk) return;
-  try {
-    sdk.capture(
-      event,
-      properties,
-      options?.leaving ? { send_instantly: true, transport: 'sendBeacon' } : undefined,
-    );
-  } catch (error) {
-    // Analytics never breaks the page; the console says why an event was lost.
-    console.warn('[analytics] event not captured', error instanceof Error ? error.message : 'unknown');
+  if (inactive()) return;
+  const props = properties as Record<string, unknown>;
+  if (!sdk) {
+    if (pending.length < PENDING_LIMIT) pending.push({ event, properties: props, options });
+    return;
   }
+  capture(event, props, options);
 }
 
 export { withoutIds } from '@/lib/analytics/filter';
