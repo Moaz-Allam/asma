@@ -193,7 +193,9 @@ describe('the env schema and the deployment check (R-4, D192)', () => {
   };
 
   it('EMAIL_DRIVER defaults to off and takes only the three drivers', () => {
-    expect(() => parseEnv({ ...base, EMAIL_DRIVER: 'smtp' } as NodeJS.ProcessEnv)).toThrow(/EMAIL_DRIVER/);
+    expect(() => parseEnv({ ...base, EMAIL_DRIVER: 'smtp' } as unknown as NodeJS.ProcessEnv)).toThrow(
+      /EMAIL_DRIVER/,
+    );
   });
 
   it('a sender is an address, or a name and an address in angle brackets', () => {
