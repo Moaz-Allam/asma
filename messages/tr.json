@@ -266,7 +266,36 @@
     "renameTitle": "[tr] Change your name?",
     "renameBody": "[tr] Your name must match your ID. Changing it sends your file back to review, and you cannot apply to new requests until admin approves it again.",
     "renameConfirm": "[tr] Change and send for review",
-    "renameCancel": "[tr] Keep my name"
+    "renameCancel": "[tr] Keep my name",
+    "emailConfirmed": "[tr] Confirmed.",
+    "emailSendLink": "[tr] Send link again",
+    "emailSending": "[tr] Sending…",
+    "emailLinkSent": "[tr] We sent a link to your email. Open it to confirm the address.",
+    "emailErrors": {
+      "no_email": "[tr] Save an email address first.",
+      "already_confirmed": "[tr] This address is already confirmed.",
+      "emails_off": "[tr] Email is not available yet. Try again later.",
+      "rate_limited": "[tr] Too many links in the last hour. Try again later.",
+      "action_failed": "[tr] Something went wrong. Please try again.",
+      "unauthorized": "[tr] Your session ended. Sign in again.",
+      "forbidden": "[tr] Your session ended. Sign in again."
+    },
+    "confirm": {
+      "title": "[tr] Confirm your email",
+      "intro": "[tr] Press Confirm to use this address for our notices.",
+      "button": "[tr] Confirm",
+      "confirming": "[tr] Confirming…",
+      "done": "[tr] Your email is confirmed.",
+      "back": "[tr] Back to my account",
+      "errors": {
+        "invalid_link": "[tr] This link is not valid for your account.",
+        "link_expired": "[tr] This link has expired.",
+        "link_used": "[tr] This link was already used.",
+        "action_failed": "[tr] Something went wrong. Please try again.",
+        "unauthorized": "[tr] Your session ended. Sign in again.",
+        "forbidden": "[tr] Your session ended. Sign in again."
+      }
+    }
   },
   "Legal": {
     "termsTitle": "[tr] Terms",
@@ -1121,7 +1150,11 @@
       "closedByCustomer": "[tr] Closed by the customer",
       "closedAuto": "[tr] Closed by itself"
     },
-    "cancelSelected": "[tr] The provider you chose will see that their offer is cancelled."
+    "cancelSelected": "[tr] The provider you chose will see that their offer is cancelled.",
+    "emailBanner": {
+      "text": "[tr] Add and confirm an email to get notices about offers, payments and deadlines.",
+      "link": "[tr] Go to my account"
+    }
   },
   "ProviderFeed": {
     "days": {
@@ -1289,7 +1322,8 @@
       "message_invalid": "[tr] Write between 20 and 600 characters.",
       "contact_info_in_message": "[tr] Your message has contact details. Remove phone numbers, emails, links and social handles.",
       "apply_settings_invalid": "[tr] Applying is not possible right now. Please try again later.",
-      "action_failed": "[tr] Something went wrong. Nothing was sent. Try again."
+      "action_failed": "[tr] Something went wrong. Nothing was sent. Try again.",
+      "email_unconfirmed": "[tr] Confirm your email on your account page before you apply."
     },
     "chosen": {
       "line": "[tr] The customer is paying the commission by {date}. Your fee comes after that.",
@@ -1320,6 +1354,10 @@
       "ended": "[tr] The payment time ended.",
       "contactsHidden": "[tr] The contact details are no longer shown for this job.",
       "changedOn": "[tr] Updated {date}"
+    },
+    "emailPrompt": {
+      "text": "[tr] You need a confirmed email to apply to requests.",
+      "link": "[tr] Go to my account"
     }
   },
   "DevFakeCheckout": {
@@ -1509,6 +1547,106 @@
       "invalid_state": "[tr] Not possible at this stage.",
       "reason_required": "[tr] Write 10 to 500 characters.",
       "action_failed": "[tr] That did not work. Try again."
+    }
+  },
+  "Email": {
+    "shell": {
+      "footer": "[draft] [tr] You get this email because you have an account with us. You can turn some notices off on your account page.",
+      "linkHint": "[draft] [tr] If the button does not work, copy this link into your browser:",
+      "openRequest": "[draft] [tr] Open my request",
+      "openReceipt": "[draft] [tr] See the receipt",
+      "openApplications": "[draft] [tr] Open my applications",
+      "openAccount": "[draft] [tr] Open my account"
+    },
+    "new_offer": {
+      "subject": "[draft] [tr] New offer on your {service} request",
+      "lead": "[draft] [tr] A provider sent you an offer for {service}. Open your request to compare the offers."
+    },
+    "chosen": {
+      "subject": "[draft] [tr] You were chosen for {service}",
+      "lead": "[draft] [tr] The customer chose you for {service} on {start}. The customer pays the commission first; then we ask you to pay your fee, and you both see each other’s contact details."
+    },
+    "pay_your_fee": {
+      "subject": "[draft] [tr] Pay your fee for {service}",
+      "lead": "[draft] [tr] The customer paid the commission. Pay your fee of {amount} by {deadline} to see the customer’s contact details and keep the job."
+    },
+    "commission_received": {
+      "subject": "[draft] [tr] Your commission for {service} is paid",
+      "lead": "[draft] [tr] We received your commission of {amount}. The provider now pays their fee; then you both see each other’s contact details.",
+      "leadFree": "[draft] [tr] No commission is due for {service}. The provider now pays their fee; then you both see each other’s contact details."
+    },
+    "contacts_ready": {
+      "subject": "[draft] [tr] Contact details are open for {service}",
+      "leadCustomer": "[draft] [tr] You and the provider can now see each other’s contact details. The work is on {start}. You pay the provider in cash after the service.",
+      "leadProvider": "[draft] [tr] You and the customer can now see each other’s contact details. The work is on {start}. The customer pays you in cash after the service."
+    },
+    "job_started": {
+      "subject": "[draft] [tr] Work has started on {service}",
+      "lead": "[draft] [tr] The provider marked the work on {service} as started."
+    },
+    "please_confirm": {
+      "subject": "[draft] [tr] Please confirm the work on {service}",
+      "lead": "[draft] [tr] The provider marked the work on {service} as done. Please check it and confirm.",
+      "deadline": "[draft] [tr] If you do nothing, the job closes by itself on {deadline}."
+    },
+    "job_completed": {
+      "subject": "[draft] [tr] The work on {service} is complete",
+      "lead": "[draft] [tr] The job for {service} is closed. Thank you for your work."
+    },
+    "request_cancelled": {
+      "subject": "[draft] [tr] The request for {service} was cancelled",
+      "leadCustomer": "[draft] [tr] Your request for {service} on {start} was cancelled.",
+      "leadProvider": "[draft] [tr] The job for {service} on {start} was cancelled. You do not need to go.",
+      "refund": "[draft] [tr] We are refunding your commission of {amount} to your card."
+    },
+    "pick_again": {
+      "subject": "[draft] [tr] Choose another provider for {service}",
+      "lead": "[draft] [tr] Your pick for {service} ended. Choose a provider from your offers.",
+      "carried": "[draft] [tr] Your commission stays paid, so you do not pay it again."
+    },
+    "pick_ended": {
+      "subject": "[draft] [tr] Your pick for {service} ended",
+      "lead": "[draft] [tr] The customer did not pay the commission in time, so your pick for {service} ended."
+    },
+    "window_missed": {
+      "subject": "[draft] [tr] The time to pay your fee for {service} ended",
+      "lead": "[draft] [tr] Your fee was not paid in time, so the customer may now choose another provider."
+    },
+    "payment_too_late": {
+      "subject": "[draft] [tr] Your payment came too late",
+      "lead": "[draft] [tr] Your payment of {amount} came after the time to pay ended. We are refunding it in full."
+    },
+    "fee_refunded": {
+      "subject": "[draft] [tr] Your refund of {amount} is done",
+      "lead": "[draft] [tr] We refunded {amount} to your card. Your bank may take a few days to show it."
+    },
+    "confirm_email": {
+      "subject": "[draft] [tr] Confirm your email address",
+      "lead": "[draft] [tr] Open the link, then press Confirm, so that our notices reach this address. The link works until {deadline}.",
+      "ignore": "[draft] [tr] If you did not ask for this, ignore this email.",
+      "action": "[draft] [tr] Confirm my email"
+    },
+    "account_approved": {
+      "subject": "[draft] [tr] Your provider account is approved",
+      "lead": "[draft] [tr] You can now apply to requests in your districts."
+    },
+    "account_rejected": {
+      "subject": "[draft] [tr] We could not approve your provider account",
+      "lead": "[draft] [tr] Open your account to see why and what to change."
+    },
+    "account_suspended": {
+      "subject": "[draft] [tr] Your provider account is suspended",
+      "lead": "[draft] [tr] You cannot apply to new requests for now. Open your account for details."
+    },
+    "pay_window_closing": {
+      "subjectCustomer": "[draft] [tr] Pay the commission for {service} soon",
+      "subjectProvider": "[draft] [tr] Pay your fee for {service} soon",
+      "leadCustomer": "[draft] [tr] Your pick holds until {deadline}. Pay the commission before then, or the pick ends.",
+      "leadProvider": "[draft] [tr] Pay your fee before {deadline} to keep the job."
+    },
+    "closes_soon": {
+      "subject": "[draft] [tr] The job for {service} closes soon",
+      "lead": "[draft] [tr] If you do nothing, the job closes by itself on {deadline}. Confirm it, or tell us about a problem before then."
     }
   }
 }

@@ -1,8 +1,10 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { RequestRow, rowStatus } from '@/components/features/requests/RequestRow';
+import { EmailNudge } from '@/components/shared/EmailNudge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
+import { needsEmailNudge } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { Link } from '@/lib/i18n/navigation';
@@ -28,6 +30,8 @@ export default async function Page({ params, searchParams }: Props) {
   const t = await getTranslations('Requests');
   const tab = parseTab(query.tab);
   const page = await listMyRequests({ userId: user.id, tab, after: query.after });
+  // Spec 0011-13 AC-4: a nudge, never a block, while mail is on and the address is not confirmed.
+  const emailNudge = user.role === 'customer' ? await needsEmailNudge(user.id, 'customer') : false;
   const fallback = regionDefaultLocale(user.region ?? 'TR');
   const posted = (iso: string, timezone: string) =>
     new Intl.DateTimeFormat(NUMBER_LOCALE[locale] ?? locale, {
@@ -45,6 +49,7 @@ export default async function Page({ params, searchParams }: Props) {
           <Link href="/requests/new">{t('list.newRequest')}</Link>
         </Button>
       </div>
+      {emailNudge ? <EmailNudge text={t('emailBanner.text')} linkLabel={t('emailBanner.link')} /> : null}
       <nav aria-label={t('list.tabs')}>
         <ul className="flex flex-wrap gap-2">
           {REQUEST_TABS.map((value) => (

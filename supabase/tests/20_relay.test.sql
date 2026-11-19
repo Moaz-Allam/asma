@@ -175,10 +175,11 @@ DELETE FROM vault.secrets WHERE name IN ('relay_url', 'relay_secret');
 SELECT results_eq(
   $$ SELECT jobname::text, schedule::text, command::text FROM cron.job WHERE jobname LIKE 'relay-%' ORDER BY jobname $$,
   $$ VALUES ('relay-drain', '* * * * *', 'select public.relay_kick(''drain'')'),
+            ('relay-email', '* * * * *', 'select public.relay_kick(''email'')'),
             ('relay-heartbeat', '*/5 * * * *', 'select public.relay_kick(''heartbeat'')'),
             ('relay-reconcile-daily', '*/10 0-1 * * *', 'select public.relay_kick(''reconcile_daily'')'),
             ('relay-reconcile-pending', '*/15 * * * *', 'select public.relay_kick(''reconcile_pending'')') $$,
-  'AC-6, R-11: the four schedules');
+  'AC-6, R-11: the four schedules, and 13''s email lane (spec 0011-13 R-12)');
 
 -- ══ AC-20, R-4, R-8: checkout_context ══════════════════════════════════════════
 SELECT is(public.checkout_context((SELECT id FROM a1)) - 'attempt_age_seconds',

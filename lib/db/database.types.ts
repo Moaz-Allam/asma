@@ -406,6 +406,57 @@ export type Database = {
           },
         ]
       }
+      email_confirmations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          profile_id: string
+          region: string
+          revoked_at: string | null
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          profile_id: string
+          region: string
+          revoked_at?: string | null
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          profile_id?: string
+          region?: string
+          revoked_at?: string | null
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_confirmations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_confirmations_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       fake_psp_outcomes: {
         Row: {
           created_at: string
@@ -1895,6 +1946,7 @@ export type Database = {
         Args: { p_fee_refund_id: string; p_psp_refund_id: string }
         Returns: Json
       }
+      apply_needs_email: { Args: { p_region: string }; Returns: boolean }
       apply_settings: { Args: { p_region: string }; Returns: Json }
       apply_to_request: {
         Args: { p_message: string; p_request_id: string }
@@ -1962,6 +2014,10 @@ export type Database = {
         Returns: Json
       }
       choose_settings: { Args: { p_region: string }; Returns: number }
+      claim_email_outbox: {
+        Args: { p_limit: number; p_worker: string }
+        Returns: Json
+      }
       claim_outbox: {
         Args: { p_limit: number; p_worker: string }
         Returns: Json
@@ -1988,6 +2044,7 @@ export type Database = {
         }
         Returns: Json
       }
+      confirm_email: { Args: { p_token: string }; Returns: Json }
       confirm_job: { Args: { p_request_id: string }; Returns: Json }
       confirm_settings: { Args: { p_region: string }; Returns: number }
       contact_normalise: { Args: { p_text: string }; Returns: string }
@@ -2028,6 +2085,10 @@ export type Database = {
         }
         Returns: Json
       }
+      email_context: { Args: { p_outbox_id: string }; Returns: Json }
+      email_settings: { Args: { p_region: string }; Returns: Json }
+      emails_enabled: { Args: { p_region: string }; Returns: boolean }
+      emails_housekeeping: { Args: never; Returns: number }
       end_pick: {
         Args: {
           p_application_status: string
@@ -2063,6 +2124,15 @@ export type Database = {
       }
       fee_settings: {
         Args: { p_region: string; p_unit?: number }
+        Returns: Json
+      }
+      finish_email: {
+        Args: {
+          p_claim_token: string
+          p_detail?: string
+          p_id: string
+          p_outcome: string
+        }
         Returns: Json
       }
       finish_job: { Args: { p_request_id: string }; Returns: Json }
@@ -2452,10 +2522,40 @@ export type Database = {
         }
         Returns: boolean
       }
+      queue_audit_email: { Args: { p_audit_id: number }; Returns: number }
+      queue_audit_mail: {
+        Args: {
+          p_audit_id: number
+          p_entity: string
+          p_recipient: string
+          p_region: string
+          p_request: string
+          p_send_until: string
+          p_template: string
+          p_topic?: string
+        }
+        Returns: number
+      }
+      queue_email: {
+        Args: {
+          p_entity: string
+          p_key: string
+          p_recipient: string
+          p_region: string
+          p_request: string
+          p_send_until: string
+          p_template: string
+          p_token?: string
+          p_topic?: string
+        }
+        Returns: string
+      }
       queue_fee_refund: {
         Args: { p_by: string; p_fee_id: string; p_reason: string }
         Returns: string
       }
+      queue_offer_email: { Args: { p_application_id: string }; Returns: number }
+      queue_reminders: { Args: never; Returns: number }
       quote_price: {
         Args: {
           p_addon_ids: string[]
@@ -2498,6 +2598,7 @@ export type Database = {
       request_catalog: { Args: never; Returns: Json }
       request_close_info: { Args: { p_request_id: string }; Returns: Json }
       request_contacts: { Args: { p_request_id: string }; Returns: Json }
+      request_email_confirmation: { Args: never; Returns: Json }
       request_offers: { Args: { p_request_id: string }; Returns: Json }
       request_settings: { Args: { p_region: string }; Returns: Json }
       reselection_limit: { Args: { p_region: string }; Returns: number }
@@ -2543,6 +2644,10 @@ export type Database = {
         Returns: string
       }
       start_day_reached: { Args: { p_request_id: string }; Returns: boolean }
+      start_email_confirmation: {
+        Args: { p_profile_id: string }
+        Returns: string
+      }
       start_job: { Args: { p_request_id: string }; Returns: Json }
       submit_provider_file: { Args: never; Returns: Json }
       suspend_provider: {

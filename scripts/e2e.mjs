@@ -132,6 +132,10 @@ const env = {
   APP_ORIGIN: `http://localhost:${process.env.E2E_PORT || 3100}`,
   RELAY_SECRET: 'e2e-relay-secret-0000000000000000000000',
   SENTRY_SERVER_DSN: 'https://e2eserver0000000000000000000000@o1.ingest.de.sentry.io/1',
+  // Spec 0011-13 R-4: the fake mail driver appends each mail to this file, which the mail journey reads. Under
+  // .next/, not test-results/, which Playwright clears before a run.
+  EMAIL_DRIVER: 'fake',
+  EMAIL_FAKE_FILE: join(root, '.next', 'e2e-mail.jsonl'),
   ...localSupabase(),
   ...(indexable ? { APP_SITE_URL: 'https://aldebyani.example', VERCEL_ENV: 'production' } : {}),
 };

@@ -5,7 +5,7 @@ import { NotificationTable } from '@/components/features/account/NotificationTab
 import { SignOutCard } from '@/components/features/account/SignOutCard';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
-import { getProfile } from '@/lib/account/profile';
+import { getEmailStanding, getProfile } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { Link, redirect } from '@/lib/i18n/navigation';
 import { getTurnedOffTopics } from '@/lib/notifications/preferences';
@@ -28,6 +28,10 @@ export default async function AccountPage({ params }: Props) {
   // Spec 0006 AC-12: an approved provider confirms first that a rename returns the file to review.
   const standing = user.role === 'provider' ? await getStanding(user.id) : null;
   const t = await getTranslations('Account');
+  // Spec 0011-13 AC-7: "Send link again" only while mail is on; a failed read just hides it.
+  const emailsEnabled = await getEmailStanding(user.id)
+    .then((standing) => standing.emailsEnabled)
+    .catch(() => false);
 
   return (
     <div className="grid items-start gap-3.5 lg:grid-cols-account">
@@ -38,6 +42,7 @@ export default async function AccountPage({ params }: Props) {
           phone={profile.phone}
           email={profile.email}
           emailConfirmed={profile.emailConfirmed}
+          emailsEnabled={emailsEnabled}
           warnBeforeRename={standing === 'approved' || standing === 'document_expired'}
         >
           <NotificationTable rows={noticeRowsFor(user.role)} turnedOff={turnedOff} />

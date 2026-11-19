@@ -691,18 +691,18 @@ RESET ROLE;
 SELECT is(pg_temp.try_write('delete', 'fee_refunds'), 'fee_refund_immutable', 'AC-9: a refund row is never deleted');
 
 -- ══ AC-10, R-10: the outbox ══════════════════════════════════════════════════
-CREATE TEMP TABLE ob AS SELECT public.enqueue_outbox('email.send', 'email:test-18:1', '{"n": 1}', 'TR') AS id;
+CREATE TEMP TABLE ob AS SELECT public.enqueue_outbox('payment.verify', 'verify:test-18:1', '{"n": 1}', 'TR') AS id;
 GRANT SELECT ON ob TO authenticated, service_role;
-SELECT is(public.enqueue_outbox('email.send', 'email:test-18:1', '{"n": 1}', 'TR'), (SELECT id FROM ob), 'AC-10: the same key returns the same row');
-SELECT is((SELECT count(*)::int FROM public.outbox_events WHERE idempotency_key = 'email:test-18:1'), 1, 'AC-10: once');
-SELECT is(pg_temp.err($$ SELECT public.enqueue_outbox('email.send', 'email:test-18:1', '{"n": 2}', 'TR') $$), 'idempotency_conflict',
+SELECT is(public.enqueue_outbox('payment.verify', 'verify:test-18:1', '{"n": 1}', 'TR'), (SELECT id FROM ob), 'AC-10: the same key returns the same row');
+SELECT is((SELECT count(*)::int FROM public.outbox_events WHERE idempotency_key = 'verify:test-18:1'), 1, 'AC-10: once');
+SELECT is(pg_temp.err($$ SELECT public.enqueue_outbox('payment.verify', 'verify:test-18:1', '{"n": 2}', 'TR') $$), 'idempotency_conflict',
   'AC-10: the same key with another payload is a conflict');
 SELECT is(pg_temp.err($$ SELECT public.enqueue_outbox('sms.send', 'sms:test-18:1', '{}', 'TR') $$), 'validation_failed', 'AC-10: an unknown kind');
 SET LOCAL ROLE service_role;
 CREATE TEMP TABLE c1 AS SELECT public.claim_outbox(100, 'worker-18') AS j;
 GRANT SELECT ON c1 TO authenticated, service_role;
 RESET ROLE;
-SELECT ok((SELECT j @> jsonb_build_array(jsonb_build_object('id', (SELECT id FROM ob), 'kind', 'email.send', 'idempotency_key', 'email:test-18:1',
+SELECT ok((SELECT j @> jsonb_build_array(jsonb_build_object('id', (SELECT id FROM ob), 'kind', 'payment.verify', 'idempotency_key', 'verify:test-18:1',
                                                            'payload', '{"n": 1}'::jsonb, 'attempts', 1, 'region', 'TR',
                                                            'claim_token', pg_temp.token((SELECT id FROM ob)))) FROM c1),
   'AC-10: a due row is claimed, with its attempt counted and its claim token');
@@ -739,7 +739,7 @@ SELECT results_eq($$ SELECT attempt, wait, status FROM schedule ORDER BY attempt
             (5, interval '720 minutes', 'pending'), (6, NULL::interval, 'failed') $$,
   'R-10: retries at 5, 30, 120 and 720 minutes, then failed after the sixth try');
 SELECT is((SELECT status FROM public.outbox_events WHERE id = (SELECT id FROM ob)), 'failed', 'R-10: the row is failed');
-CREATE TEMP TABLE ob2 AS SELECT public.enqueue_outbox('email.send', 'email:test-18:2', '{"n": 2}', 'TR') AS id;
+CREATE TEMP TABLE ob2 AS SELECT public.enqueue_outbox('payment.verify', 'verify:test-18:2', '{"n": 2}', 'TR') AS id;
 GRANT SELECT ON ob2 TO authenticated, service_role;
 UPDATE public.outbox_events SET status = 'claimed', claimed_at = now() - interval '3 minutes', claimed_by = 'gone', attempts = 2
  WHERE id = (SELECT id FROM ob2);
@@ -750,7 +750,7 @@ SELECT is(public.finish_outbox((SELECT id FROM ob2), true, NULL, pg_temp.token((
 SELECT is(public.finish_outbox((SELECT id FROM ob2), false, 'late', pg_temp.token((SELECT id FROM ob2))) - 'next_attempt_at',
   jsonb_build_object('id', (SELECT id FROM ob2), 'status', 'done', 'attempts', 3, 'stale', true), 'AC-10: a late finish changes nothing');
 RESET ROLE;
-CREATE TEMP TABLE ob3 AS SELECT public.enqueue_outbox('email.send', 'email:test-18:3', '{"n": 3}', 'TR') AS id;
+CREATE TEMP TABLE ob3 AS SELECT public.enqueue_outbox('payment.verify', 'verify:test-18:3', '{"n": 3}', 'TR') AS id;
 GRANT SELECT ON ob3 TO authenticated, service_role;
 UPDATE public.outbox_events SET status = 'claimed', claimed_at = now() - interval '3 minutes', claimed_by = 'gone', attempts = 6
  WHERE id = (SELECT id FROM ob3);

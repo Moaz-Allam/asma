@@ -42,7 +42,16 @@ export type LogEvent =
   // Spec 0011-11 review F-6: the customer's close info could not be read.
   | 'close_info_refused'
   // Spec 0011-12, review: a cancel preview refused; the page hides the cancel button instead of failing.
-  | 'cancel_preview_refused';
+  | 'cancel_preview_refused'
+  // Spec 0011-13 AC-9: the mail lane. The outbox row in request_id, `<template>:<outcome>` in code; never an
+  // address, a subject or a body.
+  | 'email_finished'
+  | 'email_stale_finish'
+  | 'email_finish_failed'
+  | 'email_context_failed'
+  | 'email_render_failed'
+  // Spec 0011-13 AC-7: the account page could not read the email standing; it shows the plain field.
+  | 'email_standing_failed';
 
 /** The only ids a record may carry: internal ids, never personal data. */
 export type LogIds = {

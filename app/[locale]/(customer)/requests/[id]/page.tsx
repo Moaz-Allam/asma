@@ -15,6 +15,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { PriceCard } from '@/components/shared/PriceCard';
 import { StatusChip } from '@/components/shared/StatusChip';
 import { Button } from '@/components/ui/button';
+import { needsEmailNudge } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { formatMoney } from '@/lib/format/money';
@@ -58,6 +59,8 @@ export default async function Page({ params, searchParams }: Props) {
   if (!found || !offers) notFound();
 
   const t = await getTranslations('Requests');
+  // Spec 0011-13 AC-4: a customer without a confirmed email, while mail is on, sees a nudge in the choose dialog.
+  const emailNudge = user.role === 'customer' ? await needsEmailNudge(user.id, 'customer') : false;
   const { request, addressLine, now } = found;
   const fallback = regionDefaultLocale(user.region ?? 'TR');
   const text = (value: unknown) => localized(value, locale, fallback);
@@ -276,6 +279,7 @@ export default async function Page({ params, searchParams }: Props) {
                 currency={request.currency}
                 windowHours={offers.payment_window_hours}
                 readOnly={!liveOpen}
+                emailNudge={emailNudge}
               />
             ) : (
               <EmptyState

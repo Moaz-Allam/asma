@@ -3,8 +3,10 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { ApplicationForm } from '@/components/features/provider-feed/ApplicationForm';
 import { ShortDetailsList } from '@/components/features/provider-feed/ShortDetailsList';
+import { EmailNudge } from '@/components/shared/EmailNudge';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
+import { needsEmailNudge } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { Link } from '@/lib/i18n/navigation';
@@ -25,7 +27,10 @@ export default async function Page({ params }: Props) {
   const user = await guardPage(['provider']);
   const t = await getTranslations('ProviderFeed');
 
-  const result = await loadRequest(id, { region: user.region });
+  const [result, emailNudge] = await Promise.all([
+    loadRequest(id, { region: user.region }),
+    needsEmailNudge(user.id, 'provider'),
+  ]);
   if (!result.ok) {
     return <ErrorState title={t('feed.error.title')} body={t('feed.error.body')} />;
   }
@@ -73,6 +78,7 @@ export default async function Page({ params }: Props) {
       >
         {t('detail.back')}
       </Link>
+      {emailNudge ? <EmailNudge text={t('emailPrompt.text')} linkLabel={t('emailPrompt.link')} /> : null}
       <div className="grid items-start gap-3.5 lg:grid-cols-[1.5fr_1fr]">
         <div className="flex min-w-0 flex-col gap-5">
           <div className="flex flex-col gap-3">

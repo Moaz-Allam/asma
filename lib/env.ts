@@ -11,7 +11,7 @@ import { isPostHogProjectKey, parseEuSentryDsn } from '@/lib/deployment';
  * app does not boot, rather than failing at first use in production.
  *
  * ⚠️ SCOPE — this schema covers only what the CURRENTLY BUILT features consume.
- * `.env.example` lists more (PAYTABS_*, EMAIL_API_KEY…; IYZICO_* joined with 08)
+ * `.env.example` lists more (PAYTABS_*…; IYZICO_* joined with 08, EMAIL_* with 13)
  * because it documents the whole system. Those are deliberately NOT validated yet:
  * requiring a PSP key before the PSP adapter exists would stop the app booting for
  * a feature nobody can call.
@@ -28,6 +28,12 @@ import { isPostHogProjectKey, parseEuSentryDsn } from '@/lib/deployment';
  */
 
 const REMOVED_BY_D14 = ['APP_REGION', 'APP_CURRENCY', 'PSP_PROVIDER'] as const;
+
+/** A mail sender (spec 0011-13 R-4): `a@b.c`, or `Name <a@b.c>` with no angle bracket, quote or line break in the name. */
+export function isEmailSender(value: string): boolean {
+  const address = '[^@\\s<>"]+@[^@\\s<>"]+\\.[^@\\s<>"]+';
+  return new RegExp(`^(?:${address}|[^<>"\\r\\n]{1,64} <${address}>)$`).test(value) && value.length <= 254;
+}
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -131,6 +137,24 @@ const EnvSchema = z.object({
   // SECRET: the x-relay-secret header pg_net sends (S33). Read only by lib/relay (lint). Without it the
   // relay route answers 404 to everyone.
   RELAY_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
+
+  // ── The email door (lib/email, spec 0011-13 R-4, AC-1) ───────────────────
+  // `off` (the default) sends nothing and ends each mail `email_off`; `fake` appends each mail as one JSON line
+  // to EMAIL_FAKE_FILE (the e2e wrapper only); `resend` sends through Resend's REST API. Read only inside
+  // lib/email (lint). lib/deployment.ts refuses `fake` on any deployment and `resend` without its key and sender.
+  EMAIL_DRIVER: z.enum(['off', 'fake', 'resend']).default('off'),
+  // SECRET: the Resend sending key (owner step S5).
+  EMAIL_API_KEY: z.string().min(1).optional(),
+  // The sender, `Name <address>` or a bare address, such as `Aldebyani <no-reply@domain>` once S4 exists.
+  EMAIL_FROM: z
+    .string()
+    .refine((from) => isEmailSender(from), {
+      message:
+        'must be an address, or a name and an address in angle brackets: Aldebyani <no-reply@example.com>',
+    })
+    .optional(),
+  // An absolute path; the e2e wrapper's file for the fake driver. Never set on Vercel.
+  EMAIL_FAKE_FILE: z.string().min(1).optional(),
 
   // ── Server only error reporting (spec 0011-08 AC-14, R5) ──────────────────
   // A second Sentry project that no browser ever sees, so nobody can forge a server alert. Unset, the

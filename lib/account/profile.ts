@@ -3,6 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 
 import { createSupabaseServer } from '@/lib/db/server';
+import { log } from '@/lib/observability/log';
 import { LocaleSchema } from '@/lib/validation';
 
 /**
@@ -81,4 +82,80 @@ export async function completeOnboardingInDb(input: {
   });
   if (error) throw error;
   return z.object({ role: z.string() }).parse(data);
+}
+
+/**
+ * Spec 0011-13 AC-4, AC-7, R-10: whether the caller's address is confirmed, and the two mail switches of their
+ * region (`platform_settings`, readable by every signed in user). The banner and "Send link again" show only while
+ * mail is on; the provider's prompt only while the apply gate is. Read with the caller's own client.
+ */
+export type EmailStanding = {
+  hasEmail: boolean;
+  confirmed: boolean;
+  emailsEnabled: boolean;
+  applyNeedsEmail: boolean;
+};
+
+const StandingSchema = z.object({
+  region: z.string(),
+  email: z.string().nullable(),
+  email_confirmed_at: z.string().nullable(),
+});
+
+export async function getEmailStanding(userId: string): Promise<EmailStanding> {
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('region, email, email_confirmed_at')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { hasEmail: false, confirmed: false, emailsEnabled: false, applyNeedsEmail: false };
+  const row = StandingSchema.parse(data);
+  const { data: settings, error: settingsError } = await supabase
+    .from('platform_settings')
+    .select('key, value')
+    .eq('region', row.region)
+    .in('key', ['emails_enabled', 'apply_needs_email']);
+  if (settingsError) throw settingsError;
+  // Fails closed, as the database's readers do: a missing or non boolean row is off.
+  const on = (key: string) => (settings ?? []).some((s) => s.key === key && s.value === true);
+  return {
+    hasEmail: row.email !== null,
+    confirmed: row.email !== null && row.email_confirmed_at !== null,
+    emailsEnabled: on('emails_enabled'),
+    applyNeedsEmail: on('apply_needs_email'),
+  };
+}
+
+/** AC-7: a new link for the caller's address. Throws the database's stable code as the message. */
+export async function requestEmailConfirmationInDb(): Promise<void> {
+  const supabase = await createSupabaseServer();
+  const { error } = await supabase.rpc('request_email_confirmation');
+  if (error) throw error;
+}
+
+/** AC-7: confirms the caller's address with the link's token. Throws the database's stable code as the message. */
+export async function confirmEmailInDb(token: string): Promise<void> {
+  const supabase = await createSupabaseServer();
+  const { error } = await supabase.rpc('confirm_email', { p_token: token });
+  if (error) throw error;
+}
+
+/** R-9: 32 random bytes in base64url. Anything else is refused before the database is asked. */
+export const ConfirmTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+
+/**
+ * Spec 0011-13 AC-4: whether to nudge the caller to add and confirm an address. A customer while mail is on in
+ * their region; a provider while the apply gate is on. Never a block: a failed read shows no nudge.
+ */
+export async function needsEmailNudge(userId: string, kind: 'customer' | 'provider'): Promise<boolean> {
+  try {
+    const standing = await getEmailStanding(userId);
+    if (standing.confirmed) return false;
+    return kind === 'customer' ? standing.emailsEnabled : standing.applyNeedsEmail;
+  } catch {
+    log.warn('email_standing_failed', { user_id: userId });
+    return false;
+  }
 }

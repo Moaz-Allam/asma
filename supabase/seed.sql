@@ -5,6 +5,11 @@
 -- end to end suite can open fake card pages.
 update public.platform_settings set value = 'true' where region = 'TR' and key = 'payments_enabled';
 
+-- Position 13 (spec 0011-13 R-3): mail is seeded off in both regions by the `transactional_email` migration, and only
+-- the owner turns it on in the cloud (S43). The local stack turns TR on, so the end to end suite sends through the
+-- fake driver (EMAIL_DRIVER=fake, a file the e2e wrapper names).
+update public.platform_settings set value = 'true' where region = 'TR' and key = 'emails_enabled';
+
 -- The fake payment fence (security review 2026-11-17, L1): a fake payment books nothing unless this Vault
 -- secret is `true`. Local only; in the cloud the owner sets it for a deliberate fake check and deletes it after.
 select vault.create_secret('true', 'fake_psp_allowed');

@@ -73,6 +73,10 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'message',
   'body',
   'comment',
+  // Spec 0011-13 AC-9: a rendered mail's subject and HTML. Exact keys: `to` is already a URL key here, and
+  // `text` is too common to drop everywhere.
+  'subject',
+  'html',
   // Postgres error fields: they quote the row that failed, such as `Key (phone)=(+90…) already exists.`
   'detail',
   'details',
