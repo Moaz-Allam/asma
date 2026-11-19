@@ -90,6 +90,22 @@ describe('what an allowed event carries (AC-3, AC-6)', () => {
     expect(out?.properties.$pathname).toBe('/ar/requests/[id]');
   });
 
+  it("drops the SDK's own page ids, so no event carries an id shaped value", () => {
+    const out = filterAnalyticsEvent(
+      captured('contacts_unlocked', {
+        ...SDK_PROPS,
+        side: 'customer',
+        $pageview_id: '01a1f48d-06fd-7e8c-8176-7d61ce1b276a',
+        $prev_pageview_id: '01a1f48d-06fd-7e8c-8176-7d61ce1b2700',
+      }),
+      'preview',
+    );
+    expect(out?.properties).not.toHaveProperty('$pageview_id');
+    expect(out?.properties).not.toHaveProperty('$prev_pageview_id');
+    expect(JSON.stringify(out?.properties)).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
+    expect(out?.properties.side).toBe('customer');
+  });
+
   it('a payment event carries only which fee, and no attempt id from the pay pages (spec 0011-09 AC-14)', () => {
     const id = '00000000-0000-4000-8000-0009000a1001';
     const out = filterAnalyticsEvent(
