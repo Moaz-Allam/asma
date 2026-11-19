@@ -115,7 +115,8 @@ async function waitForMail(request: APIRequestContext, match: (mail: Mail) => bo
     await new Promise((resolve) => setTimeout(resolve, 1_000));
     found = mails().find(match);
     expect(found).toBeDefined();
-  }).toPass({ timeout: 60_000 });
+    // Every try kicks the relay; at most one every 2 seconds, so the other worker's journey is not starved.
+  }).toPass({ timeout: 60_000, intervals: [2_000] });
   return found as Mail;
 }
 
@@ -311,7 +312,8 @@ test('an address is confirmed once through its link, and a choose and a paid com
             ` as states from public.outbox_events o where o.kind = 'email.send' and o.payload ->> 'request_id' = '${f.request}';`,
         )[0]?.states;
       },
-      { timeout: 60_000 },
+      // Each try starts a database client process: one every 3 seconds is enough.
+      { timeout: 60_000, intervals: [3_000] },
     )
     .toBe('chosen:done:condition,commission_received:done:-,new_offer:done:condition,pay_your_fee:done:-');
   expect(
