@@ -193,7 +193,8 @@ CREATE FUNCTION pg_temp.report(p_user text, p integer, p_reason text DEFAULT 'po
 -- The latest report by a user on a request.
 CREATE FUNCTION pg_temp.rep(p integer, p_user text) RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT id FROM public.problem_reports WHERE request_id = pg_temp.r(p) AND reporter_id = pg_temp.u(p_user)
-   ORDER BY created_at DESC, id DESC LIMIT 1 $$;
+   -- Two reports of one transaction share now(): the open one first, so a handle always finds it.
+   ORDER BY (status = 'open') DESC, created_at DESC, id DESC LIMIT 1 $$;
 -- handle_report as a user: the outcome, or the refusal.
 CREATE FUNCTION pg_temp.handle(p_user text, x uuid, p_outcome text, p_note text DEFAULT 'Checked both sides of it.',
                                p_refund uuid DEFAULT NULL, p_warn text DEFAULT NULL) RETURNS text LANGUAGE sql AS $$
@@ -534,8 +535,9 @@ SELECT is(pg_temp.call_as('c1', 'SELECT public.admin_reports(''open'', 1)::text'
 SELECT is(pg_temp.call_as('ad', format($q$SELECT string_agg((p ->> 'role') || ':' || (p ->> 'filed') || '/' || (p ->> 'against') || '/' || (p ->> 'warnings'), ' ')
                                          FROM jsonb_array_elements(public.admin_report_detail(%L) -> 'parties') p$q$, pg_temp.rep(1, 'a1'))),
   'provider:0/7/1 customer:9/0/0', 'AC-4: both parties with their counts, this report left out');
-SELECT is(pg_temp.call_as('ad', format('SELECT jsonb_array_length(public.admin_report_detail(%L) -> ''photos'')::text', pg_temp.rep(1, 'c1'))), '0',
-  'AC-4: the latest report of c1 on r1 has no photos');
+SELECT is(pg_temp.call_as('ad', format('SELECT jsonb_array_length(public.admin_report_detail(%L) -> ''photos'')::text',
+                                       (SELECT report_id FROM public.report_photos LIMIT 1))),
+  '3', 'AC-4: the report with photos lists its three');
 SELECT is(pg_temp.call_as('c1', format('SELECT public.admin_report_detail(%L)::text', pg_temp.rep(1, 'c1'))), 'forbidden', 'AC-4: admin only');
 
 -- ══ Grants (R-15) ═══════════════════════════════════════════════════════════
