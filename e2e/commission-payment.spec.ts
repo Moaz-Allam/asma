@@ -314,6 +314,11 @@ test('a customer pays the commission, gets a receipt, and the request moves on',
       throw error;
     });
   });
+  // Analytics (AC-14): posthog-js queues the event in the browser, and toCardPage may reload a stalled pay page,
+  // which drops a queue not yet sent. So the start is counted here, before anything can reload.
+  await expect
+    .poll(() => telemetry.posthog.filter((e) => e.event === 'payment_started').length, { timeout: 20_000 })
+    .toBe(1);
   await toCardPage(page, request, locale);
   await chooseAndReturn(page, locale, 'success', attempt);
   await untilTitle(page, request, m(locale, 'Payment.successTitle'));
@@ -346,9 +351,7 @@ test('a customer pays the commission, gets a receipt, and the request moves on',
   await expect
     .poll(() => telemetry.posthog.filter((e) => e.event === 'payment_succeeded').length, { timeout: 20_000 })
     .toBe(1);
-  await expect
-    .poll(() => telemetry.posthog.filter((e) => e.event === 'payment_started').length, { timeout: 20_000 })
-    .toBe(1);
+  expect(telemetry.posthog.filter((e) => e.event === 'payment_started').length).toBe(1);
   for (const event of telemetry.posthog.filter((e) => e.event.startsWith('payment_'))) {
     expect(event.properties.fee).toBe('commission');
     expect(JSON.stringify(event.properties)).not.toContain(attempt);

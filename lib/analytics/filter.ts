@@ -16,6 +16,9 @@ type Captured = { event: string; properties: Record<string, unknown> };
 
 const SDK_FIELDS: ReadonlySet<string> = new Set(['token', 'distinct_id']);
 const PERSON_PROPERTIES: ReadonlySet<string> = new Set(['$set', '$set_once', '$unset']);
+// The SDK's own per page ids: random uuids we never use (no replay, cookieless), dropped so no event carries an
+// id-shaped value (found when queued events began to arrive, 2026-11-19).
+const SDK_IDS: ReadonlySet<string> = new Set(['$pageview_id', '$prev_pageview_id']);
 
 function isUrlProperty(key: string): boolean {
   return /url|referrer|pathname/i.test(key);
@@ -40,7 +43,7 @@ export function filterAnalyticsEvent<T extends Captured>(event: T | null, appEnv
     const typed = new Set(EVENT_PROPERTIES[event.event as AnalyticsEvent]);
     const properties: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(event.properties)) {
-      if (PERSON_PROPERTIES.has(key)) continue;
+      if (PERSON_PROPERTIES.has(key) || SDK_IDS.has(key)) continue;
       if (!key.startsWith('$') && !SDK_FIELDS.has(key) && !typed.has(key)) continue;
       properties[key] = typeof value === 'string' && isUrlProperty(key) ? withoutIds(scrubUrl(value)) : value;
     }
