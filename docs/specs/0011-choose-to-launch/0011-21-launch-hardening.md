@@ -41,7 +41,7 @@ Vercel Pro (D25), S23 firewall, S2 and iyzico live keys, S10 uptime, S16 periods
 - **AC-6**: Retention jobs, daily, as the relay's `retention` task (08 AC-5; `pg_cron` calls the route, because Storage
   objects and Auth users can only be deleted through their APIs): abandoned sign ups after 30 days (D101); rejected or abandoned provider
   files after `provider_file_retention_days`, doing nothing while it is unset (D114); report photos
-  `report_photo_retention_days` after the report is handled (the object and its row; the report text stays). Each job
+  `report_photo_retention_days` after the report is handled (the object and its row; the report text stays), and `report-photos` objects never registered after 24 hours (0011-14 X-6). Each job
   logs counts only.
 - **AC-7**: Security review: STRIDE (a checklist of spoofing, tampering, repudiation, information disclosure, denial of
   service, elevation of privilege) on sign in, the reveal, both fees, the relay and callbacks, storage; `security-reviewer`
