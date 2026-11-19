@@ -93,6 +93,13 @@ leaves a slot for them (the reviews slot on the applicant card), the slot render
 > their own columns. A payer reads attempts and receipts only through `my_checkout` and `my_receipt`, never a PSP payment
 > id. A commission of 0 (D171) moves the request with no fee row.
 
+> **Email (D191, 2026-11-19).** 0011-13 is amended to what 06 to 12 built. Mail hangs on the `audit_log` row each move
+> already writes (read `email:<event_id>:…` as `email:<audit_id>:…`), through a small trigger that only names the
+> recipients, plus one on `applications` insert for a new offer; no `request_events` table. Whether to send is decided
+> by the relay at send time, in a lane of its own: `claim_outbox` leaves `email.send` rows to `claim_email_outbox`.
+> `emails_enabled` and `apply_needs_email` (both off until S5, owner step S43) and `confirm_reminder_hours` join the
+> settings; `EMAIL_DRIVER` defaults to `off`.
+
 Every child builds to this section. A child may add to it, never contradict it.
 
 ### Request states
@@ -173,6 +180,9 @@ Read by the database functions; a missing or malformed key refuses with `<area>_
 | `contact_visible_days` | 14 | days | 10 | New. Contacts hidden this long after the job closes |
 | `pay_reminder_hours` | 4 | hours | 13 | New. Skipped when the window is shorter |
 | `email_link_hours` | 24 | hours | 13 | New |
+| `confirm_reminder_hours` | 24 | hours | 13 | New ☐ (D191). "Closes by itself soon", only where `auto_close_enabled` is on |
+| `emails_enabled` | `false` | boolean | 13 | New (D191). No email row is written while off; on after S5 (S43) |
+| `apply_needs_email` | `false` | boolean | 13 | New (D191). A provider needs a confirmed email to apply; on with `emails_enabled` |
 | `report_window_days` | 14 | days | 14 | New. After `COMPLETED` or `CANCELLED` |
 | `report_photo_retention_days` | 180 | days | 21 | New ☐ (S16) |
 | `provider_file_retention_days` | none | days | 21 | New, no seed: the job does nothing until S16 gives the period (D114) |
@@ -233,7 +243,7 @@ Read by the database functions; a missing or malformed key refuses with `<area>_
 | `checkout.initialize` | 09, 10 pay action | `initializeCheckout`, stores URL and token on the attempt |
 | `payment.verify` | 08 callback, webhook, reconcile | `retrieveCheckout`, checks amount, currency, status, then applies |
 | `refund.request` | 12 functions, admin refund | `refundPayment`, retries, then marks failed and alerts |
-| `email.send` | 13 trigger on `request_events` and confirmation | Resend call with the key as `Idempotency-Key` |
+| `email.send` | 13 triggers on `audit_log` and `applications`, reminders, confirmation (D191) | Resend call with the key as `Idempotency-Key` |
 
 A row is claimed with `for update skip locked` and a 2 minute lease; a crashed claim is reclaimed after the lease.
 

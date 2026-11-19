@@ -74,7 +74,10 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   migration pushed through the Supabase connector (S40, D184). **AC-17 (the S37 window) owed.**
 - 2026-11-19 · **11 merged** (spec 0011-11, PR #43, `eaed326`, D180, D182, D185): work and close. The full local e2e found a
   My jobs crash, fixed before the merge. Migration pushed through the connector (S41, D184). Merges run on the local gate
-  (D183). Next: 12 (built, reviews fixed, D186), then 13.
+  (D183).
+- 2026-11-19 · **12 merged** (spec 0011-12, PR #44, `29c4fec`, D181, D186 to D190): expiry, cancellation, fee refunds,
+  the admin request page. First merge on GitHub's checks only (D187); its migration pushed with the CLI (S42).
+  Carry overs R17. Next: 13, spec 0011-13 amended and accepted (D191), built in a fresh session.
 
 ## Stack (pinned exactly)
 
