@@ -159,6 +159,8 @@ describe('the links and lines of AC-5', () => {
     expect(lines('please_confirm', { deadline: null })).not.toContain('closes by itself');
     expect(lines('request_cancelled', { amount: null })).not.toContain('refunding');
     expect(lines('request_cancelled', { amount: 10000 })).toContain('refunding');
+    expect(lines('commission_received', { amount: 0, fee_id: null })).toContain('No commission is due');
+    expect(lines('commission_received', { amount: 10000 })).not.toContain('No commission is due');
   });
 
   it('refuses a mail whose link has no id, rather than sending a broken link', () => {

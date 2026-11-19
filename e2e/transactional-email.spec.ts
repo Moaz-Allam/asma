@@ -215,7 +215,9 @@ test('an address is confirmed once through its link, and a choose and a paid com
   // A second use is refused.
   await page.goto(link?.[0] ?? '');
   await page.getByRole('button', { name: m(locale, 'Account.confirm.button') }).click();
-  await expect(page.getByRole('alert')).toContainText(m(locale, 'Account.confirm.errors.link_used'));
+  await expect(page.locator('main [role="alert"]')).toContainText(
+    m(locale, 'Account.confirm.errors.link_used'),
+  );
   await axe(page);
 
   await page.goto(`/${locale}/account`);
@@ -301,11 +303,14 @@ test('an address is confirmed once through its link, and a choose and a paid com
   }
   await expect
     .poll(
-      () =>
-        sql(
+      async () => {
+        // Kick again, so a row still claimed or pending when the loop above ended gets finished.
+        await drainMail(request);
+        return sql(
           `select string_agg(o.payload ->> 'template' || ':' || o.status || ':' || coalesce(o.last_error, '-'), ',' order by o.payload ->> 'template')` +
             ` as states from public.outbox_events o where o.kind = 'email.send' and o.payload ->> 'request_id' = '${f.request}';`,
-        )[0]?.states,
+        )[0]?.states;
+      },
       { timeout: 60_000 },
     )
     .toBe('chosen:done:condition,commission_received:done:-,new_offer:done:condition,pay_your_fee:done:-');

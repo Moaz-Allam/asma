@@ -186,13 +186,13 @@ CREATE FUNCTION pg_temp.offer(p integer, w text) RETURNS text LANGUAGE sql AS $$
 
 -- ── mail helpers ─────────────────────────────────────────────────────────────
 -- A request's mail rows, sorted: template>recipient.
-CREATE FUNCTION pg_temp.mails(p integer) RETURNS text LANGUAGE sql STABLE AS $$
+CREATE FUNCTION pg_temp.mails(p integer) RETURNS text LANGUAGE sql VOLATILE AS $$
   SELECT coalesce(string_agg(o.payload ->> 'template' || '>' || pg_temp.who((o.payload ->> 'recipient_id')::uuid), ','
                              ORDER BY o.payload ->> 'template' COLLATE "C", pg_temp.who((o.payload ->> 'recipient_id')::uuid) COLLATE "C"), '')
     FROM public.outbox_events o
    WHERE o.kind = 'email.send' AND o.payload ->> 'request_id' = pg_temp.r(p)::text $$;
 -- The mail rows one audit row wrote, sorted: template>recipient.
-CREATE FUNCTION pg_temp.queued(p_audit bigint) RETURNS text LANGUAGE sql STABLE AS $$
+CREATE FUNCTION pg_temp.queued(p_audit bigint) RETURNS text LANGUAGE sql VOLATILE AS $$
   SELECT coalesce(string_agg(o.payload ->> 'template' || '>' || pg_temp.who((o.payload ->> 'recipient_id')::uuid), ','
                              ORDER BY o.payload ->> 'template' COLLATE "C", pg_temp.who((o.payload ->> 'recipient_id')::uuid) COLLATE "C"), '')
     FROM public.outbox_events o
@@ -202,7 +202,7 @@ CREATE FUNCTION pg_temp.audit(p_action text, p_type text, p_entity uuid, p_new j
   INSERT INTO public.audit_log (actor_id, action, entity_type, entity_id, region, old_value, new_value)
   VALUES (NULL, p_action, p_type, p_entity::text, 'TR', NULL, p_new) RETURNING id $$;
 -- The key AC-3 gives the latest audit row of an action on an entity, for one recipient and template.
-CREATE FUNCTION pg_temp.k(p_action text, p_entity uuid, p_who text, p_template text) RETURNS text LANGUAGE sql STABLE AS $$
+CREATE FUNCTION pg_temp.k(p_action text, p_entity uuid, p_who text, p_template text) RETURNS text LANGUAGE sql VOLATILE AS $$
   SELECT 'email:' || (SELECT max(a.id) FROM public.audit_log a WHERE a.action = p_action AND a.entity_id = p_entity::text)
          || ':' || pg_temp.u(p_who) || ':' || p_template $$;
 CREATE FUNCTION pg_temp.ctx(p_key text) RETURNS jsonb LANGUAGE sql AS $$
@@ -218,15 +218,15 @@ BEGIN
   v := pg_temp.ctx(p_key);
   RETURN CASE WHEN v ->> 'status' = 'send' THEN 'send' ELSE v ->> 'reason' END;
 END $$;
-CREATE FUNCTION pg_temp.live(p_who text) RETURNS uuid LANGUAGE sql STABLE AS $$
+CREATE FUNCTION pg_temp.live(p_who text) RETURNS uuid LANGUAGE sql VOLATILE AS $$
   SELECT id FROM public.email_confirmations WHERE profile_id = pg_temp.u(p_who) AND used_at IS NULL AND revoked_at IS NULL $$;
-CREATE FUNCTION pg_temp.tok(p_conf uuid) RETURNS text LANGUAGE sql STABLE AS $$
+CREATE FUNCTION pg_temp.tok(p_conf uuid) RETURNS text LANGUAGE sql VOLATILE AS $$
   SELECT payload ->> 'token' FROM public.outbox_events WHERE idempotency_key = 'email:confirm:' || p_conf $$;
 CREATE FUNCTION pg_temp.confirm(p_who text, p_token text) RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.call_as(p_who, format('SELECT public.confirm_email(%L)::text', p_token)) $$;
 CREATE FUNCTION pg_temp.resend(p_who text) RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.call_as(p_who, 'SELECT public.request_email_confirmation()::text') $$;
-CREATE FUNCTION pg_temp.ctoken(p_id uuid) RETURNS timestamptz LANGUAGE sql STABLE AS $$
+CREATE FUNCTION pg_temp.ctoken(p_id uuid) RETURNS timestamptz LANGUAGE sql VOLATILE AS $$
   SELECT claimed_at FROM public.outbox_events WHERE id = p_id $$;
 CREATE FUNCTION pg_temp.mail_row(p_key text, p_payload jsonb, p_status text DEFAULT 'pending', p_attempts integer DEFAULT 0,
                                  p_claimed timestamptz DEFAULT NULL) RETURNS uuid LANGUAGE sql AS $$
@@ -772,7 +772,7 @@ SELECT results_eq(
                           'claim_outbox', 'confirm_email', 'email_context', 'email_settings', 'emails_enabled', 'emails_housekeeping',
                           'finish_email', 'outbox_strip_token', 'queue_audit_email', 'queue_audit_mail', 'queue_email', 'queue_offer_email',
                           'queue_reminders', 'relay_kick', 'request_email_confirmation', 'start_email_confirmation')
-      ORDER BY 1 COLLATE "C" $$,
+      ORDER BY p.proname COLLATE "C" $$,
   $$ VALUES ('applications_need_email'::text, false, false, false), ('applications_offer_email', false, false, false),
             ('apply_needs_email', false, false, false), ('audit_log_email', false, false, false),
             ('claim_email_outbox', false, false, true), ('claim_outbox', false, false, true), ('confirm_email', false, true, false),
@@ -800,7 +800,7 @@ SELECT is(
   'AC-3: the trigger fires on exactly the map''s actions');
 SELECT results_eq(
   $$ SELECT tgname::text COLLATE "default" FROM pg_trigger WHERE tgrelid IN ('public.applications'::regclass, 'public.outbox_events'::regclass)
-       AND tgname IN ('applications_offer_email', 'applications_need_email', 'outbox_strip_token') ORDER BY 1 COLLATE "C" $$,
+       AND tgname IN ('applications_offer_email', 'applications_need_email', 'outbox_strip_token') ORDER BY tgname COLLATE "C" $$,
   $$ VALUES ('applications_need_email'::text), ('applications_offer_email'), ('outbox_strip_token') $$,
   'R-1, R-9, R-10: the other three triggers');
 SELECT ok('outbox_events_guard' < 'outbox_strip_token'::text COLLATE "C", 'D192: the guard fires before the strip (name order)');

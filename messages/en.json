@@ -1572,7 +1572,8 @@
     },
     "commission_received": {
       "subject": "[draft] Your commission for {service} is paid",
-      "lead": "[draft] We received your commission of {amount}. The provider now pays their fee; then you both see each other’s contact details."
+      "lead": "[draft] We received your commission of {amount}. The provider now pays their fee; then you both see each other’s contact details.",
+      "leadFree": "[draft] No commission is due for {service}. The provider now pays their fee; then you both see each other’s contact details."
     },
     "contacts_ready": {
       "subject": "[draft] Contact details are open for {service}",
@@ -1600,7 +1601,7 @@
     },
     "pick_again": {
       "subject": "[draft] Choose another provider for {service}",
-      "lead": "[draft] The provider you chose for {service} cannot go ahead. Choose another one from your offers.",
+      "lead": "[draft] Your pick for {service} ended. Choose a provider from your offers.",
       "carried": "[draft] Your commission stays paid, so you do not pay it again."
     },
     "pick_ended": {

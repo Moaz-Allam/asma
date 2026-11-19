@@ -37,6 +37,7 @@ type Parts = {
   carried: boolean;
   hasRefund: boolean;
   hasDeadline: boolean;
+  isFree: boolean;
   link: {
     request: () => { label: string; href: string };
     receiptOrRequest: () => { label: string; href: string };
@@ -71,7 +72,8 @@ const TEMPLATES: Readonly<Record<EmailTemplate, (p: Parts) => Draft>> = {
   }),
   commission_received: (p) => ({
     subject: p.t('commission_received.subject', p.vals),
-    lines: [p.t('commission_received.lead', p.vals)],
+    // A commission of 0 (D171) is no amount to announce.
+    lines: [p.t(p.isFree ? 'commission_received.leadFree' : 'commission_received.lead', p.vals)],
     action: p.link.receiptOrRequest(),
   }),
   contacts_ready: (p) => ({
@@ -216,6 +218,7 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
     carried: values.carried === true,
     hasRefund: values.amount !== null && values.amount > 0,
     hasDeadline: values.deadline !== null,
+    isFree: values.amount === 0,
     link: {
       request: () => ({
         label: t('shell.openRequest'),
