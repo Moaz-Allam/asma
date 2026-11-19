@@ -91,8 +91,15 @@ describe('the customer close (AC-4, AC-5, R-5)', () => {
   });
 
   it('reads the close info, null for anyone else', async () => {
-    m.rpc.mockResolvedValue({ data: { auto_close_enabled: false, can_mark_done: true }, error: null });
-    expect(await loadCloseInfo(REQUEST)).toEqual({ auto_close_enabled: false, can_mark_done: true });
+    m.rpc.mockResolvedValue({
+      data: { auto_close_enabled: false, can_mark_done: true, my_report_open: false },
+      error: null,
+    });
+    expect(await loadCloseInfo(REQUEST)).toEqual({
+      auto_close_enabled: false,
+      can_mark_done: true,
+      my_report_open: false,
+    });
     m.rpc.mockResolvedValue(refuse('not_found'));
     expect(await loadCloseInfo(REQUEST)).toBeNull();
   });

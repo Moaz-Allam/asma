@@ -23,6 +23,12 @@ import { cleanValue, escapeHtml, VALUE_LIMIT } from '@/lib/email/values';
 const ORIGIN = 'http://localhost:3100';
 const REQUEST = '11111111-1111-4111-8111-111111111111';
 const FEE = '22222222-2222-4222-8222-222222222222';
+const REPORT = '33333333-3333-4333-8333-333333333333';
+const REPORT_TEMPLATES: ReadonlySet<EmailTemplate> = new Set([
+  'report_received',
+  'report_handled',
+  'report_new_admin',
+]);
 const TOKEN = 'AbC_-'.repeat(8) + 'xyz';
 const ADDRESS = 'person-13@example.com';
 const HOSTILE = `<script>alert("x")</script> 'quoted' & \u202Eevil\u2066\u200F\nSubject: injected\r\n${'Ç'.repeat(300)}`;
@@ -61,29 +67,35 @@ function context(
       fee_id: FEE,
       carried: true,
       token: template === 'confirm_email' ? TOKEN : null,
+      ...(REPORT_TEMPLATES.has(template) ? { report_id: REPORT, reason: 'poor_work' as const } : {}),
     },
   };
 }
 
 const CASES = EMAIL_TEMPLATES.flatMap((template) =>
   EMAIL_LOCALES.flatMap((locale) => {
-    const sides: Array<'customer' | 'provider'> = PROVIDER_TEMPLATES.has(template)
-      ? ['provider']
-      : [
-            'contacts_ready',
-            'request_cancelled',
-            'payment_too_late',
-            'fee_refunded',
-            'pay_window_closing',
-          ].includes(template)
-        ? ['customer', 'provider']
-        : ['customer'];
+    const sides: Array<'customer' | 'provider' | null> =
+      template === 'report_new_admin'
+        ? [null]
+        : PROVIDER_TEMPLATES.has(template)
+          ? ['provider']
+          : [
+                'contacts_ready',
+                'request_cancelled',
+                'payment_too_late',
+                'fee_refunded',
+                'pay_window_closing',
+                'report_received',
+                'report_handled',
+              ].includes(template)
+            ? ['customer', 'provider']
+            : ['customer'];
     return sides.map((side) => ({ template, locale, side }));
   }),
 );
 
 const HREF = new RegExp(
-  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|account|account/email/confirm\\?t=${TOKEN})$`,
+  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|account|admin/reports/${REPORT}|account/email/confirm\\?t=${TOKEN})$`,
 );
 
 describe('every template renders in every locale (AC-2)', () => {
@@ -141,6 +153,12 @@ describe('the links and lines of AC-5', () => {
     );
     expect(href('fee_refunded', 'customer')).toBe(`${ORIGIN}/en/receipts/${FEE}`);
     expect(href('fee_refunded', 'customer', { fee_id: null })).toBe(`${ORIGIN}/en/requests/${REQUEST}`);
+  });
+
+  it('a new report links admin to the report; the reporter to their own page (spec 0011-14 X-10)', () => {
+    expect(href('report_new_admin', null)).toBe(`${ORIGIN}/en/admin/reports/${REPORT}`);
+    expect(href('report_received', 'customer')).toBe(`${ORIGIN}/en/requests/${REQUEST}`);
+    expect(href('report_handled', 'provider')).toBe(`${ORIGIN}/en/provider/applications`);
   });
 
   it('the confirmation links the confirm page with the token', () => {

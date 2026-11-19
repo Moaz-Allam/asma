@@ -16,7 +16,8 @@ export type MenuItem = {
     | 'pricing'
     | 'feed'
     | 'applications'
-    | 'setup';
+    | 'setup'
+    | 'reports';
   href: string;
 };
 
@@ -88,6 +89,8 @@ export const ADMIN_RAIL: readonly MenuItem[] = [
   { key: 'providers', href: '/admin/providers' },
   { key: 'catalog', href: '/admin/catalog' },
   { key: 'pricing', href: '/admin/pricing' },
+  // Spec 0011-14 AC-4: the report queue, with its open count.
+  { key: 'reports', href: '/admin/reports' },
   { key: 'account', href: '/account' },
 ];
 

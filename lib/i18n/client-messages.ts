@@ -32,6 +32,9 @@ export const CLIENT_NAMESPACES = [
   // Spec 0011-12 AC-14, AC-12: Withdraw, the provider's cancel, and admin's refund dialogs.
   'Cancel',
   'AdminRequests',
+  // Spec 0011-14 AC-4 to AC-7: the report form, the warning banner, admin's handle form and photo button.
+  'Reports',
+  'AdminReports',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */

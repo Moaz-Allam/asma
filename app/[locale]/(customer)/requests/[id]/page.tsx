@@ -9,6 +9,7 @@ import { OfferList } from '@/components/features/requests/OfferList';
 import { RequestActions } from '@/components/features/requests/RequestActions';
 import { rowStatus, toneOf } from '@/components/features/requests/RequestRow';
 import { RequestTimeline } from '@/components/features/requests/RequestTimeline';
+import { ReportStatus } from '@/components/features/reports/ReportStatus';
 import { ContactCard } from '@/components/shared/ContactCard';
 import { AgreementLine } from '@/components/shared/AgreementLine';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -29,6 +30,8 @@ import {
   loadContacts,
   loadOffers,
 } from '@/lib/requests';
+import { reportServerError } from '@/lib/observability/server';
+import { myReport } from '@/lib/reports';
 import { instantLabel, NUMBER_LOCALE, quoteLines, regionDefaultLocale } from '@/lib/requests/view';
 
 /** Spec 0011-10 AC-12, security review S10-12: contacts render here, so the route is never cached. */
@@ -124,6 +127,17 @@ export default async function Page({ params, searchParams }: Props) {
   const working = ['UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION'].includes(current);
   const closeInfo = working ? await loadCloseInfo(request.id) : null;
   const tj = await getTranslations('Jobs');
+  // Spec 0011-14 AC-3, AC-7: the customer's own report after the reveal (Postgres says whether one can be filed).
+  const report =
+    user.role === 'customer' && (revealed || current === 'CANCELLED')
+      ? await myReport(request.id).catch((error: unknown) => {
+          // Security review F-1: never break the request page over this read; the report entry simply hides.
+          reportServerError('requestReport', error);
+          return null;
+        })
+      : null;
+  const tr = await getTranslations('Reports');
+  const reportHref = `/requests/${request.id}/report`;
   const payOpen =
     current === 'SELECTED' &&
     offers.payment_deadline !== null &&
@@ -386,17 +400,26 @@ export default async function Page({ params, searchParams }: Props) {
                 {tj('confirmTitle')}
               </h2>
               <p className="text-body text-text-primary">
-                {closeInfo?.auto_close_enabled
-                  ? tj('closesOn', { date: instantLabel(request.confirm_deadline, timezone, locale) })
-                  : tj('confirmBy', { date: instantLabel(request.confirm_deadline, timezone, locale) })}
+                {closeInfo?.my_report_open
+                  ? tr('closeWaits')
+                  : closeInfo?.auto_close_enabled
+                    ? tj('closesOn', { date: instantLabel(request.confirm_deadline, timezone, locale) })
+                    : tj('confirmBy', { date: instantLabel(request.confirm_deadline, timezone, locale) })}
               </p>
-              <JobActionButton
-                move="confirm"
-                requestId={request.id}
-                label={tj('confirm')}
-                title={tj('confirmDialogTitle')}
-                body={tj('confirmDialogBody')}
-              />
+              <div className="flex flex-wrap items-start gap-3">
+                <JobActionButton
+                  move="confirm"
+                  requestId={request.id}
+                  label={tj('confirm')}
+                  title={tj('confirmDialogTitle')}
+                  body={tj('confirmDialogBody')}
+                />
+                {report?.can_report ? (
+                  <Button asChild variant="outline">
+                    <Link href={`${reportHref}?reason=poor_work`}>{tr('notDone')}</Link>
+                  </Button>
+                ) : null}
+              </div>
             </section>
           ) : null}
           {(current === 'UNLOCKED' || current === 'IN_PROGRESS') && closeInfo?.can_mark_done ? (
@@ -417,6 +440,13 @@ export default async function Page({ params, searchParams }: Props) {
               fallbackLocale={fallback}
             />
           ) : null}
+          <ReportStatus
+            report={report}
+            href={reportHref}
+            timezone={timezone}
+            locale={locale}
+            showLink={current !== 'AWAITING_CONFIRMATION'}
+          />
           <RequestTimeline title={t('timeline.title')} steps={timeline} />
           <RequestActions
             requestId={request.id}

@@ -3,6 +3,7 @@
 import {
   Calculator,
   CirclePlus,
+  Flag,
   LayoutDashboard,
   LayoutList,
   List,
@@ -31,6 +32,7 @@ const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
   feed: Search,
   applications: Send,
   setup: SlidersHorizontal,
+  reports: Flag,
 };
 
 /**

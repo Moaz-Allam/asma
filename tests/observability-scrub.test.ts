@@ -125,6 +125,11 @@ describe('isPersonalKey: the keys whose values never leave', () => {
     'applicationMessage',
     'application_message',
     'p_message',
+    // Spec 0011-14 X-23: a report's text and admin's note on it, as keys and as RPC arguments.
+    'text',
+    'admin_note',
+    'p_text',
+    'p_note',
   ])('%s is personal', (key) => {
     expect(isPersonalKey(key)).toBe(true);
   });

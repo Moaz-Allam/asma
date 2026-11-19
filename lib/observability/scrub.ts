@@ -61,6 +61,9 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'authorization',
   'cookie',
   'note',
+  // Spec 0011-14 AC-9, X-23: a report's text and admin's note on it.
+  'text',
+  'admin_note',
   // Spec 0008 AC-18: a request's street line, its notes and the answers a customer typed.
   'line',
   'address_line',
@@ -105,6 +108,9 @@ const PERSONAL_SUFFIXES = [
   // Spec 0008 (review A5): the request RPC arguments p_address_line, p_notes, p_answers.
   '_line',
   '_notes',
+  // Spec 0011-14 X-23: p_text, p_note and any other `_text` or `_note` argument.
+  '_text',
+  '_note',
   '_answers',
   '_email',
   '_phone',

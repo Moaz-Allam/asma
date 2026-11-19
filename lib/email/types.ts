@@ -26,6 +26,10 @@ export const EMAIL_TEMPLATES = [
   'account_suspended',
   'pay_window_closing',
   'closes_soon',
+  // Spec 0011-14 R-8 (rows 15 and 16).
+  'report_received',
+  'report_new_admin',
+  'report_handled',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -58,6 +62,19 @@ export const EmailValuesSchema = z
       .string()
       .regex(/^[A-Za-z0-9_-]{43}$/)
       .nullable(),
+    // Spec 0011-14 X-10: the report mails only.
+    report_id: id.nullable().optional(),
+    reason: z
+      .enum([
+        'no_show',
+        'did_not_pay_cash',
+        'poor_work',
+        'safety_or_behaviour',
+        'asked_money_off_platform',
+        'other',
+      ])
+      .nullable()
+      .optional(),
   })
   .strict();
 export type EmailValues = z.infer<typeof EmailValuesSchema>;

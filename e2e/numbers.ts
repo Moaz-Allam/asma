@@ -62,6 +62,10 @@ export const NUMBER = {
   // Position 13 (spec 0011-13 AC-12): the customer who confirms an address, and the provider of the mail journey.
   emailCustomer: 37,
   emailProvider: 38,
+  // Position 14 (spec 0011-14 AC-10): the customer who reports, the provider who is warned, and each project's admin.
+  reportCustomer: 39,
+  reportProvider: 40,
+  reportAdmin: 41,
 } as const;
 
 /**

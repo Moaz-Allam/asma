@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
+import { isReportReason } from '@/lib/reports/constants';
+
 import { Button } from '@/components/ui/button';
 import { Link } from '@/lib/i18n/navigation';
 import type { Standing } from '@/lib/provider/options';
@@ -21,6 +23,11 @@ export async function AccountStateBanner({
   const t = await getTranslations('Provider.home');
   const tReason = await getTranslations('Rejection');
   const tType = await getTranslations('ProviderDocs.missing');
+  const tReport = await getTranslations('Reports.warning');
+  // Spec 0011-14 X-2: a suspension from a report stores `report:<reason>`, shown as its translated sentence.
+  const reportCode = file.suspensionReason?.startsWith('report:') ? file.suspensionReason.slice(7) : null;
+  const suspensionText =
+    reportCode !== null && isReportReason(reportCode) ? tReport(reportCode) : file.suspensionReason;
 
   const docs = Object.values(file.documents);
   const rejected = docs.filter((d) => d.status === 'rejected');
@@ -62,7 +69,7 @@ export async function AccountStateBanner({
           <section className="flex flex-col gap-2 rounded-block border-2 border-border p-5.5">
             <h3 className="text-meta font-bold text-text-secondary">{t('suspended.reasonLabel')}</h3>
             <p className="text-body font-bold break-words whitespace-pre-line text-text-primary">
-              {file.suspensionReason}
+              {suspensionText}
             </p>
           </section>
         ) : null}

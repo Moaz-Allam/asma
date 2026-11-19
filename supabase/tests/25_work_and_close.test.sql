@@ -255,7 +255,7 @@ SELECT is(pg_temp.call_as('c1', format($q$UPDATE public.requests SET actual_star
   'R-12: the customer cannot update the request');
 
 -- ══ R-5: the reads ═══════════════════════════════════════════════════════════
-SELECT is(pg_temp.job('request_close_info', 1, 'c1'), '{"can_mark_done": false, "auto_close_enabled": false}', 'R-5: R1 cannot be closed yet');
+SELECT is(pg_temp.job('request_close_info', 1, 'c1'), '{"can_mark_done": false, "my_report_open": false, "auto_close_enabled": false}', 'R-5: R1 cannot be closed yet (14 adds my_report_open)');
 SELECT is((pg_temp.job('request_close_info', 7, 'c1'))::jsonb ->> 'can_mark_done', 'true', 'R-5: R7 can be closed on its day');
 SELECT is(pg_temp.job('request_close_info', 7, 'a1'), 'not_found', 'R-5: the provider cannot read it');
 SELECT ok((SELECT bool_or((x ->> 'application_id')::uuid = pg_temp.app(5) AND (x ->> 'request_status') = 'AWAITING_CONFIRMATION')

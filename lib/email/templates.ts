@@ -44,6 +44,7 @@ type Parts = {
     applications: () => { label: string; href: string };
     account: () => { label: string; href: string };
     confirm: () => { label: string; href: string };
+    adminReport: () => { label: string; href: string };
   };
 };
 
@@ -176,6 +177,22 @@ const TEMPLATES: Readonly<Record<EmailTemplate, (p: Parts) => Draft>> = {
     lines: [p.t('closes_soon.lead', p.vals)],
     action: p.link.request(),
   }),
+  // Spec 0011-14 R-8, X-11: what happened, never the outcome or the other party; the reporter's own page.
+  report_received: (p) => ({
+    subject: p.t('report_received.subject', p.vals),
+    lines: [p.t('report_received.lead', p.vals)],
+    action: bySide(p),
+  }),
+  report_handled: (p) => ({
+    subject: p.t('report_handled.subject', p.vals),
+    lines: [p.t('report_handled.lead', p.vals)],
+    action: bySide(p),
+  }),
+  report_new_admin: (p) => ({
+    subject: p.t('report_new_admin.subject', p.vals),
+    lines: [p.t('report_new_admin.lead', p.vals)],
+    action: p.link.adminReport(),
+  }),
 };
 
 function translator(locale: EmailLocale): Translate {
@@ -236,6 +253,10 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
       confirm: () => ({
         label: t('confirm_email.action'),
         href: `${base}/account/email/confirm?t=${encodeURIComponent(needs(values.token, 'token_missing'))}`,
+      }),
+      adminReport: () => ({
+        label: t('report_new_admin.action'),
+        href: `${base}/admin/reports/${needs(values.report_id ?? null, 'report_id_missing')}`,
       }),
     },
   };

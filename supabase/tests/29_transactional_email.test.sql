@@ -742,11 +742,11 @@ SELECT is((SELECT pg_temp.who((payload ->> 'recipient_id')::uuid) FROM public.ou
   'AC-6: the chosen provider''s reminder');
 SELECT is(pg_temp.ctx('email:' || pg_temp.app(14, 'a2') || ':provider_fee:pay_window_closing') -> 'values' ->> 'side', 'provider',
   'D192: the provider''s side of pay_window_closing');
-SELECT is(pg_temp.verdict('email:' || pg_temp.r(1) || ':closes_soon'), 'missing', 'AC-6: no closes_soon while auto close is off');
+SELECT is(pg_temp.verdict('email:' || pg_temp.r(1) || ':closes_soon:' || (SELECT floor(extract(epoch from confirm_deadline))::bigint FROM public.requests WHERE id = pg_temp.r(1))), 'missing', 'AC-6: no closes_soon while auto close is off');
 SELECT is(public.queue_reminders(), 0, 'AC-6: a second run writes nothing');
 UPDATE public.platform_settings SET value = 'true' WHERE region = 'TR' AND key = 'auto_close_enabled';
 SELECT is(public.queue_reminders(), 1, 'AC-6: with auto close on, the confirm window''s reminder');
-SELECT is(pg_temp.verdict('email:' || pg_temp.r(1) || ':closes_soon'), 'send', 'AC-6: closes_soon sends while AWAITING_CONFIRMATION');
+SELECT is(pg_temp.verdict('email:' || pg_temp.r(1) || ':closes_soon:' || (SELECT floor(extract(epoch from confirm_deadline))::bigint FROM public.requests WHERE id = pg_temp.r(1))), 'send', 'AC-6: closes_soon sends while AWAITING_CONFIRMATION');
 UPDATE public.platform_settings SET value = 'false' WHERE region = 'TR' AND key = 'auto_close_enabled';
 SELECT is(pg_temp.probe(ARRAY[format($q$SELECT pg_temp.age(13, 'pay_soon')$q$)], 'public.queue_reminders()'), '1',
   'AC-6: a window that comes inside the lead is taken on a later run');
@@ -792,9 +792,9 @@ SELECT is(
   (SELECT array_to_string(array_agg(m[1] ORDER BY m[1] COLLATE "C"), ',') COLLATE "default"
      FROM pg_trigger t, regexp_matches(pg_get_triggerdef(t.oid), '''([a-z_]+\.[a-z_]+)''', 'g') AS m
     WHERE t.tgname = 'audit_log_email' AND t.tgrelid = 'public.audit_log'::regclass),
-  array_to_string(ARRAY['fee.late', 'fee.refund_done_by_hand', 'fee.refunded', 'job.auto_closed', 'job.confirmed', 'job.customer_closed', 'job.done',
-        'job.started', 'profile.email_changed', 'provider.approved', 'provider.reinstated', 'provider.rejected', 'provider.suspended',
-        'request.cancelled', 'request.commission_paid', 'request.failed_picks_limit', 'request.fee_expired', 'request.no_paid_pick',
+  array_to_string(ARRAY['fee.late', 'fee.refund_done_by_hand', 'fee.refunded', 'job.auto_closed', 'job.closed_by_admin', 'job.confirmed',
+        'job.customer_closed', 'job.done', 'job.started', 'profile.email_changed', 'provider.approved', 'provider.reinstated', 'provider.rejected',
+        'provider.suspended', 'report.handled', 'report.opened', 'request.cancelled', 'request.commission_paid', 'request.failed_picks_limit', 'request.fee_expired', 'request.no_paid_pick',
         'request.pick_dropped', 'request.pick_expired', 'request.provider_cancelled', 'request.provider_chosen', 'request.provider_withdrew',
         'request.unlocked'], ','),
   'AC-3: the trigger fires on exactly the map''s actions');
