@@ -283,7 +283,8 @@ test('a report with a photo, a warning acknowledged, a paused close and a return
   sql(
     `do $s$ begin` +
       ` alter table public.requests disable trigger requests_guard;` +
-      ` update public.requests set confirm_deadline = now() - interval '1 hour' where id = '${f.request(2)}';` +
+      ` update public.requests set actual_completed_at = now() - interval '4 days', confirm_deadline = now() - interval '1 day'` +
+      ` where id = '${f.request(2)}';` +
       ` alter table public.requests enable trigger requests_guard;` +
       ` update public.platform_settings set value = 'true' where region = 'TR' and key = 'auto_close_enabled';` +
       ` perform public.auto_close_jobs();` +
