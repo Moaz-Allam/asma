@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { listRequests, type ListFilters } from '@/lib/admin-requests';
-import { ADMIN_PAGE_SIZE, LIST_STATUSES, dayFrom, requestIdFrom } from '@/lib/admin-requests/constants';
+import { ADMIN_PAGE_SIZE, LIST_STATUSES, requestIdFrom } from '@/lib/admin-requests/constants';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
+import { dayFrom } from '@/lib/format/day';
 import { Link } from '@/lib/i18n/navigation';
 import { instantLabel, regionDefaultLocale } from '@/lib/requests/view';
 

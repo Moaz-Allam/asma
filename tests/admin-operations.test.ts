@@ -45,7 +45,8 @@ import {
   listRequests,
   showAddress,
 } from '@/lib/admin-requests';
-import { adminMayCancel, dayFrom, extendableDeadline } from '@/lib/admin-requests/constants';
+import { adminMayCancel, extendableDeadline } from '@/lib/admin-requests/constants';
+import { dayFrom } from '@/lib/format/day';
 import { loadRevenue, revenueCsv, revenueFileName } from '@/lib/admin-revenue';
 import { formatMinorFixed } from '@/lib/money/parse';
 
@@ -115,6 +116,8 @@ describe('the pure helpers', () => {
   it('reads only real calendar days', () => {
     expect(dayFrom('2026-11-20')).toBe('2026-11-20');
     expect(dayFrom('2026-02-30')).toBeNull();
+    expect(dayFrom('0000-01-01')).toBeNull();
+    expect(dayFrom('1999-12-31')).toBeNull();
     expect(dayFrom('20261120')).toBeNull();
     expect(dayFrom(undefined)).toBeNull();
   });

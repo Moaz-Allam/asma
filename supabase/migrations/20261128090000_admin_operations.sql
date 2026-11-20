@@ -113,28 +113,30 @@ begin
      is distinct from (old.selected_application_id, old.selected_at, old.payment_deadline)
      and not ((old.status = 'OPEN' and new.status in ('SELECTED', 'COMMISSION_PAID'))
               or (old.status in ('SELECTED', 'COMMISSION_PAID') and new.status = 'OPEN'))
-     -- X-4 of 16: the payment window alone moves later while SELECTED, within the band, the pick's allowance unused.
+     -- X-4 of 16: the payment window alone moves later while SELECTED, within the band, with the pick's allowance spent
+     -- in this same transaction (admin_extend_deadline spends it first), so it moves once per pick.
      and not (old.status = 'SELECTED' and new.status = 'SELECTED'
               and new.selected_application_id is not distinct from old.selected_application_id
               and new.selected_at is not distinct from old.selected_at
               and new.fee_deadline is not distinct from old.fee_deadline
               and public.extension_in_band(old.payment_deadline, new.payment_deadline, new.scheduled_start_at)
               and exists (select 1 from public.applications a
-                           where a.id = new.selected_application_id and a.payment_extended_at is null)) then
+                           where a.id = new.selected_application_id and a.payment_extended_at = now())) then
     raise exception 'request_immutable';
   end if;
   -- fee_deadline: written on SELECTED -> COMMISSION_PAID (09) and on the carried re-pick, cleared on a reopen.
   if new.fee_deadline is distinct from old.fee_deadline
      and not ((old.status in ('SELECTED', 'OPEN') and new.status = 'COMMISSION_PAID')
               or (old.status = 'COMMISSION_PAID' and new.status = 'OPEN'))
-     -- X-4 of 16: the fee window alone moves later while COMMISSION_PAID, within the band, the allowance unused.
+     -- X-4 of 16: the fee window alone moves later while COMMISSION_PAID, within the band, with the allowance spent in
+     -- this same transaction.
      and not (old.status = 'COMMISSION_PAID' and new.status = 'COMMISSION_PAID'
               and new.selected_application_id is not distinct from old.selected_application_id
               and new.selected_at is not distinct from old.selected_at
               and new.payment_deadline is not distinct from old.payment_deadline
               and public.extension_in_band(old.fee_deadline, new.fee_deadline, new.scheduled_start_at)
               and exists (select 1 from public.applications a
-                           where a.id = new.selected_application_id and a.fee_extended_at is null)) then
+                           where a.id = new.selected_application_id and a.fee_extended_at = now())) then
     raise exception 'request_immutable';
   end if;
   if old.status = 'SELECTED' and new.status = 'COMMISSION_PAID' and new.fee_deadline is null then
@@ -177,12 +179,12 @@ begin
               and new.confirm_deadline > old.confirm_deadline and new.confirm_deadline > now()) then
     raise exception 'request_immutable';
   end if;
-  -- R-5, X-6 of 16: the confirm allowance is spent once, with a later confirm deadline, while AWAITING_CONFIRMATION,
-  -- and never reset.
+  -- R-5, X-6 of 16: the confirm allowance is spent once, now, with a confirm deadline later by at most 48 hours past the
+  -- later of the old one and now, while AWAITING_CONFIRMATION, and never reset.
   if new.confirm_extended_at is distinct from old.confirm_extended_at
-     and not (old.confirm_extended_at is null and new.confirm_extended_at is not null
+     and not (old.confirm_extended_at is null and new.confirm_extended_at = now()
               and old.status = 'AWAITING_CONFIRMATION' and new.status = 'AWAITING_CONFIRMATION'
-              and new.confirm_deadline > old.confirm_deadline) then
+              and public.extension_in_band(old.confirm_deadline, new.confirm_deadline, null)) then
     raise exception 'request_immutable';
   end if;
   if new.status = 'UNLOCKED' and old.status is distinct from 'UNLOCKED'
@@ -275,8 +277,8 @@ $$;
 revoke all on function public.applications_guard() from public, anon, authenticated, service_role;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 5. cancel_by_rule (X-1), replaced from 12 with a seventh argument merged into its audit row's new_value. Its three
---    callers keep six arguments.
+-- 5. cancel_by_rule (X-1), replaced from 12 with a seventh argument merged into its audit row's new_value, under the
+--    computed keys, so p_meta can never change the outcome it records. Its three callers keep six arguments.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 drop function public.cancel_by_rule(uuid, text, text, text, text, uuid);
@@ -323,12 +325,12 @@ begin
   insert into public.audit_log (actor_id, action, entity_type, entity_id, region, old_value, new_value)
   values (p_by, p_action, 'requests', v_req.id::text, v_req.region,
           jsonb_build_object('status', v_req.status),
-          jsonb_build_object('status', 'CANCELLED', 'cancelled_by', p_actor, 'rule_state', v_state,
+          coalesce(p_meta, '{}'::jsonb)
+          || jsonb_build_object('status', 'CANCELLED', 'cancelled_by', p_actor, 'rule_state', v_state,
                              'commission_outcome', v_rule.commission_outcome,
                              'provider_fee_outcome', v_rule.provider_fee_outcome,
                              'counts_against', v_rule.counts_against, 'fee_refund_id', v_refund,
-                             'fixed_price', v_req.fixed_price)
-          || coalesce(p_meta, '{}'::jsonb));
+                             'fixed_price', v_req.fixed_price));
 
   return jsonb_build_object('status', 'ok')
          || case when v_refund is null then '{}'::jsonb
@@ -712,8 +714,8 @@ grant execute on function public.admin_cancel_request(uuid, text, text) to authe
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 10. The extension (R-5, X-5 to X-7): once per pick for payment and fee, once per request for confirm; 1 to 48
---     hours from the later of the old deadline and now; payment and fee never past the start. The request moves
---     first, while the allowance is still unused (the guard checks it), then the allowance is spent.
+--     hours from the later of the old deadline and now; payment and fee never past the start. The allowance is spent
+--     first; the request guard lets the deadline move only with an allowance spent in this same transaction.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 create function public.admin_extend_deadline(p_request_id uuid, p_which text, p_hours integer, p_reason text)
@@ -779,11 +781,11 @@ begin
   end if;
 
   if p_which = 'payment' then
-    update public.requests set payment_deadline = v_new where id = v_req.id;
     update public.applications set payment_extended_at = now() where id = v_app.id;
+    update public.requests set payment_deadline = v_new where id = v_req.id;
   elsif p_which = 'fee' then
-    update public.requests set fee_deadline = v_new where id = v_req.id;
     update public.applications set fee_extended_at = now() where id = v_app.id;
+    update public.requests set fee_deadline = v_new where id = v_req.id;
   else
     update public.requests set confirm_deadline = v_new, confirm_extended_at = now() where id = v_req.id;
   end if;

@@ -234,7 +234,15 @@ export function AdminExtendAction({
               value={hours}
               onChange={(event) => setHours(event.target.value)}
               aria-invalid={hoursValid ? undefined : true}
+              aria-describedby={`${hoursId}-hint`}
             />
+            <p
+              id={`${hoursId}-hint`}
+              role={hoursValid ? undefined : 'alert'}
+              className={hoursValid ? 'text-meta text-text-secondary' : 'text-body-s text-error-foreground'}
+            >
+              {t('hoursHint', { min: EXTEND_HOURS_MIN, max: EXTEND_HOURS_MAX })}
+            </p>
           </div>
           {dialog.field(t('reason'))}
         </div>
@@ -254,7 +262,9 @@ export function AdminAddressButton({ requestId }: { requestId: string }) {
       {line ? (
         <p className="flex flex-col gap-1 rounded-block bg-surface p-3" role="status">
           <span className="text-meta text-text-secondary">{t('addressLine')}</span>
-          <span className="text-body-s text-text-primary">{line}</span>
+          <span className="text-body-s text-text-primary" dir="auto">
+            {line}
+          </span>
         </p>
       ) : (
         <Button variant="outline" size="sm" onClick={() => dialog.setOpen(true)}>

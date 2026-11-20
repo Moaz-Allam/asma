@@ -78,12 +78,3 @@ export function extendableDeadline(status: string, hasPick: boolean): ExtendWhic
 export function adminMayCancel(status: string): boolean {
   return ['OPEN', 'SELECTED', 'COMMISSION_PAID', 'UNLOCKED', 'IN_PROGRESS'].includes(status);
 }
-
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
-
-/** A `YYYY-MM-DD` day that exists on the calendar, or null. */
-export function dayFrom(value: unknown): string | null {
-  if (typeof value !== 'string' || !DAY.test(value)) return null;
-  const date = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value ? value : null;
-}

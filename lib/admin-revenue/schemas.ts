@@ -22,7 +22,6 @@ export const REVENUE_COLUMNS = [
   'late_received',
   'late_refunded',
 ] as const;
-export type RevenueColumn = (typeof REVENUE_COLUMNS)[number];
 
 const Row = z
   .object({
@@ -39,13 +38,8 @@ const Row = z
     late_refunded: Minor,
   })
   .strict();
-export type RevenueRow = z.infer<typeof Row>;
 
 export const RevenueReport = z
   .object({ from: Day, to: Day, grain: z.enum(REVENUE_GRAINS), rows: z.array(Row) })
   .strict();
 export type RevenueReport = z.infer<typeof RevenueReport>;
-
-/** R-9: the longest range per grain, both ends inclusive. Postgres checks again. */
-export const MAX_DAYS = 92;
-export const MAX_MONTHS = 24;

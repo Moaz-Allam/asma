@@ -10,7 +10,7 @@ import { RevenueReport, type RevenueGrain } from './schemas';
  */
 
 export { revenueCsv, revenueFileName } from './csv';
-export type { RevenueReport, RevenueRow } from './schemas';
+export type { RevenueReport } from './schemas';
 
 /** The codes `admin_revenue` raises. */
 export const REVENUE_DB_CODES = ['forbidden', 'validation_failed'] as const;

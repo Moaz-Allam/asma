@@ -1609,7 +1609,8 @@
     "addressBody": "Her görüntüleme gerekçenizle kaydedilir. Yalnızca müşteriye ya da hizmet verene yardım için kullanın.",
     "addressConfirm": "Göster",
     "addressLine": "Açık adres",
-    "flagClear": "İşareti kaldır"
+    "flagClear": "İşareti kaldır",
+    "hoursHint": "Tam saat, {min} ile {max} arası."
   },
   "Email": {
     "shell": {

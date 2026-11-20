@@ -1609,7 +1609,8 @@
     "addressBody": "Each view is recorded with your reason. Use it only to help the customer or the provider.",
     "addressConfirm": "Show",
     "addressLine": "Street address",
-    "flagClear": "Clear flag"
+    "flagClear": "Clear flag",
+    "hoursHint": "Whole hours, {min} to {max}."
   },
   "Email": {
     "shell": {

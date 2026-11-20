@@ -1,10 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 
-import { dayFrom } from '@/lib/admin-requests/constants';
 import { loadRevenue, revenueCsv, revenueFileName } from '@/lib/admin-revenue';
 import { REVENUE_GRAINS } from '@/lib/admin-revenue/schemas';
 import { AuthRefusal, requireRole } from '@/lib/auth/session';
+import { dayFrom } from '@/lib/format/day';
 import { reportServerError } from '@/lib/observability/server';
 
 /**

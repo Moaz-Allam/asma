@@ -28,15 +28,7 @@ import {
  * no Sentry report; anything else is thrown for `guardedAction` or the page to report.
  */
 
-export type {
-  AdminFee,
-  AdminFlagQueue,
-  AdminFlagRow,
-  AdminListRow,
-  AdminRefund,
-  AdminRequestDetail,
-  AdminRequestList,
-} from './schemas';
+export type { AdminFee, AdminFlagQueue, AdminRefund, AdminRequestDetail, AdminRequestList } from './schemas';
 
 type Refused = { ok: false; code: AdminRequestCode };
 
@@ -122,7 +114,7 @@ export async function listRequests(filters: ListFilters): Promise<AdminRequestLi
     p_from: filters.from,
     p_to: filters.to,
     p_has_flag: filters.hasFlag,
-    p_page: Math.max(1, Math.floor(filters.page)),
+    p_page: Math.min(10000, Math.max(1, Math.floor(filters.page))),
   });
   if ('ok' in result) return result;
   return AdminRequestList.parse(result.data);
@@ -182,7 +174,7 @@ export async function showAddress(input: {
 
 /** One page of open deadline flags, oldest first (R-7); `total` is the rail's badge. */
 export async function listFlags(page: number): Promise<AdminFlagQueue> {
-  const result = await call('admin_flags', { p_page: Math.max(1, Math.floor(page)) });
+  const result = await call('admin_flags', { p_page: Math.min(10000, Math.max(1, Math.floor(page))) });
   if ('ok' in result) throw new Error(`admin_flags refused: ${result.code}`);
   return AdminFlagQueue.parse(result.data);
 }

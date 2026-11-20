@@ -16,7 +16,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(110);
+SELECT plan(116);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -300,6 +300,19 @@ SELECT pg_temp.call_as('c1', format('SELECT public.cancel_request(%L, %L)::text'
 SELECT is(pg_temp.st(6) || ' ' || pg_temp.cancel(6), 'CANCELLED customer plans_changed not_cancellable',
   'X-9: a request the customer cancelled is not admin''s to cancel again');
 
+-- An OPEN request with a carried commission reads the COMMISSION_PAID row (by hand): nothing comes back by itself.
+SELECT pg_temp.choose(22, 'a1');
+SELECT pg_temp.paycom(22);
+SELECT pg_temp.call_as('a1', format('SELECT public.withdraw_application(%L)::text', pg_temp.app(22, 'a1')));
+SELECT is((SELECT status FROM public.requests WHERE id = pg_temp.r(22)), 'OPEN', 'fixture: r22 reopened with its commission carried');
+CREATE TEMP TABLE r22 AS SELECT pg_temp.cancel(22) AS res;
+SELECT is((SELECT res FROM r22) || ' ' || (SELECT (new_value ->> 'rule_state') || ' ' || (new_value ->> 'commission_outcome')
+                                          FROM public.audit_log WHERE action = 'request.admin_cancelled' AND entity_id = pg_temp.r(22)::text)
+          || ' ' || (SELECT status FROM public.fee_payments WHERE id = pg_temp.cfee(22))
+          || ' ' || (SELECT count(*) FROM public.fee_refunds WHERE request_id = pg_temp.r(22))::text,
+  '{"status": "ok", "replayed": false} COMMISSION_PAID by_hand paid 0',
+  'R-3: a carried commission is read as COMMISSION_PAID: cancelled by hand, the commission stays paid');
+
 -- ══ R-5, X-5 to X-7: the extension ═══════════════════════════════════════════
 SELECT is(pg_temp.extend(7, 'payment', 2), 'invalid_state', 'X-5: payment needs SELECTED');
 SELECT pg_temp.choose(7, 'a1');
@@ -355,25 +368,32 @@ SELECT is(pg_temp.extend(5, 'confirm', 1), 'already_extended', 'X-6: once per re
 -- ══ R-6, X-3, X-4: the guards, as postgres ════════════════════════════════════
 SELECT pg_temp.choose(10, 'a1');
 SELECT is(pg_temp.try(format('UPDATE public.requests SET payment_deadline = payment_deadline + interval ''1 hour'' WHERE id = %L', pg_temp.r(10))),
-  'ok', 'X-4: the payment window alone moves later while SELECTED');
-SELECT is(pg_temp.try(format('UPDATE public.requests SET payment_deadline = payment_deadline + interval ''1 hour'', selected_at = selected_at - interval ''1 minute'' WHERE id = %L', pg_temp.r(10))),
+  'request_immutable', 'M-2: not without the pick''s allowance spent in the same transaction');
+SELECT is(pg_temp.probe(ARRAY[format('UPDATE public.applications SET payment_extended_at = now() WHERE id = %L', pg_temp.app(10, 'a1')), format('UPDATE public.requests SET payment_deadline = payment_deadline + interval ''1 hour'' WHERE id = %L', pg_temp.r(10))], '''ok'''),
+  'ok', 'X-4: the payment window alone moves later while SELECTED, the allowance spent now');
+SELECT is(pg_temp.probe(ARRAY[format('UPDATE public.applications SET payment_extended_at = now() WHERE id = %L', pg_temp.app(10, 'a1')), format('UPDATE public.requests SET payment_deadline = payment_deadline + interval ''1 hour'', selected_at = selected_at - interval ''1 minute'' WHERE id = %L', pg_temp.r(10))], '''ok'''),
   'request_immutable', 'X-4: not with another change to the pick');
-SELECT is(pg_temp.try(format('UPDATE public.requests SET payment_deadline = greatest(payment_deadline, now()) + interval ''49 hours'' WHERE id = %L', pg_temp.r(10))),
+SELECT is(pg_temp.probe(ARRAY[format('UPDATE public.applications SET payment_extended_at = now() WHERE id = %L', pg_temp.app(10, 'a1')), format('UPDATE public.requests SET payment_deadline = greatest(payment_deadline, now()) + interval ''49 hours'' WHERE id = %L', pg_temp.r(10))], '''ok'''),
   'request_immutable', 'X-4: not past the 48 hour band');
-SELECT is(pg_temp.try(format('UPDATE public.requests SET payment_deadline = payment_deadline - interval ''1 minute'' WHERE id = %L', pg_temp.r(10))),
+SELECT is(pg_temp.probe(ARRAY[format('UPDATE public.applications SET payment_extended_at = now() WHERE id = %L', pg_temp.app(10, 'a1')), format('UPDATE public.requests SET payment_deadline = payment_deadline - interval ''1 minute'' WHERE id = %L', pg_temp.r(10))], '''ok'''),
   'request_immutable', 'X-4: never earlier');
-SELECT is(pg_temp.try(format('UPDATE public.requests SET payment_deadline = payment_deadline + interval ''1 hour'', notes = ''x'' WHERE id = %L', pg_temp.r(10))),
+SELECT is(pg_temp.probe(ARRAY[format('UPDATE public.applications SET payment_extended_at = now() WHERE id = %L', pg_temp.app(10, 'a1')), format('UPDATE public.requests SET payment_deadline = payment_deadline + interval ''1 hour'', notes = ''x'' WHERE id = %L', pg_temp.r(10))], '''ok'''),
   'request_immutable', 'X-4: not with any other column');
-SELECT is(pg_temp.probe(ARRAY[format('UPDATE public.applications SET payment_extended_at = now() WHERE id = %L', pg_temp.app(10, 'a1'))],
+SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.applications DISABLE TRIGGER applications_guard',
+                              format('UPDATE public.applications SET payment_extended_at = now() - interval ''1 day'' WHERE id = %L', pg_temp.app(10, 'a1')),
+                              'ALTER TABLE public.applications ENABLE TRIGGER applications_guard'],
                         format('pg_temp.try(%L)', format('UPDATE public.requests SET payment_deadline = payment_deadline + interval ''1 hour'' WHERE id = %L', pg_temp.r(10)))),
-  'request_immutable', 'X-4: not once the pick''s allowance is spent');
-SELECT is(pg_temp.try(format('UPDATE public.requests SET fee_deadline = fee_deadline + interval ''1 hour'' WHERE id = %L', pg_temp.r(9))),
-  'request_immutable', 'X-4: the fee window not once its allowance is spent');
+  'request_immutable', 'M-2: not with an allowance spent in an earlier transaction');
+SELECT is(pg_temp.probe(ARRAY['ALTER TABLE public.applications DISABLE TRIGGER applications_guard',
+                              format('UPDATE public.applications SET fee_extended_at = now() - interval ''1 day'' WHERE id = %L', pg_temp.app(9, 'a1')),
+                              'ALTER TABLE public.applications ENABLE TRIGGER applications_guard'],
+                        format('pg_temp.try(%L)', format('UPDATE public.requests SET fee_deadline = fee_deadline + interval ''1 hour'' WHERE id = %L', pg_temp.r(9)))),
+  'request_immutable', 'M-2: the fee window not with an allowance spent in an earlier transaction');
 SELECT pg_temp.choose(11, 'a1');
 SELECT pg_temp.paycom(11);
-SELECT is(pg_temp.try(format('UPDATE public.requests SET fee_deadline = fee_deadline + interval ''1 hour'' WHERE id = %L', pg_temp.r(11))),
-  'ok', 'X-4: the fee window alone moves later while COMMISSION_PAID');
-SELECT is(pg_temp.try(format('UPDATE public.requests SET fee_deadline = fee_deadline + interval ''1 hour'', selected_at = selected_at - interval ''1 minute'' WHERE id = %L', pg_temp.r(11))),
+SELECT is(pg_temp.probe(ARRAY[format('UPDATE public.applications SET fee_extended_at = now() WHERE id = %L', pg_temp.app(11, 'a1')), format('UPDATE public.requests SET fee_deadline = fee_deadline + interval ''1 hour'' WHERE id = %L', pg_temp.r(11))], '''ok'''),
+  'ok', 'X-4: the fee window alone moves later while COMMISSION_PAID, the allowance spent now');
+SELECT is(pg_temp.probe(ARRAY[format('UPDATE public.applications SET fee_extended_at = now() WHERE id = %L', pg_temp.app(11, 'a1')), format('UPDATE public.requests SET fee_deadline = fee_deadline + interval ''1 hour'', selected_at = selected_at - interval ''1 minute'' WHERE id = %L', pg_temp.r(11))], '''ok'''),
   'request_immutable', 'X-4: the fee window not with another change to the pick');
 SELECT is(pg_temp.try(format('UPDATE public.requests SET confirm_extended_at = NULL WHERE id = %L', pg_temp.r(5))),
   'request_immutable', 'X-6: the confirm allowance never goes back');
@@ -387,6 +407,23 @@ SELECT is(pg_temp.try(format('UPDATE public.applications SET payment_extended_at
   'application_immutable', 'R-6: the payment allowance only while the pick waits for the commission');
 SELECT is(pg_temp.try(format('UPDATE public.applications SET payment_extended_at = now() WHERE id = %L', pg_temp.app(10, 'a2'))),
   'application_immutable', 'R-6: never on an application that is not the pick');
+
+SELECT pg_temp.choose(13, 'a1');
+SELECT pg_temp.paycom(13);
+SELECT pg_temp.payfee(13, 'a1');
+SELECT pg_temp.age_late(13);
+SELECT pg_temp.call_as('a1', format('SELECT public.start_job(%L)::text', pg_temp.r(13)));
+SELECT pg_temp.call_as('a1', format('SELECT public.finish_job(%L)::text', pg_temp.r(13)));
+SELECT is(pg_temp.try(format('UPDATE public.requests SET confirm_deadline = greatest(confirm_deadline, now()) + interval ''49 hours'', confirm_extended_at = now() WHERE id = %L', pg_temp.r(13))),
+  'request_immutable', 'M-2: the confirm allowance moves the deadline at most 48 hours');
+SELECT is(pg_temp.try(format('UPDATE public.requests SET confirm_deadline = confirm_deadline + interval ''2 hours'', confirm_extended_at = now() WHERE id = %L', pg_temp.r(13))),
+  'ok', 'R-5: within 48 hours, spent now');
+CREATE TEMP TABLE m1 AS
+  SELECT public.cancel_by_rule(pg_temp.r(14), 'admin', NULL, NULL, 'request.admin_cancelled', pg_temp.u('ad'),
+                               '{"status": "OPEN", "fee_refund_id": "00000000-0000-0000-0000-000000000000", "reason": "kept"}'::jsonb) AS x;
+SELECT is((SELECT (new_value ->> 'status') || ' ' || coalesce(new_value ->> 'fee_refund_id', '-') || ' ' || (new_value ->> 'reason')
+             FROM public.audit_log WHERE action = 'request.admin_cancelled' AND entity_id = pg_temp.r(14)::text),
+  'CANCELLED - kept', 'M-1: p_meta adds keys but never changes the outcome the audit row records');
 
 -- ══ R-7, X-15: the flag queue ════════════════════════════════════════════════
 SELECT pg_temp.choose(12, 'a1');

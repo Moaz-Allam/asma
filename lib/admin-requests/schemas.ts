@@ -177,7 +177,6 @@ const ListRow = z
     open_report: z.boolean(),
   })
   .strict();
-export type AdminListRow = z.infer<typeof ListRow>;
 
 export const AdminRequestList = z
   .object({ rows: z.array(ListRow), total: z.number().int().nonnegative() })
@@ -196,7 +195,6 @@ const FlagRow = z
     timezone: z.string(),
   })
   .strict();
-export type AdminFlagRow = z.infer<typeof FlagRow>;
 
 export const AdminFlagQueue = z
   .object({ rows: z.array(FlagRow), total: z.number().int().nonnegative() })

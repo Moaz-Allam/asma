@@ -6,10 +6,10 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { dayFrom } from '@/lib/admin-requests/constants';
 import { loadRevenue } from '@/lib/admin-revenue';
 import { REVENUE_COLUMNS, REVENUE_GRAINS, type RevenueGrain } from '@/lib/admin-revenue/schemas';
 import { guardPage } from '@/lib/auth/session';
+import { dayFrom } from '@/lib/format/day';
 
 /** Money from the ledger; never cached. */
 export const dynamic = 'force-dynamic';
