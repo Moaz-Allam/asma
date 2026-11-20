@@ -16,7 +16,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(109);
+SELECT plan(110);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -486,6 +486,11 @@ SELECT is((pg_temp.call_as('ad', format('SELECT public.admin_revenue(%L, %L, %L)
 SELECT is((SELECT (j ->> 'from') || ' ' || (j ->> 'to')
              FROM (SELECT (pg_temp.call_as('ad', format('SELECT public.admin_revenue(%L, %L, %L)::text', date '2026-01-15', date '2027-12-01', 'month')))::jsonb AS j) t),
   '2026-01-01 2027-12-31', 'X-12: 24 months allowed, widened to whole months');
+
+-- ══ 12's detail, fixed: no pick means selected is false, never null ══════════
+SELECT pg_temp.as_user('ad');
+SELECT is((SELECT array_agg(DISTINCT x -> 'selected') FROM jsonb_array_elements(public.admin_request_detail(pg_temp.r(30)) -> 'applications') x),
+  ARRAY['false'::jsonb], 'admin_request_detail: an OPEN request''s applications are not selected (false, not null)');
 
 -- ══ Grants and attributes ════════════════════════════════════════════════════
 SELECT results_eq(

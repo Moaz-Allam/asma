@@ -1002,3 +1002,95 @@ $$;
 
 revoke all on function public.admin_revenue(date, date, text) from public, anon, authenticated, service_role;
 grant execute on function public.admin_revenue(date, date, text) to authenticated;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 14. 12's admin_request_detail, replaced only so `selected` is false, never null, when the request has no pick (an
+--     OPEN request's applications crashed the strict parse of the request page; found by 16's e2e).
+-- ═══════════════════════════════════════════════════════════════════════════
+
+create or replace function public.admin_request_detail(p_request_id uuid)
+  returns jsonb
+  language plpgsql
+  stable
+  security definer
+  set search_path = ''
+as $$
+declare
+  v_req   public.requests%rowtype;
+  v_out   jsonb;
+begin
+  if not public.is_admin() then
+    raise exception 'forbidden';
+  end if;
+  select r.* into v_req from public.requests r where r.id = p_request_id;
+  if not found then
+    raise exception 'not_found';
+  end if;
+
+  with fees as (
+    select f.* from public.fee_payments f where f.request_id = v_req.id
+  ), refunds as (
+    select x.* from public.fee_refunds x where x.request_id = v_req.id
+  ), journals as (
+    select j.* from public.ledger_journals j
+     where j.fee_payment_id in (select id from fees)
+        or j.idempotency_key in (select 'late:' || x.psp_payment_id || ':received' from refunds x where x.kind = 'late'
+                                 union all
+                                 select 'late:' || x.psp_payment_id || ':refund' from refunds x where x.kind = 'late')
+  )
+  select jsonb_build_object(
+    'request', jsonb_build_object(
+      'id', v_req.id, 'region', v_req.region, 'status', v_req.status, 'customer_id', v_req.customer_id,
+      'service_name', (select s.name from public.services s where s.id = v_req.service_id),
+      'zone_name', (select z.name from public.zones z where z.id = v_req.zone_id),
+      'timezone', (select g.timezone from public.regions g where g.code = v_req.region),
+      'fixed_price', v_req.fixed_price, 'commission_amount', v_req.commission_amount, 'cash_due', v_req.cash_due,
+      'currency', v_req.currency, 'scheduled_start_at', v_req.scheduled_start_at,
+      'scheduled_end_at', v_req.scheduled_end_at, 'created_at', v_req.created_at,
+      'selected_application_id', v_req.selected_application_id, 'selected_at', v_req.selected_at,
+      'payment_deadline', v_req.payment_deadline, 'fee_deadline', v_req.fee_deadline,
+      'failed_picks', v_req.failed_picks, 'cancelled_at', v_req.cancelled_at, 'cancelled_by', v_req.cancelled_by,
+      'cancel_reason', v_req.cancel_reason, 'closed_at', v_req.closed_at, 'closed_by', v_req.closed_by,
+      'actual_started_at', v_req.actual_started_at, 'actual_completed_at', v_req.actual_completed_at,
+      'confirm_deadline', v_req.confirm_deadline),
+    'applications', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', a.id, 'provider_id', a.provider_id, 'provider_name', pr.approved_name, 'status', a.status,
+        'selected', coalesce(a.id = v_req.selected_application_id, false), 'created_at', a.created_at,
+        'status_changed_at', a.status_changed_at, 'unlocked_at', a.unlocked_at,
+        'provider_fee_amount', a.provider_fee_amount) order by a.created_at, a.id)
+      from public.applications a left join public.providers pr on pr.id = a.provider_id
+     where a.request_id = v_req.id), '[]'::jsonb),
+    'fees', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', f.id, 'kind', f.kind, 'provider_id', f.provider_id, 'application_id', f.application_id,
+        'amount', f.amount, 'currency', f.currency, 'status', f.status, 'paid_at', f.paid_at,
+        'psp_payment_id', f.psp_payment_id, 'psp_fee_amount', f.psp_fee_amount, 'created_at', f.created_at)
+        order by f.created_at, f.id) from fees f), '[]'::jsonb),
+    'refunds', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', x.id, 'kind', x.kind, 'fee_payment_id', x.fee_payment_id, 'psp_payment_id', x.psp_payment_id,
+        'amount', x.amount, 'currency', x.currency, 'reason', x.reason, 'status', x.status,
+        'requested_by', x.requested_by, 'created_at', x.created_at, 'finished_at', x.finished_at)
+        order by x.created_at, x.id) from refunds x), '[]'::jsonb),
+    'ledger', coalesce((select jsonb_agg(jsonb_build_object(
+        'journal_id', j.id, 'kind', j.kind, 'key', j.idempotency_key, 'fee_payment_id', j.fee_payment_id,
+        'currency', j.currency, 'created_at', j.created_at,
+        'entries', (select jsonb_agg(jsonb_build_object('account', e.account, 'amount', e.amount) order by e.id)
+                      from public.ledger_entries e where e.journal_id = j.id))
+        order by j.created_at, j.id) from journals j), '[]'::jsonb),
+    'flags', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', d.id, 'kind', d.kind, 'raised_at', d.raised_at, 'cleared_at', d.cleared_at, 'cleared_by', d.cleared_by,
+        'note', d.note) order by d.raised_at, d.id)
+      from public.deadline_flags d where d.request_id = v_req.id), '[]'::jsonb),
+    'timeline', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', l.id, 'action', l.action, 'actor_id', l.actor_id, 'entity_type', l.entity_type, 'entity_id', l.entity_id,
+        'old_value', l.old_value, 'new_value', l.new_value, 'created_at', l.created_at) order by l.created_at, l.id)
+      from public.audit_log l
+     where (l.entity_type = 'requests' and l.entity_id = v_req.id::text)
+        or (l.entity_type = 'fee_payments' and l.entity_id in (select id::text from fees))
+        or (l.entity_type = 'fee_refunds' and l.entity_id in (select id::text from refunds))), '[]'::jsonb))
+    into v_out;
+  return v_out;
+end;
+$$;
+
+revoke all on function public.admin_request_detail(uuid) from public, anon, authenticated, service_role;
+grant execute on function public.admin_request_detail(uuid) to authenticated;
