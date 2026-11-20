@@ -209,6 +209,7 @@ DECLARE
 BEGIN
   PERFORM set_config('request.jwt.claims',
                      CASE WHEN p_user = 'anon' THEN '{"role": "anon"}'
+                          WHEN p_user = 'service' THEN '{"role": "service_role"}'
                           ELSE jsonb_build_object('sub', pg_temp.u(p_user), 'role', 'authenticated')::text END, true);
   EXECUTE format('SET LOCAL ROLE %I', CASE WHEN p_user = 'anon' THEN 'anon'
                                            WHEN p_user = 'service' THEN 'service_role' ELSE 'authenticated' END);

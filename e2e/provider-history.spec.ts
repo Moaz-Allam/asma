@@ -79,61 +79,60 @@ const TZ = `(select timezone from public.regions where code = 'TR')`;
 const fifteenth = (k: number) =>
   `((date_trunc('month', now() at time zone ${TZ}) + interval '${k} months' + interval '14 days 10 hours') at time zone ${TZ})`;
 
-type Job = {
-  n: number;
-  k: number;
-  request: 'UNLOCKED' | 'COMPLETED' | 'CANCELLED';
-  pick: 'UNLOCKED' | 'CONFIRMED' | 'CANCELLED';
-  cash: number;
-  fee: number;
-  refund?: 'done';
-};
+/** Moves a request to its month past the guard, keeping its deadlines in order. */
+function moveTo(f: ReturnType<typeof ids>, n: number, at: string, extra = ''): string {
+  return (
+    ` alter table public.requests disable trigger requests_guard;` +
+    ` update public.requests set selected_at = ${at} - interval '5 hours', payment_deadline = ${at} - interval '4 hours',` +
+    ` fee_deadline = ${at} - interval '3 hours', scheduled_start_at = ${at}, scheduled_end_at = ${at} + interval '2 hours'${extra}` +
+    ` where id = '${f.request(n)}';` +
+    ` alter table public.requests enable trigger requests_guard;`
+  );
+}
 
-/** One unlocked job of the provider, exact: the request, the pick, the fee row and the refund row. */
-function job(f: ReturnType<typeof ids>, locale: string, j: Job): string {
-  const at = fifteenth(j.k);
-  const closed = j.request === 'UNLOCKED' ? 'null' : `${at} + interval '3 hours'`;
-  const cancelled = j.request === 'CANCELLED' ? `${at} + interval '3 hours'` : 'null';
+function request(f: ReturnType<typeof ids>, n: number, cash: number, commission: number, at: string): string {
+  const snapshot = JSON.stringify({
+    price: cash + commission,
+    currency: 'TRY',
+    commission_percent: '0',
+    rounding_minor: 100,
+    service: { id: f.service, name: { tr: f.service_name } },
+  });
   return (
     ` insert into public.requests (id, region, customer_id, client_key, service_id, zone_id, answers, questions_snapshot,` +
     ` pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at)` +
-    ` values ('${f.request(j.n)}', 'TR', '${f.customer}', gen_random_uuid(), '${f.service}', '${f.zone}', '{}', '[]',` +
-    ` '{"rounding_minor": 100}', ${j.cash + 10000}, 10000, ${j.cash}, 'TRY', ${at}, ${at} + interval '2 hours');` +
+    ` values ('${f.request(n)}', 'TR', '${f.customer}', gen_random_uuid(), '${f.service}', '${f.zone}', '{}', '[]',` +
+    ` '${snapshot}', ${cash + commission}, ${commission}, ${cash}, 'TRY', ${at}, ${at} + interval '2 hours');` +
     ` insert into public.applications (id, region, request_id, provider_id, message)` +
-    ` values ('${f.offer(j.n)}', 'TR', '${f.request(j.n)}', v_p, 'I can start at ten with my own tools, two people.');` +
-    ` alter table public.applications disable trigger applications_guard;` +
-    ` update public.applications set status = '${j.pick}', unlocked_at = ${at} - interval '2 hours',` +
-    ` provider_fee_amount = ${j.fee}, provider_fee_kind = 'fixed' where id = '${f.offer(j.n)}';` +
-    ` alter table public.applications enable trigger applications_guard;` +
-    ` alter table public.requests disable trigger requests_guard;` +
-    ` update public.requests set status = '${j.request}', selected_application_id = '${f.offer(j.n)}',` +
-    ` selected_at = ${at} - interval '5 hours', payment_deadline = ${at} - interval '4 hours',` +
-    ` fee_deadline = ${at} - interval '3 hours', closed_at = ${closed},` +
-    ` closed_by = ${j.request === 'UNLOCKED' ? 'null' : "'customer'"}, cancelled_at = ${cancelled},` +
-    ` cancelled_by = ${j.request === 'CANCELLED' ? "'customer'" : 'null'},` +
-    ` actual_started_at = ${j.request === 'COMPLETED' ? at : 'null'},` +
-    ` actual_completed_at = ${j.request === 'COMPLETED' ? `${at} + interval '1 hour'` : 'null'}` +
-    ` where id = '${f.request(j.n)}';` +
-    ` alter table public.requests enable trigger requests_guard;` +
-    (j.fee > 0
-      ? ` insert into public.fee_payments (id, region, request_id, kind, payer_id, provider_id, application_id, amount,` +
-        ` currency, status, psp_payment_id, psp_fee_amount, paid_at) values ('${f.fee(j.n)}', 'TR', '${f.request(j.n)}',` +
-        ` 'provider_fee', v_p, v_p, '${f.offer(j.n)}', ${j.fee}, 'TRY', '${j.refund ? 'refunded' : 'paid'}',` +
-        ` 'e2e-history-${locale}-${j.n}', 0, ${at} - interval '2 hours');`
-      : '') +
-    (j.refund
-      ? ` insert into public.fee_refunds (region, request_id, kind, fee_payment_id, psp_payment_id, amount, currency,` +
-        ` reason, status, psp_refund_id, finished_at) values ('TR', '${f.request(j.n)}', 'fee', '${f.fee(j.n)}',` +
-        ` 'e2e-history-${locale}-${j.n}', ${j.fee}, 'TRY', 'admin_refund', 'done', 'e2e-history-refund-${locale}-${j.n}', now());`
-      : '')
+    ` values ('${f.offer(n)}', 'TR', '${f.request(n)}', v_p, 'I can start at ten with my own tools, two people.');`
+  );
+}
+
+/**
+ * A job whose provider fee is paid as the relay applies it (choose, a commission of 0, the fee, apply_fee_paid), so
+ * every fee row has its ledger journal (other specs check the whole ledger), then moved to the fifteenth of month k.
+ */
+function paidJob(f: ReturnType<typeof ids>, locale: string, n: number, k: number, cash: number): string {
+  return (
+    request(f, n, cash, 0, `now() + interval '3 days'`) +
+    ` perform set_config('request.jwt.claims', json_build_object('sub', '${f.customer}', 'role', 'authenticated')::text, true);` +
+    ` perform public.choose_provider('${f.request(n)}', '${f.offer(n)}');` +
+    ` perform public.pay_commission('${f.request(n)}', 'tr', null);` +
+    ` perform set_config('request.jwt.claims', json_build_object('sub', v_p, 'role', 'authenticated')::text, true);` +
+    ` v_attempt := (public.pay_provider_fee('${f.offer(n)}', 'tr', null) ->> 'attempt_id')::uuid;` +
+    ` select id, amount into v_fee, v_amount from public.fee_payments where request_id = '${f.request(n)}' and kind = 'provider_fee';` +
+    ` perform public.apply_fee_paid(v_fee, v_attempt, 'e2e-history-${locale}-${n}', v_amount, 'TRY', 0);` +
+    moveTo(f, n, fifteenth(k))
   );
 }
 
 function seed(locale: string, f: ReturnType<typeof ids>) {
   const provider = `(select id from public.profiles where phone = '${testE164(locale, 'historyProvider')}')`;
   const phone = testE164(locale, 'historyCustomer');
+  const at2 = fifteenth(0);
+  const at3 = fifteenth(-1);
   sql(
-    `do $s$ declare v_p uuid := ${provider}; begin` +
+    `do $s$ declare v_p uuid := ${provider}; v_attempt uuid; v_fee uuid; v_amount bigint; v_ref uuid; begin` +
       ` if exists (select 1 from public.requests where id = '${f.request(1)}') then return; end if;` +
       ` insert into auth.users (id, aud, role, phone, phone_confirmed_at)` +
       ` values ('${f.customer}', 'authenticated', 'authenticated', '${phone.slice(1)}', now()) on conflict (id) do nothing;` +
@@ -145,17 +144,37 @@ function seed(locale: string, f: ReturnType<typeof ids>) {
       ` values ('${f.service}', '${f.category}', 'TR', '{"tr": "${f.service_name}"}', 2, 3, 1, true) on conflict (id) do nothing;` +
       ` insert into public.zones (id, region, name, multiplier, display_order, active)` +
       ` values ('${f.zone}', 'TR', '{"tr": "Geçmiş semt ${locale}"}', 1.00, 975, true) on conflict (id) do nothing;` +
-      job(f, locale, { n: 1, k: 0, request: 'UNLOCKED', pick: 'UNLOCKED', cash: 90000, fee: 5000 }) +
-      job(f, locale, { n: 2, k: 0, request: 'COMPLETED', pick: 'CONFIRMED', cash: 50000, fee: 0 }) +
-      job(f, locale, {
-        n: 3,
-        k: -1,
-        request: 'CANCELLED',
-        pick: 'CANCELLED',
-        cash: 70000,
-        fee: 4000,
-        refund: 'done',
-      }) +
+      // 1: this month, a paid fee with its receipt.
+      paidJob(f, locale, 1, 0, 90000) +
+      // 3: the month before, paid, refunded as the relay applies it, then cancelled by the customer.
+      paidJob(f, locale, 3, -1, 70000) +
+      ` insert into public.fee_refunds (region, request_id, kind, fee_payment_id, psp_payment_id, amount, currency, reason, status)` +
+      ` values ('TR', '${f.request(3)}', 'fee', v_fee, 'e2e-history-${locale}-3', v_amount, 'TRY', 'admin_refund', 'queued')` +
+      ` returning id into v_ref;` +
+      ` perform public.apply_fee_refunded(v_ref, 'e2e-history-refund-${locale}-3');` +
+      ` alter table public.applications disable trigger applications_guard;` +
+      ` update public.applications set status = 'CANCELLED' where id = '${f.offer(3)}';` +
+      ` alter table public.applications enable trigger applications_guard;` +
+      moveTo(
+        f,
+        3,
+        at3,
+        `, status = 'CANCELLED', cancelled_at = ${at3} + interval '3 hours', cancelled_by = 'customer',` +
+          ` closed_at = ${at3} + interval '3 hours', closed_by = 'customer'`,
+      ) +
+      // 2: this month, a fee of 0 (no fee row, D171), closed by the customer.
+      request(f, 2, 50000, 10000, at2) +
+      ` alter table public.applications disable trigger applications_guard;` +
+      ` update public.applications set status = 'CONFIRMED', unlocked_at = ${at2} - interval '2 hours',` +
+      ` provider_fee_amount = 0, provider_fee_kind = 'fixed' where id = '${f.offer(2)}';` +
+      ` alter table public.applications enable trigger applications_guard;` +
+      moveTo(
+        f,
+        2,
+        at2,
+        `, status = 'COMPLETED', selected_application_id = '${f.offer(2)}', actual_started_at = ${at2},` +
+          ` actual_completed_at = ${at2} + interval '1 hour', closed_at = ${at2} + interval '3 hours', closed_by = 'customer'`,
+      ) +
       ` end $s$;`,
   );
 }
