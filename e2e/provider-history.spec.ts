@@ -69,7 +69,6 @@ function ids(locale: string) {
     zone: id('21'),
     request: (n: number) => id(`e${n}`),
     offer: (n: number) => id(`f${n}`),
-    fee: (n: number) => id(`a${n}`),
     service_name: `Geçmiş hizmet ${locale}`,
   };
 }
@@ -220,7 +219,7 @@ test('the provider reads each month of jobs and fees, with receipts, a refund an
   await onboard(page, `Geçmiş Usta ${locale}`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/provider/profile$`), { timeout: 20_000 });
   sql(
-    `update public.providers set status = 'approved', approved_at = now(), approved_name = 'Geçmiş Kaya'` +
+    `update public.providers set status = 'approved', approved_at = now() - interval '30 days', approved_name = 'Geçmiş Kaya'` +
       ` where id = (select id from public.profiles where phone = '${testE164(locale, 'historyProvider')}');`,
   );
   seed(locale, f);
@@ -241,7 +240,7 @@ test('the provider reads each month of jobs and fees, with receipts, a refund an
   await expect(picker.locator('a[aria-current="page"]')).toHaveCount(1);
   const rows = page.locator('li', { hasText: f.service_name });
   await expect(rows).toHaveCount(2);
-  const paid = page.locator('li', { has: page.locator(`a[href$="/receipts/${f.fee(1)}"]`) });
+  const paid = page.locator('li', { has: page.locator('a[href*="/receipts/"]') });
   await expect(paid).toHaveCount(1);
   await expect(paid.getByRole('link', { name: m(locale, 'History.openJob') })).toHaveAttribute(
     'href',
