@@ -3,7 +3,11 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useId, useState, useTransition } from 'react';
 
-import { adminMarkRefundDoneAction, adminRefundFeeAction } from '@/actions/admin-requests';
+import {
+  adminClearFlagAction,
+  adminMarkRefundDoneAction,
+  adminRefundFeeAction,
+} from '@/actions/admin-requests';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -14,8 +18,9 @@ import type { Locale } from '@/lib/i18n/direction';
 import { useRouter } from '@/lib/i18n/navigation';
 
 /**
- * Admin's two writes on a request's money trail (ui-registry `AdminReasonAction`, spec 0011-12 AC-8, AC-9): refund
- * a paid fee by hand with a reason, or record a refused refund as refunded by hand in the PSP panel with a note.
+ * Admin's writes with a reason (ui-registry `AdminReasonAction`, spec 0011-12 AC-8, AC-9; spec 0011-16 R-7): refund
+ * a paid fee by hand with a reason, record a refused refund as refunded by hand in the PSP panel with a note, or
+ * clear an open deadline flag with a note.
  * The dialog states the exact amount and holds the text field; the length is counted as Postgres counts it and
  * checked there again. The amount is shown, never sent: the refund is the paid fee's own.
  */
@@ -26,17 +31,18 @@ export function AdminReasonAction({
   amount,
   currency,
 }: {
-  mode: 'refund' | 'done';
-  /** The fee id for `refund`, the refund id for `done`. */
+  mode: 'refund' | 'done' | 'clear';
+  /** The fee id for `refund`, the refund id for `done`, the flag id for `clear`. */
   targetId: string;
   label: string;
-  /** The fee's or the refund's own amount, shown in the dialog (review of 12). */
-  amount: number;
-  currency: 'TRY' | 'SAR';
+  /** The fee's or the refund's own amount, shown in the dialog (review of 12); none for `clear`. */
+  amount?: number;
+  currency?: 'TRY' | 'SAR';
 }) {
   const t = useTranslations('AdminRequests');
+  const tFlags = useTranslations('AdminFlags');
   const locale = useLocale() as Locale;
-  const money = formatMoney(amount, currency, locale);
+  const money = amount !== undefined && currency ? formatMoney(amount, currency, locale) : '';
   const router = useRouter();
   const fieldId = useId();
   const [open, setOpen] = useState(false);
@@ -58,7 +64,9 @@ export function AdminReasonAction({
         result =
           mode === 'refund'
             ? await adminRefundFeeAction({ paymentId: targetId, reason: text })
-            : await adminMarkRefundDoneAction({ refundId: targetId, note: text });
+            : mode === 'done'
+              ? await adminMarkRefundDoneAction({ refundId: targetId, note: text })
+              : await adminClearFlagAction({ flagId: targetId, note: text });
       } catch {
         result = { success: false, error: 'action_failed' };
       }
@@ -84,15 +92,25 @@ export function AdminReasonAction({
           setOpen(next);
           if (!next) setError(null);
         }}
-        title={mode === 'refund' ? t('refundTitle') : t('doneTitle')}
-        body={mode === 'refund' ? t('refundBody', { amount: money }) : t('doneBody', { amount: money })}
-        confirmLabel={mode === 'refund' ? t('refundConfirm') : t('doneConfirm')}
+        title={mode === 'refund' ? t('refundTitle') : mode === 'done' ? t('doneTitle') : tFlags('clearTitle')}
+        body={
+          mode === 'refund'
+            ? t('refundBody', { amount: money })
+            : mode === 'done'
+              ? t('doneBody', { amount: money })
+              : tFlags('clearBody')
+        }
+        confirmLabel={
+          mode === 'refund' ? t('refundConfirm') : mode === 'done' ? t('doneConfirm') : tFlags('clearConfirm')
+        }
         cancelLabel={t('keep')}
         onConfirm={confirm}
         busy={busy}
       >
         <div className="flex flex-col gap-2">
-          <Label htmlFor={fieldId}>{mode === 'refund' ? t('reason') : t('note')}</Label>
+          <Label htmlFor={fieldId}>
+            {mode === 'refund' ? t('reason') : mode === 'done' ? t('note') : tFlags('note')}
+          </Label>
           <Textarea
             id={fieldId}
             value={text}

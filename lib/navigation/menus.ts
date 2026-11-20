@@ -18,6 +18,8 @@ export type MenuItem = {
     | 'applications'
     | 'setup'
     | 'reports'
+    | 'flags'
+    | 'revenue'
     | 'history';
   href: string;
 };
@@ -98,10 +100,14 @@ export function activeMenuKey(items: readonly MenuItem[], pathname: string): Men
 export const ADMIN_RAIL: readonly MenuItem[] = [
   { key: 'dashboard', href: '/admin' },
   { key: 'providers', href: '/admin/providers' },
-  { key: 'catalog', href: '/admin/catalog' },
-  { key: 'pricing', href: '/admin/pricing' },
+  // Spec 0011-16 R-12: the request list, the flag queue (with its open count) and revenue.
+  { key: 'requests', href: '/admin/requests' },
+  { key: 'flags', href: '/admin/flags' },
   // Spec 0011-14 AC-4: the report queue, with its open count.
   { key: 'reports', href: '/admin/reports' },
+  { key: 'revenue', href: '/admin/revenue' },
+  { key: 'catalog', href: '/admin/catalog' },
+  { key: 'pricing', href: '/admin/pricing' },
   { key: 'account', href: '/account' },
 ];
 
