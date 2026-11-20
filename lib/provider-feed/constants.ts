@@ -78,7 +78,7 @@ export function jobTabFor(status: ApplicationStatus): JobTab {
 
 /** Spec 0011-15 R-10: `?month=YYYY-MM` as the first day of that month; anything else is null (the current month). */
 export function parseHistoryMonth(value: unknown): string | null {
-  if (typeof value !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return null;
+  if (typeof value !== 'string' || !/^(19|20)\d{2}-(0[1-9]|1[0-2])$/.test(value)) return null;
   return `${value}-01`;
 }
 

@@ -130,12 +130,20 @@ describe('the month (R-10)', () => {
     expect(parseHistoryMonth(value)).toBe(expected);
   });
 
-  it.each(['2026-13', '2026-00', '2026-1', '2026-11-05', 'november', '', undefined, ['2026-11']])(
-    'falls back to the current month for %s',
-    (value) => {
-      expect(parseHistoryMonth(value)).toBeNull();
-    },
-  );
+  it.each([
+    '2026-13',
+    '2026-00',
+    '0000-01',
+    '9999-01',
+    '2026-1',
+    '2026-11-05',
+    'november',
+    '',
+    undefined,
+    ['2026-11'],
+  ])('falls back to the current month for %s', (value) => {
+    expect(parseHistoryMonth(value)).toBeNull();
+  });
 
   it('writes the link value back', () => {
     expect(historyMonthParam('2026-11-01')).toBe('2026-11');

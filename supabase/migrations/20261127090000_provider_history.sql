@@ -51,7 +51,10 @@ begin
    where a.provider_id = v_me.id and a.region = v_me.region and a.unlocked_at is not null;
   v_last := least(greatest(coalesce(v_latest, v_current), v_current), (v_current + interval '12 months')::date);
 
-  -- R-2: any day of a month reads that month; null is the current month.
+  -- R-2: any day of a month reads that month; null is the current month; infinity is no month (security review I-1).
+  if p_month is not null and not isfinite(p_month) then
+    raise exception 'validation_failed';
+  end if;
   v_month := coalesce(p_month - (extract(day from p_month)::integer - 1), v_current);
   if v_month < v_first or v_month > v_last then
     raise exception 'validation_failed';
@@ -73,6 +76,7 @@ begin
            r.cash_due,
            s.name as service_name,
            f.id as fee_id,
+           -- X-5: an unlocked pick with no paid fee row froze a fee of 0 (D171); pgTAP 32 proves that invariant.
            coalesce(f.amount, a.provider_fee_amount, 0) as fee_amount,
            case when fr.status in ('done', 'done_by_hand') then 'done'
                 when fr.status in ('queued', 'failed') then 'pending'

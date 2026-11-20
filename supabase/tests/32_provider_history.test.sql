@@ -15,7 +15,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(54);
+SELECT plan(56);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -142,6 +142,12 @@ SELECT pg_temp.job(9, 'a1', pg_temp.mid(-12), 'COMPLETED', 'CONFIRMED', 15000, 0
 -- a2's job this month, with a1's offer on the same request left unpicked (never unlocked).
 SELECT pg_temp.job(8, 'a2', pg_temp.mid(0) + interval '8 minutes', 'UNLOCKED', 'UNLOCKED', 25000, 5000);
 SELECT pg_temp.offer(8, 'a1');
+-- a1's unlocked pick two months back whose request names another pick (unreachable today, security review I-2).
+SELECT pg_temp.job(12, 'a1', pg_temp.mid(-2), 'UNLOCKED', 'UNLOCKED', 12000, 0);
+SELECT pg_temp.offer(12, 'a2');
+ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
+UPDATE public.requests SET selected_application_id = pg_temp.app(12, 'a2') WHERE id = pg_temp.r(12);
+ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
 
 -- a3's two real jobs: through choose_provider, pay_commission and pay_provider_fee, as 30 does.
 CREATE FUNCTION pg_temp.real(p integer, p_commission bigint) RETURNS void LANGUAGE plpgsql AS $$
@@ -164,7 +170,9 @@ BEGIN
                                   v_att, 'pay-32-p' || p, 5000, 'TRY', 150);
   END IF;
 END $$;
+-- r20 pays a real fee, so it is made before the fee settings go to 0 for r21 (as 30 does).
 SELECT pg_temp.real(20, 10000);
+UPDATE public.platform_settings SET value = '0' WHERE region = 'TR' AND key IN ('provider_fee_value', 'fee_min_minor');
 SELECT pg_temp.real(21, 0);
 
 -- a4's month before: 201 jobs closed by the customer, the fee 0, the cash 100.00 each (X-11), in one statement each.
@@ -257,6 +265,8 @@ SELECT is(pg_temp.call_as('a1', 'SELECT public.provider_history(NULL)::text')::j
 
 -- ══ R-2, X-1, X-8: months ═══════════════════════════════════════════════════
 SELECT is(pg_temp.h('a1', -12), 'validation_failed', 'R-2: twelve months back is refused');
+SELECT is(pg_temp.call_as('a1', 'SELECT public.provider_history(''infinity''::date)::text'), 'validation_failed',
+  'I-1: infinity is refused');
 SELECT is(pg_temp.hj('a1', -11) ->> 'month', pg_temp.m(-11)::text, 'R-2: eleven months back is read');
 SELECT is(pg_temp.hj('a1', 2) ->> 'month', pg_temp.m(2)::text, 'X-1: the month of a future job is read');
 SELECT is(pg_temp.h('a1', 3), 'validation_failed', 'X-1: a month after the latest job is refused');
@@ -310,6 +320,9 @@ SELECT is((SELECT x ->> 'request_status' FROM pg_temp.row_of(pg_temp.hj('a1', 0)
 SELECT is((SELECT x -> 'service_name' ->> 'en' FROM pg_temp.row_of(pg_temp.hj('a1', 0), 1) x), 'Cleaning',
   'R-9: the service name in every locale');
 SELECT is((SELECT x ->> 'request_id' FROM pg_temp.row_of(pg_temp.hj('a1', 0), 1) x), pg_temp.r(1)::text, 'R-9: the request id');
+SELECT is((SELECT coalesce(x ->> 'request_status', 'hidden') || ' ' || (pg_temp.hj('a1', -2) -> 'totals' ->> 'cash_closed')
+             FROM pg_temp.row_of(pg_temp.hj('a1', -2), 12) x),
+  'hidden 0', 'S11-1, I-2: the request state of a pick the request no longer names is hidden');
 
 -- ══ R-5, X-3, X-4: totals ═══════════════════════════════════════════════════
 SELECT is(pg_temp.totals(pg_temp.hj('a1', 0)), '6 12000 4000 8000 50000',
