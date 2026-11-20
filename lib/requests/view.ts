@@ -190,3 +190,11 @@ export function quoteLines(
   }
   return lines;
 }
+
+/** A month start (`YYYY-MM-01`) as its month and year, such as "November 2026" (spec 0011-15 AC-2). */
+export function monthLabel(monthStart: string, locale: string): string {
+  const tag = NUMBER_LOCALE[locale] ?? locale;
+  return new Intl.DateTimeFormat(tag, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+    new Date(`${monthStart}T00:00:00Z`),
+  );
+}

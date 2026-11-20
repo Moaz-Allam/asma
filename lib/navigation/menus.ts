@@ -17,7 +17,8 @@ export type MenuItem = {
     | 'feed'
     | 'applications'
     | 'setup'
-    | 'reports';
+    | 'reports'
+    | 'history';
   href: string;
 };
 
@@ -51,10 +52,20 @@ export const PROVIDER_NAV: readonly MenuItem[] = [
   { key: 'dashboard', href: '/provider' },
   { key: 'feed', href: '/provider/feed' },
   { key: 'applications', href: '/provider/applications' },
+  // Spec 0011-15 R-12: the jobs and fees history, in the header and the links on `/provider`, not a phone tab.
+  { key: 'history', href: '/provider/history' },
   { key: 'setup', href: '/provider/setup' },
   { key: 'profile', href: '/provider/profile' },
   { key: 'account', href: '/account' },
 ];
+
+/**
+ * Spec 0011-15 X-12: the history's label lives at `History.nav`, so its word test (R-13) covers the menu too. Every
+ * other item reads `Nav.<key>`.
+ */
+export function menuLabelKey(key: MenuItem['key']): string {
+  return key === 'history' ? 'History.nav' : `Nav.${key}`;
+}
 
 /** The provider pages the bottom bar has no tab for, linked from `/provider` below `lg`. */
 export const PROVIDER_LINKS: readonly MenuItem[] = PROVIDER_NAV.filter(

@@ -23,6 +23,7 @@ import {
   ApplicationsPage,
   ApplyResult,
   FeedPage,
+  History,
   HomeCounts,
   JobMoveResult,
   JobsPage,
@@ -42,6 +43,9 @@ import {
 
 export type {
   ApplicationListRow,
+  History,
+  HistoryRow,
+  HistoryTotals,
   JobRow,
   FeedRow,
   OwnApplication,
@@ -323,4 +327,17 @@ export async function jobCancelPreview(requestId: string, context: Context): Pro
 export async function loadHomeCounts(context: Context): Promise<{ ok: true; counts: HomeCounts } | Refused> {
   const result = await call('provider_home_counts', {}, context);
   return 'ok' in result ? result : { ok: true, counts: HomeCounts.parse(result.data) };
+}
+
+/**
+ * Spec 0011-15 R-10: the caller's own jobs and fees of one month (`YYYY-MM-01`, or null for the current month), with
+ * the whole month's totals. Every figure comes from Postgres; nothing here adds or subtracts money (rule 4). A month
+ * outside the window is refused with `validation_failed`.
+ */
+export async function loadHistory(
+  month: string | null,
+  context: Context,
+): Promise<{ ok: true; history: History } | Refused> {
+  const result = await call('provider_history', { p_month: month }, context);
+  return 'ok' in result ? result : { ok: true, history: History.parse(result.data) };
 }

@@ -3,12 +3,13 @@
 import { useTranslations } from 'next-intl';
 
 import { Link, usePathname } from '@/lib/i18n/navigation';
-import type { MenuItem } from '@/lib/navigation/menus';
+import { menuLabelKey, type MenuItem } from '@/lib/navigation/menus';
 import { cn } from '@/lib/utils';
 
 /** The active item is shown with `aria-current` and weight, no underline (ui-rules.md §14). */
 export function NavLinks({ items }: { items: readonly MenuItem[] }) {
   const t = useTranslations('Nav');
+  const label = useTranslations();
   const pathname = usePathname();
 
   return (
@@ -20,7 +21,7 @@ export function NavLinks({ items }: { items: readonly MenuItem[] }) {
           aria-current={pathname === href ? 'page' : undefined}
           className={cn('text-nav text-text-primary', pathname === href && 'font-extrabold')}
         >
-          {t(key)}
+          {label(menuLabelKey(key))}
         </Link>
       ))}
     </nav>

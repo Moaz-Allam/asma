@@ -60,6 +60,33 @@ export function parseJobTab(value: unknown): JobTab {
     : 'applied';
 }
 
+/**
+ * Spec 0011-11 (X-13 of 0011-15): the application statuses each My jobs tab shows, the same sets as `provider_jobs`
+ * in `20261123090000_work_and_close.sql` (Active keeps a job until it closes). A unit test reads that migration.
+ */
+export const JOB_TAB_STATUSES: Readonly<Record<JobTab, readonly ApplicationStatus[]>> = {
+  applied: ['APPLIED', 'SELECTED'],
+  chosen: ['AWAITING_FEE'],
+  active: ['UNLOCKED', 'STARTED', 'COMPLETED'],
+  done: ['CONFIRMED', 'RATED', 'NOT_SELECTED', 'WITHDRAWN', 'EXPIRED', 'CANCELLED'],
+};
+
+/** Spec 0011-15 R-11: the My jobs tab an application status belongs to. */
+export function jobTabFor(status: ApplicationStatus): JobTab {
+  return JOB_TABS.find((tab) => JOB_TAB_STATUSES[tab].includes(status)) ?? 'done';
+}
+
+/** Spec 0011-15 R-10: `?month=YYYY-MM` as the first day of that month; anything else is null (the current month). */
+export function parseHistoryMonth(value: unknown): string | null {
+  if (typeof value !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return null;
+  return `${value}-01`;
+}
+
+/** The `?month=` value of a month start (`YYYY-MM-01` becomes `YYYY-MM`). */
+export function historyMonthParam(monthStart: string): string {
+  return monthStart.slice(0, 7);
+}
+
 /** The twelve application statuses of project-overview.md §22 (AC-17). */
 export const APPLICATION_STATUSES = [
   'APPLIED',

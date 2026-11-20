@@ -1811,5 +1811,38 @@
       "reason_required": "[tr] Please write a note of 10 to 500 characters.",
       "action_failed": "[tr] Something went wrong. Please try again."
     }
+  },
+  "History": {
+    "nav": "[tr] Jobs and fees",
+    "title": "[tr] Jobs and fees",
+    "intro": "[tr] Each job you unlocked: the cash the customer pays you in person, and the fee you paid the platform.",
+    "months": "[tr] Month",
+    "byJobDate": "[tr] By job date",
+    "totals": "[tr] Month totals",
+    "jobs": "[tr] Jobs",
+    "feesPaid": "[tr] Fees paid",
+    "refunds": "[tr] Fees refunded",
+    "netFees": "[tr] Fees after completed refunds",
+    "cashClosed": "[tr] Cash from closed jobs",
+    "cashClosedNote": "[tr] Paid to you in person. Finished work still waiting for the customer to confirm is not counted.",
+    "rows": "[tr] Jobs this month",
+    "cash": "[tr] Cash the customer pays you in person",
+    "fee": "[tr] Fee you paid",
+    "refundPending": "[tr] Refund in progress",
+    "refundDone": "[tr] Refunded",
+    "cancelled": "[tr] Cancelled: not counted in the cash",
+    "openJob": "[tr] Open in My jobs",
+    "receipt": "[tr] Receipt",
+    "truncated": "[tr] Showing the newest 200 jobs of this month. The totals cover every job.",
+    "empty": {
+      "lead": "[tr] Nothing yet",
+      "title": "[tr] No jobs in this month",
+      "body": "[tr] Jobs you unlock appear here with their cash and fees.",
+      "action": "[tr] Find requests"
+    },
+    "error": {
+      "title": "[tr] Jobs and fees could not load",
+      "body": "[tr] Nothing changed. Try again in a moment."
+    }
   }
 }

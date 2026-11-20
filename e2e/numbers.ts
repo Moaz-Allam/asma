@@ -66,6 +66,10 @@ export const NUMBER = {
   reportCustomer: 39,
   reportProvider: 40,
   reportAdmin: 41,
+  // Position 15 (spec 0011-15 AC-5): the provider who reads the history; the customer is written by SQL and never
+  // signs in.
+  historyProvider: 42,
+  historyCustomer: 43,
 } as const;
 
 /**

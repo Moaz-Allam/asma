@@ -2438,6 +2438,7 @@ export type Database = {
         Args: { p_region: string; p_user: string }
         Returns: boolean
       }
+      provider_history: { Args: { p_month: string }; Returns: Json }
       provider_home_counts: { Args: never; Returns: Json }
       provider_jobs: {
         Args: { p_after_changed_at: string; p_after_id: string; p_tab: string }
