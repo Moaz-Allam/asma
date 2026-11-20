@@ -223,7 +223,7 @@ SELECT is(pg_temp.err($$DELETE FROM public.platform_settings WHERE region = 'KSA
 
 -- ══ AC-1, R-15: the matrix and the flags, RLS ═════════════════════════════════
 SELECT results_eq($$ SELECT region, count(*)::int, count(*) FILTER (WHERE allowed)::int FROM public.cancellation_rules GROUP BY region ORDER BY region $$,
-  $$ VALUES ('KSA'::text, 25, 15), ('TR', 25, 15) $$, 'AC-1: the matrix is seeded for TR and KSA');
+  $$ VALUES ('KSA'::text, 27, 17), ('TR', 27, 17) $$, 'AC-1: the matrix is seeded for TR and KSA (16 adds admin in OPEN and SELECTED)');
 SELECT results_eq($$ SELECT state, actor, allowed, commission_outcome, provider_fee_outcome, counts_against FROM public.cancellation_rules
                       WHERE region = 'TR' AND (state, actor) IN (('COMMISSION_PAID', 'customer'), ('COMMISSION_PAID', 'provider'),
                             ('COMMISSION_PAID', 'platform'), ('UNLOCKED', 'customer'), ('AWAITING_CONFIRMATION', 'customer')) ORDER BY state, actor $$,
@@ -244,7 +244,7 @@ SELECT is(pg_temp.err($$INSERT INTO public.cancellation_rules VALUES ('TR', 'IN_
   '23514', '§36 rule 1: no row may refund automatically after the reveal');
 SELECT is(pg_temp.err($$UPDATE public.cancellation_rules SET allowed = true WHERE state = 'AWAITING_CONFIRMATION' AND actor = 'customer'$$),
   '23514', '§36 row 12: AWAITING_CONFIRMATION can never be made cancellable');
-SELECT is(pg_temp.call_as('c2', 'SELECT count(*)::text FROM public.cancellation_rules'), '50', 'R-15: a signed in user reads the matrix');
+SELECT is(pg_temp.call_as('c2', 'SELECT count(*)::text FROM public.cancellation_rules'), '54', 'R-15: a signed in user reads the matrix');
 SELECT is(pg_temp.call_as('c1', $$UPDATE public.cancellation_rules SET allowed = true RETURNING 'x'$$), '42501', 'R-15: no API write on the matrix');
 SELECT is(pg_temp.call_as('ad', $$DELETE FROM public.cancellation_rules RETURNING 'x'$$), '42501', 'R-15: not even for admin');
 SELECT is(pg_temp.call_as('anon', 'SELECT count(*)::text FROM public.cancellation_rules'), '42501', 'R-15: anon reads nothing');
