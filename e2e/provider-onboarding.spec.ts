@@ -283,7 +283,7 @@ test('admin suspends and lifts an approved provider', async ({ page, browser }, 
   const name = `Usta ${locale} Suspended`;
   await newProvider(page, locale, 'suspended', name);
   sql(
-    `update public.providers set status = 'approved', approved_at = now() where id = (select id from public.profiles where phone = '${testE164(locale, 'suspended')}')`,
+    `update public.providers set status = 'approved', approved_at = now(), decided_at = now() where id = (select id from public.profiles where phone = '${testE164(locale, 'suspended')}')`,
   );
 
   const admin = await newAdmin(browser, locale, 'reviewer');
