@@ -31,6 +31,7 @@ describe('activeMenuKey', () => {
 
   it.each([
     ['/provider/setup', 'setup'],
+    ['/provider/history', 'history'],
     ['/provider/profile', 'profile'],
     ['/provider/profile/documents', 'profile'],
     ['/account', 'account'],
@@ -40,7 +41,7 @@ describe('activeMenuKey', () => {
 
   it('the provider bar keeps three tabs, and the home links every other page', () => {
     expect(menuFor('provider')).toHaveLength(3);
-    expect(PROVIDER_LINKS.map((item) => item.key)).toEqual(['setup', 'profile', 'account']);
+    expect(PROVIDER_LINKS.map((item) => item.key)).toEqual(['history', 'setup', 'profile', 'account']);
   });
 
   it.each([

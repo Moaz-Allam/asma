@@ -1811,5 +1811,38 @@
       "reason_required": "Please write a note of 10 to 500 characters.",
       "action_failed": "Something went wrong. Please try again."
     }
+  },
+  "History": {
+    "nav": "Jobs and fees",
+    "title": "Jobs and fees",
+    "intro": "Each job you unlocked: the cash the customer pays you in person, and the fee you paid the platform.",
+    "months": "Month",
+    "byJobDate": "By job date",
+    "totals": "Month totals",
+    "jobs": "Jobs",
+    "feesPaid": "Fees paid",
+    "refunds": "Fees refunded",
+    "netFees": "Fees after completed refunds",
+    "cashClosed": "Cash from closed jobs",
+    "cashClosedNote": "Paid to you in person. Finished work still waiting for the customer to confirm is not counted.",
+    "rows": "Jobs this month",
+    "cash": "Cash the customer pays you in person",
+    "fee": "Fee you paid",
+    "refundPending": "Refund in progress",
+    "refundDone": "Refunded",
+    "cancelled": "Cancelled: not counted in the cash",
+    "openJob": "Open in My jobs",
+    "receipt": "Receipt",
+    "truncated": "Showing the newest 200 jobs of this month. The totals cover every job.",
+    "empty": {
+      "lead": "Nothing yet",
+      "title": "No jobs in this month",
+      "body": "Jobs you unlock appear here with their cash and fees.",
+      "action": "Find requests"
+    },
+    "error": {
+      "title": "Jobs and fees could not load",
+      "body": "Nothing changed. Try again in a moment."
+    }
   }
 }

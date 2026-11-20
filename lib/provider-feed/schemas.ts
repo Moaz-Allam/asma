@@ -2,6 +2,8 @@ import 'server-only';
 
 import { z } from 'zod';
 
+import { REQUEST_STATUSES } from '@/lib/requests/schemas';
+
 import { APPLICATION_STATUSES } from './constants';
 
 /**
@@ -163,3 +165,51 @@ export const ApplyResult = z.discriminatedUnion('status', [
   z.object({ status: z.literal('ok'), replayed: z.boolean(), application: OwnApplication }),
   z.object({ status: z.literal('refused'), code: z.enum(['message_invalid', 'contact_info_in_message']) }),
 ]);
+
+/**
+ * Spec 0011-15 R-9: one row of the provider's jobs and fees history. Money only: no name, phone, address,
+ * district or note, so a key the function starts sending by mistake fails the parse.
+ */
+export const HistoryRow = z
+  .object({
+    application_id: z.string().uuid(),
+    request_id: z.string().uuid(),
+    scheduled_start_at: Instant,
+    service_name: Localized.nullable(),
+    application_status: z.enum(APPLICATION_STATUSES),
+    request_status: z.enum(REQUEST_STATUSES).nullable(),
+    cash_due: Minor.nonnegative(),
+    fee_amount: Minor.nonnegative(),
+    receipt_id: z.string().uuid().nullable(),
+    refund_state: z.enum(['none', 'pending', 'done']),
+    refund_amount: Minor.positive().nullable(),
+  })
+  .strict();
+export type HistoryRow = z.infer<typeof HistoryRow>;
+
+const MonthStart = z.string().regex(/^\d{4}-\d{2}-01$/);
+
+/** Spec 0011-15 R-5, X-3, X-4: the whole month's figures, summed in Postgres. None is a balance (rule 9). */
+export const HistoryTotals = z
+  .object({
+    jobs: z.number().int().nonnegative(),
+    fees_paid: Minor.nonnegative(),
+    refunds: Minor.nonnegative(),
+    net_fees: Minor,
+    cash_closed: Minor.nonnegative(),
+  })
+  .strict();
+export type HistoryTotals = z.infer<typeof HistoryTotals>;
+
+export const History = z
+  .object({
+    month: MonthStart,
+    timezone: z.string().min(1),
+    currency: z.enum(['TRY', 'SAR']),
+    months: z.array(MonthStart).min(1),
+    totals: HistoryTotals,
+    truncated: z.boolean(),
+    rows: z.array(HistoryRow).max(200),
+  })
+  .strict();
+export type History = z.infer<typeof History>;

@@ -35,6 +35,8 @@ export const CLIENT_NAMESPACES = [
   // Spec 0011-14 AC-4 to AC-7: the report form, the warning banner, admin's handle form and photo button.
   'Reports',
   'AdminReports',
+  // Spec 0011-15 X-12: the header reads the history's menu label from `History.nav`.
+  'History',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */

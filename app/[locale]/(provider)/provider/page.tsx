@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { guardPage } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
-import { PROVIDER_LINKS } from '@/lib/navigation/menus';
+import { PROVIDER_LINKS, menuLabelKey } from '@/lib/navigation/menus';
 import { getProviderFile, getStanding } from '@/lib/provider/queries';
 import { loadHomeCounts } from '@/lib/provider-feed';
 
@@ -26,7 +26,7 @@ export default async function Page({ params }: Props) {
   const t = await getTranslations('Provider.home');
   const tHomes = await getTranslations('Homes');
   const tFeed = await getTranslations('ProviderFeed');
-  const tNav = await getTranslations('Nav');
+  const label = await getTranslations();
 
   const links = (
     <nav aria-label={tFeed('home.links')} className="lg:hidden">
@@ -37,7 +37,7 @@ export default async function Page({ params }: Props) {
               href={href}
               className="inline-flex min-h-11 items-center rounded-full bg-surface-secondary px-5.5 py-3 text-btn-sm text-text-primary"
             >
-              {tNav(key)}
+              {label(menuLabelKey(key))}
             </Link>
           </li>
         ))}

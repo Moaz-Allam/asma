@@ -585,6 +585,8 @@ SELECT set_eq(
             ('public.pay_commission(uuid, text, text)'),
             ('public.pay_provider_fee(uuid, text, text)'),
             ('public.provider_jobs(text, timestamp with time zone, uuid)'),
+            -- Spec 0011-15: the provider's own jobs and fees history, read only.
+            ('public.provider_history(date)'),
             ('public.preview_pricing_formula(uuid, bigint, jsonb, uuid, uuid[], jsonb)'),
             ('public.provider_may_store(text, text)'),
             ('public.public_region_info()'),
