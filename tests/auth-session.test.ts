@@ -47,17 +47,53 @@ beforeEach(() => {
 describe('getSessionUser', () => {
   it('reads the role and the region from app_metadata', async () => {
     asUser({ role: 'provider', region: 'TR' });
-    expect(await getSessionUser()).toEqual({ id: 'u1', role: 'provider', region: 'TR' });
+    expect(await getSessionUser()).toEqual({
+      id: 'u1',
+      role: 'provider',
+      region: 'TR',
+      hasPassword: false,
+      passwordChangedAt: null,
+    });
   });
 
   it('has no role before onboarding', async () => {
     asUser({ provider: 'phone' });
-    expect(await getSessionUser()).toEqual({ id: 'u1', role: null, region: null });
+    expect(await getSessionUser()).toEqual({
+      id: 'u1',
+      role: null,
+      region: null,
+      hasPassword: false,
+      passwordChangedAt: null,
+    });
   });
 
   it('refuses an unknown role and a region it does not know', async () => {
     asUser({ role: 'superuser', region: 'XX' });
-    expect(await getSessionUser()).toEqual({ id: 'u1', role: null, region: null });
+    expect(await getSessionUser()).toEqual({
+      id: 'u1',
+      role: null,
+      region: null,
+      hasPassword: false,
+      passwordChangedAt: null,
+    });
+  });
+
+  it('reads has_password and password_changed_at, written only by password_guard (spec 0012 AC-4, AC-7)', async () => {
+    asUser({
+      role: 'customer',
+      region: 'TR',
+      has_password: true,
+      password_changed_at: '2026-11-20T10:00:00+00:00',
+    });
+    expect(await getSessionUser()).toMatchObject({
+      hasPassword: true,
+      passwordChangedAt: '2026-11-20T10:00:00+00:00',
+    });
+  });
+
+  it('counts anything but a boolean true as no password', async () => {
+    asUser({ role: 'customer', region: 'TR', has_password: 'true', password_changed_at: 5 });
+    expect(await getSessionUser()).toMatchObject({ hasPassword: false, passwordChangedAt: null });
   });
 
   it('is null with no session', async () => {
