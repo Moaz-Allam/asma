@@ -185,10 +185,28 @@
       "bot_unavailable": "[tr] The security check could not load. Nothing was sent. Check your connection and try again.",
       "send_failed": "[tr] We could not send the code. Nothing changed. Try again in a moment.",
       "network": "[tr] We could not reach the server. Nothing changed. Check your connection and try again.",
-      "wrong_or_expired": "[tr] This code is wrong or has expired. Check it, or ask for a new code."
+      "wrong_or_expired": "[tr] This code is wrong or has expired. Check it, or ask for a new code.",
+      "bad_credentials": "[tr] That phone and password do not match. Check them, or reset your password with a code.",
+      "password_empty": "[tr] Enter your password."
     },
     "botRetry": "[tr] Try again",
-    "help": "[tr] Need help? Message us on WhatsApp"
+    "help": "[tr] Need help? Message us on WhatsApp",
+    "havePassword": "[tr] I have a password",
+    "reset": {
+      "title": "[tr] Reset your password",
+      "intro": "[tr] Enter your mobile number. We will send you a code, then you choose a new password."
+    },
+    "password": {
+      "title": "[tr] Welcome back",
+      "intro": "[tr] Sign in with your mobile number and your password.",
+      "label": "[tr] Password",
+      "show": "[tr] Show password",
+      "hide": "[tr] Hide password",
+      "submit": "[tr] Sign in",
+      "submitting": "[tr] Signing in…",
+      "forgot": "[tr] Forgot your password?",
+      "newHere": "[tr] New here? Create an account"
+    }
   },
   "Onboarding": {
     "title": "[tr] How will you use Aldebyani?",
@@ -297,6 +315,50 @@
         "action_failed": "[tr] Something went wrong. Please try again.",
         "unauthorized": "[tr] Your session ended. Sign in again.",
         "forbidden": "[tr] Your session ended. Sign in again."
+      }
+    },
+    "password": {
+      "sectionTitle": "[tr] Password",
+      "reminder": "[tr] You have not set a password yet. Set one, and sign in without waiting for a code.",
+      "reminderLink": "[tr] Set a password",
+      "lastChanged": "[tr] Last changed {when}.",
+      "lastChangedUnknown": "[tr] Your password is set.",
+      "firstTitle": "[tr] Choose a password",
+      "firstIntro": "[tr] Your phone is confirmed. From now on you sign in with your phone and this password.",
+      "resetTitle": "[tr] Choose a new password",
+      "resetIntro": "[tr] A code confirmed your phone, so you do not need your old password. The new one replaces it.",
+      "rules": "[tr] At least 10 characters, and at most about 72 Latin letters or about 36 Arabic letters. Avoid your phone number and common passwords.",
+      "currentLabel": "[tr] Current password",
+      "newLabel": "[tr] New password",
+      "repeatLabel": "[tr] Repeat the new password",
+      "show": "[tr] Show password",
+      "hide": "[tr] Hide password",
+      "save": "[tr] Save password",
+      "saveReset": "[tr] Save the new password",
+      "saving": "[tr] Saving…",
+      "change": "[tr] Change password",
+      "changed": "[tr] Your password is changed. Your other devices are signed out.",
+      "othersLeft": "[tr] Your password is saved, but other devices may still be signed in. Sign out on them yourself.",
+      "continue": "[tr] Continue",
+      "forgot": "[tr] Forgot it? Reset it with a code",
+      "codeAgain": "[tr] Sign in again with a code",
+      "problems": {
+        "too_short": "[tr] Use at least 10 characters.",
+        "too_long": "[tr] This is too long. Use at most about 72 Latin letters or about 36 Arabic letters.",
+        "only_digits": "[tr] Use more than digits: add letters or symbols.",
+        "one_character": "[tr] Do not repeat one character.",
+        "has_phone": "[tr] Do not use your phone number in your password.",
+        "common": "[tr] This password is too common. Choose a less common one.",
+        "mismatch": "[tr] The two new passwords do not match."
+      },
+      "errors": {
+        "weak_password": "[tr] This password is too weak or too well known. Choose a longer or less common one.",
+        "same_password": "[tr] This is already your password. Choose a new one.",
+        "reauth_needed": "[tr] Sign in again with a code to continue.",
+        "network": "[tr] We could not reach the server. Nothing changed. Check your connection and try again.",
+        "bad_credentials": "[tr] The current password is not right.",
+        "bot_check_failed": "[tr] The security check did not pass. Try again.",
+        "limit_ip": "[tr] Too many attempts from this connection. Wait a few minutes and try again."
       }
     }
   },
@@ -1723,6 +1785,12 @@
       "subject": "[draft] [tr] New problem report: {service}",
       "lead": "[draft] [tr] A customer or provider reported a problem. Open the report to review it.",
       "action": "[draft] [tr] Open the report"
+    },
+    "password_changed": {
+      "subject": "[draft] [tr] Your password was changed",
+      "lead": "[draft] [tr] The password of your Aldebyani account was changed on {when}.",
+      "notYou": "[draft] [tr] If this was not you, reset your password with an SMS code now, then contact our support.",
+      "action": "[draft] [tr] Reset my password"
     }
   },
   "Reports": {

@@ -68,6 +68,7 @@ function context(
       carried: true,
       token: template === 'confirm_email' ? TOKEN : null,
       ...(REPORT_TEMPLATES.has(template) ? { report_id: REPORT, reason: 'poor_work' as const } : {}),
+      ...(template === 'password_changed' ? { changed_at: '2026-11-20T09:30:00+00:00' } : {}),
     },
   };
 }
@@ -75,7 +76,7 @@ function context(
 const CASES = EMAIL_TEMPLATES.flatMap((template) =>
   EMAIL_LOCALES.flatMap((locale) => {
     const sides: Array<'customer' | 'provider' | null> =
-      template === 'report_new_admin'
+      template === 'report_new_admin' || template === 'password_changed'
         ? [null]
         : PROVIDER_TEMPLATES.has(template)
           ? ['provider']
@@ -95,7 +96,7 @@ const CASES = EMAIL_TEMPLATES.flatMap((template) =>
 );
 
 const HREF = new RegExp(
-  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|account|admin/reports/${REPORT}|account/email/confirm\\?t=${TOKEN})$`,
+  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|account|admin/reports/${REPORT}|account/email/confirm\\?t=${TOKEN}|login\\?mode=code&reset=1)$`,
 );
 
 describe('every template renders in every locale (AC-2)', () => {
@@ -159,6 +160,16 @@ describe('the links and lines of AC-5', () => {
     expect(href('report_new_admin', null)).toBe(`${ORIGIN}/en/admin/reports/${REPORT}`);
     expect(href('report_received', 'customer')).toBe(`${ORIGIN}/en/requests/${REQUEST}`);
     expect(href('report_handled', 'provider')).toBe(`${ORIGIN}/en/provider/applications`);
+  });
+
+  it('a changed password links the reset by code and says when, in the region time zone (spec 0012 AC-10)', () => {
+    expect(href('password_changed', null, { request_id: null })).toBe(
+      `${ORIGIN}/en/login?mode=code&amp;reset=1`,
+    );
+    const base = context('password_changed', 'en', null);
+    const mail = renderEmail({ ...base, values: { ...base.values, request_id: null } }, ORIGIN);
+    expect(mail.text).toContain('12:30');
+    expect(mail.text).toContain('SMS code');
   });
 
   it('the confirmation links the confirm page with the token', () => {

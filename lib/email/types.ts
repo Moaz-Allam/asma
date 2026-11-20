@@ -30,6 +30,8 @@ export const EMAIL_TEMPLATES = [
   'report_received',
   'report_new_admin',
   'report_handled',
+  // Spec 0012 AC-10.
+  'password_changed',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -64,6 +66,8 @@ export const EmailValuesSchema = z
       .nullable(),
     // Spec 0011-14 X-10: the report mails only.
     report_id: id.nullable().optional(),
+    // Spec 0012 AC-10: password_changed only, the change's time.
+    changed_at: z.string().min(1).nullable().optional(),
     reason: z
       .enum([
         'no_show',

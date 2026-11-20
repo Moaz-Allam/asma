@@ -27,7 +27,7 @@ const SDK_PROPS = {
 };
 
 describe('the allow list (AC-7)', () => {
-  it('names exactly the 00b events, the sign in events of spec 0005 and the onboarding events of spec 0006, request_posted of spec 0008, and the two of spec 0009', () => {
+  it('names exactly the 00b events, the sign in events of spec 0005 and the onboarding events of spec 0006, request_posted of spec 0008, the two of spec 0009 and the three of spec 0012', () => {
     expect([...ANALYTICS_EVENTS].sort()).toEqual([
       '$pageview',
       'application_submitted',
@@ -41,6 +41,9 @@ describe('the allow list (AC-7)', () => {
       'job_started',
       'locale_changed',
       'onboarding_completed',
+      'password_set',
+      'password_sign_in_failed',
+      'password_signed_in',
       'payment_started',
       'payment_succeeded',
       'phone_rejected',

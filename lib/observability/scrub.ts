@@ -236,6 +236,8 @@ function foldKey(key: string): string {
 
 export function isPersonalKey(key: string): boolean {
   const k = foldKey(key);
+  // Spec 0012 AC-11: any key that names a password, wherever the word sits (`password_confirm`, `new_password_2`).
+  if (k.includes('password') || k.includes('passwd')) return true;
   return PERSONAL_KEYS.has(k) || PERSONAL_SUFFIXES.some((suffix) => k.endsWith(suffix));
 }
 

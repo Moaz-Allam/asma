@@ -185,10 +185,28 @@
       "bot_unavailable": "The security check could not load. Nothing was sent. Check your connection and try again.",
       "send_failed": "We could not send the code. Nothing changed. Try again in a moment.",
       "network": "We could not reach the server. Nothing changed. Check your connection and try again.",
-      "wrong_or_expired": "This code is wrong or has expired. Check it, or ask for a new code."
+      "wrong_or_expired": "This code is wrong or has expired. Check it, or ask for a new code.",
+      "bad_credentials": "That phone and password do not match. Check them, or reset your password with a code.",
+      "password_empty": "Enter your password."
     },
     "botRetry": "Try again",
-    "help": "Need help? Message us on WhatsApp"
+    "help": "Need help? Message us on WhatsApp",
+    "havePassword": "I have a password",
+    "reset": {
+      "title": "Reset your password",
+      "intro": "Enter your mobile number. We will send you a code, then you choose a new password."
+    },
+    "password": {
+      "title": "Welcome back",
+      "intro": "Sign in with your mobile number and your password.",
+      "label": "Password",
+      "show": "Show password",
+      "hide": "Hide password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "forgot": "Forgot your password?",
+      "newHere": "New here? Create an account"
+    }
   },
   "Onboarding": {
     "title": "How will you use Aldebyani?",
@@ -297,6 +315,50 @@
         "action_failed": "Something went wrong. Please try again.",
         "unauthorized": "Your session ended. Sign in again.",
         "forbidden": "Your session ended. Sign in again."
+      }
+    },
+    "password": {
+      "sectionTitle": "Password",
+      "reminder": "You have not set a password yet. Set one, and sign in without waiting for a code.",
+      "reminderLink": "Set a password",
+      "lastChanged": "Last changed {when}.",
+      "lastChangedUnknown": "Your password is set.",
+      "firstTitle": "Choose a password",
+      "firstIntro": "Your phone is confirmed. From now on you sign in with your phone and this password.",
+      "resetTitle": "Choose a new password",
+      "resetIntro": "A code confirmed your phone, so you do not need your old password. The new one replaces it.",
+      "rules": "At least 10 characters, and at most about 72 Latin letters or about 36 Arabic letters. Avoid your phone number and common passwords.",
+      "currentLabel": "Current password",
+      "newLabel": "New password",
+      "repeatLabel": "Repeat the new password",
+      "show": "Show password",
+      "hide": "Hide password",
+      "save": "Save password",
+      "saveReset": "Save the new password",
+      "saving": "Saving…",
+      "change": "Change password",
+      "changed": "Your password is changed. Your other devices are signed out.",
+      "othersLeft": "Your password is saved, but other devices may still be signed in. Sign out on them yourself.",
+      "continue": "Continue",
+      "forgot": "Forgot it? Reset it with a code",
+      "codeAgain": "Sign in again with a code",
+      "problems": {
+        "too_short": "Use at least 10 characters.",
+        "too_long": "This is too long. Use at most about 72 Latin letters or about 36 Arabic letters.",
+        "only_digits": "Use more than digits: add letters or symbols.",
+        "one_character": "Do not repeat one character.",
+        "has_phone": "Do not use your phone number in your password.",
+        "common": "This password is too common. Choose a less common one.",
+        "mismatch": "The two new passwords do not match."
+      },
+      "errors": {
+        "weak_password": "This password is too weak or too well known. Choose a longer or less common one.",
+        "same_password": "This is already your password. Choose a new one.",
+        "reauth_needed": "Sign in again with a code to continue.",
+        "network": "We could not reach the server. Nothing changed. Check your connection and try again.",
+        "bad_credentials": "The current password is not right.",
+        "bot_check_failed": "The security check did not pass. Try again.",
+        "limit_ip": "Too many attempts from this connection. Wait a few minutes and try again."
       }
     }
   },
@@ -1723,6 +1785,12 @@
       "subject": "[draft] New problem report: {service}",
       "lead": "[draft] A customer or provider reported a problem. Open the report to review it.",
       "action": "[draft] Open the report"
+    },
+    "password_changed": {
+      "subject": "[draft] Your password was changed",
+      "lead": "[draft] The password of your Aldebyani account was changed on {when}.",
+      "notYou": "[draft] If this was not you, reset your password with an SMS code now, then contact our support.",
+      "action": "[draft] Reset my password"
     }
   },
   "Reports": {

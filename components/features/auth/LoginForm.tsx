@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type FormEvent } from 'react';
 
+import { signOut } from '@/actions/account';
 import { BotCheck } from '@/components/features/auth/BotCheck';
 import { CodeField } from '@/components/features/auth/CodeField';
 import { PhoneField } from '@/components/features/auth/PhoneField';
@@ -20,7 +21,7 @@ import {
   type LoginStep,
 } from '@/lib/auth/login-step';
 import { checkCode, sendCode } from '@/lib/auth/otp-channel';
-import { getPathname } from '@/lib/i18n/navigation';
+import { getPathname, Link } from '@/lib/i18n/navigation';
 import { reportClientError } from '@/lib/observability/client';
 import { normalizeForRegions, type PhoneRejection } from '@/lib/region/phone';
 
@@ -29,6 +30,10 @@ import { normalizeForRegions, type PhoneRejection } from '@/lib/region/phone';
  * the same form, so nothing reveals whether a number has an account. The phone stays in client state,
  * never the URL. After a code, `/continue` decides where to land, with a full page load so the server
  * reads the new session.
+ *
+ * Spec 0012: this is the code mode (`?mode=code`), for a new account and a password reset (`reset=1`, kept with the
+ * phone in `login_step`, carried to `/continue`). A signed in visitor who asks for a reset is signed out on this
+ * device first (`signOutFirst`), so a reset always starts from a fresh code session.
  */
 
 type FormError = PhoneRejection | SendError | CheckError | null;
@@ -64,9 +69,20 @@ type Props = {
   next: string | null;
   asProvider: boolean;
   supportWhatsapp: string | null | undefined;
+  reset: boolean;
+  signOutFirst: boolean;
 };
 
-export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, supportWhatsapp }: Props) {
+export function LoginForm({
+  dialCodes,
+  siteKey,
+  nonce,
+  next,
+  asProvider,
+  supportWhatsapp,
+  reset: resetInUrl,
+  signOutFirst,
+}: Props) {
   const t = useTranslations('Login');
   const locale = useLocale();
   const dialCode = dialCodes[0] ?? '';
@@ -78,6 +94,8 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, support
   const step = chosenStep ?? (live ? 'code' : 'phone');
   const phone = live?.phone ?? '';
   const sentAt = live?.sentAt ?? 0;
+  const reset = resetInUrl || live?.reset === true;
+  const [signedOut, setSignedOut] = useState(!signOutFirst);
 
   const [code, setCode] = useState('');
   const [token, setToken] = useState<string | null>(null);
@@ -87,6 +105,19 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, support
   const [now, setNow] = useState(0);
 
   const onToken = useCallback((value: string | null) => setToken(value), []);
+
+  useEffect(() => {
+    if (!signOutFirst) return;
+    let active = true;
+    void signOut()
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setSignedOut(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [signOutFirst]);
 
   useEffect(() => {
     if (step !== 'code') return;
@@ -100,7 +131,7 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, support
   const waitSeconds = Math.max(0, RESEND_SECONDS - elapsed);
 
   async function send(target: string) {
-    if (!token) return;
+    if (!token || !signedOut) return;
     setBusy(true);
     setError(null);
     const result = await sendCode(target, token);
@@ -114,8 +145,9 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, support
     }
     const time = Date.now();
     track('code_requested', {});
-    saveLoginStep({ phone: target, sentAt: time });
-    setSent({ phone: target, sentAt: time });
+    const step = reset ? { phone: target, sentAt: time, reset: true } : { phone: target, sentAt: time };
+    saveLoginStep(step);
+    setSent(step);
     setCode('');
     setChosenStep('code');
   }
@@ -146,7 +178,11 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, support
     }
     track('code_verified', {}, { leaving: true });
     clearLoginStep();
-    const query = { ...(next ? { next } : {}), ...(asProvider ? { as: 'provider' } : {}) };
+    const query = {
+      ...(next ? { next } : {}),
+      ...(asProvider ? { as: 'provider' } : {}),
+      ...(reset ? { reset: '1' } : {}),
+    };
     window.location.assign(getPathname({ href: { pathname: '/continue', query }, locale }));
   }
 
@@ -185,8 +221,12 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, support
     <div className="flex flex-1 flex-col gap-4">
       {step === 'phone' ? (
         <form onSubmit={onSubmitPhone} noValidate className="flex flex-1 flex-col gap-4">
-          <h1 className="font-display text-title-s text-text-primary">{t('title')}</h1>
-          <p className="text-label leading-relaxed font-medium text-text-primary">{t('intro')}</p>
+          <h1 className="font-display text-title-s text-text-primary">
+            {reset ? t('reset.title') : t('title')}
+          </h1>
+          <p className="text-label leading-relaxed font-medium text-text-primary">
+            {reset ? t('reset.intro') : t('intro')}
+          </p>
           <div className="flex-1" />
           <PhoneField
             id="login-phone"
@@ -198,7 +238,7 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, support
             onChange={() => setError(null)}
           />
           {errorNote}
-          <Button type="submit" size="block" disabled={busy || !token}>
+          <Button type="submit" size="block" disabled={busy || !token || !signedOut}>
             {busy ? t('sending') : t('send')}
           </Button>
           {live ? (
@@ -255,6 +295,15 @@ export function LoginForm({ dialCodes, siteKey, nonce, next, asProvider, support
           )}
         </form>
       )}
+      <Link
+        href={{
+          pathname: '/login',
+          query: { ...(next ? { next } : {}), ...(asProvider ? { as: 'provider' } : {}) },
+        }}
+        className="self-start text-body-s font-semibold text-link underline underline-offset-4"
+      >
+        {t('havePassword')}
+      </Link>
       <BotCheck siteKey={siteKey} nonce={nonce} locale={locale} attempt={attempt} onToken={onToken} />
     </div>
   );

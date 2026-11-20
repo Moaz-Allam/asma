@@ -6,7 +6,8 @@ import { LOGIN_STEP_KEY, LOGIN_STEP_MS } from './limits';
  * window, so every touch is wrapped.
  */
 
-export type LoginStep = { phone: string; sentAt: number };
+/** `reset`: the code is for a password reset (spec 0012 AC-3), kept so a reload on the code step keeps it. */
+export type LoginStep = { phone: string; sentAt: number; reset?: boolean };
 
 /** The raw value, for `useSyncExternalStore`: a string stays equal between reads, an object would not. */
 export function rawLoginStep(): string | null {
@@ -21,9 +22,10 @@ export function parseLoginStep(raw: string | null, now = Date.now()): LoginStep 
   try {
     const stored: unknown = JSON.parse(raw ?? 'null');
     if (typeof stored !== 'object' || stored === null) return null;
-    const { phone, sentAt } = stored as Partial<LoginStep>;
+    const { phone, sentAt, reset } = stored as Partial<LoginStep>;
     if (typeof phone !== 'string' || typeof sentAt !== 'number') return null;
-    return now - sentAt < LOGIN_STEP_MS ? { phone, sentAt } : null;
+    if (now - sentAt >= LOGIN_STEP_MS) return null;
+    return reset === true ? { phone, sentAt, reset } : { phone, sentAt };
   } catch {
     return null;
   }

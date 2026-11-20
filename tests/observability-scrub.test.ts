@@ -155,6 +155,30 @@ describe('isPersonalKey: the keys whose values never leave', () => {
   ])('%s is not', (key) => {
     expect(isPersonalKey(key)).toBe(false);
   });
+
+  // Spec 0012 AC-11: any key named like a password, wherever the word sits.
+  it.each([
+    'password_confirm',
+    'password_hash',
+    'passwordRepeat',
+    'newPassword2',
+    'current-password',
+    'PASSWORD',
+    'user.password.new',
+    'passwd',
+  ])('%s names a password, so it is personal', (key) => {
+    expect(isPersonalKey(key)).toBe(true);
+  });
+
+  it('drops a password value from an event, at any depth', () => {
+    const event = scrubEvent({
+      extra: {
+        form: { password_confirm: 'kırmızı-elma-2026', newPassword: 'kırmızı-elma-2026', kept: 'yes' },
+      },
+    } as Parameters<typeof scrubEvent>[0]);
+    expect(JSON.stringify(event)).not.toContain('kırmızı-elma-2026');
+    expect(JSON.stringify(event)).toContain('yes');
+  });
 });
 
 // ── URLs ─────────────────────────────────────────────────────────────────────────────────────

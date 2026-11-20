@@ -1,12 +1,16 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { headers } from 'next/headers';
 
 import { AccountForm } from '@/components/features/account/AccountForm';
 import { NotificationTable } from '@/components/features/account/NotificationTable';
+import { PasswordSection } from '@/components/features/account/PasswordSection';
 import { SignOutCard } from '@/components/features/account/SignOutCard';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
-import { getEmailStanding, getProfile } from '@/lib/account/profile';
+import { passwordSectionState } from '@/lib/account/password-section';
+import { getEmailStanding, getProfile, getRegionTimezone } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
+import { getEnv } from '@/lib/env';
 import { Link, redirect } from '@/lib/i18n/navigation';
 import { getTurnedOffTopics } from '@/lib/notifications/preferences';
 import { getStanding } from '@/lib/provider/queries';
@@ -16,7 +20,7 @@ type Props = { params: Promise<{ locale: string }> };
 
 /**
  * `s12`, `p16`, for every role (spec 0005 AC-19, AC-32). No activity tiles before positions 04 and 12. An
- * approved provider is warned before a rename (spec 0006 AC-12).
+ * approved provider is warned before a rename (spec 0006 AC-12). Spec 0012 AC-4, AC-7: the Password section.
  */
 export default async function AccountPage({ params }: Props) {
   const { locale } = await params;
@@ -32,6 +36,13 @@ export default async function AccountPage({ params }: Props) {
   const emailsEnabled = await getEmailStanding(user.id)
     .then((standing) => standing.emailsEnabled)
     .catch(() => false);
+  const passwordState = passwordSectionState({
+    hasPassword: user.hasPassword,
+    passwordChangedAt: user.passwordChangedAt,
+    timezone: user.hasPassword ? await getRegionTimezone(user.region) : null,
+    locale,
+  });
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
 
   return (
     <div className="grid items-start gap-3.5 lg:grid-cols-account">
@@ -57,6 +68,12 @@ export default async function AccountPage({ params }: Props) {
             </Button>
           </section>
         ) : null}
+        <PasswordSection
+          state={passwordState}
+          phone={profile.phone}
+          siteKey={getEnv().NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+          nonce={nonce}
+        />
         <SignOutCard />
       </div>
     </div>

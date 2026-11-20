@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -228,9 +228,16 @@ describe('the lists the database and the code share', () => {
   });
 
   it('queue_email knows every template lib/email renders (X-9)', () => {
+    // The latest body: spec 0012 replaced it with password_changed.
+    const latest = readdirSync('supabase/migrations')
+      .filter((name) => name.endsWith('.sql'))
+      .sort()
+      .map((name) => readFileSync(`supabase/migrations/${name}`, 'utf8'))
+      .filter((sql) => sql.includes('create or replace function public.queue_email('))
+      .at(-1);
     const body =
       /create or replace function public\.queue_email[\s\S]*?p_template not in \(([\s\S]*?)\) then/.exec(
-        MIGRATION,
+        latest ?? '',
       );
     const sql = [...(body?.[1] ?? '').matchAll(/'([a-z_]+)'/g)].map((x) => x[1]);
     expect(sql.sort()).toEqual([...EMAIL_TEMPLATES].sort());
