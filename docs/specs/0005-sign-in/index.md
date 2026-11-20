@@ -2,6 +2,8 @@
 
 **Date**: 2026-10-31
 **Status**: Accepted (confirmed by the owner 2026-10-31, after a cross check on a second model)
+**Amended by**: [0012](../0012-phone-password-sign-in/index.md) (2026-11-20, D199): the daily sign in becomes phone
+and password, and AC-3's "no account holds a password" becomes "no password before a code proves the phone".
 
 ## Summary
 
