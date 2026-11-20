@@ -283,8 +283,9 @@ SELECT is(public.provider_home_counts() -> 'selected', '0', 'and counts none cho
 RESET ROLE;
 
 -- ── the guard on the three columns (AC-7) ────────────────────────────────────
-SELECT throws_ok($$ UPDATE public.requests SET payment_deadline = payment_deadline + interval '1 hour' WHERE id = pg_temp.r(1) $$,
-  'P0001', 'request_immutable', 'the deadline never changes once set, even as postgres');
+-- Spec 0011-16 R-6 lets admin's extension move it later, within a band, once per pick (supabase/tests/33); never earlier.
+SELECT throws_ok($$ UPDATE public.requests SET payment_deadline = payment_deadline - interval '1 minute' WHERE id = pg_temp.r(1) $$,
+  'P0001', 'request_immutable', 'the deadline never moves earlier once set, even as postgres');
 SELECT throws_ok($$ UPDATE public.requests SET selected_application_id = pg_temp.app(1, 'a2') WHERE id = pg_temp.r(1) $$,
   'P0001', 'request_immutable', 'nor the chosen offer');
 SELECT throws_ok($$ UPDATE public.requests SET selected_at = now(), selected_application_id = pg_temp.app(2, 'a2'), payment_deadline = now() WHERE id = pg_temp.r(2) $$,

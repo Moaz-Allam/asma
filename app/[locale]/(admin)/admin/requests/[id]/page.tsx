@@ -2,10 +2,16 @@ import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { AdminReasonAction } from '@/components/features/admin/requests/AdminReasonAction';
+import {
+  AdminAddressButton,
+  AdminCancelAction,
+  AdminExtendAction,
+} from '@/components/features/admin/requests/AdminRequestActions';
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusChip, type ChipTone } from '@/components/shared/StatusChip';
 import { loadAdminRequest } from '@/lib/admin-requests';
+import { adminMayCancel, extendableDeadline } from '@/lib/admin-requests/constants';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { instantLabel, regionDefaultLocale } from '@/lib/requests/view';
@@ -28,7 +34,9 @@ const REVEALED = ['UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION', 'COMPLETED
  * One request as admin reads it (spec 0011-12 AC-12): the summary without the address, the pick and past picks, the
  * fees, refunds, ledger lines, deadline flags and the audit timeline, with refund by hand (AC-8) and a refused refund
  * recorded as done by hand (AC-9). `admin_request_detail` checks `is_admin()` again; a malformed or unknown id is
- * 404. Status and account codes are shown as the data they are.
+ * 404. Status and account codes are shown as the data they are. Spec 0011-16 adds the actions: cancel with an
+ * attribution (R-3), extend the deadline the state allows (R-5), the street line on click once revealed (R-8), and a
+ * Clear button on each open flag (R-7). The line is never read here: only the client component that asks holds it.
  */
 export default async function Page({ params }: Props) {
   const { locale, id } = await params;
@@ -49,6 +57,21 @@ export default async function Page({ params }: Props) {
     if (fee.kind === 'commission') return request.status === 'CANCELLED' || REVEALED.includes(request.status);
     return applications.some((a) => a.id === fee.application_id && a.unlocked_at !== null);
   };
+
+  const pick = applications.find((a) => a.selected) ?? null;
+  const which = extendableDeadline(request.status, pick !== null);
+  const whichDeadline =
+    which === 'payment'
+      ? request.payment_deadline
+      : which === 'fee'
+        ? request.fee_deadline
+        : which === 'confirm'
+          ? request.confirm_deadline
+          : null;
+  const paidFees = fees
+    .filter((fee) => fee.status === 'paid')
+    .map(({ id: feeId, kind, amount, currency }) => ({ id: feeId, kind, amount, currency }));
+  const revealed = pick?.unlocked_at != null;
 
   const section = 'flex flex-col gap-3 rounded-block bg-surface-secondary p-5';
   const heading = 'text-meta font-bold text-text-secondary';
@@ -105,6 +128,12 @@ export default async function Page({ params }: Props) {
               {t('deadlineLine', { pay: at(request.payment_deadline), fee: at(request.fee_deadline) })}
             </dd>
           </div>
+          {request.confirm_deadline ? (
+            <div className={row}>
+              <dt className="text-text-secondary">{t('confirmBy')}</dt>
+              <dd className="text-text-primary">{at(request.confirm_deadline)}</dd>
+            </div>
+          ) : null}
           {request.cancelled_at ? (
             <div className={row}>
               <dt className="text-text-secondary">{t('cancelled')}</dt>
@@ -124,6 +153,23 @@ export default async function Page({ params }: Props) {
           ) : null}
         </dl>
       </section>
+
+      {adminMayCancel(request.status) || which || revealed ? (
+        <section className={section} aria-labelledby="req-actions">
+          <h2 id="req-actions" className={heading}>
+            {t('actions')}
+          </h2>
+          <div className="flex flex-wrap items-start gap-2.5">
+            {which && whichDeadline ? (
+              <AdminExtendAction requestId={request.id} which={which} deadlineLabel={at(whichDeadline)} />
+            ) : null}
+            {adminMayCancel(request.status) ? (
+              <AdminCancelAction requestId={request.id} paidFees={paidFees} />
+            ) : null}
+            {revealed ? <AdminAddressButton requestId={request.id} /> : null}
+          </div>
+        </section>
+      ) : null}
 
       <section className={section} aria-labelledby="req-picks">
         <h2 id="req-picks" className={heading}>
@@ -269,12 +315,20 @@ export default async function Page({ params }: Props) {
         ) : (
           <ul className="flex flex-col gap-2">
             {flags.map((flag) => (
-              <li key={flag.id} className={row}>
-                <span className="text-text-primary">{t(`flag.${flag.kind}`)}</span>
-                <span className="text-text-secondary">
-                  {at(flag.raised_at)}
-                  {flag.cleared_at ? ` → ${at(flag.cleared_at)}` : ` · ${t('flagOpen')}`}
-                </span>
+              <li key={flag.id} className="flex flex-col gap-2">
+                <div className={row}>
+                  <span className="text-text-primary">{t(`flag.${flag.kind}`)}</span>
+                  <span className="text-text-secondary">
+                    {at(flag.raised_at)}
+                    {flag.cleared_at ? ` → ${at(flag.cleared_at)}` : ` · ${t('flagOpen')}`}
+                  </span>
+                </div>
+                {flag.note && flag.note !== 'auto' ? (
+                  <p className="text-meta text-text-secondary">{flag.note}</p>
+                ) : null}
+                {flag.cleared_at ? null : (
+                  <AdminReasonAction mode="clear" targetId={flag.id} label={t('flagClear')} />
+                )}
               </li>
             ))}
           </ul>

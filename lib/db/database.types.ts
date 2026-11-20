@@ -120,8 +120,10 @@ export type Database = {
       applications: {
         Row: {
           created_at: string
+          fee_extended_at: string | null
           id: string
           message: string
+          payment_extended_at: string | null
           provider_fee_amount: number | null
           provider_fee_kind: string | null
           provider_id: string
@@ -133,8 +135,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          fee_extended_at?: string | null
           id?: string
           message: string
+          payment_extended_at?: string | null
           provider_fee_amount?: number | null
           provider_fee_kind?: string | null
           provider_id: string
@@ -146,8 +150,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          fee_extended_at?: string | null
           id?: string
           message?: string
+          payment_extended_at?: string | null
           provider_fee_amount?: number | null
           provider_fee_kind?: string | null
           provider_id?: string
@@ -994,6 +1000,103 @@ export type Database = {
           },
         ]
       }
+      problem_reports: {
+        Row: {
+          admin_note: string | null
+          against_id: string
+          created_at: string
+          fee_refund_id: string | null
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          outcome: string | null
+          reason: string
+          region: string
+          reporter_id: string
+          request_id: string
+          side: string
+          status: string
+          text: string
+        }
+        Insert: {
+          admin_note?: string | null
+          against_id: string
+          created_at?: string
+          fee_refund_id?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          outcome?: string | null
+          reason: string
+          region: string
+          reporter_id: string
+          request_id: string
+          side: string
+          status?: string
+          text: string
+        }
+        Update: {
+          admin_note?: string | null
+          against_id?: string
+          created_at?: string
+          fee_refund_id?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          outcome?: string | null
+          reason?: string
+          region?: string
+          reporter_id?: string
+          request_id?: string
+          side?: string
+          status?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "problem_reports_against_id_fkey"
+            columns: ["against_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "problem_reports_fee_refund_id_fkey"
+            columns: ["fee_refund_id"]
+            isOneToOne: false
+            referencedRelation: "fee_refunds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "problem_reports_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "problem_reports_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "problem_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "problem_reports_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1541,6 +1644,48 @@ export type Database = {
         }
         Relationships: []
       }
+      report_photos: {
+        Row: {
+          created_at: string
+          id: string
+          object_id: string
+          object_path: string
+          region: string
+          report_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          object_id: string
+          object_path: string
+          region: string
+          report_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          object_id?: string
+          object_path?: string
+          region?: string
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_photos_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "report_photos_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "problem_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_addresses: {
         Row: {
           created_at: string
@@ -1602,6 +1747,7 @@ export type Database = {
           closed_by: string | null
           commission_amount: number
           confirm_deadline: string | null
+          confirm_extended_at: string | null
           created_at: string
           currency: string
           customer_id: string
@@ -1636,6 +1782,7 @@ export type Database = {
           closed_by?: string | null
           commission_amount: number
           confirm_deadline?: string | null
+          confirm_extended_at?: string | null
           created_at?: string
           currency: string
           customer_id: string
@@ -1670,6 +1817,7 @@ export type Database = {
           closed_by?: string | null
           commission_amount?: number
           confirm_deadline?: string | null
+          confirm_extended_at?: string | null
           created_at?: string
           currency?: string
           customer_id?: string
@@ -1859,6 +2007,68 @@ export type Database = {
           },
         ]
       }
+      user_warnings: {
+        Row: {
+          acknowledged_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          reason: string
+          region: string
+          report_id: string | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          reason: string
+          region: string
+          report_id?: string | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          reason?: string
+          region?: string
+          report_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_warnings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_warnings_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "user_warnings_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "problem_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_warnings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zones: {
         Row: {
           active: boolean
@@ -1915,6 +2125,33 @@ export type Database = {
         Args: { p_attempt: string; p_fee: string }
         Returns: boolean
       }
+      acknowledge_warning: { Args: { p_warning_id: string }; Returns: Json }
+      add_report_photo: {
+        Args: { p_object_path: string; p_report_id: string }
+        Returns: Json
+      }
+      admin_cancel_request: {
+        Args: {
+          p_attributed_to: string
+          p_reason: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
+      admin_clear_flag: {
+        Args: { p_flag_id: string; p_note: string }
+        Returns: Json
+      }
+      admin_extend_deadline: {
+        Args: {
+          p_hours: number
+          p_reason: string
+          p_request_id: string
+          p_which: string
+        }
+        Returns: Json
+      }
+      admin_flags: { Args: { p_page: number }; Returns: Json }
       admin_mark_refund_done: {
         Args: { p_note: string; p_refund_id: string }
         Returns: Json
@@ -1927,35 +2164,28 @@ export type Database = {
         Args: { p_payment_id: string; p_reason: string }
         Returns: Json
       }
-      admin_request_detail: { Args: { p_request_id: string }; Returns: Json }
-      acknowledge_warning: { Args: { p_warning_id: string }; Returns: Json }
-      add_report_photo: {
-        Args: { p_object_path: string; p_report_id: string }
-        Returns: Json
-      }
       admin_report_detail: { Args: { p_report_id: string }; Returns: Json }
       admin_reports: { Args: { p_page: number; p_tab: string }; Returns: Json }
       admin_reports_open_count: { Args: never; Returns: number }
-      handle_report: {
+      admin_request_address: {
+        Args: { p_reason: string; p_request_id: string }
+        Returns: Json
+      }
+      admin_request_detail: { Args: { p_request_id: string }; Returns: Json }
+      admin_requests: {
         Args: {
-          p_note: string
-          p_outcome: string
-          p_refund_payment_id?: string | null
-          p_report_id: string
-          p_warning_reason?: string | null
+          p_from: string
+          p_has_flag: boolean
+          p_page: number
+          p_region: string
+          p_status: string
+          p_to: string
         }
         Returns: Json
       }
-      log_report_photo_view: { Args: { p_photo_id: string }; Returns: Json }
-      my_report: { Args: { p_request_id: string }; Returns: Json }
-      my_warning: { Args: never; Returns: Json }
-      open_report: {
-        Args: { p_reason: string; p_request_id: string; p_text: string }
+      admin_revenue: {
+        Args: { p_from: string; p_grain: string; p_to: string }
         Returns: Json
-      }
-      report_photo_allowed: {
-        Args: { p_name: string; p_write: boolean }
-        Returns: boolean
       }
       after_commission_paid: { Args: { p_fee: string }; Returns: undefined }
       after_provider_fee_paid: { Args: { p_fee: string }; Returns: undefined }
@@ -1999,6 +2229,7 @@ export type Database = {
           p_actor: string
           p_by: string
           p_cancel_reason: string
+          p_meta?: Json
           p_refund_reason: string
           p_request_id: string
         }
@@ -2137,6 +2368,10 @@ export type Database = {
       }
       expire_request: { Args: { p_request_id: string }; Returns: string }
       expire_windows: { Args: never; Returns: number }
+      extension_in_band: {
+        Args: { p_cap: string; p_new: string; p_old: string }
+        Returns: boolean
+      }
       fail_attempt: {
         Args: { p_attempt_id: string; p_reason: string }
         Returns: Json
@@ -2178,6 +2413,16 @@ export type Database = {
         Args: { p_key: string; p_region: string }
         Returns: number
       }
+      handle_report: {
+        Args: {
+          p_note: string
+          p_outcome: string
+          p_refund_payment_id?: string
+          p_report_id: string
+          p_warning_reason?: string
+        }
+        Returns: Json
+      }
       has_contact_info: { Args: { p_text: string }; Returns: boolean }
       health_ping: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
@@ -2185,8 +2430,10 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: {
           created_at: string
+          fee_extended_at: string | null
           id: string
           message: string
+          payment_extended_at: string | null
           provider_fee_amount: number | null
           provider_fee_kind: string | null
           provider_id: string
@@ -2231,6 +2478,7 @@ export type Database = {
         Args: { p_document_id: string; p_object_id: string }
         Returns: Json
       }
+      log_report_photo_view: { Args: { p_photo_id: string }; Returns: Json }
       mark_checkout_failed: {
         Args: { p_attempt_id: string; p_reason: string }
         Returns: Json
@@ -2244,6 +2492,8 @@ export type Database = {
       message_has_contact_info: { Args: { p_text: string }; Returns: boolean }
       my_checkout: { Args: { p_attempt_id: string }; Returns: Json }
       my_receipt: { Args: { p_receipt_id: string }; Returns: Json }
+      my_report: { Args: { p_request_id: string }; Returns: Json }
+      my_warning: { Args: never; Returns: Json }
       offer_card: {
         Args: {
           p_application: Database["public"]["Tables"]["applications"]["Row"]
@@ -2255,6 +2505,10 @@ export type Database = {
       open_fee: {
         Args: { p_kind: string; p_request_id: string }
         Returns: string
+      }
+      open_report: {
+        Args: { p_reason: string; p_request_id: string; p_text: string }
+        Returns: Json
       }
       outbox_health: { Args: never; Returns: Json }
       pay_commission: {
@@ -2625,6 +2879,39 @@ export type Database = {
       }
       reinstate_provider: { Args: { p_provider_id: string }; Returns: Json }
       relay_kick: { Args: { p_task: string }; Returns: number }
+      report_party: {
+        Args: {
+          p_request: Database["public"]["Tables"]["requests"]["Row"]
+          p_user: string
+        }
+        Returns: {
+          against_id: string
+          side: string
+        }[]
+      }
+      report_photo_allowed: {
+        Args: { p_name: string; p_write: boolean }
+        Returns: boolean
+      }
+      report_photo_name_ok: {
+        Args: {
+          p_name: string
+          p_report: Database["public"]["Tables"]["problem_reports"]["Row"]
+        }
+        Returns: boolean
+      }
+      report_photo_store_allowed: {
+        Args: { p_name: string; p_user: string }
+        Returns: boolean
+      }
+      report_settings: { Args: { p_region: string }; Returns: Json }
+      report_window_open: {
+        Args: {
+          p_request: Database["public"]["Tables"]["requests"]["Row"]
+          p_window_days: number
+        }
+        Returns: boolean
+      }
       request_catalog: { Args: never; Returns: Json }
       request_close_info: { Args: { p_request_id: string }; Returns: Json }
       request_contacts: { Args: { p_request_id: string }; Returns: Json }

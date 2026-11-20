@@ -8,21 +8,25 @@ import { cn } from '@/lib/utils';
 
 /**
  * The navy console rail from `lg` (`app-03`, ui-registry `AdminRail`, AC-13): built pages only, the active
- * one on a light pill, a count badge for files under review. No region switch, no console search.
+ * one on a light pill, count badges for files under review, open flags (spec 0011-16) and open reports. No region switch, no console search.
  */
 export function AdminRail({
   items,
   pending,
   reports = 0,
+  flags = 0,
 }: {
   items: readonly MenuItem[];
   pending: number;
   /** Spec 0011-14 AC-4: open reports. */
   reports?: number;
+  /** Spec 0011-16 R-12: open deadline flags. */
+  flags?: number;
 }) {
   const t = useTranslations('Nav');
   const tAdmin = useTranslations('AdminReview');
   const tReports = useTranslations('AdminReports');
+  const tFlags = useTranslations('AdminFlags');
   const pathname = usePathname();
 
   return (
@@ -58,6 +62,14 @@ export function AdminRail({
                       aria-label={tAdmin('pendingCount', { count: pending })}
                     >
                       {pending}
+                    </span>
+                  ) : null}
+                  {key === 'flags' && flags > 0 ? (
+                    <span
+                      className="flex min-w-7 items-center justify-center rounded-full bg-surface px-2 py-0.5 text-chip text-text-primary"
+                      aria-label={tFlags('openCount', { count: flags })}
+                    >
+                      {flags}
                     </span>
                   ) : null}
                   {key === 'reports' && reports > 0 ? (

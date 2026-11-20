@@ -159,3 +159,58 @@ export const AdminRefundResult = z
 export const AdminRefundDoneResult = z
   .object({ status: z.literal('ok'), replayed: z.boolean(), journal_id: Id.optional() })
   .strict();
+
+/** `admin_requests()` (spec 0011-16 R-2): one page of the list, no name, phone, address or note. */
+const ListRow = z
+  .object({
+    id: Id,
+    region: z.enum(['TR', 'KSA']),
+    status: z.enum(REQUEST_STATUSES),
+    service_name: Localized.nullable(),
+    zone_name: Localized.nullable(),
+    created_at: Instant,
+    scheduled_start_at: Instant,
+    fixed_price: Minor,
+    currency: Currency,
+    timezone: z.string(),
+    open_flags: z.array(z.enum(['start_late', 'completion_late'])),
+    open_report: z.boolean(),
+  })
+  .strict();
+
+export const AdminRequestList = z
+  .object({ rows: z.array(ListRow), total: z.number().int().nonnegative() })
+  .strict();
+export type AdminRequestList = z.infer<typeof AdminRequestList>;
+
+/** `admin_flags()` (R-7): open flags, oldest first. */
+const FlagRow = z
+  .object({
+    id: Id,
+    kind: z.enum(['start_late', 'completion_late']),
+    raised_at: Instant,
+    request_id: Id,
+    region: z.enum(['TR', 'KSA']),
+    request_status: z.enum(REQUEST_STATUSES),
+    timezone: z.string(),
+  })
+  .strict();
+
+export const AdminFlagQueue = z
+  .object({ rows: z.array(FlagRow), total: z.number().int().nonnegative() })
+  .strict();
+export type AdminFlagQueue = z.infer<typeof AdminFlagQueue>;
+
+/** `admin_cancel_request()` (R-3, X-9): ok, or a replay of admin's own cancel. Never a refund (row 11). */
+export const AdminCancelResult = z.object({ status: z.literal('ok'), replayed: z.boolean() }).strict();
+
+/** `admin_extend_deadline()` (R-5): the new deadline. */
+export const AdminExtendResult = z
+  .object({ status: z.literal('ok'), which: z.enum(['payment', 'fee', 'confirm']), deadline: Instant })
+  .strict();
+
+/** `admin_clear_flag()` (R-7). */
+export const AdminClearResult = z.object({ status: z.literal('ok'), flag_id: Id }).strict();
+
+/** `admin_request_address()` (R-8): the street line, only to the client component that asked. */
+export const AdminAddressResult = z.object({ line: z.string().min(1) }).strict();

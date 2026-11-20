@@ -150,7 +150,9 @@
     "feed": "Available requests",
     "applications": "My jobs",
     "setup": "Services and districts",
-    "reports": "Reports"
+    "reports": "Reports",
+    "flags": "Deadline flags",
+    "revenue": "Revenue"
   },
   "Login": {
     "title": "Welcome",
@@ -1547,8 +1549,68 @@
       "not_found": "Not found.",
       "invalid_state": "Not possible at this stage.",
       "reason_required": "Write 10 to 500 characters.",
-      "action_failed": "That did not work. Try again."
-    }
+      "action_failed": "That did not work. Try again.",
+      "validation_failed": "Check the values and try again.",
+      "not_cancellable": "This request can no longer be cancelled. Use a report to close it.",
+      "checkout_open": "A card page is open on this request. Wait for it to end, then try again.",
+      "already_extended": "This deadline was already extended once.",
+      "deadline_after_start": "That would pass the job start. Choose fewer hours.",
+      "already_cleared": "This flag is already cleared.",
+      "not_available": "The address shows only after contacts were shared."
+    },
+    "listTitle": "Requests",
+    "listIntro": "Every region, newest first. No names, phones or addresses here.",
+    "filters": "Filters",
+    "filterStatus": "Status",
+    "filterRegion": "Region",
+    "any": "Any",
+    "from": "Created from",
+    "to": "Created to",
+    "hasFlag": "Only with an open flag",
+    "apply": "Apply",
+    "reset": "Clear filters",
+    "total": "{count, plural, one {# request} other {# requests}}",
+    "listEmpty": "No requests match",
+    "listEmptyBody": "Change the filters or clear them.",
+    "invalidFilter": "These filters are not valid: the date range must go forward and be at most 366 days.",
+    "created": "Created {date}",
+    "openReport": "Open report",
+    "listPage": "Page {page} of {pages}",
+    "prev": "Previous",
+    "next": "Next",
+    "actions": "Actions",
+    "cancel": "Cancel request",
+    "cancelTitle": "Cancel this request?",
+    "cancelBody": "The request ends for both sides. Nothing is refunded by itself: refund each paid fee with Refund by hand.",
+    "cancelPaid": "Paid fees",
+    "cancelNoPaid": "No fee is paid.",
+    "cancelRefundLink": "Go to the fees to refund",
+    "attributedTo": "Attributed to",
+    "attribution": {
+      "customer": "Customer",
+      "provider": "Provider",
+      "platform": "Platform"
+    },
+    "cancelConfirm": "Cancel request",
+    "cancelDone": "Cancelled by admin.",
+    "extend": "Extend deadline",
+    "extendTitle": "Extend the deadline?",
+    "which": {
+      "payment": "Commission payment",
+      "fee": "Provider fee",
+      "confirm": "Confirmation"
+    },
+    "extendBody": "{which}, now due {deadline}. Once only, 1 to 48 hours from the later of now and this deadline. Payment and fee deadlines never pass the job start.",
+    "hours": "Hours",
+    "extendConfirm": "Extend",
+    "confirmBy": "Confirm by",
+    "address": "Show address",
+    "addressTitle": "Show the street address?",
+    "addressBody": "Each view is recorded with your reason. Use it only to help the customer or the provider.",
+    "addressConfirm": "Show",
+    "addressLine": "Street address",
+    "flagClear": "Clear flag",
+    "hoursHint": "Whole hours, {min} to {max}."
   },
   "Email": {
     "shell": {
@@ -1843,6 +1905,50 @@
     "error": {
       "title": "Jobs and fees could not load",
       "body": "Nothing changed. Try again in a moment."
+    }
+  },
+  "AdminFlags": {
+    "title": "Deadline flags",
+    "lead": "Jobs that did not start or finish on time, oldest first. Clear one once you have dealt with it.",
+    "openCount": "{count, plural, one {# open flag} other {# open flags}}",
+    "empty": "No open flags",
+    "emptyBody": "A flag shows here when a job runs late.",
+    "raised": "Raised {date}",
+    "openRequest": "Open request",
+    "clearTitle": "Clear this flag?",
+    "clearBody": "It will not be raised again for this request. Write what you did.",
+    "clearConfirm": "Clear flag",
+    "note": "Note",
+    "page": "Page {page} of {pages}",
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "AdminRevenue": {
+    "title": "Revenue",
+    "lead": "From the ledger, per region and currency. Late payments are shown apart and are never revenue.",
+    "from": "From",
+    "to": "To",
+    "grain": "Group by",
+    "grains": {
+      "day": "Day",
+      "month": "Month"
+    },
+    "show": "Show",
+    "download": "Download CSV",
+    "empty": "No ledger entries in this range",
+    "emptyBody": "Choose another range.",
+    "invalid": "The range must go forward: at most 92 days by day, or 24 months by month.",
+    "period": "Period",
+    "late": "Late payments (not revenue)",
+    "columns": {
+      "commission_revenue": "Commission revenue",
+      "provider_fee_revenue": "Provider fee revenue",
+      "commission_refunds": "Commission refunds",
+      "provider_fee_refunds": "Provider fee refunds",
+      "psp_fees": "PSP fees",
+      "net": "Net",
+      "late_received": "Late payments received",
+      "late_refunded": "Late payments refunded"
     }
   }
 }

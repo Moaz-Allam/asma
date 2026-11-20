@@ -1,7 +1,9 @@
 'use client';
 
 import {
+  AlarmClock,
   Calculator,
+  ChartColumn,
   CirclePlus,
   Flag,
   History,
@@ -34,6 +36,8 @@ const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
   applications: Send,
   setup: SlidersHorizontal,
   reports: Flag,
+  flags: AlarmClock,
+  revenue: ChartColumn,
   history: History,
 };
 

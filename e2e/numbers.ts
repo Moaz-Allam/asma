@@ -70,6 +70,11 @@ export const NUMBER = {
   // signs in.
   historyProvider: 42,
   historyCustomer: 43,
+  // Position 16 (spec 0011-16 AC-9): the admin who runs the operations; the customer and the provider are written by
+  // SQL and never sign in.
+  opsAdmin: 44,
+  opsCustomer: 45,
+  opsProvider: 46,
 } as const;
 
 /**

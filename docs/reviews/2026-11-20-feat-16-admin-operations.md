@@ -1,0 +1,38 @@
+# Review: feat/16-admin-operations
+
+- Branch: `feat/16-admin-operations`
+- PR: #54
+- Reviewer model: Sonnet (author: another model)
+- Date: 2026-11-20
+- Scope: `git diff master...HEAD` against spec 0011-16 (R-1 to R-14, X-1 to X-16, AC-1 to AC-9)
+
+## Spec conformance
+
+Every R rule, X rule and AC is built. Tests: pgTAP 33 (110 assertions: grants and refusals for customer, provider and anon, the matrix, list filters and paging, cancel with audit meta and replay, extension bands and guards, hand clear latch, address rule, revenue signs, grains and ranges), `tests/admin-operations.test.ts` (doors, actions, CSV route 401/403/400), `e2e/admin-operations.spec.ts` (list, extend, cancel, address, clear, CSV, axe at 390px, three locales). The migration reproduces 14's `requests_guard` and `applications_guard`, 12's `cancel_by_rule` and `raise_deadline_flags`, and 14's `queue_audit_email` with only the intended edits. Rail, doors and namespaces are in place; `ADMIN_LINKS` is derived from `ADMIN_RAIL`, so the phone links follow. messages ar/tr/en have the same keys for `AdminRequests`, `AdminFlags`, `AdminRevenue`, `Nav`.
+
+Not met or not tested (all minor):
+- X-10: only the mapping list is asserted (pgTAP 29); nothing proves `request.admin_cancelled` queues mail to the customer and the pick's provider with no refund line.
+- R-3 / X-2: no pgTAP case for an admin cancel of an OPEN request that carries a paid commission (`cancel_state` returns `COMMISSION_PAID`, so the `by_hand` row applies, not the new `OPEN` row).
+- X-14: `AGENTS.md` door table does not yet list `lib/admin-revenue/` (due at merge) or 16's new `lib/admin-requests` functions.
+
+## Findings
+
+| id | severity | file:line | finding | suggested fix | resolution |
+| --- | --- | --- | --- | --- | --- |
+| F1 | Minor | supabase/migrations/20261128090000_admin_operations.sql:766-789 | `confirm` branch does not check `confirm_deadline is not null`. If an `AWAITING_CONFIRMATION` request has no deadline (auto close off, which 13's mail map treats as possible), `v_new` becomes `now() + hours` and the update trips 14's guard (null to value only on Done), surfacing a raw `request_immutable` that the action maps to `action_failed`. The page hides the button, but the function itself should refuse cleanly. | Add `if v_req.confirm_deadline is null then raise exception 'invalid_state'` in the `confirm` branch (and a pgTAP case). | No change: `requests_awaiting_has_deadline` (11) makes `confirm_deadline` not null in AWAITING_CONFIRMATION, so the case cannot happen. |
+| F2 | Minor | components/features/admin/AdminShell.tsx:40-48 | `listFlags(1)` runs the full `admin_flags` page query (20 rows, three joins) on every admin page render just to read `total`. Reports use a count-only function. | Add `admin_flags_open_count()` (as `admin_reports_open_count`) or keep and accept; at least call it only on `lg`-visible shell if possible. | Kept: `admin_flags` reads at most 20 rows plus a count; a count function is a later tweak if the rail grows slow. |
+| F3 | Minor | components/features/admin/requests/AdminRequestActions.tsx:194-201 | `AdminExtendAction`: with hours outside 1 to 48 (or empty) the confirm click silently does nothing; only `aria-invalid` is set, no message. | Set the dialog error (a new `errors.hours` string in the 3 locales) instead of returning `undefined`. | Fixed: an hours hint (`AdminRequests.hoursHint`, three locales) under the field, shown as an alert while out of range. |
+| F4 | Minor | app/[locale]/(admin)/admin/requests/page.tsx:97-102,141; flags/page.tsx:62 | Raw status codes (`OPEN`, `COMMISSION_PAID`, ...) are the labels of the status filter options and the row chips, in all locales. Rule 10 (no hardcoded strings). 12's detail page shows them "as data", but a filter control's labels are UI. | Reuse an existing status label namespace for the `<option>` text (keep the value as the code). | Kept: codes are shown as the data they are, as on 12's request page (spec 0011-12 AC-12). |
+| F5 | Nit | lib/admin-revenue/schemas.ts:50-51; lib/admin-revenue/index.ts:13; lib/admin-requests/index.ts:30-40 | Unused exports: `MAX_DAYS`, `MAX_MONTHS`, `RevenueRow`, `RevenueColumn`, and the re-exports `AdminListRow`, `AdminFlagRow` have no importer. | Delete, or use `MAX_*` to pre-validate the range on the page and route. | Fixed: the unused exports are removed. |
+| F6 | Nit | app/api/admin/revenue/route.ts:5; app/[locale]/(admin)/admin/revenue/page.tsx:9 | `lib/admin-revenue` consumers import `dayFrom` from `lib/admin-requests/constants`, crossing one single door's internals into another. | Move `dayFrom` to a neutral module (for example `lib/admin-revenue/schemas.ts` or a shared date helper) and import from there in both doors. | Fixed: `dayFrom` moved to `lib/format/day.ts` (and bounded to the year 2000 on, security I-2). |
+| F7 | Nit | supabase/migrations/20261128090000_admin_operations.sql:620-648 | `admin_requests` evaluates the open flags array and the open report `exists` for every request before filtering and paging, and the day filter is not index friendly. Fine at launch volume. | Compute `open_report` only for the 20 returned rows; revisit if the table grows. | Kept: fine at launch volume; with security I-3 as a carry over. |
+| F8 | Nit | components/features/admin/requests/AdminRequestActions.tsx:238-246 | The street line stays on screen until navigation (also after a cancel from the same page) with no hide control, and no `dir="auto"` for a mixed script address. | Add a Hide button (clears state) and `dir="auto"` on the line. | Fixed: `dir="auto"` on the line. No Hide button: the line leaves on navigation. |
+| F9 | Nit | app/[locale]/(admin)/admin/requests/page.tsx:187; flags/page.tsx:77 | `?page=` beyond the last page shows an empty state with no pager (pages computed from `total`, so no Previous link). | Clamp `page` to `pages` or show a link to page 1. | Kept: an empty page past the end is harmless; pages are clamped to 10000 (security I-2). |
+| F10 | Minor | supabase/tests/29, supabase/tests/33 | Test gaps listed under Spec conformance (X-10 mail enqueue, cancel of an OPEN request with a carried commission). | Add one pgTAP case each. | Partly: pgTAP 33 already asserts both mails and no refund line (r1, r2); added the carried commission cancel case. |
+| F11 | Minor | AGENTS.md (door table) | X-14 requires `lib/admin-revenue/` in the door table at merge; 12's `lib/admin-requests` row still lists only `loadAdminRequest`, `refundFee`, `markRefundDone`. | Update at `/sync`. | At the merge, in the `docs(16)` PR. |
+
+No Major finding. Checked and clear: signs and grains of `admin_revenue` (credits negated, refunds and PSP fees summed, `refunds_due` apart, bigint sums, range checks inclusive and month-widened), extension write order (request first while the allowance is unused, then the allowance), guard carve outs (each requires status, pick tuple and the other deadline unchanged, band and allowance), X-2 `checkout_open` with null fee ids, X-9 replay, hand clear latch via `cleared_by`, the address audit row never holding the line, grants (`revoke ... from public, anon, authenticated, service_role` then `grant ... to authenticated` only on API functions), CSV by integer arithmetic with `no-store` and `AuthRefusal` mapped to 401/403, logical classes only, 44px targets on inputs and chips, client namespaces (`AdminFlags` added; `AdminRequests` already present), ui-registry rows for `AdminRequestActions`, the three pages, and the `AdminReasonAction` and `AdminRail` changes.
+
+## Verdict
+
+Approve with minor fixes: no Major findings; F1, F3, F4 and the test gaps (F10) are worth fixing before merge, the rest are optional.

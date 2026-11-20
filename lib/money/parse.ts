@@ -75,6 +75,20 @@ export function formatMinor(minor: number): string {
 }
 
 /**
+ * Integer minor units to decimal text with exactly two decimals, by integer arithmetic only (rule 4): `1200.00`,
+ * `-4.05`, `0.00`. For machine readers such as the revenue CSV (spec 0011-16 R-10, X-14), where `formatMinor`'s
+ * short form would vary in width.
+ */
+export function formatMinorFixed(minor: number): string {
+  if (!Number.isSafeInteger(minor)) {
+    throw new Error(`formatMinorFixed takes integer minor units, got ${minor}.`);
+  }
+  const digits = String(Math.abs(minor)).padStart(3, '0');
+  const text = `${digits.slice(0, -2)}.${digits.slice(-2)}`;
+  return minor < 0 ? `-${text}` : text;
+}
+
+/**
  * A factor (up to 4 decimals) or a zone multiplier (up to 2) as its canonical text, or null: no sign, no
  * leading zeros, no trailing zeros. It travels as a string to `numeric` and is never rounded here: one
  * decimal too many is refused. The range is the database's to check.

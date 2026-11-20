@@ -7,6 +7,7 @@ import { getProfile } from '@/lib/account/profile';
 import { getSessionUser } from '@/lib/auth/session';
 import { ADMIN_RAIL, menuFor } from '@/lib/navigation/menus';
 import { openReportsCount } from '@/lib/admin-reports';
+import { listFlags } from '@/lib/admin-requests';
 import { pendingCount } from '@/lib/provider/admin-queries';
 
 import { AdminRail } from './AdminRail';
@@ -36,11 +37,23 @@ export async function AdminShell({ children }: { children: ReactNode }) {
           return 0;
         })
       : 0;
+  // Spec 0011-16 R-12: the open flags on the rail; a failed count shows no badge and is reported.
+  const flags =
+    role === 'admin'
+      ? await listFlags(1)
+          .then((queue) => queue.total)
+          .catch((error: unknown) => {
+            reportServerError('adminShellFlags', error);
+            return 0;
+          })
+      : 0;
   const items = role ? menuFor(role) : [];
 
   return (
     <div className="lg:flex lg:min-h-dvh">
-      {role === 'admin' ? <AdminRail items={ADMIN_RAIL} pending={pending} reports={reports} /> : null}
+      {role === 'admin' ? (
+        <AdminRail items={ADMIN_RAIL} pending={pending} reports={reports} flags={flags} />
+      ) : null}
       <div className="min-w-0 flex-1">
         <SiteHeader
           user={role && profile ? { role, name: profile.fullName } : null}

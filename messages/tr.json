@@ -150,7 +150,9 @@
     "feed": "[tr] Available requests",
     "applications": "[tr] My jobs",
     "setup": "[tr] Services and districts",
-    "reports": "[tr] Reports"
+    "reports": "[tr] Reports",
+    "flags": "Gecikme işaretleri",
+    "revenue": "Gelir"
   },
   "Login": {
     "title": "[tr] Welcome",
@@ -1547,8 +1549,68 @@
       "not_found": "[tr] Not found.",
       "invalid_state": "[tr] Not possible at this stage.",
       "reason_required": "[tr] Write 10 to 500 characters.",
-      "action_failed": "[tr] That did not work. Try again."
-    }
+      "action_failed": "[tr] That did not work. Try again.",
+      "validation_failed": "Değerleri kontrol edip tekrar deneyin.",
+      "not_cancellable": "Bu talep artık iptal edilemez. Kapatmak için şikayet kullanın.",
+      "checkout_open": "Bu talepte açık bir kart sayfası var. Bitmesini bekleyip tekrar deneyin.",
+      "already_extended": "Bu süre zaten bir kez uzatıldı.",
+      "deadline_after_start": "Bu, işin başlangıcını geçer. Daha az saat seçin.",
+      "already_cleared": "Bu işaret zaten kaldırıldı.",
+      "not_available": "Adres yalnızca iletişim bilgileri paylaşıldıktan sonra görünür."
+    },
+    "listTitle": "Talepler",
+    "listIntro": "Tüm bölgeler, en yenisi önce. Burada ad, telefon ve adres yok.",
+    "filters": "Filtreler",
+    "filterStatus": "Durum",
+    "filterRegion": "Bölge",
+    "any": "Tümü",
+    "from": "Oluşturulma başlangıcı",
+    "to": "Oluşturulma bitişi",
+    "hasFlag": "Yalnızca açık işareti olanlar",
+    "apply": "Uygula",
+    "reset": "Filtreleri temizle",
+    "total": "{count, plural, one {# talep} other {# talep}}",
+    "listEmpty": "Eşleşen talep yok",
+    "listEmptyBody": "Filtreleri değiştirin ya da temizleyin.",
+    "invalidFilter": "Bu filtreler geçerli değil: tarih aralığı ileri gitmeli ve en fazla 366 gün olmalı.",
+    "created": "Oluşturuldu: {date}",
+    "openReport": "Açık şikayet",
+    "listPage": "Sayfa {page} / {pages}",
+    "prev": "Önceki",
+    "next": "Sonraki",
+    "actions": "İşlemler",
+    "cancel": "Talebi iptal et",
+    "cancelTitle": "Bu talep iptal edilsin mi?",
+    "cancelBody": "Talep iki taraf için de biter. Hiçbir şey kendiliğinden iade edilmez: ödenen her ücreti Elle iade et ile iade edin.",
+    "cancelPaid": "Ödenen ücretler",
+    "cancelNoPaid": "Ödenmiş ücret yok.",
+    "cancelRefundLink": "İade için ücretlere git",
+    "attributedTo": "Sorumlu taraf",
+    "attribution": {
+      "customer": "Müşteri",
+      "provider": "Hizmet veren",
+      "platform": "Platform"
+    },
+    "cancelConfirm": "Talebi iptal et",
+    "cancelDone": "Yönetici tarafından iptal edildi.",
+    "extend": "Süreyi uzat",
+    "extendTitle": "Süre uzatılsın mı?",
+    "which": {
+      "payment": "Komisyon ödemesi",
+      "fee": "Hizmet veren ücreti",
+      "confirm": "Onay"
+    },
+    "extendBody": "{which}, şu an son tarih {deadline}. Yalnızca bir kez, şimdiden ya da bu son tarihten (hangisi geçse) 1 ile 48 saat. Ödeme ve ücret süreleri işin başlangıcını asla geçmez.",
+    "hours": "Saat",
+    "extendConfirm": "Uzat",
+    "confirmBy": "Onay son tarihi",
+    "address": "Adresi göster",
+    "addressTitle": "Açık adres gösterilsin mi?",
+    "addressBody": "Her görüntüleme gerekçenizle kaydedilir. Yalnızca müşteriye ya da hizmet verene yardım için kullanın.",
+    "addressConfirm": "Göster",
+    "addressLine": "Açık adres",
+    "flagClear": "İşareti kaldır",
+    "hoursHint": "Tam saat, {min} ile {max} arası."
   },
   "Email": {
     "shell": {
@@ -1843,6 +1905,50 @@
     "error": {
       "title": "[tr] Jobs and fees could not load",
       "body": "[tr] Nothing changed. Try again in a moment."
+    }
+  },
+  "AdminFlags": {
+    "title": "Gecikme işaretleri",
+    "lead": "Zamanında başlamayan ya da bitmeyen işler, en eskisi önce. İlgilendikten sonra işareti kaldırın.",
+    "openCount": "{count, plural, one {# açık işaret} other {# açık işaret}}",
+    "empty": "Açık işaret yok",
+    "emptyBody": "Bir iş geciktiğinde işaret burada görünür.",
+    "raised": "İşaretlendi: {date}",
+    "openRequest": "Talebi aç",
+    "clearTitle": "Bu işaret kaldırılsın mı?",
+    "clearBody": "Bu talep için bir daha işaretlenmez. Ne yaptığınızı yazın.",
+    "clearConfirm": "İşareti kaldır",
+    "note": "Not",
+    "page": "Sayfa {page} / {pages}",
+    "prev": "Önceki",
+    "next": "Sonraki"
+  },
+  "AdminRevenue": {
+    "title": "Gelir",
+    "lead": "Defterden, bölge ve para birimine göre. Geç ödemeler ayrı gösterilir ve asla gelir sayılmaz.",
+    "from": "Başlangıç",
+    "to": "Bitiş",
+    "grain": "Gruplama",
+    "grains": {
+      "day": "Gün",
+      "month": "Ay"
+    },
+    "show": "Göster",
+    "download": "CSV indir",
+    "empty": "Bu aralıkta defter kaydı yok",
+    "emptyBody": "Başka bir aralık seçin.",
+    "invalid": "Aralık ileri gitmeli: günlükte en fazla 92 gün, aylıkta en fazla 24 ay.",
+    "period": "Dönem",
+    "late": "Geç ödemeler (gelir değil)",
+    "columns": {
+      "commission_revenue": "Komisyon geliri",
+      "provider_fee_revenue": "Hizmet veren ücreti geliri",
+      "commission_refunds": "Komisyon iadeleri",
+      "provider_fee_refunds": "Hizmet veren ücreti iadeleri",
+      "psp_fees": "Ödeme kuruluşu kesintileri",
+      "net": "Net",
+      "late_received": "Alınan geç ödemeler",
+      "late_refunded": "İade edilen geç ödemeler"
     }
   }
 }
