@@ -19,7 +19,11 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** Today as a UTC day, moved by `days`. Only a default for the form: Postgres buckets in each region's time zone. */
+/**
+ * A UTC day, moved by `days`. Only a default for the form: Postgres buckets in each region's time zone, and a region east
+ * of UTC (TR, KSA) is already on the next day for the last hours of the UTC day, so the default end is the next UTC
+ * day, the latest day any region can be on (found by the 17 CI run at 22:54 UTC, D208).
+ */
 function utcDay(days: number): string {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() + days);
@@ -42,7 +46,7 @@ export default async function Page({ params, searchParams }: Props) {
   const query = await searchParams;
   const grain: RevenueGrain = query.grain === 'month' ? 'month' : 'day';
   const from = dayFrom(typeof query.from === 'string' ? query.from : null) ?? utcDay(-29);
-  const to = dayFrom(typeof query.to === 'string' ? query.to : null) ?? utcDay(0);
+  const to = dayFrom(typeof query.to === 'string' ? query.to : null) ?? utcDay(1);
   const outcome = await loadRevenue({ from, to, grain });
   if (!outcome.ok && outcome.code !== 'validation_failed')
     throw new Error(`admin_revenue refused: ${outcome.code}`);
