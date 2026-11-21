@@ -11,6 +11,7 @@ export function PhoneField({
   dialCode,
   error,
   errorId,
+  autoComplete = 'tel-national',
   onChange,
 }: {
   id: string;
@@ -19,6 +20,11 @@ export function PhoneField({
   dialCode: string;
   error: boolean;
   errorId: string;
+  /**
+   * Spec 0012 AC-1: `username` beside a password, so password managers pair the two. Not `username tel`: the HTML
+   * autofill grammar takes one field name, and axe fails two (WCAG 1.3.5). `type="tel"` keeps the number keypad.
+   */
+  autoComplete?: string;
   onChange: () => void;
 }) {
   return (
@@ -36,7 +42,7 @@ export function PhoneField({
           name="phone"
           type="tel"
           inputMode="tel"
-          autoComplete="tel-national"
+          autoComplete={autoComplete}
           dir="ltr"
           placeholder={placeholder}
           aria-invalid={error}

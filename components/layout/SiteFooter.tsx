@@ -20,7 +20,7 @@ export function SiteFooter({ whatsapp }: { whatsapp: string | null | undefined }
         <Link href="/privacy" className={LINK}>
           {t('privacy')}
         </Link>
-        <Link href={{ pathname: '/login', query: { as: 'provider' } }} className={LINK}>
+        <Link href={{ pathname: '/login', query: { mode: 'code', as: 'provider' } }} className={LINK}>
           {t('joinProvider')}
         </Link>
         <SupportLink whatsapp={whatsapp} label={t('support')} className={LINK} />

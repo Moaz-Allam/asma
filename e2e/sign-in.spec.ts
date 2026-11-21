@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
+import { onboard, requestCode, signIn, signOut, typeCode } from './auth';
 import { TURNSTILE_STUB, expect, test } from './fixtures';
 import { TEST_CODE, WRONG_CODE, testPhone } from './numbers';
 
@@ -26,46 +27,14 @@ async function axe(page: Page) {
 }
 
 const sendButton = (page: Page) => page.locator('form button[type="submit"]');
-
-async function requestCode(page: Page, phone: string) {
-  await page.locator('#login-phone').fill(phone);
-  await expect(sendButton(page)).toBeEnabled();
-  await sendButton(page).click();
-  await expect(page.locator('#login-code')).toBeVisible();
-}
-
-async function typeCode(page: Page, code: string) {
-  await page.locator('#login-code').pressSequentially(code);
-}
-
-async function signIn(page: Page, locale: string, phone: string, path = `/${locale}/login`) {
-  await page.goto(path);
-  await requestCode(page, phone);
-  await typeCode(page, TEST_CODE);
-}
-
-async function finishOnboarding(page: Page, name = 'Ayşe Yılmaz') {
-  await page.locator('#full-name').fill(name);
-  const tick = page.locator('#agreement');
-  // A click before hydration does nothing, so keep trying until the box answers.
-  await expect(async () => {
-    if ((await tick.getAttribute('data-state')) !== 'checked') await tick.click();
-    await expect(tick).toHaveAttribute('data-state', 'checked', { timeout: 500 });
-  }).toPass();
-  await sendButton(page).click();
-}
-
-async function signOut(page: Page, locale: string) {
-  await page.goto(`/${locale}/account`);
-  await page.locator('section button[data-slot="button"]').click();
-  await expect(page).toHaveURL(new RegExp(`/${locale}$`));
-}
+// Since spec 0012 the account page has a second form (the password change): the name and email form's own button.
+const accountSave = (page: Page) => page.locator('form:has(#account-name) button[type="submit"]');
 
 test('a new customer signs up, signs out and signs in again', async ({ page }, testInfo) => {
   const locale = testInfo.project.name;
   const phone = testPhone(locale, 'customer');
 
-  await page.goto(`/${locale}/login`);
+  await page.goto(`/${locale}/login?mode=code`);
   await axe(page);
 
   await signIn(page, locale, phone);
@@ -76,7 +45,7 @@ test('a new customer signs up, signs out and signs in again', async ({ page }, t
   await page.goto(`/${locale}/account`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding$`));
 
-  await finishOnboarding(page);
+  await onboard(page, 'Ayşe Yılmaz');
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/new$`));
   await axe(page);
 
@@ -90,7 +59,7 @@ test('a new customer signs up, signs out and signs in again', async ({ page }, t
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`));
   await page.goto(`/${locale}/provider`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`));
-  await page.goto(`/${locale}/login`);
+  await page.goto(`/${locale}/login?mode=code`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`));
   await page.goto(`/${locale}`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`));
@@ -104,7 +73,7 @@ test('a provider link preselects the role, and one phone keeps one role', async 
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding\\?as=provider$`));
   await expect(page.locator('input[value="provider"]')).toBeChecked();
 
-  await finishOnboarding(page, 'Mehmet Demir');
+  await onboard(page, 'Mehmet Demir');
   await expect(page).toHaveURL(new RegExp(`/${locale}/provider/profile$`));
   // Step 1 of spec 0006 is a form: scan once it has hydrated and its Save button is live.
   await expect(page.locator('form button[type="submit"]')).toBeEnabled();
@@ -120,12 +89,12 @@ test('a provider link preselects the role, and one phone keeps one role', async 
 
 test('a wrong code shows one message and the right one still works', async ({ page }, testInfo) => {
   const locale = testInfo.project.name;
-  await page.goto(`/${locale}/login`);
+  await page.goto(`/${locale}/login?mode=code`);
   await requestCode(page, testPhone(locale, 'wrongCode'));
 
   await typeCode(page, WRONG_CODE);
   await expect(page.locator('#login-error')).toBeVisible();
-  await expect(page).toHaveURL(new RegExp(`/${locale}/login$`));
+  await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?mode=code$`));
   expect(page.url()).not.toContain(WRONG_CODE);
 
   await typeCode(page, TEST_CODE);
@@ -138,7 +107,7 @@ test('the form refuses a bad number with no Auth call', async ({ page, telemetry
   page.on('request', (request) => {
     if (request.url().includes('/auth/v1/otp')) otp.push(request.url());
   });
-  await page.goto(`/${locale}/login`);
+  await page.goto(`/${locale}/login?mode=code`);
   await expect(sendButton(page)).toBeEnabled();
 
   for (const number of ['0212 123 45 67', '555 12', '+49 151 1234 5678']) {
@@ -168,7 +137,7 @@ test('the form takes every way of writing a number, in every digit set', async (
   });
 
   for (const typed of ['555 123 45 67', '0555 123 45 67', '+90 555 123 45 67', '٥٥٥ ١٢٣ ٤٥ ٦٧']) {
-    await page.goto(`/${locale}/login`);
+    await page.goto(`/${locale}/login?mode=code`);
     await requestCode(page, typed);
     await page.evaluate(() => sessionStorage.clear());
   }
@@ -177,7 +146,7 @@ test('the form takes every way of writing a number, in every digit set', async (
 
 test('a reload on the code step keeps working', async ({ page, context }, testInfo) => {
   const locale = testInfo.project.name;
-  await page.goto(`/${locale}/login`);
+  await page.goto(`/${locale}/login?mode=code`);
   await requestCode(page, testPhone(locale, 'reload'));
 
   await page.reload();
@@ -200,7 +169,7 @@ test('a next that leaves the site lands on the home of the role', async ({ page 
   const locale = testInfo.project.name;
   await signIn(page, locale, testPhone(locale, 'injection'));
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding$`));
-  await finishOnboarding(page);
+  await onboard(page, 'Ayşe Yılmaz');
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/new$`));
 
   for (const next of ['https://evil.example', '//evil.example', '/\\evil.example']) {
@@ -224,13 +193,13 @@ test('the account page saves the name, and the language follows the profile', as
   const phone = testPhone(locale, 'account');
   await signIn(page, locale, phone);
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding$`));
-  await finishOnboarding(page);
+  await onboard(page, 'Ayşe Yılmaz');
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/new$`));
 
   await page.goto(`/${locale}/account`);
   await axe(page);
   await page.locator('#account-name').fill('Yeni İsim');
-  await sendButton(page).click();
+  await accountSave(page).click();
   await expect(page.locator('main [role="status"]')).toBeVisible();
   await expect(page.locator('#account-phone')).toHaveJSProperty('readOnly', true);
 
@@ -258,7 +227,7 @@ test('the account page holds the email and the notice switches', async ({ page }
   const locale = testInfo.project.name;
   await signIn(page, locale, testPhone(locale, 'notices'), `/${locale}/login?as=provider`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding\\?as=provider$`));
-  await finishOnboarding(page, 'Mehmet Demir');
+  await onboard(page, 'Mehmet Demir');
   await expect(page).toHaveURL(new RegExp(`/${locale}/provider/profile$`));
 
   await page.goto(`/${locale}/account`);
@@ -266,10 +235,10 @@ test('the account page holds the email and the notice switches', async ({ page }
 
   // An address that is not one is refused, and a good one is saved, lowercased, and never confirmed.
   await page.locator('#account-email').fill('not an email');
-  await sendButton(page).click();
+  await accountSave(page).click();
   await expect(page.locator('main [role="alert"]')).toBeVisible();
   await page.locator('#account-email').fill('Mehmet@Example.COM');
-  await sendButton(page).click();
+  await accountSave(page).click();
   await expect(page.locator('main [role="status"]')).toBeVisible();
   await page.reload();
   await expect(page.locator('#account-email')).toHaveValue('mehmet@example.com');
@@ -292,14 +261,19 @@ test('a widget that cannot load shows a retry, and nothing can be sent', async (
   await page.unroute('https://challenges.cloudflare.com/**');
   await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
 
-  await page.goto(`/${locale}/login`);
-  await expect(page.locator('main [role="alert"]')).toBeVisible();
-  await expect(sendButton(page)).toBeDisabled();
+  // Both modes of the login page (spec 0012 AC-1, AC-3) need a live token.
+  for (const mode of ['', '?mode=code']) {
+    await page.goto(`/${locale}/login${mode}`);
+    await expect(page.locator('main [role="alert"]')).toBeVisible();
+    await expect(sendButton(page)).toBeDisabled();
+  }
 });
 
 test('the login page fires no CSP violation (AC-23)', async ({ page, telemetry }, testInfo) => {
-  await page.goto(`/${testInfo.project.name}/login`);
-  await expect(sendButton(page)).toBeEnabled();
+  for (const mode of ['', '?mode=code']) {
+    await page.goto(`/${testInfo.project.name}/login${mode}`);
+    await expect(sendButton(page)).toBeEnabled();
+  }
   expect(await telemetry.cspViolations()).toEqual([]);
 });
 
@@ -322,14 +296,14 @@ test('the terms and privacy pages exist and say noindex', async ({ page }, testI
 test('no phone, code or name reaches Sentry or PostHog', async ({ page, telemetry }, testInfo) => {
   const locale = testInfo.project.name;
   const phone = testPhone(locale, 'telemetry');
-  await page.goto(`/${locale}/login`);
+  await page.goto(`/${locale}/login?mode=code`);
   await requestCode(page, phone);
   await expect
     .poll(() => telemetry.posthog.map((event) => event.event), { timeout: 20_000 })
     .toContain('code_requested');
   await typeCode(page, TEST_CODE);
   await expect(page).toHaveURL(new RegExp(`/${locale}/onboarding$`));
-  await finishOnboarding(page, 'Gizli Kişi');
+  await onboard(page, 'Gizli Kişi');
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/new$`));
 
   await expect

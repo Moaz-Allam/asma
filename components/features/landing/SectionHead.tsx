@@ -17,7 +17,7 @@ export function SectionHead({
     <div className={`flex flex-wrap items-center gap-x-5 gap-y-3 ${className}`}>
       <h2 className="flex-1 font-display text-title text-text-primary lg:text-heading">{title}</h2>
       <Button asChild variant="outline" size="nav">
-        <Link href={{ pathname: '/login', query: { next: '/requests/new' } }}>
+        <Link href={{ pathname: '/login', query: { mode: 'code', next: '/requests/new' } }}>
           {action}
           <ArrowRight aria-hidden className="rtl:rotate-180" />
         </Link>

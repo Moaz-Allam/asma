@@ -35,7 +35,8 @@ export const completeOnboarding = guardedAction(
       const { role } = await completeOnboardingInDb({ ...input, locale: await getLocale() });
       await refreshToken();
       if (!isRole(role)) return fail('action_failed');
-      return { destination: firstStopFor(role) };
+      // Spec 0012 AC-4: through continue, so a new account meets the password step; 0005's first stop rides as next.
+      return { destination: `/continue?next=${encodeURIComponent(firstStopFor(role))}` };
     } catch (error) {
       const code = databaseCode(error);
       if (code) return fail(code);

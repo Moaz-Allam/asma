@@ -18,7 +18,9 @@ export function ClosingCall() {
           {t('closingBody')}
         </p>
         <Button asChild variant="white" size="hero" className="px-8 text-link">
-          <Link href={{ pathname: '/login', query: { next: '/requests/new' } }}>{t('offersCta')}</Link>
+          <Link href={{ pathname: '/login', query: { mode: 'code', next: '/requests/new' } }}>
+            {t('offersCta')}
+          </Link>
         </Button>
       </div>
     </section>

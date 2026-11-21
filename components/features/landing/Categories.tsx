@@ -26,7 +26,7 @@ export function Categories() {
         {SAMPLE_CATEGORIES.map((category) => (
           <li key={category} className="w-36 shrink-0 snap-start lg:w-auto">
             <Link
-              href={{ pathname: '/login', query: { next: '/requests/new' } }}
+              href={{ pathname: '/login', query: { mode: 'code', next: '/requests/new' } }}
               className="flex flex-col items-center gap-3"
             >
               <span

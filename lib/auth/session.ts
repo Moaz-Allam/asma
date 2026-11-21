@@ -18,7 +18,15 @@ import { homeFor, isRole, type Role } from './roles';
  * layouts do not run again on client navigation, and every Server Action goes through `guardedAction`.
  */
 
-export type SessionUser = { id: string; role: Role | null; region: Region | null };
+export type SessionUser = {
+  id: string;
+  role: Role | null;
+  region: Region | null;
+  /** Spec 0012 AC-4: written only by `password_guard`; fresh from `getUser`, never read from the JWT. */
+  hasPassword: boolean;
+  /** Spec 0012 AC-7: when the password last changed, an ISO time, or null. */
+  passwordChangedAt: string | null;
+};
 export type RoleUser = SessionUser & { role: Role };
 
 /** A refusal in a Server Action. `guardedAction` turns it into `{ success: false, error: code }`. */
@@ -33,8 +41,14 @@ async function readUser(): Promise<SessionUser | null> {
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) return null;
-  const { role, region } = data.user.app_metadata;
-  return { id: data.user.id, role: isRole(role) ? role : null, region: isRegion(region) ? region : null };
+  const { role, region, has_password: hasPassword, password_changed_at: changedAt } = data.user.app_metadata;
+  return {
+    id: data.user.id,
+    role: isRole(role) ? role : null,
+    region: isRegion(region) ? region : null,
+    hasPassword: hasPassword === true,
+    passwordChangedAt: typeof changedAt === 'string' ? changedAt : null,
+  };
 }
 
 /** The signed in user, or null. A render reuses one check; use `requireUser` in an action. */

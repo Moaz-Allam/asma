@@ -32,7 +32,7 @@ function ServiceTile({
   return (
     <li aria-hidden={copy || undefined} className="shrink-0">
       <Link
-        href={{ pathname: '/login', query: { next: '/requests/new' } }}
+        href={{ pathname: '/login', query: { mode: 'code', next: '/requests/new' } }}
         tabIndex={copy ? -1 : undefined}
         className="flex flex-col items-start gap-2.5 rounded-row bg-surface p-3.5 sm:flex-row sm:items-center sm:gap-3.5"
       >
@@ -102,7 +102,9 @@ export function QuickStart() {
           ))}
         </ol>
         <Button asChild size="band" className="px-8">
-          <Link href={{ pathname: '/login', query: { next: '/requests/new' } }}>{t('cta')}</Link>
+          <Link href={{ pathname: '/login', query: { mode: 'code', next: '/requests/new' } }}>
+            {t('cta')}
+          </Link>
         </Button>
       </div>
       <div className="grid h-110 grid-cols-2 gap-3 overflow-hidden rounded-panel bg-surface-secondary p-3 mask-tiles sm:p-5.5">

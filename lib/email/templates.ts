@@ -32,7 +32,7 @@ type Translate = (key: string, values?: Record<string, string>) => string;
 type Parts = {
   t: Translate;
   /** The values a line may show, each already cleaned (bidi marks and line breaks removed, clamped). */
-  vals: { service: string; start: string; deadline: string; amount: string };
+  vals: { service: string; start: string; deadline: string; amount: string; when: string };
   side: 'customer' | 'provider' | null;
   carried: boolean;
   hasRefund: boolean;
@@ -43,6 +43,7 @@ type Parts = {
     receiptOrRequest: () => { label: string; href: string };
     applications: () => { label: string; href: string };
     account: () => { label: string; href: string };
+    reset: () => { label: string; href: string };
     confirm: () => { label: string; href: string };
     adminReport: () => { label: string; href: string };
   };
@@ -193,6 +194,12 @@ const TEMPLATES: Readonly<Record<EmailTemplate, (p: Parts) => Draft>> = {
     lines: [p.t('report_new_admin.lead', p.vals)],
     action: p.link.adminReport(),
   }),
+  // Spec 0012 AC-10: what changed and when; if it was not them, a reset by SMS code and support.
+  password_changed: (p) => ({
+    subject: p.t('password_changed.subject', p.vals),
+    lines: [p.t('password_changed.lead', p.vals), p.t('password_changed.notYou', p.vals)],
+    action: p.link.reset(),
+  }),
 };
 
 function translator(locale: EmailLocale): Translate {
@@ -230,6 +237,10 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
       deadline:
         values.deadline === null ? '' : cleanValue(instantLabel(values.deadline, context.timezone, locale)),
       amount: cleanValue(amount),
+      when:
+        values.changed_at === undefined || values.changed_at === null
+          ? ''
+          : cleanValue(instantLabel(values.changed_at, context.timezone, locale)),
     },
     side: values.side,
     carried: values.carried === true,
@@ -250,6 +261,7 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
             },
       applications: () => ({ label: t('shell.openApplications'), href: `${base}/provider/applications` }),
       account: () => ({ label: t('shell.openAccount'), href: `${base}/account` }),
+      reset: () => ({ label: t('password_changed.action'), href: `${base}/login?mode=code&reset=1` }),
       confirm: () => ({
         label: t('confirm_email.action'),
         href: `${base}/account/email/confirm?t=${encodeURIComponent(needs(values.token, 'token_missing'))}`,

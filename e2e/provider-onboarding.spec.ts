@@ -6,7 +6,8 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Browser, Locator, Page } from '@playwright/test';
 
 import { expect, test } from './fixtures';
-import { TEST_CODE, testE164, testPhone, type NUMBER } from './numbers';
+import { onboard, signIn } from './auth';
+import { testE164, testPhone, type NUMBER } from './numbers';
 
 /**
  * Spec 0006 AC-28 at 390px in every locale, against the real local Auth, database and Storage: a provider
@@ -74,29 +75,6 @@ async function noOverflow(page: Page) {
     expect(overflow, `overflow at ${width}px`).toBeLessThanOrEqual(0);
   }
   await page.setViewportSize({ width: 390, height: 844 });
-}
-
-async function signIn(page: Page, locale: string, phone: string, path = `/${locale}/login`) {
-  await page.goto(path);
-  await page.locator('#login-phone').fill(phone);
-  const send = page.locator('form button[type="submit"]');
-  // Auth restarts with the database reset, so the first send of a run can meet it down: send again.
-  await expect(async () => {
-    await expect(send).toBeEnabled();
-    await send.click();
-    await expect(page.locator('#login-code')).toBeVisible({ timeout: 5_000 });
-  }).toPass({ timeout: 60_000 });
-  await page.locator('#login-code').pressSequentially(TEST_CODE);
-}
-
-async function onboard(page: Page, name: string) {
-  await page.locator('#full-name').fill(name);
-  const tick = page.locator('#agreement');
-  await expect(async () => {
-    if ((await tick.getAttribute('data-state')) !== 'checked') await tick.click();
-    await expect(tick).toHaveAttribute('data-state', 'checked', { timeout: 500 });
-  }).toPass();
-  await page.locator('form button[type="submit"]').click();
 }
 
 async function newProvider(page: Page, locale: string, test: keyof typeof NUMBER, name: string) {

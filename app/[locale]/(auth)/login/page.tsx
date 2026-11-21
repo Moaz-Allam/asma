@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { headers } from 'next/headers';
 
 import { LoginForm } from '@/components/features/auth/LoginForm';
+import { PasswordLoginForm } from '@/components/features/auth/PasswordLoginForm';
 import { LandingPhoto } from '@/components/features/landing/LandingPhoto';
 import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
 import { safeNext } from '@/lib/auth/roles';
@@ -12,18 +13,26 @@ import { getPublicRegions } from '@/lib/region/public';
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ next?: string; as?: string }>;
+  searchParams: Promise<{ next?: string; as?: string; mode?: string; reset?: string }>;
 };
 
-/** `s2`. `next` is checked here, and again at `/continue`; `as` only ever means provider (AC-7). */
+/**
+ * `s2`. `next` is checked here, and again at `/continue`; `as` only ever means provider (AC-7).
+ * Spec 0012 AC-1, AC-3: phone and password by default (an unknown `mode` too); `?mode=code` is 0005's code flow, for
+ * a new account and, with `reset=1`, a password reset. A signed in visitor goes on to `/continue`, except on a reset:
+ * the code form signs this device out first.
+ */
 export default async function LoginPage({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const { next, as } = await searchParams;
+  const { next, as, mode, reset: resetParam } = await searchParams;
   const safe = safeNext(next);
   const asProvider = as === 'provider';
+  const reset = resetParam === '1';
+  const codeMode = mode === 'code' || reset;
+  const signedIn = (await getSessionUser()) !== null;
 
-  if (await getSessionUser()) {
+  if (signedIn && !reset) {
     const query = { ...(safe ? { next: safe } : {}), ...(asProvider ? { as: 'provider' } : {}) };
     redirect({ href: { pathname: '/continue', query }, locale });
   }
@@ -39,8 +48,19 @@ export default async function LoginPage({ params, searchParams }: Props) {
         <Link href="/" dir="ltr" className="font-wordmark text-wordmark-sm text-text-primary">
           Aldebyani
         </Link>
-        {regions.length > 0 ? (
+        {regions.length > 0 && codeMode ? (
           <LoginForm
+            dialCodes={regions.map((region) => region.dialCode)}
+            siteKey={getEnv().NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+            nonce={nonce}
+            next={safe}
+            asProvider={asProvider}
+            supportWhatsapp={regions[0]?.supportWhatsapp}
+            reset={reset}
+            signOutFirst={signedIn}
+          />
+        ) : regions.length > 0 ? (
+          <PasswordLoginForm
             dialCodes={regions.map((region) => region.dialCode)}
             siteKey={getEnv().NEXT_PUBLIC_TURNSTILE_SITE_KEY}
             nonce={nonce}

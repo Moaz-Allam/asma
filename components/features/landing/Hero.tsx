@@ -21,7 +21,9 @@ export function Hero() {
           <p className="mt-6.5 max-w-36ch text-body-l">{t('heroBody')}</p>
           <div className="min-h-6.5 flex-1" />
           <Button asChild variant="white" size="hero" className="self-start">
-            <Link href={{ pathname: '/login', query: { next: '/requests/new' } }}>{t('heroCta')}</Link>
+            <Link href={{ pathname: '/login', query: { mode: 'code', next: '/requests/new' } }}>
+              {t('heroCta')}
+            </Link>
           </Button>
         </div>
         <LandingPhoto

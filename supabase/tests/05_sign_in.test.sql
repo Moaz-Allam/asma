@@ -11,7 +11,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(99);
+SELECT plan(102);
 
 INSERT INTO auth.users (id, aud, role, phone, phone_confirmed_at) VALUES
   ('00000000-0000-0000-0000-0000000000a1', 'authenticated', 'authenticated', '905551110001', now()),
@@ -98,17 +98,34 @@ UPDATE public.regions SET active = true WHERE code = 'KSA';
 SELECT is(public.check_new_user('{"user": {"phone": "966551234567"}}'), '{}'::jsonb, 'switching KSA on is a data change, with no code change');
 UPDATE public.regions SET active = false WHERE code = 'KSA';
 
--- ── no account holds a password (AC-3, D104) ─────────────────────────────────
+-- ── a password only on a proven phone (spec 0012 AC-8, D104) ─────────────────
 INSERT INTO auth.users (id, aud, role, phone, encrypted_password)
 VALUES ('00000000-0000-0000-0000-0000000000b1', 'authenticated', 'authenticated', '905551110099', 'a-hash');
 SELECT is(
   (SELECT encrypted_password FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000b1'),
   '', 'a password given at sign up is dropped'
 );
-UPDATE auth.users SET encrypted_password = 'a-hash' WHERE id = '00000000-0000-0000-0000-0000000000a1';
+INSERT INTO auth.users (id, aud, role, phone, phone_confirmed_at) VALUES
+  ('00000000-0000-0000-0000-0000000000b2', 'authenticated', 'authenticated', '905551110098', NULL),
+  ('00000000-0000-0000-0000-0000000000b3', 'authenticated', 'authenticated', '905551110097', now());
+UPDATE auth.users SET encrypted_password = 'a-hash' WHERE id = '00000000-0000-0000-0000-0000000000b2';
 SELECT is(
-  (SELECT encrypted_password FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000a1'),
-  '', 'a password set later is dropped too'
+  (SELECT encrypted_password FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000b2'),
+  '', 'a password set on an unproven phone is dropped'
+);
+UPDATE auth.users SET encrypted_password = 'a-hash' WHERE id = '00000000-0000-0000-0000-0000000000b3';
+SELECT is(
+  (SELECT encrypted_password FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000b3'),
+  '', 'a password on a proven phone before onboarding (no profile) is dropped (D201)'
+);
+INSERT INTO public.profiles (id, role, region, phone, full_name, locale)
+VALUES ('00000000-0000-0000-0000-0000000000b3', 'customer', 'TR', '+905551110097', 'Kanıtlı Hesap', 'tr');
+UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "customer", "region": "TR"}'
+ WHERE id = '00000000-0000-0000-0000-0000000000b3';
+UPDATE auth.users SET encrypted_password = 'a-hash' WHERE id = '00000000-0000-0000-0000-0000000000b3';
+SELECT is(
+  (SELECT encrypted_password FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000b3'),
+  'a-hash', 'a password set after a code proved the phone and onboarding made the profile is kept'
 );
 
 -- ── complete_onboarding: anon (AC-8) ─────────────────────────────────────────
@@ -194,10 +211,19 @@ SELECT is(
 );
 RESET ROLE;
 
--- ── phone_taken: an Auth phone change frees the old number in auth.users only ──
-UPDATE auth.users SET phone = '905551119999' WHERE id = '00000000-0000-0000-0000-0000000000a1';
+-- ── the Auth phone is fixed once set (spec 0012 AC-8) ─────────────────────────
+SELECT throws_ok(
+  $$ UPDATE auth.users SET phone = '905551119999' WHERE id = '00000000-0000-0000-0000-0000000000a1' $$,
+  'P0001', 'phone_immutable', 'an Auth phone change is refused'
+);
+
+-- ── phone_taken: a number still held by a profile (a row from before phone_fixed) ──
+INSERT INTO public.profiles (id, role, region, phone, full_name, locale)
+VALUES ('00000000-0000-0000-0000-0000000000b1', 'customer', 'TR', '+905551110096', 'Eski Hesap', 'tr');
+UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "customer", "region": "TR"}'
+ WHERE id = '00000000-0000-0000-0000-0000000000b1';
 INSERT INTO auth.users (id, aud, role, phone, phone_confirmed_at)
-VALUES ('00000000-0000-0000-0000-0000000000c1', 'authenticated', 'authenticated', '905551110001', now());
+VALUES ('00000000-0000-0000-0000-0000000000c1', 'authenticated', 'authenticated', '905551110096', now());
 SET LOCAL ROLE authenticated;
 SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000c1", "role": "authenticated", "app_metadata": {}}';
 SELECT throws_ok($$ SELECT public.complete_onboarding('customer', 'Yeni Kişi', 'tr', true) $$, 'P0001', 'phone_taken', 'a number still held by a profile is refused');

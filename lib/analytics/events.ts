@@ -20,6 +20,12 @@ export type AnalyticsEvents = {
   };
   /** The form refused a number before any Auth call. Only the reason, never the number. */
   phone_rejected: { reason: 'not_mobile' | 'too_short' | 'other_country' };
+  /** Spec 0012 AC-11: signed in with phone and password. Never the phone, never the password. */
+  password_signed_in: Record<string, never>;
+  /** A password sign in failed. Only the kind of failure. */
+  password_sign_in_failed: { reason: 'credentials' | 'limit' | 'bot_check' | 'network' };
+  /** A password was saved: the first one, a reset one, or a change from the account page. */
+  password_set: { reason: 'first' | 'reset' | 'change' };
   /** A new account chose its role. */
   onboarding_completed: { role: 'customer' | 'provider' };
   /** A provider sent their file for review (spec 0006 AC-24). */
@@ -74,6 +80,9 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'code_verified',
   'code_limited',
   'phone_rejected',
+  'password_signed_in',
+  'password_sign_in_failed',
+  'password_set',
   'onboarding_completed',
   'provider_file_submitted',
   'provider_decided',
@@ -100,6 +109,9 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   code_verified: [],
   code_limited: ['limit'],
   phone_rejected: ['reason'],
+  password_signed_in: [],
+  password_sign_in_failed: ['reason'],
+  password_set: ['reason'],
   onboarding_completed: ['role'],
   provider_file_submitted: [],
   provider_decided: ['decision'],

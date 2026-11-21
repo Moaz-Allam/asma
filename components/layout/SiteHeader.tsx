@@ -73,10 +73,14 @@ export async function SiteHeader({
               <Link href="/login">{t('signIn')}</Link>
             </Button>
             <Button asChild variant="secondary" size="nav" className="hidden lg:inline-flex">
-              <Link href={{ pathname: '/login', query: { as: 'provider' } }}>{tLanding('ctaProvider')}</Link>
+              <Link href={{ pathname: '/login', query: { mode: 'code', as: 'provider' } }}>
+                {tLanding('ctaProvider')}
+              </Link>
             </Button>
             <Button asChild size="nav" className="hidden lg:inline-flex">
-              <Link href={{ pathname: '/login', query: { next: '/requests/new' } }}>{tLanding('cta')}</Link>
+              <Link href={{ pathname: '/login', query: { mode: 'code', next: '/requests/new' } }}>
+                {tLanding('cta')}
+              </Link>
             </Button>
             <PublicMenu />
           </div>

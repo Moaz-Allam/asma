@@ -47,12 +47,15 @@ export function PublicMenu() {
           </nav>
           <div className="flex flex-col gap-3 border-t-2 border-border-light p-5 lg:px-8.5">
             <Button asChild size="band">
-              <Link href={{ pathname: '/login', query: { next: '/requests/new' } }} onClick={close}>
+              <Link
+                href={{ pathname: '/login', query: { mode: 'code', next: '/requests/new' } }}
+                onClick={close}
+              >
                 {tLanding('cta')}
               </Link>
             </Button>
             <Button asChild variant="secondary" size="band">
-              <Link href={{ pathname: '/login', query: { as: 'provider' } }} onClick={close}>
+              <Link href={{ pathname: '/login', query: { mode: 'code', as: 'provider' } }} onClick={close}>
                 {tLanding('ctaProvider')}
               </Link>
             </Button>

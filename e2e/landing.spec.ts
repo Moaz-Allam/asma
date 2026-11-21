@@ -36,7 +36,8 @@ test('every call leads to the login with the right intent', async ({ page }, tes
     .locator('main a[href*="/login"]')
     .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
   expect(new Set(hrefs)).toEqual(
-    new Set([`/${locale}/login?next=%2Frequests%2Fnew`, `/${locale}/login?as=provider`]),
+    // Spec 0012 AC-3: each start opens the code mode, which creates an account.
+    new Set([`/${locale}/login?mode=code&next=%2Frequests%2Fnew`, `/${locale}/login?mode=code&as=provider`]),
   );
 });
 

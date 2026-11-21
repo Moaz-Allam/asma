@@ -25,6 +25,7 @@ export const ContactEmailSchema = z.preprocess(
 const ProfileSchema = z.object({
   full_name: z.string(),
   phone: z.string(),
+  region: z.string(),
   locale: LocaleSchema,
   email: z.string().nullable(),
   email_confirmed_at: z.string().nullable(),
@@ -33,6 +34,8 @@ const ProfileSchema = z.object({
 export type Profile = {
   fullName: string;
   phone: string;
+  /** The owning row's region (rule 10), never the copy in `app_metadata`. */
+  region: string;
   locale: z.infer<typeof LocaleSchema>;
   email: string | null;
   emailConfirmed: boolean;
@@ -42,7 +45,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from('profiles')
-    .select('full_name, phone, locale, email, email_confirmed_at')
+    .select('full_name, phone, region, locale, email, email_confirmed_at')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
@@ -51,6 +54,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return {
     fullName: row.full_name,
     phone: row.phone,
+    region: row.region,
     locale: row.locale,
     email: row.email,
     emailConfirmed: row.email_confirmed_at !== null,
@@ -158,4 +162,13 @@ export async function needsEmailNudge(userId: string, kind: 'customer' | 'provid
     log.warn('email_standing_failed', { user_id: userId });
     return false;
   }
+}
+
+/** The region's time zone, for "last changed" on the account page (spec 0012 AC-7). Null when it cannot be read. */
+export async function getRegionTimezone(region: string | null): Promise<string | null> {
+  if (!region) return null;
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase.from('regions').select('timezone').eq('code', region).maybeSingle();
+  if (error || !data) return null;
+  return data.timezone;
 }

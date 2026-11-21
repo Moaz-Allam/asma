@@ -35,7 +35,9 @@ sign in followed by setting a new password; a change on the account page proves 
 with it first.
 
 **Pros**:
-- Keeps D104's protection without relying on how Auth treats a repeated sign up of an unconfirmed number.
+- Keeps D104's protection without relying on how Auth treats a repeated sign up of an unconfirmed number. (The
+  2026-11-21 security review found one narrow race that did lean on it, a repeated raw sign up committing just after
+  the owner's code; requiring a profile, which only the owner's own session can create, closes it, D201.)
 - No Server Action, no secret, no new service: the D98 pattern, one trigger, Auth settings.
 - Reset and change need no undocumented Auth switch: a fresh session is enough for Secure password change.
 
@@ -122,7 +124,27 @@ Each is the recommended option; the runner up is named so the owner can overturn
 - Minimum 10 characters, no character classes (runner up: 8 with mixed classes).
 - The account page change asks the current password and signs in with it (runner up: a code by `reauthenticate`).
 - Other sessions end after any set or change (runner up: keep them).
-- A change notice by email, not on the first set (runner up: no notice).
+- A notice by email on a change, and since D201 on a first set too, to a confirmed address only (runner up: no notice;
+  the first text had change only, which left a first password set by a stolen session unseen).
 - Login opens in password mode; the landing page's start buttons open the code mode (runner up: code mode by default).
 - The per IP limit stays at Auth's default (runner up: lower it).
 - No feature flag (runner up: a flag in `platform_settings`).
+
+## Build and review amendments (2026-11-21, D200, D201)
+
+The build kept every decision above and corrected the text in seven places, each the recommended option under the
+owner's standing rule. From the build (D200): `autocomplete="username"`, because two field names fail axe; 24 mail
+templates, because 14 had already added three. From the slice review ("fix then merge") and the security review ("fix
+then ship", nothing high; `docs/reviews/2026-11-21-feat-01b-phone-password*.md`, D201): the profile rule in
+`password_guard` (runner up: leave the race to Auth's behaviour); the notice on a first password (runner up: write the
+risk down only); a button instead of signing out on load for `?reset=1` (runner up: keep the load sign out, a nuisance
+with no data at stake); every password submit held until hydration, with an e2e that runs without JavaScript (runner
+up: rely on the token being empty in the server render, which the review called accidental); S44 before the cloud push
+(runner up: the first order, which left the cloud on Supabase's defaults for a while). Stated rather than changed: the
+hour long access token after other sessions end, and the SMS cost of a phone change, which S20 bounds.
+
+The amended text was cross checked on Sonnet (2026-11-21): three Major findings (a refused write over an existing
+hash, stated as unreachable; the notice's values sourced; the reset links described as links, not sign outs) and seven
+Minor ones (two unlisted messages, `phone_fixed` on an empty phone, `reset=1` alone, `reset=1` with no password, the
+first password notice to legitimate users, a complete rollback, a failed sign out during a reset), all applied as text
+with no code change. The owner accepted the amended spec the same day.

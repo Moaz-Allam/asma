@@ -20,10 +20,14 @@ export function OffersBand() {
         <p className="mt-5.5 max-w-42ch text-lead text-text-body">{t('offersBody')}</p>
         <div className="mt-7.5 flex flex-wrap gap-2.5">
           <Button asChild size="band">
-            <Link href={{ pathname: '/login', query: { next: '/requests/new' } }}>{t('offersCta')}</Link>
+            <Link href={{ pathname: '/login', query: { mode: 'code', next: '/requests/new' } }}>
+              {t('offersCta')}
+            </Link>
           </Button>
           <Button asChild variant="secondary" size="band">
-            <Link href={{ pathname: '/login', query: { as: 'provider' } }}>{t('ctaProvider')}</Link>
+            <Link href={{ pathname: '/login', query: { mode: 'code', as: 'provider' } }}>
+              {t('ctaProvider')}
+            </Link>
           </Button>
         </div>
       </div>
