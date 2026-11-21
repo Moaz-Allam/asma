@@ -2083,9 +2083,7 @@
     "newSummary": "[tr] Customers see New: {count, plural, one {# visible rating} other {# visible ratings}}, fewer than 5.",
     "unavailable": "[tr] The score is unavailable: check the rating settings of this region.",
     "visible": "[tr] What customers see",
-    "date": "[tr] Date",
     "request": "[tr] Request",
-    "scores": "[tr] Scores",
     "hidden": "[tr] Hidden",
     "hiddenBy": "[tr] Hidden by {name} on {date}",
     "someone": "[tr] an admin",
@@ -2113,6 +2111,7 @@
       "not_found": "[tr] This rating no longer exists.",
       "already_hidden": "[tr] This rating is already hidden.",
       "action_failed": "[tr] Something went wrong. Please try again."
-    }
+    },
+    "firstPage": "[tr] Back to the newest ratings"
   }
 }

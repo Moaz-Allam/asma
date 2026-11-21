@@ -19,7 +19,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(130);
+SELECT plan(138);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -322,6 +322,16 @@ SELECT is(pg_temp.rate(33), 'invalid_state', 'AC-1: a completed request whose pi
 SELECT is(pg_temp.rate(34), 'deadline_passed', 'AC-1: one second past 14 × 24 hours after the close');
 SELECT is(pg_temp.rate(35), 'none', 'AC-1: exactly 14 × 24 hours after the close is still inside');
 SELECT is(pg_temp.rate(36), 'none', 'AC-1: a job admin closed counts like any other COMPLETED');
+SELECT is(pg_temp.probe(ARRAY[$q$SELECT public.promote_to_admin('+905559350001')$q$], $q$pg_temp.rate(37)$q$), 'not_found',
+  'AC-1: a customer promoted to admin later never rates their old jobs (security review I-1)');
+SELECT is(pg_temp.err(format($q$INSERT INTO public.ratings (region, request_id, application_id, provider_id, customer_id,
+                                   punctuality, quality, professionalism, value) VALUES ('TR', %L, %L, %L, %L, 5, 5, 5, 5)$q$,
+                             pg_temp.r(38), pg_temp.app(38), pg_temp.u('a2'), pg_temp.u('c1'))),
+  'validation_failed', 'Guardrail: even as postgres, a rating names the provider of the request''s pick');
+SELECT is(pg_temp.err(format($q$INSERT INTO public.ratings (region, request_id, application_id, provider_id, customer_id,
+                                   punctuality, quality, professionalism, value) VALUES ('TR', %L, %L, %L, %L, 5, 5, 5, 5)$q$,
+                             pg_temp.r(38), pg_temp.app(38), pg_temp.u('a1'), pg_temp.u('c2'))),
+  '23503', 'Guardrail: and the request''s own customer');
 SELECT is(pg_temp.probe(ARRAY[$q$ALTER TABLE public.platform_settings DISABLE TRIGGER pricing_settings_guard$q$,
                               $q$DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'rating_window_days'$q$],
                         format($q$pg_temp.rate(37) || ' / ' || (pg_temp.sum('a3') ->> 'state')$q$)),
@@ -375,9 +385,9 @@ SELECT is(pg_temp.call_as('ad', format($q$INSERT INTO public.rating_hides (ratin
   '42501', 'AC-2: admin hides only through admin_hide_rating');
 SELECT results_eq(
   $$ SELECT c.relname::text COLLATE "default", c.relrowsecurity,
-            has_table_privilege('anon', c.oid, 'SELECT,INSERT,UPDATE,DELETE'),
-            has_table_privilege('authenticated', c.oid, 'SELECT,INSERT,UPDATE,DELETE'),
-            has_table_privilege('service_role', c.oid, 'SELECT,INSERT,UPDATE,DELETE')
+            has_table_privilege('anon', c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'),
+            has_table_privilege('authenticated', c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'),
+            has_table_privilege('service_role', c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
        FROM pg_class c WHERE c.oid IN ('public.ratings'::regclass, 'public.rating_hides'::regclass)
       ORDER BY c.relname COLLATE "C" $$,
   $$ VALUES ('rating_hides'::text, true, false, false, false), ('ratings', true, false, false, false) $$,
@@ -394,9 +404,25 @@ SELECT is(
      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public'
       AND regexp_replace(regexp_replace(regexp_replace(p.prosrc, '/\*.*?\*/', '', 'g'), '--[^\n]*', '', 'g'),
-                         '''[^'']*''', '', 'g') ~ '\m(ratings|rating_hides)\M'),
-  'admin_hide_rating,admin_provider_ratings,email_context,provider_rating_summary,rate_provider,request_rating',
-  'AC-3: exactly these functions read ratings or rating_hides (my_provider_rating reads through the summary), so nothing can wait on a rating');
+                         '''[^'']*''', '', 'g') ~ '\m(ratings|rating_hides|provider_rating_summary)\M'),
+  'admin_hide_rating,admin_provider_ratings,email_context,my_provider_rating,offer_card,provider_rating_summary,rate_provider,request_rating',
+  'AC-3: exactly these functions read ratings or rating_hides, directly or through provider_rating_summary, so nothing can wait on a rating');
+-- Security review guardrail (2026-11-22): the same set with string literals kept (so dynamic SQL naming the tables is
+-- caught), apart from the notice topic 'ratings', and no view, materialized view or policy anywhere reads them.
+SELECT is(
+  (SELECT string_agg(p.proname::text, ',' ORDER BY p.proname COLLATE "C")
+     FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND n.nspname NOT LIKE 'pg_temp%'
+      AND replace(regexp_replace(regexp_replace(p.prosrc, '/\*.*?\*/', '', 'g'), '--[^\n]*', '', 'g'), '''ratings''', '')
+          ~ '\m(ratings|rating_hides|provider_rating_summary)\M'),
+  'admin_hide_rating,admin_provider_ratings,email_context,my_provider_rating,offer_card,provider_rating_summary,rate_provider,request_rating',
+  'AC-3: no other function in any schema names them, not even inside a dynamic SQL string');
+SELECT is_empty(
+  $$ SELECT viewname::text FROM pg_views WHERE definition ~ '\m(ratings|rating_hides|provider_rating_summary)\M'
+     UNION ALL SELECT matviewname::text FROM pg_matviews WHERE definition ~ '\m(ratings|rating_hides|provider_rating_summary)\M'
+     UNION ALL SELECT policyname::text FROM pg_policies
+      WHERE coalesce(qual, '') || coalesce(with_check, '') ~ '\m(ratings|rating_hides|provider_rating_summary)\M' $$,
+  'AC-3: no view, materialized view or policy reads a rating');
 SELECT pg_temp.as_user('c1');
 SELECT is((public.my_report(pg_temp.r(38)) ->> 'can_report')::boolean, true,
   'AC-3: a COMPLETED request with no rating keeps its report window');
@@ -572,10 +598,11 @@ SELECT results_eq(
   $$ VALUES (pg_temp.app(30)::text, true) $$,
   'AC-9: entity the application, sent at once');
 SELECT results_eq(
-  $$ SELECT x ->> 'status', x ->> 'template', x -> 'values' ->> 'side', x -> 'values' ->> 'request_id'
+  $$ SELECT x ->> 'status', x ->> 'template', x -> 'values' ->> 'side', x -> 'values' -> 'request_id' = 'null'::jsonb,
+            x -> 'values' -> 'service' = 'null'::jsonb, x -> 'values' -> 'start_at' = 'null'::jsonb
        FROM (SELECT public.email_context(pg_temp.mail_id(30, 'rating_received')) AS x) t $$,
-  $$ VALUES ('send'::text, 'rating_received'::text, 'provider'::text, pg_temp.r(30)::text) $$,
-  'AC-9: the relay sends it');
+  $$ VALUES ('send'::text, 'rating_received'::text, 'provider'::text, true, true, true) $$,
+  'AC-9: the relay sends it, with nothing that names the rated job (security review M-1)');
 SELECT pg_temp.as_user('c1');
 SELECT is(pg_temp.probe(ARRAY[format($q$INSERT INTO public.notification_preferences (user_id, topic, region, email_enabled) VALUES (%L, 'ratings', 'TR', false)$q$, pg_temp.u('a1')),
                               format($q$SELECT public.rate_provider(%L, 5, 5, 5, 5)$q$, pg_temp.r(37))],
@@ -614,6 +641,22 @@ SELECT is(pg_temp.probe(ARRAY[$q$UPDATE public.platform_settings SET value = '1'
                               format($q$UPDATE public.requests SET closed_at = now() - interval '2 days' WHERE id = %L$q$, pg_temp.r(40))],
                         format($q$public.email_context(%L) ->> 'reason'$q$, pg_temp.mail_id(40, 'rate_provider'))),
   'condition', 'AC-9: the window is recomputed from the current setting at send time');
+-- D4 (slice review 2026-11-22): a broken rating setting never blocks a close or its other mail, and a queued invite
+-- is skipped, never raised.
+SELECT is(pg_temp.probe(ARRAY[$q$ALTER TABLE public.platform_settings DISABLE TRIGGER pricing_settings_guard$q$,
+                              $q$DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'rating_window_days'$q$,
+                              format($q$SELECT public.close_job(%L, 'auto', 'job.auto_closed')$q$, pg_temp.r(32))],
+                        format($q$(SELECT status FROM public.requests WHERE id = %L) || ' / ' || pg_temp.mails(32)$q$, pg_temp.r(32))),
+  'COMPLETED / job_completed>a1', 'D4: with a broken rating setting, the auto close still closes and mails the provider, with no invite');
+SELECT is(pg_temp.probe(ARRAY[$q$ALTER TABLE public.platform_settings DISABLE TRIGGER pricing_settings_guard$q$,
+                              $q$DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'rating_window_days'$q$,
+                              format($q$SELECT public.close_job(%L, 'admin', 'job.closed_by_admin')$q$, pg_temp.r(31))],
+                        format($q$(SELECT status FROM public.requests WHERE id = %L) || ' / ' || pg_temp.mails(31)$q$, pg_temp.r(31))),
+  'COMPLETED / job_completed>a1', 'D4: and so does an admin close');
+SELECT is(pg_temp.probe(ARRAY[$q$ALTER TABLE public.platform_settings DISABLE TRIGGER pricing_settings_guard$q$,
+                              $q$DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'rating_window_days'$q$],
+                        format($q$public.email_context(%L)$q$, pg_temp.mail_id(41, 'rate_provider'))),
+  '{"reason": "condition", "status": "skip"}', 'D4: a queued invite is skipped when the setting is broken, never raised');
 SELECT pg_temp.as_user('c1');
 SELECT is(pg_temp.rate(40), 'none', 'AC-1: the customer of an auto closed job rates');
 SELECT is(public.email_context(pg_temp.mail_id(40, 'rate_provider')),
@@ -626,12 +669,13 @@ SELECT results_eq(
        FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
       WHERE n.nspname = 'public'
         AND p.proname IN ('rate_provider', 'request_rating', 'my_provider_rating', 'admin_provider_ratings', 'admin_hide_rating',
-                          'provider_rating_summary', 'rating_settings', 'rating_append_only', 'offer_card')
+                          'provider_rating_summary', 'rating_settings', 'rating_append_only', 'rating_consistent', 'offer_card')
       ORDER BY p.proname COLLATE "C" $$,
   $$ VALUES ('admin_hide_rating'::text, true, false, true, false), ('admin_provider_ratings', true, false, true, false),
             ('my_provider_rating', true, false, true, false), ('offer_card', false, false, false, false),
             ('provider_rating_summary', false, false, false, false), ('rate_provider', true, false, true, false),
-            ('rating_append_only', false, false, false, false), ('rating_settings', false, false, false, false),
+            ('rating_append_only', false, false, false, false), ('rating_consistent', false, false, false, false),
+            ('rating_settings', false, false, false, false),
             ('request_rating', true, false, true, false) $$,
   'Security model: the five doors are definers granted to authenticated only; the internals have no grant');
 SELECT results_eq(
@@ -645,8 +689,9 @@ SELECT results_eq(
   $$ SELECT tgname::text COLLATE "default" FROM pg_trigger
       WHERE tgrelid IN ('public.ratings'::regclass, 'public.rating_hides'::regclass) AND NOT tgisinternal
       ORDER BY tgname COLLATE "C" $$,
-  $$ VALUES ('rating_hides_append_only'::text), ('rating_hides_no_truncate'), ('ratings_append_only'), ('ratings_no_truncate') $$,
-  'AC-2: the four append only triggers');
+  $$ VALUES ('rating_hides_append_only'::text), ('rating_hides_no_truncate'), ('ratings_append_only'), ('ratings_consistent'),
+            ('ratings_no_truncate') $$,
+  'AC-2: the four append only triggers, and the consistency trigger');
 SELECT is((SELECT count(*)::int FROM information_schema.columns
             WHERE table_schema = 'public' AND column_name IN ('rating_avg', 'rating_count')), 0,
   'AC-4: no stored score anywhere');

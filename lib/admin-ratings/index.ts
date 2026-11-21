@@ -56,7 +56,7 @@ export async function loadProviderRatings(
   if (!UUID.test(providerId)) return null;
   const result = await call('admin_provider_ratings', {
     p_provider_id: providerId,
-    p_page: Math.max(1, Math.floor(page)),
+    p_page: Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1,
   });
   if ('ok' in result) {
     if (result.code === 'not_found') return null;

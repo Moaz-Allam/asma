@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { getProfile } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
+import { reportServerError } from '@/lib/observability/server';
 import { getProviderFile, getStanding } from '@/lib/provider/queries';
 import { loadMyRating } from '@/lib/provider-feed';
 import { PHOTO_LINK_SECONDS, PHOTOS_BUCKET } from '@/lib/storage/buckets';
@@ -52,8 +53,12 @@ export default async function Page({ params, searchParams }: Props) {
   const approved = standing === 'approved' || standing === 'document_expired';
 
   if (standing === 'suspended' || (approved && edit !== '1')) {
-    // Spec 0011-17 AC-7: the provider's own score, exactly what customers see.
-    const mine = await loadMyRating({ region: user.region });
+    // Spec 0011-17 AC-7: the provider's own score, exactly what customers see. Optional (D4): a failed read hides the
+    // card, never the profile.
+    const mine = await loadMyRating({ region: user.region }).catch((error: unknown) => {
+      reportServerError('myProviderRating', error);
+      return { ok: false as const };
+    });
     return (
       <ProviderProfileView
         file={file}

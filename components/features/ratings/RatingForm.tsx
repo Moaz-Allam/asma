@@ -59,11 +59,14 @@ export function RatingForm({
       }
       if (result.success) {
         track('rating_submitted', {});
-      } else {
-        const key = `errors.${result.error}`;
-        setError(t.has(key) ? t(key as 'errors.action_failed') : t('errors.action_failed'));
+        router.refresh();
+        return;
       }
-      router.refresh();
+      const key = `errors.${result.error}`;
+      setError(t.has(key) ? t(key as 'errors.action_failed') : t('errors.action_failed'));
+      // Only a rating sent from another tab is worth a reload: the page then shows it. Any other refusal keeps the
+      // section and its message on screen (slice review 2026-11-22), since a reload would remove both.
+      if (result.error === 'already_rated') router.refresh();
     });
   }
 

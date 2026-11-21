@@ -196,6 +196,19 @@ describe('the links and lines of AC-5', () => {
     expect(notice.text).not.toMatch(/[1-5] of 5|★/);
   });
 
+  it.each(EMAIL_LOCALES)(
+    'the new rating notice in %s names no job: no service, start or request id (security review M-1)',
+    (locale) => {
+      // Even handed the job's values, the wording uses none of them; email_context also sends them as null.
+      const mail = renderEmail(context('rating_received', locale, 'provider'), ORIGIN);
+      const all = mail.subject + mail.text + mail.html;
+      expect(all).not.toContain('ÇÇÇ');
+      expect(all).not.toContain('injected');
+      expect(all).not.toContain(REQUEST);
+      expect(all).not.toMatch(/13:00|22\/11|11\/22|22\.11/);
+    },
+  );
+
   it('the confirmation links the confirm page with the token', () => {
     expect(href('confirm_email', null, { token: TOKEN, request_id: null })).toBe(
       `${ORIGIN}/en/account/email/confirm?t=${TOKEN}`,

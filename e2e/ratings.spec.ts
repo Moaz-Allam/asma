@@ -342,7 +342,9 @@ test('a customer skips or gives a rating, the provider and admin read it, and a 
   await page.reload();
   await expect(offer).toContainText(five);
   const offerAfter = (await offer.locator('p', { hasText: five }).first().textContent()) ?? '';
-  expect(offerAfter).not.toEqual(offerBefore);
+  // The figure itself, not only the count (slice review 2026-11-22): the first "d.d" on the line.
+  const figure = (text: string) => Number((/\d[.,٫]\d/.exec(text)?.[0] ?? 'NaN').replace(/[,٫]/, '.'));
+  expect(figure(offerAfter)).toBeGreaterThan(figure(offerBefore));
   await provider.reload();
   await expect(card).toContainText(m(locale, 'Ratings.mine.from', { count: 5 }));
   const scoreAfter = (await card.locator('.font-display.text-title').textContent()) ?? '';

@@ -10,6 +10,7 @@ import { StatusChip } from '@/components/shared/StatusChip';
 import { loadProviderRatings } from '@/lib/admin-ratings';
 import { guardPage } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
+import { reportServerError } from '@/lib/observability/server';
 import { adminProviderFile, parseQueueQuery, queueSearch } from '@/lib/provider/admin-queries';
 
 type Props = {
@@ -44,7 +45,14 @@ export default async function Page({ params, searchParams }: Props) {
 
   const file = await adminProviderFile(id);
   if (!file) notFound();
-  const ratings = file.status === 'draft' ? null : await loadProviderRatings(file.id, ratingsPage);
+  // Ratings are optional and gate nothing (D4): a failed read hides the section, never the review page.
+  const ratings =
+    file.status === 'draft'
+      ? null
+      : await loadProviderRatings(file.id, ratingsPage).catch((error: unknown) => {
+          reportServerError('adminProviderRatings', error);
+          return null;
+        });
   const ratingsHref = (page: number) =>
     `/admin/providers/${file.id}?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(queueSearch(query))), rp: String(page) }).toString()}#ratings-title`;
 

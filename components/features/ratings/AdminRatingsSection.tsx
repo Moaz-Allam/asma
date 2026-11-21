@@ -75,8 +75,16 @@ export function AdminRatingsSection({
         )}
       </div>
 
-      {data.rows.length === 0 ? (
+      {data.total === 0 ? (
         <p className="text-body-s text-text-secondary">{t('empty')}</p>
+      ) : data.rows.length === 0 ? (
+        // A page past the last one (slice review 2026-11-22): back to the newest.
+        <Link
+          href={hrefFor(1)}
+          className="inline-flex min-h-11 items-center self-start text-btn-sm text-link"
+        >
+          {t('firstPage')}
+        </Link>
       ) : (
         <ul className="flex flex-col divide-y divide-border-light rounded-block border border-border-light">
           {data.rows.map((row) => (

@@ -199,6 +199,42 @@ create trigger rating_hides_append_only before update or delete on public.rating
 create trigger rating_hides_no_truncate before truncate on public.rating_hides
   for each statement execute function public.rating_append_only();
 
+-- Security review guardrail (2026-11-22): a rating row always matches its request, for every role, the SQL editor
+-- included: the request's region and customer, its selected application, and that application's provider and region.
+-- A hide always carries its rating's region. So the region mean of a rated provider is never null.
+alter table public.ratings
+  add constraint ratings_id_region unique (id, region),
+  add constraint ratings_request_region_customer_fk foreign key (request_id, region, customer_id)
+    references public.requests (id, region, customer_id) on delete restrict,
+  add constraint ratings_application_request_fk foreign key (application_id, request_id)
+    references public.applications (id, request_id) on delete restrict;
+alter table public.rating_hides
+  add constraint rating_hides_rating_region_fk foreign key (rating_id, region)
+    references public.ratings (id, region) on delete restrict;
+
+create function public.rating_consistent()
+  returns trigger
+  language plpgsql
+  security invoker
+  set search_path = ''
+as $$
+begin
+  if not exists (select 1
+                   from public.requests r
+                   join public.applications a on a.id = r.selected_application_id
+                  where r.id = new.request_id and a.id = new.application_id
+                    and a.provider_id = new.provider_id and a.region = new.region) then
+    raise exception 'validation_failed';
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.rating_consistent() from public, anon, authenticated, service_role;
+
+create trigger ratings_consistent before insert on public.ratings
+  for each row execute function public.rating_consistent();
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 3. The score (AC-4). Internal, no grant: called from the definer functions below and from offer_card.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -310,10 +346,12 @@ begin
   if p_request_id is null or v_uid is null then
     raise exception 'not_found';
   end if;
-  -- The request row first (D169); someone else's request is never locked.
+  -- The request row first (D169); someone else's request is never locked. Security review I-1 (2026-11-22): only a
+  -- customer, so an account promoted to admin later never rates its own old jobs.
   select r.* into v_req from public.requests r
    where r.id = p_request_id and r.customer_id = v_uid
-     for update;
+     and exists (select 1 from public.profiles p where p.id = v_uid and p.role = 'customer')
+     for update of r;
   if not found then
     raise exception 'not_found';
   end if;
@@ -810,6 +848,11 @@ begin
   end if;
   if v_tpl = 'rate_provider' then
     v_values := v_values || jsonb_build_object('provider_name', v_name);
+  end if;
+  if v_tpl = 'rating_received' then
+    -- Security review M-1 (2026-11-22): the provider's notice carries nothing that names the rated job, so no later
+    -- wording can show it.
+    v_values := v_values || jsonb_build_object('request_id', null, 'service', null, 'start_at', null);
   end if;
   return jsonb_build_object(
     'status', 'send',
