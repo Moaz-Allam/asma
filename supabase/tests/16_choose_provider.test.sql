@@ -175,11 +175,12 @@ SELECT is((SELECT jsonb_agg(x ->> 'application_id' ORDER BY ord) FROM o1, jsonb_
   jsonb_build_array(pg_temp.app(1, 'a1'), pg_temp.app(1, 'a2'), pg_temp.app(1, 'a5')),
   'oldest first, and the suspended provider''s offer is hidden');
 SELECT is((SELECT array_agg(k ORDER BY k) FROM o1, jsonb_object_keys(j -> 'offers' -> 0) k),
-  ARRAY['application_id', 'approved_since', 'created_at', 'display_name', 'first_name', 'message', 'message_hidden'],
-  'an offer has exactly these keys');
+  ARRAY['application_id', 'approved_since', 'created_at', 'display_name', 'first_name', 'message', 'message_hidden', 'rating'],
+  'an offer has exactly these keys (rating since 17)');
 SELECT is((SELECT (j -> 'offers' -> 0) - 'created_at' FROM o1),
   jsonb_build_object('application_id', pg_temp.app(1, 'a1'), 'display_name', 'Ayşe K.', 'first_name', 'Ayşe',
-                     'approved_since', '2026-03-01', 'message', 'I am free all week and live close by.', 'message_hidden', false),
+                     'approved_since', '2026-03-01', 'message', 'I am free all week and live close by.', 'message_hidden', false,
+                     'rating', jsonb_build_object('state', 'new', 'count', 0)),
   'the first offer: name and initial, the month in Istanbul, the message');
 SELECT is((SELECT jsonb_build_object('message', x -> 'message', 'hidden', x -> 'message_hidden') FROM o1, jsonb_array_elements(j -> 'offers') x
             WHERE x ->> 'application_id' = pg_temp.app(1, 'a5')::text),
@@ -263,7 +264,7 @@ SELECT is((SELECT jsonb_build_object('status', j ->> 'status', 'chosen', j -> 'c
                      'deadline', (SELECT j -> 'payment_deadline' FROM ch)),
   'the chosen offer, its status and the stored deadline');
 SELECT is((SELECT array_agg(k ORDER BY k) FROM o2, jsonb_object_keys(j -> 'chosen') k),
-  ARRAY['application_id', 'approved_since', 'created_at', 'display_name', 'first_name', 'message', 'message_hidden', 'status', 'suspended'],
+  ARRAY['application_id', 'approved_since', 'created_at', 'display_name', 'first_name', 'message', 'message_hidden', 'rating', 'status', 'suspended'],
   'the chosen offer has the offer keys plus status and suspended');
 
 -- ── the provider's view (AC-12) ──────────────────────────────────────────────
