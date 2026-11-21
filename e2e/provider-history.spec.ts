@@ -8,7 +8,8 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
 import { expect, test } from './fixtures';
-import { TEST_CODE, testE164, testPhone } from './numbers';
+import { onboard, signIn } from './auth';
+import { testE164, testPhone } from './numbers';
 
 /**
  * Spec 0011-15 AC-5 on the real local stack, at 390px with axe, in every locale. The provider reaches Jobs and fees
@@ -184,28 +185,6 @@ async function axe(page: Page) {
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
   expect(scan.violations).toEqual([]);
-}
-
-async function signIn(page: Page, locale: string, phone: string, path: string) {
-  await page.goto(path);
-  await page.locator('#login-phone').fill(phone);
-  const send = page.locator('form button[type="submit"]');
-  await expect(async () => {
-    await expect(send).toBeEnabled();
-    await send.click();
-    await expect(page.locator('#login-code')).toBeVisible({ timeout: 5_000 });
-  }).toPass({ timeout: 60_000 });
-  await page.locator('#login-code').pressSequentially(TEST_CODE);
-}
-
-async function onboard(page: Page, name: string) {
-  await page.locator('#full-name').fill(name);
-  const tick = page.locator('#agreement');
-  await expect(async () => {
-    if ((await tick.getAttribute('data-state')) !== 'checked') await tick.click();
-    await expect(tick).toHaveAttribute('data-state', 'checked', { timeout: 500 });
-  }).toPass();
-  await page.locator('form button[type="submit"]').click();
 }
 
 test('the provider reads each month of jobs and fees, with receipts, a refund and a cancelled job', async ({

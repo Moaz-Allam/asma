@@ -13,6 +13,7 @@ import {
   signOutOtherDevices,
   type PasswordProblem,
 } from '@/lib/auth/password';
+import { useHydrated } from '@/lib/browser/use-hydrated';
 import { getPathname, Link } from '@/lib/i18n/navigation';
 import { reportClientError } from '@/lib/observability/client';
 
@@ -37,6 +38,8 @@ export function SetPasswordForm({ phone, reason, next }: Props) {
   const [problems, setProblems] = useState<PasswordProblem[]>([]);
   const [error, setError] = useState<SetPasswordError | null>(null);
   const [othersLeft, setOthersLeft] = useState(false);
+  // Before hydration a submit would be a native GET with the password in the URL (it would reach our server).
+  const hydrated = useHydrated();
 
   const destination = getPathname({ href: next, locale });
 
@@ -58,7 +61,8 @@ export function SetPasswordForm({ phone, reason, next }: Props) {
       if (result.report) reportClientError(new Error(`auth_set_password_${result.error}`));
       return;
     }
-    track('password_set', { reason });
+    // A full page load follows: send it now, as a beacon, or the batch is lost with the page.
+    track('password_set', { reason }, { leaving: true });
     if (!(await signOutOtherDevices())) {
       reportClientError(new Error('auth_sign_out_others_failed'));
       setBusy(false);
@@ -130,7 +134,7 @@ export function SetPasswordForm({ phone, reason, next }: Props) {
           ) : null}
         </div>
       ) : null}
-      <Button type="submit" size="block" disabled={busy}>
+      <Button type="submit" size="block" disabled={busy || !hydrated}>
         {busy ? t('saving') : reason === 'reset' ? t('saveReset') : t('save')}
       </Button>
     </form>

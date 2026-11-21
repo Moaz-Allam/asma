@@ -7,7 +7,8 @@ import type { Browser, Page } from '@playwright/test';
 
 import { formatMoney } from '../lib/format/money';
 import { expect, test } from './fixtures';
-import { TEST_CODE, testE164, testPhone, type NUMBER } from './numbers';
+import { onboard, signIn } from './auth';
+import { testE164, testPhone, type NUMBER } from './numbers';
 
 /**
  * Spec 0007 AC-25 at 390px in every locale, on the real local database: admin follows the links on
@@ -86,28 +87,6 @@ async function switchTargets(page: Page) {
       .filter((t) => t.width > 0 && (t.width < 44 || t.height < 44)),
   );
   expect(small).toEqual([]);
-}
-
-async function signIn(page: Page, locale: string, phone: string, path = `/${locale}/login`) {
-  await page.goto(path);
-  await page.locator('#login-phone').fill(phone);
-  const send = page.locator('form button[type="submit"]');
-  await expect(async () => {
-    await expect(send).toBeEnabled();
-    await send.click();
-    await expect(page.locator('#login-code')).toBeVisible({ timeout: 5_000 });
-  }).toPass({ timeout: 60_000 });
-  await page.locator('#login-code').pressSequentially(TEST_CODE);
-}
-
-async function onboard(page: Page, name: string) {
-  await page.locator('#full-name').fill(name);
-  const tick = page.locator('#agreement');
-  await expect(async () => {
-    if ((await tick.getAttribute('data-state')) !== 'checked') await tick.click();
-    await expect(tick).toHaveAttribute('data-state', 'checked', { timeout: 500 });
-  }).toPass();
-  await page.locator('form button[type="submit"]').click();
 }
 
 async function newAdmin(browser: Browser, locale: string, test: keyof typeof NUMBER): Promise<Page> {

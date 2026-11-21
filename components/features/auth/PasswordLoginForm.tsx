@@ -102,7 +102,7 @@ export function PasswordLoginForm({ dialCodes, siteKey, nonce, next, asProvider,
           label={t('phoneLabel')}
           placeholder={t('phonePlaceholder')}
           dialCode={dialCode}
-          autoComplete="username tel"
+          autoComplete="username"
           error={error !== null && error !== 'password_empty'}
           errorId="login-error"
           onChange={() => setError(null)}

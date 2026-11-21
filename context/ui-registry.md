@@ -35,7 +35,7 @@ through tokens (pills, 2px borders, the radius scale) before registering it.
 | Label | `components/ui/label.tsx` | ✅ | ✅ | forms |
 | Checkbox | `components/ui/checkbox.tsx` | ✅ 24px | ✅ | onboarding |
 | InputOTP | `components/ui/input-otp.tsx` | ✅ boxes shrink to fit 360px, always LTR | ✅ | `CodeField` |
-| Switch | `components/ui/switch.tsx` | ✅ the thumb is written to move the other way in RTL | ⚠️ needs RTL check | `NotificationTable` |
+| Switch | `components/ui/switch.tsx` | ✅ the thumb is written to move the other way in RTL | ✅ checked on `/ar/account` (01b) | `NotificationTable`. Inside a form Radix adds a hidden input, `absolute` and moved `translateX(-100%)`: give the box around the switches `relative` (with its `overflow-hidden`), or in RTL the page scrolls sideways (found by 01b's e2e) |
 | Accordion | `components/ui/accordion.tsx` | ✅ content stays mounted and CSS hides it, so answers are in the server HTML (AC-29) | ✅ | landing FAQ |
 | Sheet | `components/ui/sheet.tsx` | ✅ sides `start`, `end`, `top`, `bottom`; `closeLabel` required | ⚠️ needs RTL check | `PublicMenu` |
 
@@ -72,6 +72,8 @@ Cross-feature building blocks. Path: `components/shared/`.
 | `InitialAvatar` | A person without a photo | Circle, initial in Alexandria 700, `bg-accent-light` (40px nav, 56px cards) | s6, s7, s9 | ✅ done, 40px; first grapheme through `lib/account/initial.ts` | ✅ |
 | `RatingStars` | Choose 1–5 per dimension | Five 44px circles `bg-accent-muted` with ★, selected `bg-accent` | s9, s16 | 📋 planned | — |
 | `PhoneField` / `CodeField` | Phone sign-in and the one-time code (D55) | Phone field with the region prefix (`+90` in v1); code as **six** digit boxes (the design draws four), resend countdown | s2, p1 | ✅ done (`components/features/auth/`); `BotCheck` and `LoginForm` beside them, `Function` free | ✅ |
+| `PasswordField` | A password with a show and hide button (spec 0012 AC-1, AC-5; `components/features/auth/PasswordField.tsx`) | `Input` with `pe-13`, `dir="auto"`, never trimmed; the eye is a 44px `absolute end-1 top-1/2 -translate-y-1/2 rounded-full text-text-secondary` button with `aria-pressed` and `aria-controls`; optional hint `text-meta font-normal text-text-secondary` | — (s2 field) | ✅ built (01b) | ✅ |
+| `PasswordLoginForm` | `/login`'s default mode, phone and password (spec 0012 AC-1 to AC-3; `components/features/auth/PasswordLoginForm.tsx`) | `LoginForm`'s layout: title `font-display text-title-s`, `PhoneField` (`autocomplete="username"`), `PasswordField`, the error box `rounded-row bg-error-light px-4 py-3`, block button, links `text-body-s font-semibold text-link underline underline-offset-4` ("Forgot", "New here") | s2 | ✅ built (01b) | ✅ |
 | `ToggleRow` | Add-on with price, notification channel (`components/shared/ToggleRow.tsx`) | Wide `rounded-field` row, a real checkbox, label at start, price or switch at end; checked is `accent-light` plus a filled tick, never colour alone | s4, s12 | ✅ built (04) | ✅ |
 
 ---
@@ -164,6 +166,14 @@ Domain components. Path: `components/features/<domain>/`.
 | `EmailNudge` | A quiet note asking for a confirmed email, linking to `/account`; never a block (`components/shared/EmailNudge.tsx`) | — (no design ref; `rounded-row bg-accent-light`, a white pill) | ✅ built (13) | ✅ | Spec 0011-13 AC-4: My requests and the choose dialog while mail is on; the feed and the apply page while the apply gate is on. Strings from the caller |
 | `EmailLinkButton` | "Send link again": a `type="button"` that calls `requestEmailConfirmation` and shows the sent line or the refusal (`components/features/account/EmailLinkButton.tsx`) | s12 | ✅ built (13) | ✅ | Inside the account form it never submits the form; shown only while mail is on |
 | `ConfirmEmailForm` | The confirm page's one button (a POST through `confirmEmail`), the done line, or one refusal (`invalid_link`, `link_expired`, `link_used`) with "Send link again" (`components/features/account/ConfirmEmailForm.tsx`) | — (s12 styles) | ✅ built (13) | ✅ | Opening the link changes nothing, so a mail scanner confirms no address (AC-7) |
+
+### Account password (01b)
+
+| Component | Purpose | Design ref | Status | RTL | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `SetPasswordForm` | The password step at `/account/password`: a first or a reset password, two `PasswordField`s, the rules line, problems and Auth errors in one `rounded-row bg-error-light` box, `othersLeft` as `bg-warning-light` (`components/features/account/SetPasswordForm.tsx`) | — (s12 styles) | ✅ built (01b) | ✅ | The submit waits for `useHydrated`, so a tap before hydration is never a native GET with the password in the URL. The event is sent with `leaving` (a full load follows) |
+| `PasswordSection` | The account page's Password card: a reminder (`rounded-card bg-warning-light px-6 py-5`, a white pill link) while no password is set, else "last changed" and the change form (`rounded-card border-2 border-border bg-surface px-6 py-5`) (`components/features/account/PasswordSection.tsx`) | s12 | ✅ built (01b) | ✅ | Heading `font-sans text-label font-semibold`, as `SignOutCard` |
+| `ChangePasswordForm` | Current, new and repeat `PasswordField`s, "Forgot it?" link, one `BotCheck`, a `secondary` button; success as `rounded-row bg-success-light` (`components/features/account/ChangePasswordForm.tsx`) | s12 | ✅ built (01b) | ✅ | The phone comes from the server page, never typed; `router.refresh()` redraws "last changed" |
 
 ### Admin
 

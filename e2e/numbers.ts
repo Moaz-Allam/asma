@@ -75,6 +75,11 @@ export const NUMBER = {
   opsAdmin: 44,
   opsCustomer: 45,
   opsProvider: 46,
+  // Position 01b (spec 0012 AC-12): a customer who signs up, signs in with a password and resets it; one who changes
+  // it from the account page; one whose raw sign up carried a password that was never saved.
+  passwordCustomer: 47,
+  passwordChange: 48,
+  passwordRaw: 49,
 } as const;
 
 /**

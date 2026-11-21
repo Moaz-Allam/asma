@@ -8,7 +8,8 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
 import { expect, test } from './fixtures';
-import { TEST_CODE, testE164, testPhone } from './numbers';
+import { onboard, signIn } from './auth';
+import { testE164, testPhone } from './numbers';
 
 /**
  * Spec 0011-16 AC-9 on the real local stack, at 390px with axe, in every locale. Admin filters the request list, extends
@@ -151,28 +152,6 @@ async function axe(page: Page) {
   expect(scan.violations).toEqual([]);
 }
 
-async function signIn(page: Page, phone: string, path: string) {
-  await page.goto(path);
-  await page.locator('#login-phone').fill(phone);
-  const send = page.locator('form button[type="submit"]');
-  await expect(async () => {
-    await expect(send).toBeEnabled();
-    await send.click();
-    await expect(page.locator('#login-code')).toBeVisible({ timeout: 5_000 });
-  }).toPass({ timeout: 60_000 });
-  await page.locator('#login-code').pressSequentially(TEST_CODE);
-}
-
-async function onboard(page: Page, name: string) {
-  await page.locator('#full-name').fill(name);
-  const tick = page.locator('#agreement');
-  await expect(async () => {
-    if ((await tick.getAttribute('data-state')) !== 'checked') await tick.click();
-    await expect(tick).toHaveAttribute('data-state', 'checked', { timeout: 500 });
-  }).toPass();
-  await page.locator('form button[type="submit"]').click();
-}
-
 const one = (query: string) => sql(query)[0] ?? {};
 
 test('admin lists, extends, cancels, shows an address, clears a flag and exports revenue', async ({
@@ -184,12 +163,12 @@ test('admin lists, extends, cancels, shows an address, clears a flag and exports
   const f = ids(locale);
 
   // The admin: signed up as a customer, promoted, signed in again (as 14 does).
-  await signIn(page, testPhone(locale, 'opsAdmin'), `/${locale}/login`);
+  await signIn(page, locale, testPhone(locale, 'opsAdmin'));
   await onboard(page, `Admin ${locale}`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/new$`), { timeout: 20_000 });
   sql(`select public.promote_to_admin('${testE164(locale, 'opsAdmin')}')`);
   await page.context().clearCookies();
-  await signIn(page, testPhone(locale, 'opsAdmin'), `/${locale}/login`);
+  await signIn(page, locale, testPhone(locale, 'opsAdmin'));
   await expect(page).toHaveURL(new RegExp(`/${locale}/admin$`), { timeout: 20_000 });
   seed(locale, f);
 

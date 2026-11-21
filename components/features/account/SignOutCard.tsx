@@ -26,7 +26,7 @@ export function SignOutCard() {
         <h2 className="font-sans text-label font-semibold text-text-primary">{t('signOutTitle')}</h2>
         <p className="text-body-s text-text-secondary">{t('signOutNote')}</p>
       </div>
-      <Button variant="secondary" disabled={isPending} onClick={onSignOut}>
+      <Button id="sign-out" variant="secondary" disabled={isPending} onClick={onSignOut}>
         {t('signOut')}
       </Button>
     </section>

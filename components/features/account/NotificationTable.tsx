@@ -46,7 +46,9 @@ export function NotificationTable({
         <p className="text-meta leading-loose font-normal text-text-secondary">{t('noticesIntro')}</p>
       </div>
 
-      <div className="overflow-hidden rounded-block border-2 border-border">
+      {/* `relative`: each Radix switch in a form renders a hidden input, absolute and moved `translateX(-100%)`. In RTL
+          that lands past the page's left edge and scrolls it sideways, unless this box is its containing block. */}
+      <div className="relative overflow-hidden rounded-block border-2 border-border">
         <table className="w-full text-start">
           <thead className="bg-surface-secondary">
             <tr>
