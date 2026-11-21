@@ -11,7 +11,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(101);
+SELECT plan(102);
 
 INSERT INTO auth.users (id, aud, role, phone, phone_confirmed_at) VALUES
   ('00000000-0000-0000-0000-0000000000a1', 'authenticated', 'authenticated', '905551110001', now()),
@@ -116,7 +116,16 @@ SELECT is(
 UPDATE auth.users SET encrypted_password = 'a-hash' WHERE id = '00000000-0000-0000-0000-0000000000b3';
 SELECT is(
   (SELECT encrypted_password FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000b3'),
-  'a-hash', 'a password set after a code proved the phone is kept'
+  '', 'a password on a proven phone before onboarding (no profile) is dropped (D201)'
+);
+INSERT INTO public.profiles (id, role, region, phone, full_name, locale)
+VALUES ('00000000-0000-0000-0000-0000000000b3', 'customer', 'TR', '+905551110097', 'Kanıtlı Hesap', 'tr');
+UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "customer", "region": "TR"}'
+ WHERE id = '00000000-0000-0000-0000-0000000000b3';
+UPDATE auth.users SET encrypted_password = 'a-hash' WHERE id = '00000000-0000-0000-0000-0000000000b3';
+SELECT is(
+  (SELECT encrypted_password FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000b3'),
+  'a-hash', 'a password set after a code proved the phone and onboarding made the profile is kept'
 );
 
 -- ── complete_onboarding: anon (AC-8) ─────────────────────────────────────────

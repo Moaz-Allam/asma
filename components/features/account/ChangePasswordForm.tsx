@@ -14,6 +14,7 @@ import {
   signOutOtherDevices,
   type PasswordProblem,
 } from '@/lib/auth/password';
+import { useHydrated } from '@/lib/browser/use-hydrated';
 import { Link, useRouter } from '@/lib/i18n/navigation';
 import { reportClientError } from '@/lib/observability/client';
 
@@ -41,6 +42,8 @@ export function ChangePasswordForm({ phone, siteKey, nonce }: Props) {
   const [error, setError] = useState<PasswordSignInError | SetPasswordError | null>(null);
   const [done, setDone] = useState<'changed' | 'others_left' | null>(null);
   const onToken = useCallback((value: string | null) => setToken(value), []);
+  // Disabled until hydration on purpose, not only until the token: a native GET would put the passwords in the URL.
+  const hydrated = useHydrated();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -153,7 +156,7 @@ export function ChangePasswordForm({ phone, siteKey, nonce }: Props) {
           {done === 'changed' ? t('changed') : t('othersLeft')}
         </p>
       ) : null}
-      <Button type="submit" variant="secondary" disabled={busy || !token}>
+      <Button type="submit" variant="secondary" disabled={busy || !token || !hydrated}>
         {busy ? t('saving') : t('change')}
       </Button>
       <BotCheck siteKey={siteKey} nonce={nonce} locale={locale} attempt={attempt} onToken={onToken} />

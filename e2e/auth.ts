@@ -8,7 +8,7 @@ import { TEST_CODE } from './numbers';
  * Since 01b `/login` opens on phone and password, so a code sign in goes through `?mode=code`, and an account with a
  * role and no password meets the password step at `/continue`. These helpers pass that step with `TEST_PASSWORD`, so
  * a journey lands where it did before 01b. A fixture that writes a user by SQL may give it a password only by an
- * update after `phone_confirmed_at` is set: the insert would blank it (`password_guard`).
+ * update after `phone_confirmed_at` is set and its profile exists: otherwise `password_guard` blanks it (D201).
  */
 
 /** Ten code points or more, not on the common list, no phone digits (spec 0012 AC-5). */

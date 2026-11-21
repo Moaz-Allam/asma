@@ -193,6 +193,12 @@ test('a new account sets a password, signs in with it, and resets it by code', a
   ).toBe(0);
   await passwordSection(page).locator(`a[href*="reset=1"]`).first().click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?mode=code&reset=1&next=%2Faccount$`));
+  // The page asks first (D201): opening a ?reset=1 link alone signs nobody out.
+  await expect(page.locator('#login-phone')).toHaveCount(0);
+  await page.goto(`/${locale}/account`);
+  await expect(page).toHaveURL(new RegExp(`/${locale}/account$`));
+  await passwordSection(page).locator(`a[href*="reset=1"]`).first().click();
+  await page.locator('#reset-sign-out').click();
   await requestCode(page, phone);
   await typeCode(page, TEST_CODE);
   await expect(page).toHaveURL(new RegExp(`/${locale}/account/password\\?reason=reset&next=%2Faccount$`));
@@ -230,6 +236,31 @@ test('a change from the account page needs the current password, moves "last cha
   await signIn(page, locale, phone);
   await onboard(page, 'Parola Değişim');
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/new$`));
+
+  // D201: with no JavaScript (the page before hydration), every password form's submit is disabled, so a native GET
+  // can never carry a password into a URL. Signed in: the change form and the reset step; signed out: the login.
+  const viewport = { width: 390, height: 844 };
+  const signedIn = await browser.newContext({
+    baseURL,
+    viewport,
+    javaScriptEnabled: false,
+    storageState: await page.context().storageState(),
+  });
+  const signedOut = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false });
+  for (const [context, path] of [
+    [signedIn, `/${locale}/account`],
+    [signedIn, `/${locale}/account/password?reason=reset`],
+    [signedOut, `/${locale}/login`],
+  ] as const) {
+    const plain = await context.newPage();
+    await plain.goto(path);
+    const submits = plain.locator('form:has(input[type="password"]) button[type="submit"]');
+    await expect(submits).toHaveCount(1);
+    await expect(submits).toBeDisabled();
+    await plain.close();
+  }
+  await signedIn.close();
+  await signedOut.close();
 
   // Another device signed in with the password.
   const other = await freshPage(browser, baseURL);

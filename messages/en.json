@@ -194,7 +194,9 @@
     "havePassword": "I have a password",
     "reset": {
       "title": "Reset your password",
-      "intro": "Enter your mobile number. We will send you a code, then you choose a new password."
+      "intro": "Enter your mobile number. We will send you a code, then you choose a new password.",
+      "signedIn": "You are signed in on this device. To reset your password, sign out here first, then we will send you a code.",
+      "signOut": "Sign out and reset"
     },
     "password": {
       "title": "Welcome back",
@@ -1787,8 +1789,8 @@
       "action": "[draft] Open the report"
     },
     "password_changed": {
-      "subject": "[draft] Your password was changed",
-      "lead": "[draft] The password of your Aldebyani account was changed on {when}.",
+      "subject": "[draft] A password was saved on your account",
+      "lead": "[draft] A password was saved on your Aldebyani account on {when}.",
       "notYou": "[draft] If this was not you, reset your password with an SMS code now, then contact our support.",
       "action": "[draft] Reset my password"
     }

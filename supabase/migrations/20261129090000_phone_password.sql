@@ -1,14 +1,15 @@
 -- Position 01b (spec 0012, D199): phone and password sign in.
 --
 -- 0005's no_password trigger blanked every password. It is replaced by password_guard, which keeps a password only
--- when a code had already proven the phone before the write (AC-8, D104 holds): an account is only ever created by a
--- code, so an insert never keeps one, and registering someone else's number with a password, then waiting for them to
--- confirm it, saves nothing. On a kept change it records app_metadata.has_password and password_changed_at (the app
+-- when a code had already proven the phone before the write and the account has a profile (AC-8, D104 holds, D201):
+-- an account is only ever created by a code, so an insert never keeps one, and registering someone else's number with
+-- a password, then waiting for them to confirm it, saves nothing. On a kept change it records app_metadata.has_password and password_changed_at (the app
 -- reads them from getUser; the JWT and RLS never do) and writes one audit row. phone_fixed stops the Auth phone, the
 -- sign in key, from moving away from profiles.phone.
 --
 -- Replaced from their latest bodies, each with the change named: queue_email and email_context (14, the template
--- password_changed), queue_audit_email and the audit_log_email trigger (16, the action auth.password_changed, AC-10).
+-- password_changed), queue_audit_email and the audit_log_email trigger (16, the actions auth.password_set and
+-- auth.password_changed, AC-10 as amended by D201).
 -- Every new function is a definer with search_path '' and no API role's execute grant; Auth's own role runs the
 -- triggers. supabase/tests/05, 29 and 34 prove it.
 
@@ -29,6 +30,7 @@ declare
   v_old     text;
   v_new     text;
   v_region  text;
+  v_profile boolean;
 begin
   -- An account is only ever created by a code: a sign up that carries a password (a raw API call) saves none.
   if tg_op = 'INSERT' then
@@ -44,8 +46,14 @@ begin
     return new;
   end if;
 
-  -- A new password is kept only when a code had proven the phone before this write.
-  if v_new <> '' and old.phone_confirmed_at is null then
+  -- A new password is kept only when a code had proven the phone before this write, and the account has a profile.
+  -- The profile is written only by onboarding, with the owner's own session, after the code. It closes a race: under
+  -- READ COMMITTED a repeated raw sign up that read the row before the owner's code committed, and writes after it,
+  -- would see the confirmation in OLD (security review 2026-11-21). `continue` sends onboarding before the password
+  -- step, so no real flow changes.
+  select p.region into v_region from public.profiles p where p.id = new.id;
+  v_profile := found;
+  if v_new <> '' and (old.phone_confirmed_at is null or not v_profile) then
     v_new := '';
   end if;
   new.encrypted_password := v_new;
@@ -55,7 +63,6 @@ begin
   end if;
 
   new.raw_app_meta_data := new.raw_app_meta_data || jsonb_build_object('password_changed_at', now());
-  select p.region into v_region from public.profiles p where p.id = new.id;
   -- auth.uid() is null in Auth's connection: the actor is the account itself. No value holds the hash.
   insert into public.audit_log (actor_id, action, entity_type, entity_id, region, old_value, new_value)
   values (new.id, case when v_old = '' then 'auth.password_set' else 'auth.password_changed' end, 'auth_users',
@@ -337,7 +344,7 @@ $$;
 revoke all on function public.email_context(uuid) from public, anon, authenticated, service_role;
 grant execute on function public.email_context(uuid) to service_role;
 
--- 16's map plus auth.password_changed, before the request lookup (the audit row names the account).
+-- 16's map plus auth.password_set and auth.password_changed, before the request lookup (the audit row names the account).
 create or replace function public.queue_audit_email(p_audit_id bigint)
   returns integer
   language plpgsql
@@ -381,8 +388,10 @@ begin
                                    null, v_a.entity_id::uuid, v_day);
   end if;
 
-  -- AC-10 of 0012: a changed password, to the account owner. auth.password_set (part of signing up) sends nothing.
-  if v_a.action = 'auth.password_changed' then
+  -- AC-10 of 0012: a set or changed password, to the account owner. A first password is mailed too (security review
+  -- 2026-11-21): a fresh stolen session could set one on an established account with none. queue_audit_mail sends
+  -- only to a confirmed address, which a brand new sign up cannot have yet, so a new account gets nothing.
+  if v_a.action in ('auth.password_set', 'auth.password_changed') then
     return public.queue_audit_mail(v_a.id, v_a.region, v_a.entity_id::uuid, 'password_changed', null,
                                    v_a.entity_id::uuid, v_day);
   end if;
@@ -519,5 +528,5 @@ create trigger audit_log_email after insert on public.audit_log
                        'fee.late', 'fee.refunded', 'fee.refund_done_by_hand', 'profile.email_changed',
                        'provider.approved', 'provider.reinstated', 'provider.rejected', 'provider.suspended',
                        'job.closed_by_admin', 'report.opened', 'report.handled', 'request.admin_cancelled',
-                       'auth.password_changed'))
+                       'auth.password_set', 'auth.password_changed'))
   execute function public.audit_log_email();

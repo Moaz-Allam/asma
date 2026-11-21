@@ -849,14 +849,25 @@ Projection only. Updated in the same transaction as the ledger.
 
 ## 15. Authentication
 
-**Position 01 (spec 0005, D97 to D104) overrides this section where they differ.**
+**Position 01 (spec 0005, D97 to D104) and 01b (spec 0012, D199 to D201) override this section where they differ.**
 
 - Sending and checking the code run from the browser straight to Supabase Auth, through
   `lib/auth/otp-channel.ts` (D98). Auth is public anyway, so what holds lives inside it: Turnstile (Auth is
   the only checker, a token works once), the limits of S22, Twilio Verify's own limits, and the
   `before_user_created` hook `check_new_user`, which refuses anything but a mobile number of an active
-  region before any SMS. No account holds a password: the `no_password` trigger on `auth.users` keeps
-  `encrypted_password` empty (D104).
+  region before any SMS.
+- **Phone and password (01b).** A code only creates an account or resets a password; daily sign in is
+  `signInWithPassword` from the browser through `lib/auth/password.ts` (D98), so a password never reaches our
+  server, a URL, a log, an event or Sentry (every password submit stays disabled until hydration). The
+  `password_guard` trigger on `auth.users` (definer, no API grant) keeps a password only when a code proved
+  the phone before the write **and** the account has a profile (D104 in its 01b form, D201); an insert never
+  keeps one, and a write that leaves the hash unchanged does nothing. On a kept write it sets
+  `app_metadata.has_password` and `password_changed_at` (read from `getUser`; the JWT and RLS never read them)
+  and one audit row, `auth.password_set` or `auth.password_changed`, each mailing `password_changed` to a
+  confirmed address. `phone_fixed` refuses any change of a set `auth.users.phone`, the sign in key.
+  `/continue` sends a role with no password to `/account/password` (a guide, not a boundary: the guards never
+  read `has_password`). A password change signs other devices out (`signOut({ scope: 'others' })`): their
+  refresh tokens end at once, an access token they hold lasts until it expires (one hour).
 - Role and region live in `profiles` and in `app_metadata`, written once, in one transaction, by
   `complete_onboarding` from the verified `auth.users` row. A client can never change either. The first
   admin is set by `promote_to_admin` in the SQL editor.

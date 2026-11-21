@@ -39,7 +39,7 @@ export default async function AccountPage({ params }: Props) {
   const passwordState = passwordSectionState({
     hasPassword: user.hasPassword,
     passwordChangedAt: user.passwordChangedAt,
-    timezone: user.hasPassword ? await getRegionTimezone(user.region) : null,
+    timezone: user.hasPassword ? await getRegionTimezone(profile.region) : null,
     locale,
   });
   const nonce = (await headers()).get('x-nonce') ?? undefined;

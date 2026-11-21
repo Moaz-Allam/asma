@@ -32,8 +32,8 @@ import { normalizeForRegions, type PhoneRejection } from '@/lib/region/phone';
  * reads the new session.
  *
  * Spec 0012: this is the code mode (`?mode=code`), for a new account and a password reset (`reset=1`, kept with the
- * phone in `login_step`, carried to `/continue`). A signed in visitor who asks for a reset is signed out on this
- * device first (`signOutFirst`), so a reset always starts from a fresh code session.
+ * phone in `login_step`, carried to `/continue`). A signed in visitor who asks for a reset is asked to sign out on
+ * this device first (`signOutFirst`, a button, never on load), so a reset always starts from a fresh code session.
  */
 
 type FormError = PhoneRejection | SendError | CheckError | null;
@@ -106,18 +106,15 @@ export function LoginForm({
 
   const onToken = useCallback((value: string | null) => setToken(value), []);
 
-  useEffect(() => {
-    if (!signOutFirst) return;
-    let active = true;
-    void signOut()
-      .catch(() => undefined)
-      .finally(() => {
-        if (active) setSignedOut(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, [signOutFirst]);
+  // A click, never the page load: a posted `?reset=1` link must not sign anyone out (security review 2026-11-21).
+  const [signingOut, setSigningOut] = useState(false);
+  async function signOutForReset() {
+    setSigningOut(true);
+    // A failed sign out still goes on: the code sign in replaces this device's session anyway.
+    await signOut().catch(() => undefined);
+    setSigningOut(false);
+    setSignedOut(true);
+  }
 
   useEffect(() => {
     if (step !== 'code') return;
@@ -219,7 +216,22 @@ export function LoginForm({
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      {step === 'phone' ? (
+      {!signedOut ? (
+        <div className="flex flex-1 flex-col gap-4">
+          <h1 className="font-display text-title-s text-text-primary">{t('reset.title')}</h1>
+          <p className="text-label leading-relaxed font-medium text-text-primary">{t('reset.signedIn')}</p>
+          <div className="flex-1" />
+          <Button
+            id="reset-sign-out"
+            type="button"
+            size="block"
+            disabled={signingOut}
+            onClick={() => void signOutForReset()}
+          >
+            {t('reset.signOut')}
+          </Button>
+        </div>
+      ) : step === 'phone' ? (
         <form onSubmit={onSubmitPhone} noValidate className="flex flex-1 flex-col gap-4">
           <h1 className="font-display text-title-s text-text-primary">
             {reset ? t('reset.title') : t('title')}

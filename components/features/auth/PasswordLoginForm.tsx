@@ -12,6 +12,7 @@ import { track } from '@/lib/analytics/client';
 import type { AnalyticsEvents } from '@/lib/analytics/events';
 import type { PasswordSignInError } from '@/lib/auth/auth-errors';
 import { signInWithPassword } from '@/lib/auth/password';
+import { useHydrated } from '@/lib/browser/use-hydrated';
 import { getPathname, Link } from '@/lib/i18n/navigation';
 import { reportClientError } from '@/lib/observability/client';
 import { normalizeForRegions, type PhoneRejection } from '@/lib/region/phone';
@@ -52,6 +53,8 @@ export function PasswordLoginForm({ dialCodes, siteKey, nonce, next, asProvider,
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<FormError>(null);
   const onToken = useCallback((value: string | null) => setToken(value), []);
+  // Disabled until hydration on purpose, not only until the token: a native GET would put the password in the URL.
+  const hydrated = useHydrated();
 
   const carried = { ...(next ? { next } : {}), ...(asProvider ? { as: 'provider' } : {}) };
 
@@ -140,7 +143,7 @@ export function PasswordLoginForm({ dialCodes, siteKey, nonce, next, asProvider,
             ) : null}
           </div>
         ) : null}
-        <Button type="submit" size="block" disabled={busy || !token}>
+        <Button type="submit" size="block" disabled={busy || !token || !hydrated}>
           {busy ? t('password.submitting') : t('password.submit')}
         </Button>
         <Link

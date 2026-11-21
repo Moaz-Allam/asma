@@ -34,7 +34,10 @@ export function normalizePassword(text: string): string {
   return text.normalize('NFC');
 }
 
-/** Unicode code points, as Auth counts the minimum length. */
+/**
+ * Unicode code points. The form asks for 10 of them. Auth is believed to count bytes (Go `len`), so the form is never
+ * laxer than Auth; AC-13's real calls confirm Auth's own floor.
+ */
 export function passwordChars(text: string): number {
   return [...normalizePassword(text)].length;
 }
@@ -130,13 +133,4 @@ export async function signOutOtherDevices(): Promise<boolean> {
     }
   }
   return false;
-}
-
-/** Ends this device's session only, from the browser (the reset links, `reauth_needed`, "Forgot it?"). */
-export async function signOutThisDevice(): Promise<void> {
-  try {
-    await createSupabaseBrowser().auth.signOut({ scope: 'local' });
-  } catch {
-    // The code route signs in again anyway.
-  }
 }

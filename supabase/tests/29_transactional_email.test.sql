@@ -792,7 +792,7 @@ SELECT is(
   (SELECT array_to_string(array_agg(m[1] ORDER BY m[1] COLLATE "C"), ',') COLLATE "default"
      FROM pg_trigger t, regexp_matches(pg_get_triggerdef(t.oid), '''([a-z_]+\.[a-z_]+)''', 'g') AS m
     WHERE t.tgname = 'audit_log_email' AND t.tgrelid = 'public.audit_log'::regclass),
-  array_to_string(ARRAY['auth.password_changed', 'fee.late', 'fee.refund_done_by_hand', 'fee.refunded', 'job.auto_closed', 'job.closed_by_admin', 'job.confirmed',
+  array_to_string(ARRAY['auth.password_changed', 'auth.password_set', 'fee.late', 'fee.refund_done_by_hand', 'fee.refunded', 'job.auto_closed', 'job.closed_by_admin', 'job.confirmed',
         'job.customer_closed', 'job.done', 'job.started', 'profile.email_changed', 'provider.approved', 'provider.reinstated', 'provider.rejected',
         'provider.suspended', 'report.handled', 'report.opened', 'request.admin_cancelled', 'request.cancelled', 'request.commission_paid', 'request.failed_picks_limit', 'request.fee_expired', 'request.no_paid_pick',
         'request.pick_dropped', 'request.pick_expired', 'request.provider_cancelled', 'request.provider_chosen', 'request.provider_withdrew',
