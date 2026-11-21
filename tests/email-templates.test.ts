@@ -42,6 +42,7 @@ const PROVIDER_TEMPLATES: ReadonlySet<EmailTemplate> = new Set([
   'account_approved',
   'account_rejected',
   'account_suspended',
+  'rating_received',
 ]);
 
 function context(
@@ -69,6 +70,7 @@ function context(
       token: template === 'confirm_email' ? TOKEN : null,
       ...(REPORT_TEMPLATES.has(template) ? { report_id: REPORT, reason: 'poor_work' as const } : {}),
       ...(template === 'password_changed' ? { changed_at: '2026-11-20T09:30:00+00:00' } : {}),
+      ...(template === 'rate_provider' ? { provider_name: HOSTILE } : {}),
     },
   };
 }
@@ -96,7 +98,7 @@ const CASES = EMAIL_TEMPLATES.flatMap((template) =>
 );
 
 const HREF = new RegExp(
-  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|account|admin/reports/${REPORT}|account/email/confirm\\?t=${TOKEN}|login\\?mode=code&reset=1)$`,
+  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|account|admin/reports/${REPORT}|account/email/confirm\\?t=${TOKEN}|login\\?mode=code&reset=1|provider/profile)$`,
 );
 
 describe('every template renders in every locale (AC-2)', () => {
@@ -170,6 +172,28 @@ describe('the links and lines of AC-5', () => {
     const mail = renderEmail({ ...base, values: { ...base.values, request_id: null } }, ORIGIN);
     expect(mail.text).toContain('12:30');
     expect(mail.text).toContain('SMS code');
+  });
+
+  it('the rating invite links the request; the new rating notice links the profile, with no score (spec 0011-17 AC-9)', () => {
+    expect(href('rate_provider', 'customer')).toBe(`${ORIGIN}/en/requests/${REQUEST}`);
+    expect(href('rating_received', 'provider')).toBe(`${ORIGIN}/en/provider/profile`);
+    const invite = context('rate_provider', 'en', 'customer');
+    const named = renderEmail(
+      { ...invite, values: { ...invite.values, provider_name: 'Ayşe Y.' } },
+      ORIGIN,
+    ).text;
+    expect(named).toContain('Ayşe Y.');
+    expect(named).toContain('You can rate until');
+    expect(named).toContain('changes nothing about any payment');
+    const unnamed = renderEmail(
+      { ...invite, values: { ...invite.values, provider_name: null, deadline: null } },
+      ORIGIN,
+    ).text;
+    expect(unnamed).not.toMatch(/with\s*is closed/);
+    expect(unnamed).toContain('is closed. You can rate it if you like.');
+    expect(unnamed).not.toContain('You can rate until');
+    const notice = renderEmail(context('rating_received', 'en', 'provider'), ORIGIN);
+    expect(notice.text).not.toMatch(/[1-5] of 5|★/);
   });
 
   it('the confirmation links the confirm page with the token', () => {

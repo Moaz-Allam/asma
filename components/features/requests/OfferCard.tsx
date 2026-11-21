@@ -6,7 +6,8 @@ import { StatusChip } from '@/components/shared/StatusChip';
  * One offer on the customer's request (ui-registry `OfferCard`, `s6`, spec 0010 AC-1): a letter avatar, the
  * provider's first name and family initial, the "Verified" and "New" chips, how long they have been on the
  * platform, and their message (or "Message hidden"). No full name, photo or contact detail ever reaches it.
- * Display only; the caller passes every string and the action.
+ * Since 17 (spec 0011-17 AC-5) a rated provider shows their score in place of "New" (`rating`), and a provider
+ * whose score is unavailable shows neither (`fresh` null). Display only; the caller passes every string and the action.
  */
 export function OfferCard({
   name,
@@ -16,15 +17,19 @@ export function OfferCard({
   message,
   hidden,
   flag,
+  rating,
   action,
 }: {
   name: string;
   verified: string;
-  fresh: string;
+  /** "New", or null when the provider is rated or the score is unavailable. */
+  fresh: string | null;
   since: string | null;
   message: string | null;
   hidden: string | null;
   flag?: string | null;
+  /** The provider's score line and its disclosure (`RatingSummary`), when rated. */
+  rating?: ReactNode;
   action?: ReactNode;
 }) {
   const initial = [...name][0] ?? '';
@@ -41,10 +46,11 @@ export function OfferCard({
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-display text-card break-words text-text-primary">{name}</p>
             <StatusChip tone="info" label={verified} />
-            <StatusChip tone="neutral" label={fresh} />
+            {fresh ? <StatusChip tone="neutral" label={fresh} /> : null}
             {flag ? <StatusChip tone="negative" label={flag} /> : null}
           </div>
           {since ? <p className="text-meta text-text-secondary">{since}</p> : null}
+          {rating}
         </div>
       </div>
       {message !== null ? (

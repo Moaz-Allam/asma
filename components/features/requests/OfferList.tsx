@@ -13,6 +13,8 @@ import type { Locale } from '@/lib/i18n/direction';
 import { useRouter } from '@/lib/i18n/navigation';
 import type { Offer } from '@/lib/requests/schemas';
 
+import { RatingSummary } from '@/components/features/ratings/RatingSummary';
+
 import { OfferCard } from './OfferCard';
 
 /**
@@ -98,7 +100,8 @@ export function OfferList({
             key={offer.application_id}
             name={nameOf(offer)}
             verified={t('offers.verified')}
-            fresh={t('offers.new')}
+            fresh={offer.rating.state === 'new' ? t('offers.new') : null}
+            rating={offer.rating.state === 'rated' ? <RatingSummary rating={offer.rating} /> : null}
             since={since[offer.application_id] ?? null}
             message={offer.message}
             hidden={offer.message_hidden ? t('offers.messageHidden') : null}

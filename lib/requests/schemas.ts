@@ -3,6 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 
 import { AnswerErrors, Breakdown, PricedResult } from '@/lib/pricing/schemas';
+import { RatingScores, RatingSummary } from '@/lib/ratings/summary';
 
 /**
  * The shapes the request functions return (spec 0008, Feature design). Parsed on the server, so a change in
@@ -182,6 +183,8 @@ export const Offer = z
     message: z.string().nullable(),
     message_hidden: z.boolean(),
     created_at: z.string().min(1),
+    // Spec 0011-17 AC-5: the provider's score, computed when read.
+    rating: RatingSummary,
   })
   .strict();
 export type Offer = z.infer<typeof Offer>;
@@ -297,6 +300,22 @@ export const CloseInfo = z
   .object({ auto_close_enabled: z.boolean(), can_mark_done: z.boolean(), my_report_open: z.boolean() })
   .strict();
 export type CloseInfo = z.infer<typeof CloseInfo>;
+
+/** `rate_provider()` (spec 0011-17 AC-1). */
+export const RateResult = z.object({ rating_id: z.string().uuid() }).strict();
+
+/** `request_rating()` (spec 0011-17 AC-6): whether the form shows, until when, and the rating once sent. */
+export const RequestRating = z
+  .object({
+    can_rate: z.boolean(),
+    rate_until: z.string().min(1).nullable(),
+    timezone: z.string().min(1),
+    rating: RatingScores.extend({ created_at: z.string().min(1) })
+      .strict()
+      .nullable(),
+  })
+  .strict();
+export type RequestRating = z.infer<typeof RequestRating>;
 
 /** The commission row of a request, as its payer reads it through RLS (spec 0011-09 AC-10). */
 export const CommissionFee = z

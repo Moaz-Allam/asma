@@ -4,12 +4,14 @@ import { FileProgress } from '@/components/features/provider/FileProgress';
 import { OnboardingFrame } from '@/components/features/provider/OnboardingFrame';
 import { ProfileForm } from '@/components/features/provider/ProfileForm';
 import { ProviderProfileView } from '@/components/features/provider/ProviderProfileView';
+import { MyRatingCard } from '@/components/features/ratings/MyRatingCard';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { getProfile } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
 import { getProviderFile, getStanding } from '@/lib/provider/queries';
+import { loadMyRating } from '@/lib/provider-feed';
 import { PHOTO_LINK_SECONDS, PHOTOS_BUCKET } from '@/lib/storage/buckets';
 import { signedLink } from '@/lib/storage/server';
 
@@ -50,6 +52,8 @@ export default async function Page({ params, searchParams }: Props) {
   const approved = standing === 'approved' || standing === 'document_expired';
 
   if (standing === 'suspended' || (approved && edit !== '1')) {
+    // Spec 0011-17 AC-7: the provider's own score, exactly what customers see.
+    const mine = await loadMyRating({ region: user.region });
     return (
       <ProviderProfileView
         file={file}
@@ -57,6 +61,7 @@ export default async function Page({ params, searchParams }: Props) {
         fullName={profile.fullName}
         photoUrl={photoUrl}
         editable={approved}
+        rating={mine.ok ? <MyRatingCard rating={mine.rating} /> : null}
       />
     );
   }

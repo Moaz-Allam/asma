@@ -68,7 +68,10 @@ export type AlertReason =
   // Spec 0011-10: the contact window setting is missing or malformed.
   | 'contact_settings_invalid'
   // Spec 0011-11: the confirm window setting is missing or malformed.
-  | 'confirm_settings_invalid';
+  | 'confirm_settings_invalid'
+  // Spec 0011-17 AC-10: a region's rating window, minimum count, prior weight or half life is missing or malformed, so
+  // no customer there can rate and no score shows. The record is the request id, the provider id, or the function.
+  | 'rating_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

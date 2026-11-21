@@ -1793,6 +1793,19 @@
       "lead": "[draft] [tr] A password was saved on your Aldebyani account on {when}.",
       "notYou": "[draft] [tr] If this was not you, reset your password with an SMS code now, then contact our support.",
       "action": "[draft] [tr] Reset my password"
+    },
+    "rate_provider": {
+      "subject": "[draft] [tr] How was {service}?",
+      "lead": "[draft] [tr] Your job for {service} with {name} is closed. You can rate it if you like.",
+      "leadNoName": "[draft] [tr] Your job for {service} is closed. You can rate it if you like.",
+      "until": "[draft] [tr] You can rate until {deadline}.",
+      "optional": "[draft] [tr] Rating is optional and changes nothing about any payment.",
+      "action": "[draft] [tr] Rate the job"
+    },
+    "rating_received": {
+      "subject": "[draft] [tr] You have a new rating",
+      "lead": "[draft] [tr] A customer rated one of your jobs. See your rating on your profile.",
+      "action": "[draft] [tr] Open my profile"
     }
   },
   "Reports": {
@@ -2019,6 +2032,87 @@
       "net": "Net",
       "late_received": "Alınan geç ödemeler",
       "late_refunded": "İade edilen geç ödemeler"
+    }
+  },
+  "Ratings": {
+    "dimensions": {
+      "punctuality": "[tr] Punctuality",
+      "quality": "[tr] Quality of work",
+      "professionalism": "[tr] Professionalism",
+      "value": "[tr] Value for money"
+    },
+    "star": "[tr] {score} of 5",
+    "count": "[tr] {count, plural, one {# rating} other {# ratings}}",
+    "label": "[tr] Rated {score} out of 5 from {count, plural, one {# rating} other {# ratings}}",
+    "see": "[tr] See ratings",
+    "disclosure": "[draft] [tr] Only customers of completed jobs can rate. Admin hides a rating only when it was fake or forced, never for being low.",
+    "form": {
+      "title": "[tr] Your rating",
+      "optional": "[tr] Optional",
+      "note": "[tr] Your rating changes nothing about any payment, and you can’t change it after you send it.",
+      "until": "[tr] You can rate until {date}.",
+      "send": "[tr] Send rating",
+      "sending": "[tr] Sending…",
+      "pickAll": "[tr] Pick a score for each of the four to send.",
+      "ratedOn": "[tr] You rated on {date}"
+    },
+    "errors": {
+      "already_rated": "[tr] You have already rated this job. Here is your rating.",
+      "deadline_passed": "[tr] The time to rate this job has passed.",
+      "invalid_state": "[tr] This job can’t be rated.",
+      "not_found": "[tr] This job can’t be rated.",
+      "validation_failed": "[tr] Pick a score from 1 to 5 for each of the four.",
+      "rating_settings_invalid": "[tr] Ratings are not available right now. Please try again later.",
+      "forbidden": "[tr] This job can’t be rated.",
+      "unauthorized": "[tr] Please sign in again.",
+      "action_failed": "[tr] Something went wrong. Please try again."
+    },
+    "mine": {
+      "title": "[tr] Your rating",
+      "new": "[tr] Customers see your average after 5 ratings. You have {count}.",
+      "average": "[tr] Your average",
+      "from": "[tr] From {count, plural, one {# rating} other {# ratings}}",
+      "note": "[tr] Customers see this score on your offers. Single ratings and who gave them stay private.",
+      "unavailable": "[tr] Your rating can’t be shown right now."
+    }
+  },
+  "AdminRatings": {
+    "title": "[tr] Ratings",
+    "total": "[tr] {count, plural, =0 {No ratings yet} one {# rating} other {# ratings}}",
+    "empty": "[tr] No customer has rated this provider yet.",
+    "newSummary": "[tr] Customers see New: {count, plural, one {# visible rating} other {# visible ratings}}, fewer than 5.",
+    "unavailable": "[tr] The score is unavailable: check the rating settings of this region.",
+    "visible": "[tr] What customers see",
+    "date": "[tr] Date",
+    "request": "[tr] Request",
+    "scores": "[tr] Scores",
+    "hidden": "[tr] Hidden",
+    "hiddenBy": "[tr] Hidden by {name} on {date}",
+    "someone": "[tr] an admin",
+    "hide": "[tr] Hide",
+    "reasons": {
+      "fake": "[tr] Fake rating",
+      "pressure": "[tr] Forced or pressured",
+      "customer_asked": "[tr] The customer asked",
+      "other": "[tr] Other"
+    },
+    "dialogTitle": "[tr] Hide this rating?",
+    "dialogBody": "[tr] Rated on {date}: {scores}. A hide is final. The rating stays in this list but no longer counts. No score is changed.",
+    "reason": "[tr] Reason",
+    "noteLabel": "[tr] Note",
+    "noteHint": "[tr] Required, up to 500 characters. Only admins see it.",
+    "confirm": "[tr] Hide rating",
+    "cancel": "[tr] Back",
+    "previous": "[tr] Newer",
+    "next": "[tr] Older",
+    "page": "[tr] Page {page} of {pages}",
+    "errors": {
+      "forbidden": "[tr] Only admins can hide a rating.",
+      "unauthorized": "[tr] Please sign in again.",
+      "validation_failed": "[tr] Pick a reason and write a note of up to 500 characters.",
+      "not_found": "[tr] This rating no longer exists.",
+      "already_hidden": "[tr] This rating is already hidden.",
+      "action_failed": "[tr] Something went wrong. Please try again."
     }
   }
 }

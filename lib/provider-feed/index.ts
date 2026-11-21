@@ -3,6 +3,7 @@ import 'server-only';
 import { createSupabaseServer } from '@/lib/db/server';
 import { raiseAlert } from '@/lib/observability/alert';
 import { log } from '@/lib/observability/log';
+import { RatingSummary } from '@/lib/ratings/summary';
 import type { Region } from '@/lib/region';
 import { decodeCursor, encodeCursor } from '@/lib/requests/cursor';
 import { CancelPreview, CancelResult } from '@/lib/requests/schemas';
@@ -340,4 +341,21 @@ export async function loadHistory(
 ): Promise<{ ok: true; history: History } | Refused> {
   const result = await call('provider_history', { p_month: month }, context);
   return 'ok' in result ? result : { ok: true, history: History.parse(result.data) };
+}
+
+/**
+ * The caller's own score (spec 0011-17 AC-7): the summary customers see, never a single rating, a date, a request or
+ * a customer. `forbidden` for anyone who is not a provider. A broken rating setting alerts (AC-10).
+ */
+export async function loadMyRating(context: Context): Promise<{ ok: true; rating: RatingSummary } | Refused> {
+  const result = await call('my_provider_rating', {}, context);
+  if ('ok' in result) return result;
+  const rating = RatingSummary.parse(result.data);
+  if (rating.state === 'unavailable') {
+    raiseAlert('rating_settings_invalid', {
+      recordId: 'my_provider_rating',
+      region: context.region ?? undefined,
+    });
+  }
+  return { ok: true, rating };
 }

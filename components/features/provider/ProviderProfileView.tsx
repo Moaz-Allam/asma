@@ -1,4 +1,5 @@
 import { getFormatter, getTranslations } from 'next-intl/server';
+import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Link } from '@/lib/i18n/navigation';
@@ -14,8 +15,9 @@ const STATUS_LINE: Partial<Record<Standing, 'statusApproved' | 'statusExpired' |
 
 /**
  * The provider's own profile once approved or suspended (`p7`, AC-11), as far as data exists: photo, name,
- * chips, years and languages, and the account status card. Metrics, services, past work, ratings and the
- * bank card are left out on purpose (Feature design: 19, 05, 17, 06, D87).
+ * chips, years and languages, and the account status card. Metrics, services, past work and the bank card are
+ * left out on purpose (Feature design: 19, 05, 06, D87). Since 17 the caller passes the provider's own rating card
+ * (`MyRatingCard`, spec 0011-17 AC-7), shown under the status card.
  *
  * Everything that says whether the provider may apply follows `standing`, never `file.status`: an approved
  * provider with an expired document keeps `status = 'approved'` and reads `document_expired` (AC-20).
@@ -26,12 +28,14 @@ export async function ProviderProfileView({
   fullName,
   photoUrl,
   editable,
+  rating,
 }: {
   file: ProviderFile;
   standing: Standing;
   fullName: string;
   photoUrl: string | null;
   editable: boolean;
+  rating?: ReactNode;
 }) {
   const t = await getTranslations('Provider.view');
   const tLang = await getTranslations('ProviderForm.languages');
@@ -108,6 +112,7 @@ export async function ProviderProfileView({
             {tNav('setup')}
           </Link>
         </section>
+        {rating}
       </aside>
     </div>
   );
