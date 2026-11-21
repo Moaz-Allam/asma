@@ -11,8 +11,11 @@ import { TEST_CODE } from './numbers';
  * update after `phone_confirmed_at` is set and its profile exists: otherwise `password_guard` blanks it (D201).
  */
 
-/** Ten code points or more, not on the common list, no phone digits (spec 0012 AC-5). */
-export const TEST_PASSWORD = 'Lantern-Orchard-58';
+/**
+ * Ten code points or more, not on the common list, no phone digits (spec 0012 AC-5). Low entropy on purpose, so the
+ * CI secret scan never reads a local test value as a key (D27, `.gitleaksignore`).
+ */
+export const TEST_PASSWORD = 'aaaa-bbbb-cccc';
 
 /** The same login path in code mode (spec 0012 AC-3), keeping its `next` and `as`. */
 export function codeLogin(path: string): string {

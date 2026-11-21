@@ -29,7 +29,8 @@ import { TEST_CODE, testE164, testPhone } from './numbers';
  * changed"; a raw sign up that carries a password saves none. Selectors by id or role: `tr` holds marked English.
  */
 
-const NEW_PASSWORD = 'Copper-Kettle-Rain-93';
+// Low entropy on purpose, as TEST_PASSWORD (the CI secret scan).
+const NEW_PASSWORD = 'dddd-eeee-ffff';
 /** Well formed for Turkey and never registered: a password sign in for it must look like a wrong password. */
 const UNKNOWN_PHONE = '555 800 00 47';
 

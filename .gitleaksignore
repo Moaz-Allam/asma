@@ -6,3 +6,8 @@
 # key and a fake Sentry public key inside a fixture URL. Later commits use low-entropy fakes instead.
 e162ebade43bfd871d480f2f67d2a2a2e92137f6:tests/deployment.test.ts:generic-api-key:133
 e162ebade43bfd871d480f2f67d2a2a2e92137f6:tests/security-headers.test.ts:generic-api-key:13
+
+# 2026-11-21, owner approved (PR #57, D202): two made-up e2e passwords in commit 5052719, used only with the local
+# test numbers on the local stack (`TEST_PASSWORD`, `NEW_PASSWORD`). Later commits use low-entropy fakes instead.
+505271926139b268ed7e721cca0b9dde167188f9:e2e/auth.ts:generic-api-key:15
+505271926139b268ed7e721cca0b9dde167188f9:e2e/phone-password.spec.ts:generic-api-key:32
