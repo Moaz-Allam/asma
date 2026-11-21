@@ -104,6 +104,12 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   shared e2e sign in module (`e2e/auth.ts`). Migration `20261129090000_phone_password` pushed with the CLI after S44
   (read back). GitHub's checks ran with the repo public for the run, then private again (D202). **AC-13 real calls
   owed** (the cloud Phone provider is off: S20, S22). Carry overs R22. Next: 21.
+- 2026-11-22 · **17 merged** (spec 0011-17, PR #58, `9d8230d`, D205 to D208): optional ratings that gate nothing. The
+  customer of a `COMPLETED` job rates four scores once within 14 days; the score is computed when read (shrinkage, recency,
+  New below 5), shown on the offer card and the provider's profile; admin hides with a reason (final, audited). Two
+  append only tables, a consistency trigger, two mails. Migration `20261130090000_ratings` pushed with the CLI right before
+  the merge. Also fixes 16's revenue default range (D208). Merged on GitHub's checks with the repo public for the run, then
+  private again (D202 route). Carry overs R23, two of them owner decisions before G1. Next: 18.
 
 ## Stack (pinned exactly)
 
