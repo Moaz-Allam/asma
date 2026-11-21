@@ -32,12 +32,13 @@ type Translate = (key: string, values?: Record<string, string>) => string;
 type Parts = {
   t: Translate;
   /** The values a line may show, each already cleaned (bidi marks and line breaks removed, clamped). */
-  vals: { service: string; start: string; deadline: string; amount: string; when: string };
+  vals: { service: string; start: string; deadline: string; amount: string; when: string; name: string };
   side: 'customer' | 'provider' | null;
   carried: boolean;
   hasRefund: boolean;
   hasDeadline: boolean;
   isFree: boolean;
+  hasName: boolean;
   link: {
     request: () => { label: string; href: string };
     receiptOrRequest: () => { label: string; href: string };
@@ -46,6 +47,7 @@ type Parts = {
     reset: () => { label: string; href: string };
     confirm: () => { label: string; href: string };
     adminReport: () => { label: string; href: string };
+    profile: () => { label: string; href: string };
   };
 };
 
@@ -200,6 +202,22 @@ const TEMPLATES: Readonly<Record<EmailTemplate, (p: Parts) => Draft>> = {
     lines: [p.t('password_changed.lead', p.vals), p.t('password_changed.notYou', p.vals)],
     action: p.link.reset(),
   }),
+  // Spec 0011-17 AC-9: the invite after an auto or admin close, to the request page where the form is; optional.
+  rate_provider: (p) => ({
+    subject: p.t('rate_provider.subject', p.vals),
+    lines: [
+      p.t(p.hasName ? 'rate_provider.lead' : 'rate_provider.leadNoName', p.vals),
+      ...(p.hasDeadline ? [p.t('rate_provider.until', p.vals)] : []),
+      p.t('rate_provider.optional', p.vals),
+    ],
+    action: { ...p.link.request(), label: p.t('rate_provider.action') },
+  }),
+  // Spec 0011-17 AC-9: only that a rating arrived; no score, no customer, no request.
+  rating_received: (p) => ({
+    subject: p.t('rating_received.subject', p.vals),
+    lines: [p.t('rating_received.lead', p.vals)],
+    action: p.link.profile(),
+  }),
 };
 
 function translator(locale: EmailLocale): Translate {
@@ -241,12 +259,14 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
         values.changed_at === undefined || values.changed_at === null
           ? ''
           : cleanValue(instantLabel(values.changed_at, context.timezone, locale)),
+      name: cleanValue(values.provider_name ?? ''),
     },
     side: values.side,
     carried: values.carried === true,
     hasRefund: values.amount !== null && values.amount > 0,
     hasDeadline: values.deadline !== null,
     isFree: values.amount === 0,
+    hasName: (values.provider_name ?? '').trim().length > 0,
     link: {
       request: () => ({
         label: t('shell.openRequest'),
@@ -270,6 +290,7 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
         label: t('report_new_admin.action'),
         href: `${base}/admin/reports/${needs(values.report_id ?? null, 'report_id_missing')}`,
       }),
+      profile: () => ({ label: t('rating_received.action'), href: `${base}/provider/profile` }),
     },
   };
   const draft = TEMPLATES[context.template](parts);

@@ -22,7 +22,9 @@ import {
   CreateRequestResult,
   PayResult,
   Receipt,
+  RateResult,
   RequestOffers,
+  RequestRating,
   QuoteRequestResult,
   RequestCatalog,
   RequestDetailRow,
@@ -49,6 +51,7 @@ export type {
   RequestCatalog,
   RequestOffers,
   RequestQuote,
+  RequestRating,
 } from './schemas';
 
 /** Every code the request functions raise. */
@@ -91,6 +94,9 @@ export const REQUEST_DB_CODES = [
   'too_early',
   // Spec 0011-12 (12): a provider whose pick on this request ended is never picked again.
   'provider_not_eligible',
+  // Spec 0011-17 (17): rating the provider.
+  'already_rated',
+  'rating_settings_invalid',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -142,7 +148,8 @@ function signal(code: RequestCode, recordId: string, context: Context): void {
     code === 'fee_settings_invalid' ||
     code === 'checkout_settings_invalid' ||
     code === 'unlock_settings_invalid' ||
-    code === 'contact_settings_invalid'
+    code === 'contact_settings_invalid' ||
+    code === 'rating_settings_invalid'
   ) {
     raiseAlert(code, { recordId, region });
   } else if (code === 'price_out_of_range') {
@@ -235,7 +242,17 @@ export async function loadOffers(id: string): Promise<RequestOffers | null> {
   if (!UUID.test(id)) return null;
   const result = await call('request_offers', { p_request_id: id });
   if ('ok' in result) throw new Error(`request_offers refused: ${result.code}`);
-  return result.data === null ? null : RequestOffers.parse(result.data);
+  if (result.data === null) return null;
+  const offers = RequestOffers.parse(result.data);
+  // Spec 0011-17 AC-10: a broken rating setting shows no score anywhere in the region.
+  if (
+    [...offers.offers, ...(offers.chosen ? [offers.chosen] : [])].some(
+      (o) => o.rating.state === 'unavailable',
+    )
+  ) {
+    raiseAlert('rating_settings_invalid', { recordId: id });
+  }
+  return offers;
 }
 
 export type ChooseOutcome =
@@ -437,6 +454,37 @@ export async function loadCommissionFee(requestId: string): Promise<CommissionFe
     .maybeSingle();
   if (error) throw error;
   return data ? CommissionFee.parse(data) : null;
+}
+
+/**
+ * Rate the provider of the caller's own COMPLETED request (spec 0011-17 AC-1): four whole scores, once. The request
+ * id and the scores only; Postgres takes the provider, the application and the region from the request.
+ */
+export async function rateProvider(
+  input: { requestId: string; punctuality: number; quality: number; professionalism: number; value: number },
+  context: Context,
+): Promise<{ ok: true; ratingId: string } | Refused> {
+  if (!UUID.test(input.requestId)) return { ok: false, code: 'not_found' };
+  const result = await call('rate_provider', {
+    p_request_id: input.requestId,
+    p_punctuality: input.punctuality,
+    p_quality: input.quality,
+    p_professionalism: input.professionalism,
+    p_value: input.value,
+  });
+  if ('ok' in result) {
+    signal(result.code, input.requestId, context);
+    return result;
+  }
+  return { ok: true, ratingId: RateResult.parse(result.data).rating_id };
+}
+
+/** The rating section of the caller's own request (spec 0011-17 AC-6), or null for anyone else's. */
+export async function loadRating(requestId: string): Promise<RequestRating | null> {
+  if (!UUID.test(requestId)) return null;
+  const result = await call('request_rating', { p_request_id: requestId });
+  if ('ok' in result) throw new Error(`request_rating refused: ${result.code}`);
+  return result.data === null ? null : RequestRating.parse(result.data);
 }
 
 const PAGE = 20;

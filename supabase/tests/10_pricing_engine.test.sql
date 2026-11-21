@@ -547,6 +547,12 @@ SELECT set_eq(
             ('public.admin_request_address(uuid, text)'),
             ('public.admin_requests(text, text, date, date, boolean, integer)'),
             ('public.admin_revenue(date, date, text)'),
+            -- Spec 0011-17: ratings. The customer's rating and its form, the provider's own summary, admin's list and hide.
+            ('public.rate_provider(uuid, integer, integer, integer, integer)'),
+            ('public.request_rating(uuid)'),
+            ('public.my_provider_rating()'),
+            ('public.admin_provider_ratings(uuid, integer)'),
+            ('public.admin_hide_rating(uuid, text, text)'),
             ('public.cancel_preview(uuid)'),
             ('public.provider_cancel_job(uuid)'),
             ('public.withdraw_application(uuid)'),

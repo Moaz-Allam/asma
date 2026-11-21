@@ -80,6 +80,11 @@ export const NUMBER = {
   passwordCustomer: 47,
   passwordChange: 48,
   passwordRaw: 49,
+  // Position 17 (spec 0011-17 AC-13): the customer who completes, skips, posts again and rates; the provider who is
+  // rated; the admin who hides. The five other raters are written by SQL and never sign in.
+  ratingCustomer: 50,
+  ratingProvider: 51,
+  ratingAdmin: 52,
 } as const;
 
 /**

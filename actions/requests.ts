@@ -9,6 +9,7 @@ import {
   chooseProvider,
   createRequest,
   quoteRequest,
+  rateProvider,
   REQUEST_DB_CODES,
   type RequestQuote,
 } from '@/lib/requests';
@@ -17,6 +18,7 @@ import {
   ChooseProviderInput,
   CreateRequestInput,
   QuoteRequestInput,
+  RateProviderInput,
 } from '@/lib/requests/input';
 
 /**
@@ -108,5 +110,19 @@ export const chooseProviderAction = guardedAction(
       carried: outcome.carried,
       feeDeadline: outcome.feeDeadline,
     };
+  },
+);
+
+/**
+ * Rate the provider of a COMPLETED job (spec 0011-17 AC-1). Customers only: admin can never rate for anyone. It
+ * changes nothing else (D4); a second rating is `already_rated`, which the form answers by showing the stored one.
+ */
+export const rateProviderAction = guardedAction(
+  { name: 'rateProvider', access: ['customer'] as const, schema: RateProviderInput },
+  async (input, user): Promise<{ ratingId: string } | ReturnType<typeof fail>> => {
+    const outcome = await rateProvider(input, { region: user.region, userId: user.id });
+    if (!outcome.ok) return fail(KNOWN.includes(outcome.code) ? outcome.code : 'action_failed');
+    revalidatePath('/', 'layout');
+    return { ratingId: outcome.ratingId };
   },
 );

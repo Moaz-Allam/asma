@@ -9,6 +9,8 @@ import { OfferList } from '@/components/features/requests/OfferList';
 import { RequestActions } from '@/components/features/requests/RequestActions';
 import { rowStatus, toneOf } from '@/components/features/requests/RequestRow';
 import { RequestTimeline } from '@/components/features/requests/RequestTimeline';
+import { RatingForm } from '@/components/features/ratings/RatingForm';
+import { RatingSummary } from '@/components/features/ratings/RatingSummary';
 import { ReportStatus } from '@/components/features/reports/ReportStatus';
 import { ContactCard } from '@/components/shared/ContactCard';
 import { AgreementLine } from '@/components/shared/AgreementLine';
@@ -29,6 +31,7 @@ import {
   loadCommissionFee,
   loadContacts,
   loadOffers,
+  loadRating,
 } from '@/lib/requests';
 import { reportServerError } from '@/lib/observability/server';
 import { myReport } from '@/lib/reports';
@@ -137,6 +140,16 @@ export default async function Page({ params, searchParams }: Props) {
         })
       : null;
   const tr = await getTranslations('Reports');
+  // Spec 0011-17 AC-6: the rating section of a COMPLETED request, for its customer only (Postgres decides).
+  const rating =
+    user.role === 'customer' && current === 'COMPLETED'
+      ? await loadRating(request.id).catch((error: unknown) => {
+          // Never break the request page over this read; the section simply hides.
+          reportServerError('requestRating', error);
+          return null;
+        })
+      : null;
+  const tRatings = await getTranslations('Ratings');
   const reportHref = `/requests/${request.id}/report`;
   const payOpen =
     current === 'SELECTED' &&
@@ -312,7 +325,8 @@ export default async function Page({ params, searchParams }: Props) {
                 <OfferCard
                   name={chosen.display_name ?? t('offers.provider')}
                   verified={t('offers.verified')}
-                  fresh={t('offers.new')}
+                  fresh={chosen.rating.state === 'new' ? t('offers.new') : null}
+                  rating={chosen.rating.state === 'rated' ? <RatingSummary rating={chosen.rating} /> : null}
                   since={monthYear(chosen.approved_since)}
                   message={chosen.message}
                   hidden={chosen.message_hidden ? t('offers.messageHidden') : null}
@@ -430,6 +444,31 @@ export default async function Page({ params, searchParams }: Props) {
               title={tj('markDoneDialogTitle')}
               body={tj('markDoneDialogBody')}
               variant="outline"
+            />
+          ) : null}
+          {rating && (rating.rating || rating.can_rate) ? (
+            <RatingForm
+              requestId={request.id}
+              until={
+                rating.can_rate && rating.rate_until
+                  ? tRatings('form.until', { date: instantLabel(rating.rate_until, rating.timezone, locale) })
+                  : null
+              }
+              rating={
+                rating.rating
+                  ? {
+                      scores: {
+                        punctuality: rating.rating.punctuality,
+                        quality: rating.rating.quality,
+                        professionalism: rating.rating.professionalism,
+                        value: rating.rating.value,
+                      },
+                      ratedOn: tRatings('form.ratedOn', {
+                        date: instantLabel(rating.rating.created_at, rating.timezone, locale),
+                      }),
+                    }
+                  : null
+              }
             />
           ) : null}
           {contacts ? (

@@ -1611,6 +1611,133 @@ export type Database = {
           },
         ]
       }
+      rating_hides: {
+        Row: {
+          created_at: string
+          hidden_by: string
+          note: string
+          rating_id: string
+          reason: string
+          region: string
+        }
+        Insert: {
+          created_at?: string
+          hidden_by: string
+          note: string
+          rating_id: string
+          reason: string
+          region: string
+        }
+        Update: {
+          created_at?: string
+          hidden_by?: string
+          note?: string
+          rating_id?: string
+          reason?: string
+          region?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rating_hides_hidden_by_fkey"
+            columns: ["hidden_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rating_hides_rating_id_fkey"
+            columns: ["rating_id"]
+            isOneToOne: true
+            referencedRelation: "ratings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rating_hides_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      ratings: {
+        Row: {
+          application_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          professionalism: number
+          provider_id: string
+          punctuality: number
+          quality: number
+          region: string
+          request_id: string
+          value: number
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          professionalism: number
+          provider_id: string
+          punctuality: number
+          quality: number
+          region: string
+          request_id: string
+          value: number
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          professionalism?: number
+          provider_id?: string
+          punctuality?: number
+          quality?: number
+          region?: string
+          request_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratings_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "ratings_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       regions: {
         Row: {
           active: boolean
@@ -2152,6 +2279,10 @@ export type Database = {
         Returns: Json
       }
       admin_flags: { Args: { p_page: number }; Returns: Json }
+      admin_hide_rating: {
+        Args: { p_note: string; p_rating_id: string; p_reason: string }
+        Returns: Json
+      }
       admin_mark_refund_done: {
         Args: { p_note: string; p_refund_id: string }
         Returns: Json
@@ -2159,6 +2290,10 @@ export type Database = {
       admin_may_read: {
         Args: { p_name: string; p_object_id: string }
         Returns: boolean
+      }
+      admin_provider_ratings: {
+        Args: { p_page: number; p_provider_id: string }
+        Returns: Json
       }
       admin_refund_fee: {
         Args: { p_payment_id: string; p_reason: string }
@@ -2491,6 +2626,7 @@ export type Database = {
       message_digit_limit: { Args: never; Returns: number }
       message_has_contact_info: { Args: { p_text: string }; Returns: boolean }
       my_checkout: { Args: { p_attempt_id: string }; Returns: Json }
+      my_provider_rating: { Args: never; Returns: Json }
       my_receipt: { Args: { p_receipt_id: string }; Returns: Json }
       my_report: { Args: { p_request_id: string }; Returns: Json }
       my_warning: { Args: never; Returns: Json }
@@ -2716,6 +2852,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      provider_rating_summary: {
+        Args: { p_provider_id: string }
+        Returns: Json
+      }
       provider_reader: {
         Args: never
         Returns: {
@@ -2859,6 +2999,17 @@ export type Database = {
         Returns: Json
       }
       raise_deadline_flags: { Args: never; Returns: number }
+      rate_provider: {
+        Args: {
+          p_professionalism: number
+          p_punctuality: number
+          p_quality: number
+          p_request_id: string
+          p_value: number
+        }
+        Returns: Json
+      }
+      rating_settings: { Args: { p_region: string }; Returns: Json }
       reconcile_daily_list: {
         Args: { p_day: string; p_limit: number; p_region: string }
         Returns: Json
@@ -2917,6 +3068,7 @@ export type Database = {
       request_contacts: { Args: { p_request_id: string }; Returns: Json }
       request_email_confirmation: { Args: never; Returns: Json }
       request_offers: { Args: { p_request_id: string }; Returns: Json }
+      request_rating: { Args: { p_request_id: string }; Returns: Json }
       request_settings: { Args: { p_region: string }; Returns: Json }
       reselection_limit: { Args: { p_region: string }; Returns: number }
       review_provider_documents: {

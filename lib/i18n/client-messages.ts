@@ -39,6 +39,9 @@ export const CLIENT_NAMESPACES = [
   'AdminReports',
   // Spec 0011-15 X-12: the header reads the history's menu label from `History.nav`.
   'History',
+  // Spec 0011-17 AC-5, AC-6, AC-8: the offer card's score, the rating form and admin's hide dialog.
+  'Ratings',
+  'AdminRatings',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */

@@ -69,6 +69,8 @@ export type AnalyticsEvents = {
   };
   /** Admin handled a report (AC-9). The outcome only: no report id (D194), no note. */
   report_handled: { outcome: 'no_action' | 'warned' | 'suspended' | 'returned_to_work' | 'job_closed' };
+  /** A customer sent a rating (spec 0011-17 AC-11). Nothing else: no id, no score. */
+  rating_submitted: Record<string, never>;
 };
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
@@ -99,6 +101,7 @@ export const ANALYTICS_EVENTS: ReadonlySet<string> = new Set<AnalyticsEvent>([
   'job_confirmed',
   'report_opened',
   'report_handled',
+  'rating_submitted',
 ]);
 
 /** The typed property names per event: the only non `$` properties an event may carry. */
@@ -128,4 +131,5 @@ export const EVENT_PROPERTIES: Readonly<Record<AnalyticsEvent, readonly string[]
   job_confirmed: ['by'],
   report_opened: ['reason', 'side'],
   report_handled: ['outcome'],
+  rating_submitted: [],
 };

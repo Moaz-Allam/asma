@@ -1246,6 +1246,23 @@ displayed_rating = (C × M + Σ(w_i × r_i)) / (C + Σ w_i)
 - Recompute on rating insert and on the nightly job; store in `providers.rating_avg`.
 - **`rating_avg` has no admin write path.** It is only ever written by the computation function.
 
+### v8, 2026-11-22: as built in 17 (spec 0011-17, D205 to D207). Overrides §4, §13, §23, §24, §25 and §26 on ratings
+
+- **No stored score.** There is no `providers.rating_avg` (nor `rating_count`). `provider_rating_summary(provider)`
+  computes the figure every time it is read, so it always equals the rows: M is the region mean of the visible ratings,
+  C is `rating_prior_weight` (5), wᵢ is `0.5 ^ (age in days / rating_half_life_days)` (365), all `numeric`, rounded
+  once to one decimal. Below `rating_min_count` (5, never lower) it answers New with the count; a broken setting answers
+  `unavailable`. The four settings live in `platform_settings` per region.
+- **Two append only tables.** `ratings` (one per request, four scores 1 to 5, region, provider, application and
+  customer taken from the request) and `rating_hides` (one per rating, a reason, a note, who and when). A hide is its own
+  row, never columns on `ratings`, and is final. Both refuse update, delete and truncate for every role by trigger, are
+  closed to every API role (RLS on, deny policy, no grant), and are read only through definer functions: `rate_provider`
+  and `request_rating` (the customer), `my_provider_rating` (the provider's own summary), `admin_provider_ratings` and
+  `admin_hide_rating` (admin), and `offer_card` through the summary. A trigger and composite foreign keys keep each
+  rating aligned with its request's region, customer, pick and provider.
+- **It gates nothing (D4).** No status gains a value (no `RATED`); no function outside the list above reads the tables
+  (pgTAP 35's meta test). 21's wipe must lift the append only triggers, as it does for the ledger.
+
 ## 25. Access control additions
 
 | Data | Rule |

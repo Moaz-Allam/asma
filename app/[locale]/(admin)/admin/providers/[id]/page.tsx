@@ -3,11 +3,14 @@ import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/serve
 
 import { ProviderFileReview, type ReviewDocument } from '@/components/features/admin/ProviderFileReview';
 import { ProviderQueue } from '@/components/features/admin/ProviderQueue';
+import { AdminRatingsSection } from '@/components/features/ratings/AdminRatingsSection';
 import { STANDING_TONE } from '@/components/features/provider/StandingChip';
 import { InitialAvatar } from '@/components/shared/InitialAvatar';
 import { StatusChip } from '@/components/shared/StatusChip';
+import { loadProviderRatings } from '@/lib/admin-ratings';
 import { guardPage } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
+import { reportServerError } from '@/lib/observability/server';
 import { adminProviderFile, parseQueueQuery, queueSearch } from '@/lib/provider/admin-queries';
 
 type Props = {
@@ -34,10 +37,24 @@ export default async function Page({ params, searchParams }: Props) {
   const tEntity = await getTranslations('ProviderForm.entity');
   const tLang = await getTranslations('ProviderForm.languages');
   const format = await getFormatter();
-  const query = parseQueueQuery(await searchParams);
+  const search = await searchParams;
+  const query = parseQueueQuery(search);
+  // Spec 0011-17 AC-8: the ratings page, 1 based, kept beside the queue's own query.
+  const rawPage = Array.isArray(search.rp) ? search.rp[0] : search.rp;
+  const ratingsPage = rawPage && /^[1-9][0-9]{0,3}$/.test(rawPage) ? Number(rawPage) : 1;
 
   const file = await adminProviderFile(id);
   if (!file) notFound();
+  // Ratings are optional and gate nothing (D4): a failed read hides the section, never the review page.
+  const ratings =
+    file.status === 'draft'
+      ? null
+      : await loadProviderRatings(file.id, ratingsPage).catch((error: unknown) => {
+          reportServerError('adminProviderRatings', error);
+          return null;
+        });
+  const ratingsHref = (page: number) =>
+    `/admin/providers/${file.id}?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(queueSearch(query))), rp: String(page) }).toString()}#ratings-title`;
 
   const today = new Date().toISOString().slice(0, 10);
   const required = file.requiredTypes.map((type) => file.documents[type]);
@@ -150,6 +167,8 @@ export default async function Page({ params, searchParams }: Props) {
           reviewed={reviewed}
           total={file.requiredTypes.length}
         />
+
+        {ratings ? <AdminRatingsSection data={ratings} page={ratingsPage} hrefFor={ratingsHref} /> : null}
       </article>
     </div>
   );

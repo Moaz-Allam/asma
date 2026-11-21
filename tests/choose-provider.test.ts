@@ -43,6 +43,7 @@ const OFFER = {
   message: 'I am free all week and live close by.',
   message_hidden: false,
   created_at: '2026-11-17T08:05:00+00:00',
+  rating: { state: 'new', count: 0 },
 };
 const OFFERS = {
   status: 'OPEN',

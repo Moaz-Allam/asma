@@ -32,6 +32,9 @@ export const EMAIL_TEMPLATES = [
   'report_handled',
   // Spec 0012 AC-10.
   'password_changed',
+  // Spec 0011-17 AC-9.
+  'rate_provider',
+  'rating_received',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -68,6 +71,8 @@ export const EmailValuesSchema = z
     report_id: id.nullable().optional(),
     // Spec 0012 AC-10: password_changed only, the change's time.
     changed_at: z.string().min(1).nullable().optional(),
+    // Spec 0011-17 AC-9: rate_provider only, the provider's display name (06), or null when the name is flagged.
+    provider_name: z.string().min(1).max(200).nullable().optional(),
     reason: z
       .enum([
         'no_show',

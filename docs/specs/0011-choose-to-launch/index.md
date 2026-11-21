@@ -28,10 +28,13 @@ outbox (a table of pending side effects that a background worker carries out) an
 | [0011-14-report-problem.md](0011-14-report-problem.md) | 14 | Report a problem, photos, admin queue, warnings, the agreement statement goes live |
 | [0011-15-provider-history.md](0011-15-provider-history.md) | 15 | Read only jobs and fees history |
 | [0011-16-admin-operations.md](0011-16-admin-operations.md) | 16 | Request list, flag queue, manual actions, address view, revenue report and CSV |
+| [0011-17-ratings.md](0011-17-ratings.md) | 17 | Optional four dimension rating after `COMPLETED`, the score computed when read, admin hide, two mails (D203) |
 | [0011-21-launch-hardening.md](0011-21-launch-hardening.md) | 21 | Admin TOTP, staging, backups and restore drill, load check, retention jobs, security review, wipe |
 
-Out of this spec (P2, cut list): 17 ratings, 18 notification centre, 19 trust and quality, 20 invoicing. Where a child
-leaves a slot for them (the reviews slot on the applicant card), the slot renders nothing until they exist.
+Out of this spec at first (P2, cut list): 17 ratings, 18 notification centre, 19 trust and quality, 20 invoicing. Where
+a child leaves a slot for them (the reviews slot on the applicant card), the slot renders nothing until they exist.
+**Since D203 (2026-11-21)** the owner builds 17 to 20 before 21, each as a child of this umbrella, written against what
+was built; they stay P2.
 
 ## Prerequisites (not acceptance criteria)
 

@@ -72,3 +72,10 @@ export function parseTab(value: unknown): RequestTab {
     ? (value as RequestTab)
     : 'all';
 }
+
+/** Rate the provider (spec 0011-17 AC-1): the request and four whole scores from 1 to 5; Postgres checks again. */
+const Score = z.number().int().min(1).max(5);
+export const RateProviderInput = z
+  .object({ requestId: Uuid, punctuality: Score, quality: Score, professionalism: Score, value: Score })
+  .strict();
+export type RateProviderInput = z.infer<typeof RateProviderInput>;
