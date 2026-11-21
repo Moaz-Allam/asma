@@ -97,6 +97,13 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   clear, the street line on click (audited), revenue from the ledger by day or month with a CSV route
   (`/api/admin/revenue`). Migration `20261128090000_admin_operations` pushed with the CLI right before the merge; it also
   fixes 12's `admin_request_detail` (`selected` was null with no pick). Carry overs R21. Next: 21.
+- 2026-11-21 · **01b merged** (spec 0012, PR #57, D199 to D202): phone and password sign in. A code only creates an account
+  or resets a password; daily sign in is phone and password from the browser to Auth. `password_guard` keeps a password
+  only on a proven phone of an onboarded account, `phone_fixed` freezes the sign in phone, `/continue` sends a role with
+  no password to `/account/password`, the account page changes it, a first password and a change mail a notice. One
+  shared e2e sign in module (`e2e/auth.ts`). Migration `20261129090000_phone_password` pushed with the CLI after S44
+  (read back). GitHub's checks ran with the repo public for the run, then private again (D202). **AC-13 real calls
+  owed** (the cloud Phone provider is off: S20, S22). Carry overs R22. Next: 21.
 
 ## Stack (pinned exactly)
 
