@@ -20,6 +20,7 @@ export type MenuItem = {
     | 'reports'
     | 'flags'
     | 'revenue'
+    | 'quality'
     | 'history';
   href: string;
 };
@@ -106,6 +107,8 @@ export const ADMIN_RAIL: readonly MenuItem[] = [
   // Spec 0011-14 AC-4: the report queue, with its open count.
   { key: 'reports', href: '/admin/reports' },
   { key: 'revenue', href: '/admin/revenue' },
+  // Spec 0011-19a AC-10: the watchlist, probation and the funnel.
+  { key: 'quality', href: '/admin/quality' },
   { key: 'catalog', href: '/admin/catalog' },
   { key: 'pricing', href: '/admin/pricing' },
   { key: 'account', href: '/account' },

@@ -152,7 +152,8 @@
     "setup": "[tr] Services and districts",
     "reports": "[tr] Reports",
     "flags": "Gecikme işaretleri",
-    "revenue": "Gelir"
+    "revenue": "Gelir",
+    "quality": "[tr] Quality"
   },
   "Login": {
     "title": "[tr] Welcome",
@@ -1340,7 +1341,8 @@
       "applied": "[tr] You applied. The customer will see your offer.",
       "appliedOn": "[tr] Applied on {date}",
       "full": "[tr] This request has reached the limit of offers.",
-      "closed": "[tr] This request is closed."
+      "closed": "[tr] This request is closed.",
+      "probationLimit": "[draft] [tr] You can hold {limit} jobs at once during your first {needed} jobs. Finish one to apply again."
     },
     "applications": {
       "title": "[tr] My jobs",
@@ -1391,7 +1393,8 @@
       "contact_info_in_message": "[tr] Your message has contact details. Remove phone numbers, emails, links and social handles.",
       "apply_settings_invalid": "[tr] Applying is not possible right now. Please try again later.",
       "action_failed": "[tr] Something went wrong. Nothing was sent. Try again.",
-      "email_unconfirmed": "[tr] Confirm your email on your account page before you apply."
+      "email_unconfirmed": "[tr] Confirm your email on your account page before you apply.",
+      "probation_limit": "[draft] [tr] During your first jobs you can hold only a few jobs at once. Finish one to apply again."
     },
     "chosen": {
       "line": "[tr] The customer is paying the commission by {date}. Your fee comes after that.",
@@ -1807,6 +1810,19 @@
       "subject": "[draft] [tr] You have a new rating",
       "lead": "[draft] [tr] A customer rated one of your jobs. See your rating on your profile.",
       "action": "[draft] [tr] Open my profile"
+    },
+    "document_expiring": {
+      "subject": "[draft] [tr] A required document expires soon",
+      "lead": "[draft] [tr] Your {document} expires on {until}. Upload a new one before then to keep applying.",
+      "action": "[draft] [tr] Open my documents",
+      "types": {
+        "profile_photo": "[tr] profile photo",
+        "id_front": "[tr] ID front side",
+        "id_back": "[tr] ID back side",
+        "selfie": "[tr] selfie with your ID",
+        "criminal_record": "[tr] criminal record",
+        "skill_certificate": "[tr] skill certificate"
+      }
     }
   },
   "Reports": {
@@ -1824,7 +1840,12 @@
       "poor_work": "[tr] We received a report about the quality of a job. Please finish every job to the agreed standard.",
       "safety_or_behaviour": "[tr] We received a report about safety or behaviour on a job. Please treat everyone with respect.",
       "asked_money_off_platform": "[tr] We received a report that money was asked for outside Aldebyani. Our fees are paid only on Aldebyani.",
-      "other": "[tr] We received a report about one of your jobs. Please follow the terms of Aldebyani."
+      "other": "[tr] We received a report about one of your jobs. Please follow the terms of Aldebyani.",
+      "low_rating": "[draft] [tr] Customers have rated your recent jobs low. Please finish every job to the agreed standard.",
+      "high_reports": "[draft] [tr] We received several reports about your jobs. Please keep every booking and finish each job to the agreed standard.",
+      "high_cancellations": "[draft] [tr] You have cancelled too many jobs. Please cancel only when you truly cannot do the job.",
+      "low_follow_through": "[draft] [tr] Many customers who chose you did not get their job done. Please pay your fee and keep every job you are chosen for.",
+      "probation_issue": "[draft] [tr] There was a problem during your first jobs on Aldebyani. Please keep every booking and finish each job to the agreed standard."
     },
     "cta": "[tr] Report a problem",
     "notDone": "[tr] Not done, report a problem",
@@ -2237,6 +2258,149 @@
     "rating_received": {
       "title": "[tr] You received a rating",
       "line": "[tr] A customer rated your work."
+    },
+    "document_expiring": {
+      "title": "[tr] A document expires soon",
+      "line": "[tr] A required document expires soon. Upload a new one to keep applying.",
+      "lineDeadline": "[tr] A required document expires on {deadline}. Upload a new one to keep applying."
+    }
+  },
+  "Quality": {
+    "card": {
+      "jobs": "[draft] [tr] {count, plural, one {# job} other {# jobs}} on Aldebyani",
+      "completed": "[draft] [tr] {pct} completed",
+      "onTime": "[draft] [tr] {pct} on time",
+      "how": "[draft] [tr] How we count",
+      "windowMonths": "[draft] [tr] {count, plural, one {# month} other {# months}}",
+      "windowDays": "[draft] [tr] {count, plural, one {# day} other {# days}}",
+      "note": "[draft] [tr] Counted from jobs on Aldebyani in the last {window}. Completed counts jobs not cancelled by the customer; on time means started within {grace} minutes of the booked time."
+    },
+    "mine": {
+      "title": "[draft] [tr] Your quality",
+      "jobs": "[draft] [tr] Jobs on Aldebyani",
+      "completed": "[draft] [tr] Completed",
+      "onTime": "[draft] [tr] On time",
+      "notYet": "[draft] [tr] Shown once enough jobs count",
+      "unavailable": "[draft] [tr] Your figures are not available right now.",
+      "probation": "[draft] [tr] Your first {needed} jobs: {done} done",
+      "probationLimit": "[draft] [tr] While in your first jobs you can hold {limit} jobs at once."
+    },
+    "admin": {
+      "title": "[tr] Quality",
+      "lead": "[tr] Providers whose figures crossed a limit, providers in their first jobs, and the review funnel. For admin only.",
+      "tabs": {
+        "watchlist": "[tr] Watchlist",
+        "probation": "[tr] Probation",
+        "funnel": "[tr] Funnel"
+      },
+      "page": "[tr] Page {page} of {pages}",
+      "prev": "[tr] Previous",
+      "next": "[tr] Next",
+      "emptyWatchlist": "[tr] No open flags",
+      "emptyProbation": "[tr] No provider is on probation",
+      "openCount": "[tr] {count, plural, one {# open flag} other {# open flags}}",
+      "probationCount": "[tr] {count, plural, one {# provider} other {# providers}} on probation",
+      "unnamed": "[tr] No approved name",
+      "raised": "[tr] Raised {date}",
+      "kind": {
+        "low_rating": "[tr] Low rating",
+        "high_reports": "[tr] Many reports",
+        "high_cancellations": "[tr] Many cancellations",
+        "low_follow_through": "[tr] Low follow through",
+        "probation_report": "[tr] Report during probation",
+        "probation_cancel": "[tr] Cancel during probation"
+      },
+      "figure": {
+        "rating": "[tr] Overall score {overall} from {count} ratings, limit {limit}",
+        "high_reports": "[tr] Report rate {num} of {den} jobs ({pct}), limit {limit}",
+        "high_cancellations": "[tr] Cancellation rate {num} of {den} jobs ({pct}), limit {limit}",
+        "low_follow_through": "[tr] Follow through {num} of {den} picks ({pct}), limit {limit}",
+        "report": "[tr] A report against them during probation",
+        "request": "[tr] They cancelled a job during probation"
+      },
+      "progress": "[tr] First jobs: {done} of {needed} done",
+      "approvedOn": "[tr] approved {date}",
+      "live": "[tr] Live jobs {live} of {limit}",
+      "reports": "[tr] {count, plural, one {# report} other {# reports}}",
+      "openFlags": "[tr] {count, plural, one {# open flag} other {# open flags}}",
+      "funnelNote": "[tr] For admin only. No public claim uses this figure yet.",
+      "stage": {
+        "draft": "[tr] Draft",
+        "pending": "[tr] Pending review",
+        "probation": "[tr] On probation",
+        "active": "[tr] Active",
+        "document_expired": "[tr] Document expired",
+        "rejected": "[tr] Rejected",
+        "suspended": "[tr] Suspended"
+      },
+      "monthsCaption": "[tr] First decisions by month",
+      "month": "[tr] Month",
+      "approved": "[tr] Approved",
+      "rejected": "[tr] Rejected",
+      "rate": "[tr] Acceptance rate",
+      "note": "[tr] Note (kept for admin only)",
+      "actions": {
+        "warned": {
+          "label": "[tr] Warn",
+          "title": "[tr] Warn {provider}?",
+          "body": "[tr] They see a fixed warning for this reason until they acknowledge it. Your note is not shown to them.",
+          "confirm": "[tr] Send the warning"
+        },
+        "suspended": {
+          "label": "[tr] Suspend",
+          "title": "[tr] Suspend {provider}?",
+          "body": "[tr] They can no longer apply, and their open applications end, as with any suspension.",
+          "confirm": "[tr] Suspend"
+        },
+        "cleared": {
+          "label": "[tr] Clear",
+          "title": "[tr] Clear this flag for {provider}?",
+          "body": "[tr] Nothing changes for the provider. The flag can be raised again later.",
+          "confirm": "[tr] Clear the flag"
+        },
+        "end": {
+          "label": "[tr] End probation",
+          "title": "[tr] End probation for {provider}?",
+          "body": "[tr] The live job limit and the reserved slots stop applying to them. This cannot be undone.",
+          "confirm": "[tr] End probation"
+        }
+      },
+      "errors": {
+        "reason_required": "[tr] Write a note of 10 to 500 characters.",
+        "action_failed": "[tr] That did not work. Try again.",
+        "forbidden": "[tr] Only admin can do this.",
+        "validation_failed": "[tr] That choice is not valid.",
+        "not_found": "[tr] This flag no longer exists.",
+        "already_handled": "[tr] This flag was already handled.",
+        "not_approved": "[tr] Only an approved provider can be suspended.",
+        "not_on_probation": "[tr] This provider is not on probation any more.",
+        "already_waived": "[tr] Probation was already ended for this provider.",
+        "quality_settings_invalid": "[tr] The quality settings of this region are broken."
+      },
+      "section": "[tr] Quality",
+      "unavailable": "[tr] The quality figures are not available: this region's settings are broken.",
+      "countOf": "[tr] {num} of {den}",
+      "metric": {
+        "jobs_done": "[tr] Jobs done",
+        "completion": "[tr] Completed",
+        "on_time": "[tr] On time",
+        "cancellation": "[tr] Cancelled by them",
+        "reports": "[tr] Reports against them",
+        "repeat_customers": "[tr] Repeat customers",
+        "follow_through": "[tr] Follow through",
+        "response": "[tr] Median response time"
+      },
+      "minutes": "[tr] {minutes} min from {count} applications",
+      "windowNote": "[tr] Counted over the last {days} days.",
+      "waived": "[tr] Probation ended by {name} on {date}",
+      "flagsTitle": "[tr] Last flags",
+      "noFlags": "[tr] No flag has been raised.",
+      "handled": "[tr] {outcome} by {name} on {date}",
+      "outcome": {
+        "warned": "[tr] Warned",
+        "suspended": "[tr] Suspended",
+        "cleared": "[tr] Cleared"
+      }
     }
   }
 }

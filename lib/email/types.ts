@@ -35,6 +35,8 @@ export const EMAIL_TEMPLATES = [
   // Spec 0011-17 AC-9.
   'rate_provider',
   'rating_received',
+  // Spec 0011-19a AC-14.
+  'document_expiring',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -73,6 +75,16 @@ export const EmailValuesSchema = z
     changed_at: z.string().min(1).nullable().optional(),
     // Spec 0011-17 AC-9: rate_provider only, the provider's display name (06), or null when the name is flagged.
     provider_name: z.string().min(1).max(200).nullable().optional(),
+    // Spec 0011-19a AC-14: document_expiring only, the document's type and its last valid day (a calendar day).
+    document_type: z
+      .enum(['profile_photo', 'id_front', 'id_back', 'selfie', 'criminal_record', 'skill_certificate'])
+      .nullable()
+      .optional(),
+    valid_until: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable()
+      .optional(),
     reason: z
       .enum([
         'no_show',

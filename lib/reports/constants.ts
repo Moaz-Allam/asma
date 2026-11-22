@@ -13,6 +13,28 @@ export const REPORT_REASONS = [
 ] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];
 
+/**
+ * Spec 0011-19a AC-9, X-13: the reasons of a warning admin gives from the quality watchlist. A report still has only
+ * the six reasons above; a warning has those six or these five.
+ */
+export const QUALITY_WARNING_REASONS = [
+  'low_rating',
+  'high_reports',
+  'high_cancellations',
+  'low_follow_through',
+  'probation_issue',
+] as const;
+export const WARNING_REASONS = [...REPORT_REASONS, ...QUALITY_WARNING_REASONS] as const;
+export type WarningReason = (typeof WARNING_REASONS)[number];
+
+/** Spec 0011-19a AC-9: the warning reason a quality flag's kind gives (both probation kinds read `probation_issue`). */
+export function qualityWarningReason(kind: string): (typeof QUALITY_WARNING_REASONS)[number] | null {
+  if (kind === 'probation_report' || kind === 'probation_cancel') return 'probation_issue';
+  return (QUALITY_WARNING_REASONS as readonly string[]).includes(kind) && kind !== 'probation_issue'
+    ? (kind as (typeof QUALITY_WARNING_REASONS)[number])
+    : null;
+}
+
 export function isReportReason(value: unknown): value is ReportReason {
   return typeof value === 'string' && (REPORT_REASONS as readonly string[]).includes(value);
 }

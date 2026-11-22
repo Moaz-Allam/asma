@@ -44,6 +44,8 @@ export const CLIENT_NAMESPACES = [
   'AdminRatings',
   // Spec 0011-18 AC-8: the bell and its popover. The titles and lines (`NoticeKinds`) are rendered on the server.
   'Notices',
+  // Spec 0011-19a AC-3, AC-4, AC-9: the offer card's line, the profile card and admin's quality dialogs.
+  'Quality',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */

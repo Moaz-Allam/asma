@@ -20,7 +20,12 @@ import tr from '@/messages/tr.json';
 
 function migration(): string {
   const dir = 'supabase/migrations';
-  const file = readdirSync(dir).find((f) => f.endsWith('_notification_centre.sql'));
+  // The latest migration that sets the check: 18 created it, 19a added document_expiring.
+  const file = readdirSync(dir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort()
+    .reverse()
+    .find((f) => readFileSync(`${dir}/${f}`, 'utf8').includes('constraint notifications_kind_valid check'));
   if (!file) throw new Error('notification centre migration not found');
   return readFileSync(`${dir}/${file}`, 'utf8');
 }
@@ -35,7 +40,7 @@ describe('the kinds', () => {
       /constraint notifications_kind_valid check \(kind in \(([^)]*)\)\)/.exec(migration())?.[1] ?? '';
     const kinds = [...check.matchAll(/'([a-z_]+)'/g)].map((match) => match[1]);
     expect(kinds.sort()).toEqual([...NOTICE_KINDS].sort());
-    expect(NOTICE_KINDS).toHaveLength(24);
+    expect(NOTICE_KINDS).toHaveLength(25);
   });
 });
 
@@ -58,11 +63,13 @@ describe('noticeHref (AC-7)', () => {
         ? '/provider'
         : kind === 'rating_received'
           ? '/provider/profile'
-          : ['report_received', 'report_handled'].includes(kind)
-            ? `/provider/applications/${REQ}/report`
-            : kind === 'report_new_admin'
-              ? '/notifications'
-              : '/provider/applications',
+          : kind === 'document_expiring'
+            ? '/provider/profile/documents'
+            : ['report_received', 'report_handled'].includes(kind)
+              ? `/provider/applications/${REQ}/report`
+              : kind === 'report_new_admin'
+                ? '/notifications'
+                : '/provider/applications',
     admin: (kind) => (kind === 'report_new_admin' ? `/admin/reports/${ENT}` : '/notifications'),
   };
 
@@ -138,6 +145,7 @@ describe('the copy (AC-12)', () => {
     'pay_window_closing',
     'closes_soon',
     'rate_provider',
+    'document_expiring',
   ];
   const catalogues = { ar, en, tr } as const;
 

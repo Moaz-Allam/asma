@@ -1,4 +1,5 @@
 import { useLocale, useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
 
 import { formatScore, RATING_DIMENSIONS, type RatedSummary } from '@/lib/ratings/summary';
 
@@ -8,9 +9,10 @@ import { RatingBars } from './RatingBars';
  * A provider's score on an offer (ui-registry `RatingSummary`, s6 and s8, spec 0011-17 AC-5): "★ 4.8 · 26 ratings",
  * always with the count, and a "See ratings" disclosure with the four dimensions as bars and the line saying who can
  * rate and when admin hides one (`[draft]` until S16). A native disclosure, so it works before hydration. Only for a
- * `rated` summary: New and unavailable are the caller's (the "New" chip, or nothing).
+ * `rated` summary: New and unavailable are the caller's (the "New" chip, or nothing). Since 19a (spec 0011-19a AC-3)
+ * the disclosure also holds the caller's `note`: how the jobs and rates on the card are counted.
  */
-export function RatingSummary({ rating }: { rating: RatedSummary }) {
+export function RatingSummary({ rating, note }: { rating: RatedSummary; note?: ReactNode }) {
   const t = useTranslations('Ratings');
   const locale = useLocale();
   const score = formatScore(rating.overall, locale);
@@ -38,6 +40,7 @@ export function RatingSummary({ rating }: { rating: RatedSummary }) {
             }))}
           />
           <p className="text-meta text-text-secondary">{t('disclosure')}</p>
+          {note}
         </div>
       </details>
     </div>

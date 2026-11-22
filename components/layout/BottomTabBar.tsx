@@ -12,6 +12,7 @@ import {
   List,
   Search,
   Send,
+  ShieldCheck,
   SlidersHorizontal,
   UserRound,
   UsersRound,
@@ -38,6 +39,7 @@ const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
   reports: Flag,
   flags: AlarmClock,
   revenue: ChartColumn,
+  quality: ShieldCheck,
   history: History,
 };
 

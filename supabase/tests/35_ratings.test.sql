@@ -405,8 +405,8 @@ SELECT is(
     WHERE n.nspname = 'public'
       AND regexp_replace(regexp_replace(regexp_replace(p.prosrc, '/\*.*?\*/', '', 'g'), '--[^\n]*', '', 'g'),
                          '''[^'']*''', '', 'g') ~ '\m(ratings|rating_hides|provider_rating_summary)\M'),
-  'admin_hide_rating,admin_provider_ratings,email_context,my_provider_rating,offer_card,provider_rating_summary,rate_provider,request_rating',
-  'AC-3: exactly these functions read ratings or rating_hides, directly or through provider_rating_summary, so nothing can wait on a rating');
+  'admin_hide_rating,admin_provider_ratings,email_context,my_provider_rating,offer_card,provider_rating_summary,raise_quality_flags,rate_provider,request_rating',
+  'AC-3: exactly these functions read ratings or rating_hides, directly or through provider_rating_summary, so nothing can wait on a rating (nine since 19a: raise_quality_flags raises low_rating, AC-15)');
 -- Security review guardrail (2026-11-22): the same set with string literals kept (so dynamic SQL naming the tables is
 -- caught), apart from the notice topic 'ratings', and no view, materialized view or policy anywhere reads them.
 SELECT is(
@@ -415,7 +415,7 @@ SELECT is(
     WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND n.nspname NOT LIKE 'pg_temp%'
       AND replace(regexp_replace(regexp_replace(p.prosrc, '/\*.*?\*/', '', 'g'), '--[^\n]*', '', 'g'), '''ratings''', '')
           ~ '\m(ratings|rating_hides|provider_rating_summary)\M'),
-  'admin_hide_rating,admin_provider_ratings,email_context,my_provider_rating,offer_card,provider_rating_summary,rate_provider,request_rating',
+  'admin_hide_rating,admin_provider_ratings,email_context,my_provider_rating,offer_card,provider_rating_summary,raise_quality_flags,rate_provider,request_rating',
   'AC-3: no other function in any schema names them, not even inside a dynamic SQL string');
 SELECT is_empty(
   $$ SELECT viewname::text FROM pg_views WHERE definition ~ '\m(ratings|rating_hides|provider_rating_summary)\M'

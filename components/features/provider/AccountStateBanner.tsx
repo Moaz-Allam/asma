@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-import { isReportReason } from '@/lib/reports/constants';
+import { isReportReason, qualityWarningReason } from '@/lib/reports/constants';
 
 import { Button } from '@/components/ui/button';
 import { Link } from '@/lib/i18n/navigation';
@@ -26,8 +26,16 @@ export async function AccountStateBanner({
   const tReport = await getTranslations('Reports.warning');
   // Spec 0011-14 X-2: a suspension from a report stores `report:<reason>`, shown as its translated sentence.
   const reportCode = file.suspensionReason?.startsWith('report:') ? file.suspensionReason.slice(7) : null;
+  // Spec 0011-19a AC-9: a suspension from the quality watchlist stores `quality:<kind>`, translated the same way.
+  const qualityCode = file.suspensionReason?.startsWith('quality:')
+    ? qualityWarningReason(file.suspensionReason.slice(8))
+    : null;
   const suspensionText =
-    reportCode !== null && isReportReason(reportCode) ? tReport(reportCode) : file.suspensionReason;
+    reportCode !== null && isReportReason(reportCode)
+      ? tReport(reportCode)
+      : qualityCode !== null
+        ? tReport(qualityCode)
+        : file.suspensionReason;
 
   const docs = Object.values(file.documents);
   const rejected = docs.filter((d) => d.status === 'rejected');

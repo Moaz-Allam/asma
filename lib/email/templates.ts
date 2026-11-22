@@ -5,7 +5,7 @@ import en from '@/messages/en.json';
 import tr from '@/messages/tr.json';
 import { localized } from '@/lib/catalog/localized';
 import { formatMoney } from '@/lib/format/money';
-import { instantLabel } from '@/lib/requests/view';
+import { dayParts, instantLabel } from '@/lib/requests/view';
 
 import { renderShell } from './shell';
 import type { EmailLocale, EmailTemplate, RenderedEmail, SendContext } from './types';
@@ -32,7 +32,16 @@ type Translate = (key: string, values?: Record<string, string>) => string;
 type Parts = {
   t: Translate;
   /** The values a line may show, each already cleaned (bidi marks and line breaks removed, clamped). */
-  vals: { service: string; start: string; deadline: string; amount: string; when: string; name: string };
+  vals: {
+    service: string;
+    start: string;
+    deadline: string;
+    amount: string;
+    when: string;
+    name: string;
+    document: string;
+    until: string;
+  };
   side: 'customer' | 'provider' | null;
   carried: boolean;
   hasRefund: boolean;
@@ -48,6 +57,7 @@ type Parts = {
     confirm: () => { label: string; href: string };
     adminReport: () => { label: string; href: string };
     profile: () => { label: string; href: string };
+    documents: () => { label: string; href: string };
   };
 };
 
@@ -218,6 +228,12 @@ const TEMPLATES: Readonly<Record<EmailTemplate, (p: Parts) => Draft>> = {
     lines: [p.t('rating_received.lead', p.vals)],
     action: p.link.profile(),
   }),
+  // Spec 0011-19a AC-14: which document and its last valid day, read at send time; the documents page.
+  document_expiring: (p) => ({
+    subject: p.t('document_expiring.subject', p.vals),
+    lines: [p.t('document_expiring.lead', p.vals)],
+    action: p.link.documents(),
+  }),
 };
 
 function translator(locale: EmailLocale): Translate {
@@ -260,6 +276,8 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
           ? ''
           : cleanValue(instantLabel(values.changed_at, context.timezone, locale)),
       name: cleanValue(values.provider_name ?? ''),
+      document: values.document_type ? cleanValue(t(`document_expiring.types.${values.document_type}`)) : '',
+      until: values.valid_until ? cleanValue(dayParts(values.valid_until, locale).long) : '',
     },
     side: values.side,
     carried: values.carried === true,
@@ -291,6 +309,7 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
         href: `${base}/admin/reports/${needs(values.report_id ?? null, 'report_id_missing')}`,
       }),
       profile: () => ({ label: t('rating_received.action'), href: `${base}/provider/profile` }),
+      documents: () => ({ label: t('document_expiring.action'), href: `${base}/provider/profile/documents` }),
     },
   };
   const draft = TEMPLATES[context.template](parts);

@@ -13,6 +13,12 @@ import type { Locale } from '@/lib/i18n/direction';
 import { useRouter } from '@/lib/i18n/navigation';
 import type { Offer } from '@/lib/requests/schemas';
 
+import {
+  QualityDisclosure,
+  QualityLine,
+  QualityNote,
+  showsQuality,
+} from '@/components/features/quality/QualityLine';
 import { RatingSummary } from '@/components/features/ratings/RatingSummary';
 
 import { OfferCard } from './OfferCard';
@@ -101,7 +107,17 @@ export function OfferList({
             name={nameOf(offer)}
             verified={t('offers.verified')}
             fresh={offer.rating.state === 'new' ? t('offers.new') : null}
-            rating={offer.rating.state === 'rated' ? <RatingSummary rating={offer.rating} /> : null}
+            rating={
+              offer.rating.state === 'rated' ? (
+                <RatingSummary
+                  rating={offer.rating}
+                  note={showsQuality(offer.quality) ? <QualityNote quality={offer.quality} /> : null}
+                />
+              ) : showsQuality(offer.quality) ? (
+                <QualityDisclosure quality={offer.quality} />
+              ) : null
+            }
+            quality={<QualityLine quality={offer.quality} />}
             since={since[offer.application_id] ?? null}
             message={offer.message}
             hidden={offer.message_hidden ? t('offers.messageHidden') : null}

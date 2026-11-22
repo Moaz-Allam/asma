@@ -46,6 +46,8 @@ export const PROVIDER_FEED_DB_CODES = [
   'checkout_open',
   // Spec 0011-13 R-10, AC-10: the apply gate, while the region's apply_needs_email is on.
   'email_unconfirmed',
+  // Spec 0011-19a AC-6: on probation, at the live job limit.
+  'probation_limit',
 ] as const;
 export type ProviderFeedCode = (typeof PROVIDER_FEED_DB_CODES)[number];
 

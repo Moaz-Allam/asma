@@ -71,6 +71,9 @@ function context(
       ...(REPORT_TEMPLATES.has(template) ? { report_id: REPORT, reason: 'poor_work' as const } : {}),
       ...(template === 'password_changed' ? { changed_at: '2026-11-20T09:30:00+00:00' } : {}),
       ...(template === 'rate_provider' ? { provider_name: HOSTILE } : {}),
+      ...(template === 'document_expiring'
+        ? { document_type: 'id_front' as const, valid_until: '2026-12-02' }
+        : {}),
     },
   };
 }
@@ -98,7 +101,7 @@ const CASES = EMAIL_TEMPLATES.flatMap((template) =>
 );
 
 const HREF = new RegExp(
-  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|account|admin/reports/${REPORT}|account/email/confirm\\?t=${TOKEN}|login\\?mode=code&reset=1|provider/profile)$`,
+  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|account|admin/reports/${REPORT}|account/email/confirm\\?t=${TOKEN}|login\\?mode=code&reset=1|provider/profile|provider/profile/documents)$`,
 );
 
 describe('every template renders in every locale (AC-2)', () => {
@@ -266,5 +269,18 @@ describe('the shell colours are the tokens (ui-tokens.md §2)', () => {
     ['surface', 'white'],
   ] as const)('%s is --ramp-%s', (key, name) => {
     expect(EMAIL_COLORS[key]).toBe(ramp(name));
+  });
+});
+
+describe('the document reminder (spec 0011-19a AC-14)', () => {
+  it('names the document and its last valid day in each locale, and links the documents page', () => {
+    for (const locale of ['ar', 'tr', 'en'] as const) {
+      const mail = renderEmail(context('document_expiring', locale, 'provider'), ORIGIN);
+      expect(mail.text).toContain(`${ORIGIN}/${locale}/provider/profile/documents`);
+      expect(mail.text).not.toContain('{');
+    }
+    const en = renderEmail(context('document_expiring', 'en', 'provider'), ORIGIN).text;
+    expect(en).toContain('ID front side');
+    expect(en).toContain('December 2');
   });
 });

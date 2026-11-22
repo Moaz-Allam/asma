@@ -152,7 +152,8 @@
     "setup": "Services and districts",
     "reports": "Reports",
     "flags": "Deadline flags",
-    "revenue": "Revenue"
+    "revenue": "Revenue",
+    "quality": "Quality"
   },
   "Login": {
     "title": "Welcome",
@@ -1340,7 +1341,8 @@
       "applied": "You applied. The customer will see your offer.",
       "appliedOn": "Applied on {date}",
       "full": "This request has reached the limit of offers.",
-      "closed": "This request is closed."
+      "closed": "This request is closed.",
+      "probationLimit": "[draft] You can hold {limit} jobs at once during your first {needed} jobs. Finish one to apply again."
     },
     "applications": {
       "title": "My jobs",
@@ -1391,7 +1393,8 @@
       "contact_info_in_message": "Your message has contact details. Remove phone numbers, emails, links and social handles.",
       "apply_settings_invalid": "Applying is not possible right now. Please try again later.",
       "action_failed": "Something went wrong. Nothing was sent. Try again.",
-      "email_unconfirmed": "Confirm your email on your account page before you apply."
+      "email_unconfirmed": "Confirm your email on your account page before you apply.",
+      "probation_limit": "[draft] During your first jobs you can hold only a few jobs at once. Finish one to apply again."
     },
     "chosen": {
       "line": "The customer is paying the commission by {date}. Your fee comes after that.",
@@ -1807,6 +1810,19 @@
       "subject": "[draft] You have a new rating",
       "lead": "[draft] A customer rated one of your jobs. See your rating on your profile.",
       "action": "[draft] Open my profile"
+    },
+    "document_expiring": {
+      "subject": "[draft] A required document expires soon",
+      "lead": "[draft] Your {document} expires on {until}. Upload a new one before then to keep applying.",
+      "action": "[draft] Open my documents",
+      "types": {
+        "profile_photo": "profile photo",
+        "id_front": "ID front side",
+        "id_back": "ID back side",
+        "selfie": "selfie with your ID",
+        "criminal_record": "criminal record",
+        "skill_certificate": "skill certificate"
+      }
     }
   },
   "Reports": {
@@ -1824,7 +1840,12 @@
       "poor_work": "We received a report about the quality of a job. Please finish every job to the agreed standard.",
       "safety_or_behaviour": "We received a report about safety or behaviour on a job. Please treat everyone with respect.",
       "asked_money_off_platform": "We received a report that money was asked for outside Aldebyani. Our fees are paid only on Aldebyani.",
-      "other": "We received a report about one of your jobs. Please follow the terms of Aldebyani."
+      "other": "We received a report about one of your jobs. Please follow the terms of Aldebyani.",
+      "low_rating": "[draft] Customers have rated your recent jobs low. Please finish every job to the agreed standard.",
+      "high_reports": "[draft] We received several reports about your jobs. Please keep every booking and finish each job to the agreed standard.",
+      "high_cancellations": "[draft] You have cancelled too many jobs. Please cancel only when you truly cannot do the job.",
+      "low_follow_through": "[draft] Many customers who chose you did not get their job done. Please pay your fee and keep every job you are chosen for.",
+      "probation_issue": "[draft] There was a problem during your first jobs on Aldebyani. Please keep every booking and finish each job to the agreed standard."
     },
     "cta": "Report a problem",
     "notDone": "Not done, report a problem",
@@ -2237,6 +2258,149 @@
     "rating_received": {
       "title": "You received a rating",
       "line": "A customer rated your work."
+    },
+    "document_expiring": {
+      "title": "A document expires soon",
+      "line": "A required document expires soon. Upload a new one to keep applying.",
+      "lineDeadline": "A required document expires on {deadline}. Upload a new one to keep applying."
+    }
+  },
+  "Quality": {
+    "card": {
+      "jobs": "[draft] {count, plural, one {# job} other {# jobs}} on Aldebyani",
+      "completed": "[draft] {pct} completed",
+      "onTime": "[draft] {pct} on time",
+      "how": "[draft] How we count",
+      "windowMonths": "[draft] {count, plural, one {# month} other {# months}}",
+      "windowDays": "[draft] {count, plural, one {# day} other {# days}}",
+      "note": "[draft] Counted from jobs on Aldebyani in the last {window}. Completed counts jobs not cancelled by the customer; on time means started within {grace} minutes of the booked time."
+    },
+    "mine": {
+      "title": "[draft] Your quality",
+      "jobs": "[draft] Jobs on Aldebyani",
+      "completed": "[draft] Completed",
+      "onTime": "[draft] On time",
+      "notYet": "[draft] Shown once enough jobs count",
+      "unavailable": "[draft] Your figures are not available right now.",
+      "probation": "[draft] Your first {needed} jobs: {done} done",
+      "probationLimit": "[draft] While in your first jobs you can hold {limit} jobs at once."
+    },
+    "admin": {
+      "title": "Quality",
+      "lead": "Providers whose figures crossed a limit, providers in their first jobs, and the review funnel. For admin only.",
+      "tabs": {
+        "watchlist": "Watchlist",
+        "probation": "Probation",
+        "funnel": "Funnel"
+      },
+      "page": "Page {page} of {pages}",
+      "prev": "Previous",
+      "next": "Next",
+      "emptyWatchlist": "No open flags",
+      "emptyProbation": "No provider is on probation",
+      "openCount": "{count, plural, one {# open flag} other {# open flags}}",
+      "probationCount": "{count, plural, one {# provider} other {# providers}} on probation",
+      "unnamed": "No approved name",
+      "raised": "Raised {date}",
+      "kind": {
+        "low_rating": "Low rating",
+        "high_reports": "Many reports",
+        "high_cancellations": "Many cancellations",
+        "low_follow_through": "Low follow through",
+        "probation_report": "Report during probation",
+        "probation_cancel": "Cancel during probation"
+      },
+      "figure": {
+        "rating": "Overall score {overall} from {count} ratings, limit {limit}",
+        "high_reports": "Report rate {num} of {den} jobs ({pct}), limit {limit}",
+        "high_cancellations": "Cancellation rate {num} of {den} jobs ({pct}), limit {limit}",
+        "low_follow_through": "Follow through {num} of {den} picks ({pct}), limit {limit}",
+        "report": "A report against them during probation",
+        "request": "They cancelled a job during probation"
+      },
+      "progress": "First jobs: {done} of {needed} done",
+      "approvedOn": "approved {date}",
+      "live": "Live jobs {live} of {limit}",
+      "reports": "{count, plural, one {# report} other {# reports}}",
+      "openFlags": "{count, plural, one {# open flag} other {# open flags}}",
+      "funnelNote": "For admin only. No public claim uses this figure yet.",
+      "stage": {
+        "draft": "Draft",
+        "pending": "Pending review",
+        "probation": "On probation",
+        "active": "Active",
+        "document_expired": "Document expired",
+        "rejected": "Rejected",
+        "suspended": "Suspended"
+      },
+      "monthsCaption": "First decisions by month",
+      "month": "Month",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "rate": "Acceptance rate",
+      "note": "Note (kept for admin only)",
+      "actions": {
+        "warned": {
+          "label": "Warn",
+          "title": "Warn {provider}?",
+          "body": "They see a fixed warning for this reason until they acknowledge it. Your note is not shown to them.",
+          "confirm": "Send the warning"
+        },
+        "suspended": {
+          "label": "Suspend",
+          "title": "Suspend {provider}?",
+          "body": "They can no longer apply, and their open applications end, as with any suspension.",
+          "confirm": "Suspend"
+        },
+        "cleared": {
+          "label": "Clear",
+          "title": "Clear this flag for {provider}?",
+          "body": "Nothing changes for the provider. The flag can be raised again later.",
+          "confirm": "Clear the flag"
+        },
+        "end": {
+          "label": "End probation",
+          "title": "End probation for {provider}?",
+          "body": "The live job limit and the reserved slots stop applying to them. This cannot be undone.",
+          "confirm": "End probation"
+        }
+      },
+      "errors": {
+        "reason_required": "Write a note of 10 to 500 characters.",
+        "action_failed": "That did not work. Try again.",
+        "forbidden": "Only admin can do this.",
+        "validation_failed": "That choice is not valid.",
+        "not_found": "This flag no longer exists.",
+        "already_handled": "This flag was already handled.",
+        "not_approved": "Only an approved provider can be suspended.",
+        "not_on_probation": "This provider is not on probation any more.",
+        "already_waived": "Probation was already ended for this provider.",
+        "quality_settings_invalid": "The quality settings of this region are broken."
+      },
+      "section": "Quality",
+      "unavailable": "The quality figures are not available: this region's settings are broken.",
+      "countOf": "{num} of {den}",
+      "metric": {
+        "jobs_done": "Jobs done",
+        "completion": "Completed",
+        "on_time": "On time",
+        "cancellation": "Cancelled by them",
+        "reports": "Reports against them",
+        "repeat_customers": "Repeat customers",
+        "follow_through": "Follow through",
+        "response": "Median response time"
+      },
+      "minutes": "{minutes} min from {count} applications",
+      "windowNote": "Counted over the last {days} days.",
+      "waived": "Probation ended by {name} on {date}",
+      "flagsTitle": "Last flags",
+      "noFlags": "No flag has been raised.",
+      "handled": "{outcome} by {name} on {date}",
+      "outcome": {
+        "warned": "Warned",
+        "suspended": "Suspended",
+        "cleared": "Cleared"
+      }
     }
   }
 }
