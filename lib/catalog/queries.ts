@@ -318,3 +318,38 @@ export async function pricedQuestions(categoryId: string, serviceId: string): Pr
   if (error) fail(error);
   return ((data ?? []) as QuestionDb[]).map(toQuestion);
 }
+
+/** Spec 0011-19b AC-2: one category's application questions, retired ones included, in their order. */
+export type ApplicationQuestionRow = {
+  id: string;
+  key: string;
+  type: QuestionType;
+  label: unknown;
+  helpText: unknown;
+  required: boolean;
+  options: { value: string; label: unknown }[] | null;
+  validation: { maxLength?: number } | null;
+  active: boolean;
+};
+
+export async function listApplicationQuestions(categoryId: string): Promise<ApplicationQuestionRow[]> {
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from('application_questions')
+    .select('id, key, type, label, help_text, required, options, validation, active')
+    .eq('category_id', categoryId)
+    .order('display_order')
+    .order('id');
+  if (error) fail(error);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    key: row.key,
+    type: row.type as QuestionType,
+    label: row.label,
+    helpText: row.help_text,
+    required: row.required,
+    options: Array.isArray(row.options) ? (row.options as ApplicationQuestionRow['options']) : null,
+    validation: (row.validation as ApplicationQuestionRow['validation']) ?? null,
+    active: row.active,
+  }));
+}

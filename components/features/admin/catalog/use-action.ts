@@ -18,6 +18,9 @@ const KNOWN = new Set([
   'zone_unavailable',
   'addon_unavailable',
   'rate_limited',
+  // Spec 0011-19b AC-2.
+  'too_many_questions',
+  'application_question_retire',
 ]);
 
 /**

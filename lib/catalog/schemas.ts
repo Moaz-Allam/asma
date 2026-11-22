@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { IdSchema } from '@/lib/validation';
 
 import {
+  APPLICATION_QUESTION_TYPES,
   CATALOG_LIMITS,
   CATALOG_TABLES,
   EFFECT_TYPES,
@@ -85,6 +86,27 @@ export const SaveQuestionSchema = z.object({
     ])
     .nullable(),
 });
+
+/**
+ * Spec 0011-19b AC-2: an application question. No scope and no price flag; a text answer's limit is 10 to 600.
+ * Key and type go on create only, and no grant would let an edit change them.
+ */
+export const SaveApplicationQuestionSchema = z.object({
+  id: Id.optional(),
+  categoryId: Id,
+  key: z.string().regex(KEY_PATTERN),
+  type: z.enum(APPLICATION_QUESTION_TYPES),
+  label: Name,
+  helpText: OptionalText(CATALOG_LIMITS.helpText),
+  required: z.boolean(),
+  options: z.array(OptionSchema).max(CATALOG_LIMITS.options).nullable(),
+  validation: z
+    .object({ maxLength: z.number().int().min(CATALOG_LIMITS.answerMin).max(CATALOG_LIMITS.answerMax) })
+    .strict()
+    .nullable(),
+});
+
+export const MoveApplicationQuestionSchema = z.object({ id: Id, direction: z.enum(['up', 'down']) });
 
 export const SetActiveSchema = z.object({ table: z.enum(CATALOG_TABLES), id: Id, active: z.boolean() });
 

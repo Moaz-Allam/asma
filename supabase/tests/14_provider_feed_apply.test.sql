@@ -474,8 +474,9 @@ SELECT pg_temp.as_user('a1');
 CREATE TEMP TABLE one_a AS SELECT public.provider_request(pg_temp.r(1)) AS j;
 SELECT is((SELECT array_agg(k ORDER BY k) FROM one_a, jsonb_object_keys(j) k),
   ARRAY['addon_names', 'answers', 'application', 'applied_count', 'cap', 'cash_due', 'closed', 'currency', 'fixed_price', 'full', 'id',
-        'outside_hours', 'payment_deadline', 'scheduled_end_at', 'scheduled_start_at', 'service_id', 'service_name', 'timezone', 'zone_id', 'zone_name'],
-  'provider_request has exactly the allowed keys');
+        'outside_hours', 'payment_deadline', 'questions', 'questions_version', 'scheduled_end_at', 'scheduled_start_at', 'service_id', 'service_name', 'timezone',
+        'zone_id', 'zone_name'],
+  'provider_request has exactly the allowed keys (questions and their version since 19b)');
 SELECT is((SELECT j -> 'answers' FROM one_a),
   '[{"key": "rooms", "label": {"tr": "Oda", "en": "Rooms"}, "type": "number", "value": 3, "option_labels": null},
     {"key": "property_type", "label": {"tr": "Tip"}, "type": "single_select", "value": null, "option_labels": [{"tr": "Villa", "en": "Villa"}]},
@@ -487,8 +488,9 @@ SELECT is((SELECT j -> 'answers' FROM one_a),
   'the structured answers in the snapshot''s order; no typed answer, no unanswered question, and a string under a date question stays in');
 SELECT ok((SELECT j::text !~* 'FIXTURE|multiplier|modifier|formula|commission|customer|client_key|notes' FROM one_a),
   'no notes, typed answer, address, customer, rival message, commission or pricing internals in the details');
-SELECT is((SELECT j - 'answers' FROM one_a), (SELECT (j -> 'rows' -> 0) || '{"closed": false, "timezone": "Europe/Istanbul", "payment_deadline": null}' FROM feed_a),
-  'and otherwise the feed row, open, with the time zone');
+SELECT is((SELECT j - 'answers' FROM one_a),
+  (SELECT (j -> 'rows' -> 0) || '{"closed": false, "timezone": "Europe/Istanbul", "payment_deadline": null, "questions": [], "questions_version": null}' FROM feed_a),
+  'and otherwise the feed row, open, with the time zone (and no provider question in this category, 19b)');
 SELECT is(public.provider_request(pg_temp.r(3)), NULL, 'A: a request in a district A does not cover reads as nothing');
 SELECT is(public.provider_request(pg_temp.r(5)), NULL, 'A: a cancelled request A never applied to');
 SELECT is(public.provider_request(pg_temp.r(6)), NULL, 'A: a chosen one');
@@ -574,7 +576,9 @@ SELECT is(public.apply_to_request(pg_temp.r(1), 'Another message that is long en
 SELECT is(public.apply_to_request(pg_temp.r(1), NULL), (SELECT j || '{"replayed": true}' FROM app_a), 'whatever the message');
 SELECT results_eq($$ SELECT message, status, region, request_id FROM public.applications $$,
   $$ VALUES (pg_temp.clean(), 'APPLIED', 'TR', pg_temp.r(1)) $$, 'one row, the first message, trimmed, in the request''s region');
-SELECT is(public.provider_request(pg_temp.r(1)) -> 'application', (SELECT j -> 'application' FROM app_a), 'the details now carry the caller''s application');
+SELECT is(public.provider_request(pg_temp.r(1)) -> 'application',
+  (SELECT j -> 'application' || '{"application_answers": null, "questions_snapshot": null}' FROM app_a),
+  'the details now carry the caller''s application (no answers: a message application, 19b)');
 SELECT is((pg_temp.feed() -> 'rows' -> 0) - 'application', (SELECT (j -> 'rows' -> 0) - 'application' || '{"applied_count": 1}' FROM feed_a),
   'and the feed row counts two offers');
 RESET ROLE;
@@ -675,7 +679,7 @@ SELECT set_eq(
                           'provider_structured_answers', 'requests_delete_guard') $$,
   $$ VALUES ('provider_setup()'), ('save_provider_setup(uuid[],uuid[],smallint[],integer,integer)'),
             ('provider_feed(uuid[],uuid[],date,date,boolean,timestamp with time zone,uuid)'), ('provider_request(uuid)'),
-            ('apply_to_request(uuid,text)'), ('provider_applications(timestamp with time zone,uuid)'), ('provider_home_counts()'),
+            ('apply_to_request(uuid,text,jsonb,text)'), ('provider_applications(timestamp with time zone,uuid)'), ('provider_home_counts()'),
             ('cancel_request(uuid,text)') $$,
   'a signed in user runs the eight functions of the spec and none of the internal ones');
 SELECT is_empty(
@@ -713,7 +717,8 @@ SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('a3');
 SELECT pg_temp.as_user('a1');
 SELECT is(public.provider_request(pg_temp.r(8)) - 'answers' - 'applied_count' - 'cap' - 'full' - 'outside_hours' - 'addon_names' - 'service_name' - 'zone_name'
-            - 'scheduled_start_at' - 'scheduled_end_at' - 'fixed_price' - 'cash_due' - 'currency' - 'service_id' - 'zone_id' - 'timezone' - 'payment_deadline' #- '{application,id}' #- '{application,created_at}',
+            - 'scheduled_start_at' - 'scheduled_end_at' - 'fixed_price' - 'cash_due' - 'currency' - 'service_id' - 'zone_id' - 'timezone' - 'payment_deadline' - 'questions' - 'questions_version'
+            #- '{application,id}' #- '{application,created_at}' #- '{application,application_answers}' #- '{application,questions_snapshot}',
   jsonb_build_object('id', pg_temp.r(8), 'closed', true, 'application', '{"status": "CANCELLED"}'::jsonb),
   'A rereads the cancelled request: closed, the application CANCELLED');
 SELECT is(public.apply_to_request(pg_temp.r(8), pg_temp.clean()) #>> '{application,status}', 'CANCELLED', 'a replay shows the final status');

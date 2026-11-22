@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import { saveQuestion } from '@/actions/admin-catalog';
+import { saveApplicationQuestion, saveQuestion } from '@/actions/admin-catalog';
 import { FormField } from '@/components/shared/FormField';
 import { LocalizedField } from '@/components/shared/LocalizedField';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { parseWhole } from '@/lib/catalog/digits';
 import type { CatalogLocale, LocalizedText } from '@/lib/catalog/localized';
 import {
+  APPLICATION_QUESTION_TYPES,
   CATALOG_LIMITS,
   KEY_PATTERN,
   PRICED_TYPES,
@@ -37,6 +38,9 @@ function whole(text: string): number {
  * Add or edit one question (ui-registry `QuestionBuilder`, spec 0007 AC-3, AC-18). Key, type and scope are
  * asked on create only and shown read only after, because answers already stored use them. Only the types
  * that can price offer "affects the price". The database checks every shape again.
+ *
+ * Spec 0011-19b AC-2: with `purpose="application"` it builds a question for providers instead: three types (text,
+ * a choice, yes or no), no scope, no pricing control, a text limit of 10 to 600, saved by `saveApplicationQuestion`.
  */
 export function QuestionBuilder({
   open,
@@ -45,7 +49,9 @@ export function QuestionBuilder({
   categoryId,
   services,
   question,
+  purpose = 'request',
 }: {
+  purpose?: 'request' | 'application';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   regionDefault: CatalogLocale;
@@ -56,8 +62,10 @@ export function QuestionBuilder({
   const t = useTranslations('AdminCatalog');
   const action = useCatalogAction();
   const editing = question !== null;
+  const forProviders = purpose === 'application';
+  const types: readonly QuestionType[] = forProviders ? APPLICATION_QUESTION_TYPES : QUESTION_TYPES;
   const [key, setKey] = useState(question?.key ?? '');
-  const [type, setType] = useState<QuestionType>(question?.type ?? 'number');
+  const [type, setType] = useState<QuestionType>(question?.type ?? (forProviders ? 'textarea' : 'number'));
   const [serviceId, setServiceId] = useState<string>(question?.serviceId ?? '');
   const [label, setLabel] = useState<LocalizedText>(question?.values ?? {});
   const [help, setHelp] = useState<LocalizedText>(question?.helpValues ?? {});
@@ -84,6 +92,28 @@ export function QuestionBuilder({
   const badKey = key !== '' && !KEY_PATTERN.test(key);
 
   function submit() {
+    if (forProviders) {
+      const limit = type === 'textarea' && maxLength.trim() !== '' ? { maxLength: whole(maxLength) } : null;
+      action.run(
+        () =>
+          saveApplicationQuestion({
+            id: question?.id,
+            categoryId,
+            key,
+            type: type as (typeof APPLICATION_QUESTION_TYPES)[number],
+            label,
+            helpText: help,
+            required,
+            options:
+              type === 'single_select'
+                ? options.map(({ value, label: optionLabel }) => ({ value, label: optionLabel }))
+                : null,
+            validation: limit,
+          }),
+        () => onOpenChange(false),
+      );
+      return;
+    }
     const validation =
       type === 'number'
         ? { min: whole(min), max: whole(max), step: whole(step) }
@@ -115,8 +145,12 @@ export function QuestionBuilder({
     <CatalogSheet
       open={open}
       onOpenChange={onOpenChange}
-      title={t(editing ? 'editQuestion' : 'newQuestion')}
-      description={t('questionSheetNote')}
+      title={
+        forProviders
+          ? t(editing ? 'editProviderQuestion' : 'newProviderQuestion')
+          : t(editing ? 'editQuestion' : 'newQuestion')
+      }
+      description={forProviders ? t('providerQuestionSheetNote') : t('questionSheetNote')}
       busy={action.busy}
       error={action.error}
       onSubmit={submit}
@@ -149,29 +183,31 @@ export function QuestionBuilder({
             disabled={editing}
             onChange={(event) => setType(event.target.value as QuestionType)}
           >
-            {QUESTION_TYPES.map((value) => (
+            {types.map((value) => (
               <option key={value} value={value}>
                 {t(`type.${value}`)}
               </option>
             ))}
           </select>
         </FormField>
-        <FormField id="question-scope" label={t('fieldScope')}>
-          <select
-            id="question-scope"
-            className={SELECT_CLASS}
-            value={serviceId}
-            disabled={editing}
-            onChange={(event) => setServiceId(event.target.value)}
-          >
-            <option value="">{t('scopeAll')}</option>
-            {services.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.name}
-              </option>
-            ))}
-          </select>
-        </FormField>
+        {forProviders ? null : (
+          <FormField id="question-scope" label={t('fieldScope')}>
+            <select
+              id="question-scope"
+              className={SELECT_CLASS}
+              value={serviceId}
+              disabled={editing}
+              onChange={(event) => setServiceId(event.target.value)}
+            >
+              <option value="">{t('scopeAll')}</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.name}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        )}
       </div>
       <LocalizedField
         id="question-label"
@@ -194,7 +230,7 @@ export function QuestionBuilder({
         <span className="text-body-s font-bold text-text-primary">{t('fieldRequired')}</span>
         <Switch checked={required} onCheckedChange={setRequired} aria-label={t('fieldRequired')} />
       </label>
-      {canPrice ? (
+      {forProviders ? null : canPrice ? (
         <div className="flex flex-col gap-1.5">
           <label className="flex min-h-11 items-center justify-between gap-3">
             <span className="text-body-s font-bold text-text-primary">{t('fieldAffectsPrice')}</span>
@@ -239,10 +275,14 @@ export function QuestionBuilder({
         <FormField
           id="question-max-length"
           label={t('fieldMaxLength')}
-          note={t('maxLengthRule', {
-            limit: type === 'text' ? CATALOG_LIMITS.textMax : CATALOG_LIMITS.textareaMax,
-            fallback: type === 'text' ? CATALOG_LIMITS.textDefault : CATALOG_LIMITS.textareaDefault,
-          })}
+          note={
+            forProviders
+              ? t('answerLengthRule', { min: CATALOG_LIMITS.answerMin, limit: CATALOG_LIMITS.answerMax })
+              : t('maxLengthRule', {
+                  limit: type === 'text' ? CATALOG_LIMITS.textMax : CATALOG_LIMITS.textareaMax,
+                  fallback: type === 'text' ? CATALOG_LIMITS.textDefault : CATALOG_LIMITS.textareaDefault,
+                })
+          }
         >
           <Input
             id="question-max-length"

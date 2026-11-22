@@ -584,7 +584,7 @@ SELECT set_eq(
             -- Spec 0011-13 AC-7: the signed in owner asks for a link and confirms an address.
             ('public.request_email_confirmation()'),
             ('public.confirm_email(text)'),
-            ('public.apply_to_request(uuid, text)'),
+            ('public.apply_to_request(uuid, text, jsonb, text)'),
             ('public.choose_provider(uuid, uuid)'),
             ('public.provider_applications(timestamp with time zone, uuid)'),
             ('public.provider_feed(uuid[], uuid[], date, date, boolean, timestamp with time zone, uuid)'),

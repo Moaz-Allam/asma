@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { StatusChip } from '@/components/shared/StatusChip';
+import type { OfferAnswerLine } from '@/lib/requests/offer-answers';
 
 /**
  * One offer on the customer's request (ui-registry `OfferCard`, `s6`, spec 0010 AC-1): a letter avatar, the
@@ -8,6 +9,8 @@ import { StatusChip } from '@/components/shared/StatusChip';
  * platform, and their message (or "Message hidden"). No full name, photo or contact detail ever reaches it.
  * Since 17 (spec 0011-17 AC-5) a rated provider shows their score in place of "New" (`rating`), and a provider
  * whose score is unavailable shows neither (`fresh` null). Display only; the caller passes every string and the action.
+ * Since 19b (spec 0011-19b AC-6) an application with answers shows them in place of the message: each question's
+ * label and the answer, a hidden answer as its line.
  */
 export function OfferCard({
   name,
@@ -19,6 +22,8 @@ export function OfferCard({
   flag,
   rating,
   quality,
+  answers = null,
+  answersLabel,
   action,
 }: {
   name: string;
@@ -33,6 +38,9 @@ export function OfferCard({
   rating?: ReactNode;
   /** Spec 0011-19a AC-3: jobs on Aldebyani and the two rates (`QualityLine`), under the name line. */
   quality?: ReactNode;
+  /** Spec 0011-19b AC-6: the answers, rendered on the server; null for a message application. */
+  answers?: OfferAnswerLine[] | null;
+  answersLabel?: string;
   action?: ReactNode;
 }) {
   const initial = [...name][0] ?? '';
@@ -57,7 +65,29 @@ export function OfferCard({
           {rating}
         </div>
       </div>
-      {message !== null ? (
+      {answers !== null ? (
+        answers.length > 0 ? (
+          <dl
+            aria-label={answersLabel}
+            className="flex flex-col gap-3 rounded-block bg-surface-secondary p-4 text-body-s"
+          >
+            {answers.map((answer) => (
+              <div key={answer.key} className="flex flex-col gap-1">
+                <dt className="font-semibold text-text-primary">{answer.label}</dt>
+                <dd
+                  className={
+                    answer.hidden
+                      ? 'text-text-secondary'
+                      : 'break-words whitespace-pre-line text-text-primary'
+                  }
+                >
+                  {answer.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : null
+      ) : message !== null ? (
         <p className="rounded-block bg-surface-secondary p-4 text-body-s break-words whitespace-pre-line text-text-primary">
           {message}
         </p>
