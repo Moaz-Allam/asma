@@ -47,15 +47,17 @@ some. Every text answer passes the same contact scanner as the message.
 
 - **AC-1, the questions table**: `application_questions` (see *Data model*) holds questions per category and region,
   types `textarea`, `single_select` and `boolean` only. Labels and help text are checked by `catalog_text_ok` (120 and
-  300 code points), options and validation by `question_shape_ok`, and a `textarea`'s `maxLength` (validation) is at
-  most 600 (null means 600). A key is unique per category forever (retired keys included) and matches
+  300 code points), options and validation by `question_shape_ok`, and a `textarea`'s `maxLength` (validation) is 10 to
+  600 (null means 600; below 10 no answer could pass, D219). A key is unique per category forever (retired keys included) and matches
   `^[a-z][a-z0-9_]{0,39}$`. RLS is on, with admin read, insert and update policies (the `questions` pattern); column
   grants let admin insert every editable column and update only `label`, `help_text`, `required`, `options`,
   `validation`, `display_order`, `active` (never `key`, `type`, `category_id`, `region`). `application_questions_guard`
   (before insert, update, delete, truncate, every role) refuses delete and truncate (`application_question_retire`:
   deactivate instead), any change to `key`, `type`, `category_id` or `region`, and a sixth active question in a category
   (`too_many_questions`); before it counts, it locks the category's `service_categories` row (`for update`), so two
-  admins activating different questions at once cannot both pass (X-4). The `catalog_audit` trigger writes `catalog.created` and `catalog.updated` rows for it. New
+  admins activating different questions at once cannot both pass (X-4). It is security definer, and a BEFORE trigger runs
+  ahead of the RLS write check, so `application_questions_access` (security invoker, named to fire first) refuses an API
+  caller who is not admin with 42501 before the guard can lock or count for them (D219). The `catalog_audit` trigger writes `catalog.created` and `catalog.updated` rows for it. New
   rows start inactive. No provider, customer or `anon` reads the table directly.
 
 - **AC-2, admin builds them**: in `/[locale]/admin/catalog`, each category's sheet gets a second list, "Questions for
@@ -95,7 +97,9 @@ some. Every text answer passes the same contact scanner as the message.
      `answers_invalid` with its `key`; a `textarea` value must be a string of at most 8192 bytes, then
      `catalog_trim`, then 10 to `max_length` code points (else `answers_invalid`), then `message_has_contact_info`
      false (else `contact_info_in_answer` with its `key`); a `single_select` value must be one of its option values; a
-     `boolean` value must be a JSON boolean. Optional questions left empty are stored absent.
+     `boolean` value must be a JSON boolean. Optional questions left empty (a text blank after the trim included) are
+     stored absent. Then all text answers joined in snapshot order (`answers_joined_text`) pass `message_has_contact_info`
+     too (else `contact_info_in_answer` with no `key`), so a number split across fields is caught as one (D219).
   4. Insert the application with `message` null, `answers` the cleaned object (trimmed text), and `questions_snapshot`
      the active questions as an array, in order, each `{ "key", "label", "type", "required" }` plus, for an answered
      `single_select`, `"choice": { "value", "label" }` (only the chosen option, never the whole list, X-5), so a later
@@ -115,7 +119,8 @@ some. Every text answer passes the same contact scanner as the message.
 - **AC-6, the offer card**: `offer_card` is replaced in place (19a's body plus this) and adds `answers`: null for a
   message application, else an array in snapshot order, each `{ "key", "label", "type", "choice", "value", "hidden" }`
   for the answered questions only, where a `textarea` value that `message_has_contact_info` matches comes back as
-  `value` null with `hidden` true (06's rule for the message). `message` stays null and `message_hidden` is written
+  `value` null with `hidden` true (06's rule for the message); when the text answers joined match, every text answer of
+  that card comes back hidden (D219). `message` stays null and `message_hidden` is written
   `coalesce(public.message_has_contact_info(message), false)`, because the scanner returns null for a null message and
   the offer schema needs a boolean (X-2). `request_offers` is replaced too (body copied from
   `20261118090000_choose_provider.sql`): in its branch for a chosen provider suspended after the choose (06 security
@@ -199,13 +204,13 @@ between what the form showed and what is active, so a provider never sends answe
 | | `type` | text | no | check in `textarea`, `single_select`, `boolean` |
 | | `required` | boolean | no | default false |
 | | `options` | jsonb | yes | `question_shape_ok` |
-| | `validation` | jsonb | yes | `question_shape_ok`; `textarea` `maxLength <= 600` |
+| | `validation` | jsonb | yes | `question_shape_ok`; `textarea` `maxLength` 10 to 600 |
 | | `display_order` | integer | no | default 0 |
 | | `active` | boolean | no | default false |
 | | `created_at` | timestamptz | no | default `now()` |
 | `applications` (changed) | `message` | text | **yes** (was no) | length check kept |
 | | `answers` | jsonb | yes | object, `<= 16384` bytes |
-| | `questions_snapshot` | jsonb | yes | array, `<= 16384` bytes |
+| | `questions_snapshot` | jsonb | yes | array, `<= 32768` bytes (AC-5) |
 
 Indexes: `application_questions (category_id, display_order, key) where active`, `(region)`. Check
 `applications_one_content` (AC-5).
@@ -304,6 +309,12 @@ Tracer Bullet: one textarea question from the table to the card first, then the 
   as a starting point if the owner wants them).
 - [ ] S16: the form and card copy leave `[draft]`.
 - [ ] `/sync`: `ui-registry.md` rows for the question fields on the apply form and the answers block on the card.
+
+## Amendments after the build (2026-11-22, D219)
+
+Recorded from the 19b reviews, record only, built and merged in PR #65 (`5470f42`): the textarea limit floor of 10
+(AC-1), the access trigger ahead of the guard (AC-1), the joined text scan at apply and on the card (AC-4, AC-6), and the
+data model's snapshot bound corrected to AC-5's 32768. Carry overs are in tracker R26.
 
 ## Cross check (Sonnet, 2026-11-22)
 
