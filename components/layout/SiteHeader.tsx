@@ -35,8 +35,9 @@ export async function SiteHeader({
   return (
     <header
       className={cn(
-        'mx-auto flex w-full max-w-7xl items-center gap-4 px-5 pt-5 pb-5 lg:px-8.5',
-        user ? 'lg:gap-7.5 lg:pt-6.5 lg:pb-5.5' : 'lg:gap-8.5 lg:py-6.5',
+        'mx-auto flex w-full max-w-7xl items-center px-5 pt-5 pb-5 lg:px-8.5',
+        // Spec 0011-18: signed in, the bell joins the chip and the avatar, so a 360px phone needs the smaller gap.
+        user ? 'gap-2.5 sm:gap-4 lg:gap-7.5 lg:pt-6.5 lg:pb-5.5' : 'gap-4 lg:gap-8.5 lg:py-6.5',
       )}
     >
       <Link
