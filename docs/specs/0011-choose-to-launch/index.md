@@ -30,6 +30,8 @@ outbox (a table of pending side effects that a background worker carries out) an
 | [0011-16-admin-operations.md](0011-16-admin-operations.md) | 16 | Request list, flag queue, manual actions, address view, revenue report and CSV |
 | [0011-17-ratings.md](0011-17-ratings.md) | 17 | Optional four dimension rating after `COMPLETED`, the score computed when read, admin hide, two mails (D203) |
 | [0011-18-notification-centre.md](0011-18-notification-centre.md) | 18 | In app notices on 13's recipient map (one map, two channels), the bell and the page, live pings on a private Realtime topic per person (D209) |
+| [0011-19a-trust-quality.md](0011-19a-trust-quality.md) | 19a | Provider metrics computed when read (three on the offer card), probation as a reading with a live job limit and two reserved applicant slots, an hourly watchlist admin handles, the funnel and acceptance rate (admin only), the document expiry reminder (D213) |
+| [0011-19b-application-answers.md](0011-19b-application-answers.md) | 19b | Admin questions per category for providers (text, choice, yes or no), answered in place of the message, a snapshot on the application, answers on the offer card (D213) |
 | [0011-21-launch-hardening.md](0011-21-launch-hardening.md) | 21 | Admin TOTP, staging, backups and restore drill, load check, retention jobs, security review, wipe |
 
 Out of this spec at first (P2, cut list): 17 ratings, 18 notification centre, 19 trust and quality, 20 invoicing. Where

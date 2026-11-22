@@ -1061,6 +1061,52 @@ export type Database = {
           },
         ]
       }
+      probation_waivers: {
+        Row: {
+          created_at: string
+          note: string
+          provider_id: string
+          region: string
+          waived_by: string
+        }
+        Insert: {
+          created_at?: string
+          note: string
+          provider_id: string
+          region: string
+          waived_by: string
+        }
+        Update: {
+          created_at?: string
+          note?: string
+          provider_id?: string
+          region?: string
+          waived_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "probation_waivers_provider_region_fk"
+            columns: ["provider_id", "region"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "probation_waivers_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "probation_waivers_waived_by_fkey"
+            columns: ["waived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       problem_reports: {
         Row: {
           admin_note: string | null
@@ -1553,6 +1599,70 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "psp_events_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      quality_flags: {
+        Row: {
+          figure: Json
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          kind: string
+          note: string | null
+          outcome: string | null
+          provider_id: string
+          raised_at: string
+          region: string
+          source_id: string | null
+        }
+        Insert: {
+          figure: Json
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          kind: string
+          note?: string | null
+          outcome?: string | null
+          provider_id: string
+          raised_at?: string
+          region: string
+          source_id?: string | null
+        }
+        Update: {
+          figure?: Json
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          outcome?: string | null
+          provider_id?: string
+          raised_at?: string
+          region?: string
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_flags_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_flags_provider_region_fk"
+            columns: ["provider_id", "region"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "quality_flags_region_fkey"
             columns: ["region"]
             isOneToOne: false
             referencedRelation: "regions"
@@ -2351,6 +2461,10 @@ export type Database = {
         Args: { p_flag_id: string; p_note: string }
         Returns: Json
       }
+      admin_end_probation: {
+        Args: { p_note: string; p_provider_id: string }
+        Returns: Json
+      }
       admin_extend_deadline: {
         Args: {
           p_hours: number
@@ -2361,6 +2475,10 @@ export type Database = {
         Returns: Json
       }
       admin_flags: { Args: { p_page: number }; Returns: Json }
+      admin_handle_quality_flag: {
+        Args: { p_flag_id: string; p_note: string; p_outcome: string }
+        Returns: Json
+      }
       admin_hide_rating: {
         Args: { p_note: string; p_rating_id: string; p_reason: string }
         Returns: Json
@@ -2373,10 +2491,14 @@ export type Database = {
         Args: { p_name: string; p_object_id: string }
         Returns: boolean
       }
+      admin_probation: { Args: { p_page: number }; Returns: Json }
+      admin_provider_quality: { Args: { p_provider_id: string }; Returns: Json }
       admin_provider_ratings: {
         Args: { p_page: number; p_provider_id: string }
         Returns: Json
       }
+      admin_quality_flags: { Args: { p_page: number }; Returns: Json }
+      admin_quality_funnel: { Args: never; Returns: Json }
       admin_refund_fee: {
         Args: { p_payment_id: string; p_reason: string }
         Returns: Json
@@ -2574,6 +2696,7 @@ export type Database = {
         }
         Returns: Json
       }
+      document_reminder_days: { Args: { p_region: string }; Returns: number }
       email_context: { Args: { p_outbox_id: string }; Returns: Json }
       email_settings: { Args: { p_region: string }; Returns: Json }
       emails_enabled: { Args: { p_region: string }; Returns: boolean }
@@ -2749,6 +2872,7 @@ export type Database = {
           timezone: string
         }[]
       }
+      my_provider_quality: { Args: never; Returns: Json }
       my_provider_rating: { Args: never; Returns: Json }
       my_receipt: { Args: { p_receipt_id: string }; Returns: Json }
       my_report: { Args: { p_request_id: string }; Returns: Json }
@@ -2861,6 +2985,10 @@ export type Database = {
         Args: { p_after_created_at: string; p_after_id: string }
         Returns: Json
       }
+      provider_apply_cap: {
+        Args: { p_provider_id: string; p_region: string }
+        Returns: number
+      }
       provider_back_to_review: {
         Args: {
           p_provider: Database["public"]["Tables"]["providers"]["Row"]
@@ -2898,6 +3026,11 @@ export type Database = {
       }
       provider_can_apply: { Args: { p_provider_id: string }; Returns: boolean }
       provider_cancel_job: { Args: { p_request_id: string }; Returns: Json }
+      provider_card_quality: { Args: { p_provider_id: string }; Returns: Json }
+      provider_caused_cancel: {
+        Args: { p_cancelled_by: string; p_request_id: string; p_status: string }
+        Returns: boolean
+      }
       provider_docs_consent_version: {
         Args: { p_region: string }
         Returns: string
@@ -2967,6 +3100,8 @@ export type Database = {
         Args: { p_after_changed_at: string; p_after_id: string; p_tab: string }
         Returns: Json
       }
+      provider_jobs_done: { Args: { p_provider_id: string }; Returns: number }
+      provider_live_jobs: { Args: { p_provider_id: string }; Returns: number }
       provider_may_store: {
         Args: { p_bucket: string; p_name: string }
         Returns: boolean
@@ -2974,6 +3109,14 @@ export type Database = {
       provider_object_type: {
         Args: { p_bucket: string; p_name: string }
         Returns: string
+      }
+      provider_on_probation: {
+        Args: { p_provider_id: string }
+        Returns: boolean
+      }
+      provider_on_probation_with: {
+        Args: { p_provider_id: string; p_set: Json }
+        Returns: boolean
       }
       provider_outside_hours: {
         Args: {
@@ -2984,6 +3127,11 @@ export type Database = {
           p_work_days: number[]
         }
         Returns: boolean
+      }
+      provider_quality: { Args: { p_provider_id: string }; Returns: Json }
+      provider_quality_with: {
+        Args: { p_provider_id: string; p_set: Json }
+        Returns: Json
       }
       provider_rating_summary: {
         Args: { p_provider_id: string }
@@ -3070,6 +3218,13 @@ export type Database = {
         }
         Returns: Json
       }
+      quality_crosses: {
+        Args: { p_above: boolean; p_limit: number; p_min: number; p_rate: Json }
+        Returns: boolean
+      }
+      quality_rate: { Args: { p_den: number; p_num: number }; Returns: Json }
+      quality_settings: { Args: { p_region: string }; Returns: Json }
+      quality_settings_or_null: { Args: { p_region: string }; Returns: Json }
       question_shape_ok: {
         Args: {
           p_options: Json
@@ -3094,6 +3249,7 @@ export type Database = {
         Returns: number
       }
       queue_audit_notices: { Args: { p_audit_id: number }; Returns: number }
+      queue_document_reminders: { Args: never; Returns: number }
       queue_email: {
         Args: {
           p_entity: string
@@ -3137,6 +3293,7 @@ export type Database = {
         Returns: Json
       }
       raise_deadline_flags: { Args: never; Returns: number }
+      raise_quality_flags: { Args: never; Returns: number }
       rate_provider: {
         Args: {
           p_professionalism: number

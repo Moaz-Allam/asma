@@ -3,10 +3,12 @@ import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/serve
 
 import { ProviderFileReview, type ReviewDocument } from '@/components/features/admin/ProviderFileReview';
 import { ProviderQueue } from '@/components/features/admin/ProviderQueue';
+import { AdminQualitySection } from '@/components/features/admin/quality/AdminQualitySection';
 import { AdminRatingsSection } from '@/components/features/ratings/AdminRatingsSection';
 import { STANDING_TONE } from '@/components/features/provider/StandingChip';
 import { InitialAvatar } from '@/components/shared/InitialAvatar';
 import { StatusChip } from '@/components/shared/StatusChip';
+import { loadProviderQuality } from '@/lib/admin-quality';
 import { loadProviderRatings } from '@/lib/admin-ratings';
 import { guardPage } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
@@ -51,6 +53,14 @@ export default async function Page({ params, searchParams }: Props) {
       ? null
       : await loadProviderRatings(file.id, ratingsPage).catch((error: unknown) => {
           reportServerError('adminProviderRatings', error);
+          return null;
+        });
+  // Spec 0011-19a AC-13: the quality figures, optional too; an unknown id reads null and shows no section.
+  const quality =
+    file.status === 'draft'
+      ? null
+      : await loadProviderQuality(file.id).catch((error: unknown) => {
+          reportServerError('adminProviderQuality', error);
           return null;
         });
   const ratingsHref = (page: number) =>
@@ -167,6 +177,15 @@ export default async function Page({ params, searchParams }: Props) {
           reviewed={reviewed}
           total={file.requiredTypes.length}
         />
+
+        {quality ? (
+          <AdminQualitySection
+            data={quality}
+            locale={locale}
+            providerId={file.id}
+            providerName={file.approvedName ?? file.fullName}
+          />
+        ) : null}
 
         {ratings ? <AdminRatingsSection data={ratings} page={ratingsPage} hrefFor={ratingsHref} /> : null}
       </article>

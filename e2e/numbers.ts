@@ -89,6 +89,12 @@ export const NUMBER = {
   // rises live.
   noticeCustomer: 53,
   noticeProvider: 54,
+  // Position 19a (spec 0011-19a AC-18): the customer who reads the offer card, the established provider who finds the
+  // request full, the provider on probation who takes slot 9 and is warned, and the admin of the watchlist.
+  qualityCustomer: 55,
+  qualityEstablished: 56,
+  qualityNew: 57,
+  qualityAdmin: 58,
 } as const;
 
 /**

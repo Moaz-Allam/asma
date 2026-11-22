@@ -4,6 +4,7 @@ import { FileProgress } from '@/components/features/provider/FileProgress';
 import { OnboardingFrame } from '@/components/features/provider/OnboardingFrame';
 import { ProfileForm } from '@/components/features/provider/ProfileForm';
 import { ProviderProfileView } from '@/components/features/provider/ProviderProfileView';
+import { MyQualityCard } from '@/components/features/quality/MyQualityCard';
 import { MyRatingCard } from '@/components/features/ratings/MyRatingCard';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -12,7 +13,7 @@ import { guardPage } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
 import { reportServerError } from '@/lib/observability/server';
 import { getProviderFile, getStanding } from '@/lib/provider/queries';
-import { loadMyRating } from '@/lib/provider-feed';
+import { loadMyQuality, loadMyRating } from '@/lib/provider-feed';
 import { PHOTO_LINK_SECONDS, PHOTOS_BUCKET } from '@/lib/storage/buckets';
 import { signedLink } from '@/lib/storage/server';
 
@@ -55,10 +56,17 @@ export default async function Page({ params, searchParams }: Props) {
   if (standing === 'suspended' || (approved && edit !== '1')) {
     // Spec 0011-17 AC-7: the provider's own score, exactly what customers see. Optional (D4): a failed read hides the
     // card, never the profile.
-    const mine = await loadMyRating({ region: user.region }).catch((error: unknown) => {
-      reportServerError('myProviderRating', error);
-      return { ok: false as const };
-    });
+    // Spec 0011-19a AC-4: beside it, the three quality figures and probation, read the same way.
+    const [mine, quality] = await Promise.all([
+      loadMyRating({ region: user.region }).catch((error: unknown) => {
+        reportServerError('myProviderRating', error);
+        return { ok: false as const };
+      }),
+      loadMyQuality({ region: user.region }).catch((error: unknown) => {
+        reportServerError('myProviderQuality', error);
+        return { ok: false as const };
+      }),
+    ]);
     return (
       <ProviderProfileView
         file={file}
@@ -66,7 +74,12 @@ export default async function Page({ params, searchParams }: Props) {
         fullName={profile.fullName}
         photoUrl={photoUrl}
         editable={approved}
-        rating={mine.ok ? <MyRatingCard rating={mine.rating} /> : null}
+        rating={
+          <>
+            {mine.ok ? <MyRatingCard rating={mine.rating} /> : null}
+            {quality.ok ? <MyQualityCard quality={quality.quality} /> : null}
+          </>
+        }
       />
     );
   }

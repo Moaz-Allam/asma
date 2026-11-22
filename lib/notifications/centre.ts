@@ -6,9 +6,17 @@ import { z } from 'zod';
 import type { Role } from '@/lib/auth/roles';
 import { localized } from '@/lib/catalog/localized';
 import { createSupabaseServer } from '@/lib/db/server';
-import { instantLabel } from '@/lib/requests/view';
+import { dayParts, instantLabel } from '@/lib/requests/view';
 
-import { dayGroup, isNoticeKind, noticeHref, timeAgo, type NoticeKind, type NoticeView } from './kinds';
+import {
+  dayGroup,
+  dayKey,
+  isNoticeKind,
+  noticeHref,
+  timeAgo,
+  type NoticeKind,
+  type NoticeView,
+} from './kinds';
 
 /**
  * The notification centre's one door (spec 0011-18 AC-5 to AC-7, R-8). Each wrapper calls a definer function as the
@@ -96,6 +104,15 @@ export async function markAllRead(): Promise<number> {
   return z.number().int().min(0).parse(data);
 }
 
+/**
+ * Spec 0011-19a AC-14 (review F1): a reminder's `deadline_at` is the end of `valid_until` in the region's time zone
+ * (the next local midnight), so its line names the day before that instant, as the mail names `valid_until`.
+ */
+function lastValidDay(deadline: string, timezone: string, locale: string): string {
+  const day = dayKey(new Date(new Date(deadline).getTime() - 60_000), timezone);
+  return dayParts(day, locale).long;
+}
+
 /** R-5, AC-12: the rows as the reader sees them, in their locale, with their links. */
 export async function renderNotices(
   rows: readonly NoticeRow[],
@@ -109,7 +126,10 @@ export async function renderNotices(
     const line = withDeadline
       ? t(`${row.kind}.lineDeadline`, {
           service,
-          deadline: instantLabel(row.deadline_at as string, row.timezone, context.locale),
+          deadline:
+            row.kind === 'document_expiring'
+              ? lastValidDay(row.deadline_at as string, row.timezone, context.locale)
+              : instantLabel(row.deadline_at as string, row.timezone, context.locale),
         })
       : t(`${row.kind}.line`, { service });
     return {

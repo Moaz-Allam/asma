@@ -3,6 +3,7 @@ import 'server-only';
 import { createSupabaseServer } from '@/lib/db/server';
 import { raiseAlert } from '@/lib/observability/alert';
 import { log } from '@/lib/observability/log';
+import { MyQuality } from '@/lib/quality/summary';
 import { RatingSummary } from '@/lib/ratings/summary';
 import type { Region } from '@/lib/region';
 import { decodeCursor, encodeCursor } from '@/lib/requests/cursor';
@@ -358,4 +359,22 @@ export async function loadMyRating(context: Context): Promise<{ ok: true; rating
     });
   }
   return { ok: true, rating };
+}
+
+/**
+ * Spec 0011-19a AC-4: the caller's own three figures, as customers see them, and probation while it lasts. Never a
+ * flag, the report rate, the cancellation rate or follow through. A broken quality setting hides the figures (the
+ * card is null) and raises the one alert.
+ */
+export async function loadMyQuality(context: Context): Promise<{ ok: true; quality: MyQuality } | Refused> {
+  const result = await call('my_provider_quality', {}, context);
+  if ('ok' in result) return result;
+  const quality = MyQuality.parse(result.data);
+  if (quality.quality === null) {
+    raiseAlert('quality_settings_invalid', {
+      recordId: 'my_provider_quality',
+      region: context.region ?? undefined,
+    });
+  }
+  return { ok: true, quality };
 }

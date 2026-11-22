@@ -54,6 +54,16 @@ describe('renderNotices', () => {
     expect(view?.href).toBe('/provider/applications');
   });
 
+  it('a document reminder names the last valid day, not the midnight after it (spec 0011-19a AC-14, review F1)', async () => {
+    // valid_until 2026-12-02: deadline_at is 2026-12-03 00:00 in Istanbul, 2026-12-02 21:00 UTC.
+    const [view] = await renderNotices(
+      [{ ...base, kind: 'document_expiring', request_id: null, deadline_at: '2026-12-02T21:00:00Z' }],
+      { locale: 'en', role: 'provider', now: NOW },
+    );
+    expect(view?.line).toContain('expires on Wednesday, December 2.');
+    expect(view?.href).toBe('/provider/profile/documents');
+  });
+
   it('a deadline kind with no deadline stored reads the plain line', async () => {
     const [view] = await renderNotices([{ ...base, kind: 'please_confirm' }], {
       locale: 'en',

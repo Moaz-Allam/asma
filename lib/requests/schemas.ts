@@ -3,6 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 
 import { AnswerErrors, Breakdown, PricedResult } from '@/lib/pricing/schemas';
+import { CardQuality } from '@/lib/quality/summary';
 import { RatingScores, RatingSummary } from '@/lib/ratings/summary';
 
 /**
@@ -185,6 +186,8 @@ export const Offer = z
     created_at: z.string().min(1),
     // Spec 0011-17 AC-5: the provider's score, computed when read.
     rating: RatingSummary,
+    // Spec 0011-19a AC-3: jobs done and the two rates, computed when read; null when a quality setting is broken.
+    quality: CardQuality.nullable(),
   })
   .strict();
 export type Offer = z.infer<typeof Offer>;

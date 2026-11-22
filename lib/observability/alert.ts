@@ -71,7 +71,11 @@ export type AlertReason =
   | 'confirm_settings_invalid'
   // Spec 0011-17 AC-10: a region's rating window, minimum count, prior weight or half life is missing or malformed, so
   // no customer there can rate and no score shows. The record is the request id, the provider id, or the function.
-  | 'rating_settings_invalid';
+  | 'rating_settings_invalid'
+  // Spec 0011-19a AC-1: a region's quality settings are missing, malformed, or leave no slot for established
+  // providers, so the card figures hide and probation and the reserved slots fail open. The record is the function
+  // or the provider id.
+  | 'quality_settings_invalid';
 
 export type AlertCause = 'error' | 'missing' | 'not_boolean' | 'timeout';
 

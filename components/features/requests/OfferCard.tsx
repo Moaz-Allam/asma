@@ -18,6 +18,7 @@ export function OfferCard({
   hidden,
   flag,
   rating,
+  quality,
   action,
 }: {
   name: string;
@@ -30,6 +31,8 @@ export function OfferCard({
   flag?: string | null;
   /** The provider's score line and its disclosure (`RatingSummary`), when rated. */
   rating?: ReactNode;
+  /** Spec 0011-19a AC-3: jobs on Aldebyani and the two rates (`QualityLine`), under the name line. */
+  quality?: ReactNode;
   action?: ReactNode;
 }) {
   const initial = [...name][0] ?? '';
@@ -49,6 +52,7 @@ export function OfferCard({
             {fresh ? <StatusChip tone="neutral" label={fresh} /> : null}
             {flag ? <StatusChip tone="negative" label={flag} /> : null}
           </div>
+          {quality}
           {since ? <p className="text-meta text-text-secondary">{since}</p> : null}
           {rating}
         </div>

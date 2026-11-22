@@ -2,7 +2,7 @@ import type { Role } from '@/lib/auth/roles';
 import { NUMBER_LOCALE } from '@/lib/requests/view';
 
 /**
- * The in app notices (spec 0011-18): the 24 kinds, where each one leads, and the pure formatting the bell and the page
+ * The in app notices (spec 0011-18): the 25 kinds (24, plus 19a's `document_expiring`), where each one leads, and the pure formatting the bell and the page
  * share. No `server-only`: nothing here reads data. The kinds equal the check on `notifications.kind`;
  * tests/notifications-kinds.test.ts reads it out of the migration.
  */
@@ -32,6 +32,8 @@ export const NOTICE_KINDS = [
   'report_handled',
   'rate_provider',
   'rating_received',
+  // Spec 0011-19a AC-14: a required document expires soon.
+  'document_expiring',
 ] as const;
 export type NoticeKind = (typeof NOTICE_KINDS)[number];
 
@@ -76,6 +78,7 @@ export function noticeHref(
   if (role === 'provider') {
     if (ACCOUNT_KINDS.includes(kind)) return '/provider';
     if (kind === 'rating_received') return '/provider/profile';
+    if (kind === 'document_expiring') return '/provider/profile/documents';
     if (REPORT_KINDS.includes(kind)) {
       return requestId ? `/provider/applications/${requestId}/report` : '/notifications';
     }

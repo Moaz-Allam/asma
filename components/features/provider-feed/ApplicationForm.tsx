@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 
-import { applyToRequest } from '@/actions/provider-feed';
+import { applyToRequest, loadMyProbation } from '@/actions/provider-feed';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { FormField } from '@/components/shared/FormField';
 import { StatusChip } from '@/components/shared/StatusChip';
@@ -117,6 +117,17 @@ export function ApplicationForm({
       }
       if (result.error === 'request_closed') {
         setShown('closed');
+        return;
+      }
+      if (result.error === 'probation_limit') {
+        // Spec 0011-19a AC-6, X-22: the two figures are read again after the refusal.
+        const read = await loadMyProbation({}).catch(() => null);
+        const probation = read?.success ? read.data.probation : null;
+        setError(
+          probation
+            ? t('form.probationLimit', { limit: probation.live_limit, needed: probation.jobs_needed })
+            : t('errors.probation_limit'),
+        );
         return;
       }
       setError(t(`errors.${result.error}` as 'errors.action_failed'));

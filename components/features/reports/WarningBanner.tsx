@@ -6,14 +6,14 @@ import { useState, useTransition } from 'react';
 import { acknowledgeWarningAction } from '@/actions/reports';
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/lib/i18n/navigation';
-import type { ReportReason } from '@/lib/reports/constants';
+import type { WarningReason } from '@/lib/reports/constants';
 
 /**
  * A warning from admin (ui-registry `WarningBanner`, spec 0011-14 AC-6, R-9): a fixed sentence per reason code in
  * the reader's language, never admin's words, on every page of the customer's or the provider's area until they
  * press "I understand".
  */
-export function WarningBanner({ warningId, reason }: { warningId: string; reason: ReportReason }) {
+export function WarningBanner({ warningId, reason }: { warningId: string; reason: WarningReason }) {
   const t = useTranslations('Reports');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);

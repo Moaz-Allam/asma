@@ -1,9 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
 import { fail, guardedAction } from '@/lib/auth/action';
-import { applyToRequest as applyInDb, saveSetup } from '@/lib/provider-feed';
+import { applyToRequest as applyInDb, loadMyQuality, saveSetup } from '@/lib/provider-feed';
 import { ApplyInput, SaveSetupInput } from '@/lib/provider-feed/input';
 
 /**
@@ -32,5 +33,19 @@ export const applyToRequest = guardedAction(
     if (!outcome.ok) return fail(outcome.code);
     if (!outcome.replayed) revalidatePath('/', 'layout');
     return { replayed: outcome.replayed, application: outcome.application };
+  },
+);
+
+/**
+ * Spec 0011-19a AC-6, X-22: after a `probation_limit` refusal the form asks again for the two figures its line
+ * names (the live limit and the jobs needed). They can differ from the instant of the refusal by a job that closed
+ * in between, accepted.
+ */
+export const loadMyProbation = guardedAction(
+  { name: 'loadMyProbation', access: ['provider'], schema: z.object({}).strict() },
+  async (_input, user) => {
+    const outcome = await loadMyQuality({ region: user.region });
+    if (!outcome.ok) return fail(outcome.code);
+    return { probation: outcome.quality.probation };
   },
 );
