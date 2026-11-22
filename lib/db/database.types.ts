@@ -804,6 +804,67 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          deadline_at: string | null
+          dedupe_key: string
+          entity_id: string | null
+          id: string
+          kind: string
+          read_at: string | null
+          recipient_id: string
+          region: string
+          request_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          deadline_at?: string | null
+          dedupe_key: string
+          entity_id?: string | null
+          id?: string
+          kind: string
+          read_at?: string | null
+          recipient_id: string
+          region: string
+          request_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          deadline_at?: string | null
+          dedupe_key?: string
+          entity_id?: string | null
+          id?: string
+          kind?: string
+          read_at?: string | null
+          recipient_id?: string
+          region?: string
+          request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "notifications_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbox_events: {
         Row: {
           alerted_at: string | null
@@ -1652,6 +1713,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rating_hides_rating_region_fk"
+            columns: ["rating_id", "region"]
+            isOneToOne: false
+            referencedRelation: "ratings"
+            referencedColumns: ["id", "region"]
+          },
+          {
             foreignKeyName: "rating_hides_region_fkey"
             columns: ["region"]
             isOneToOne: false
@@ -1709,6 +1777,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ratings_application_request_fk"
+            columns: ["application_id", "request_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id", "request_id"]
+          },
+          {
             foreignKeyName: "ratings_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -1735,6 +1810,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "requests"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_request_region_customer_fk"
+            columns: ["request_id", "region", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "region", "customer_id"]
           },
         ]
       }
@@ -2354,6 +2436,18 @@ export type Database = {
         Args: { p_fee_payment_id: string; p_region: string }
         Returns: boolean
       }
+      audit_notices: {
+        Args: { p_audit_id: number }
+        Returns: {
+          o_deadline: string
+          o_entity: string
+          o_kind: string
+          o_recipient: string
+          o_request: string
+          o_send_until: string
+          o_topic: string
+        }[]
+      }
       auto_close_enabled: { Args: { p_region: string }; Returns: boolean }
       auto_close_jobs: { Args: never; Returns: number }
       blank_class: { Args: never; Returns: string }
@@ -2560,6 +2654,18 @@ export type Database = {
       }
       has_contact_info: { Args: { p_text: string }; Returns: boolean }
       health_ping: { Args: never; Returns: boolean }
+      insert_notice: {
+        Args: {
+          p_deadline: string
+          p_entity: string
+          p_key: string
+          p_kind: string
+          p_recipient: string
+          p_region: string
+          p_request: string
+        }
+        Returns: number
+      }
       is_admin: { Args: never; Returns: boolean }
       job_for_provider: {
         Args: { p_request_id: string }
@@ -2614,6 +2720,7 @@ export type Database = {
         Returns: Json
       }
       log_report_photo_view: { Args: { p_photo_id: string }; Returns: Json }
+      mark_all_notices_read: { Args: never; Returns: number }
       mark_checkout_failed: {
         Args: { p_attempt_id: string; p_reason: string }
         Returns: Json
@@ -2626,10 +2733,28 @@ export type Database = {
       message_digit_limit: { Args: never; Returns: number }
       message_has_contact_info: { Args: { p_text: string }; Returns: boolean }
       my_checkout: { Args: { p_attempt_id: string }; Returns: Json }
+      my_notice_count: { Args: never; Returns: number }
+      my_notices: {
+        Args: { p_before?: string; p_limit?: number }
+        Returns: {
+          created_at: string
+          deadline_at: string
+          default_locale: string
+          entity_id: string
+          id: string
+          kind: string
+          read_at: string
+          request_id: string
+          service_name: Json
+          timezone: string
+        }[]
+      }
       my_provider_rating: { Args: never; Returns: Json }
       my_receipt: { Args: { p_receipt_id: string }; Returns: Json }
       my_report: { Args: { p_request_id: string }; Returns: Json }
       my_warning: { Args: never; Returns: Json }
+      notices_enabled: { Args: { p_region: string }; Returns: boolean }
+      notices_housekeeping: { Args: never; Returns: number }
       offer_card: {
         Args: {
           p_application: Database["public"]["Tables"]["applications"]["Row"]
@@ -2641,6 +2766,14 @@ export type Database = {
       open_fee: {
         Args: { p_kind: string; p_request_id: string }
         Returns: string
+      }
+      open_notice: {
+        Args: { p_id: string }
+        Returns: {
+          entity_id: string
+          kind: string
+          request_id: string
+        }[]
       }
       open_report: {
         Args: { p_reason: string; p_request_id: string; p_text: string }
@@ -2960,6 +3093,7 @@ export type Database = {
         }
         Returns: number
       }
+      queue_audit_notices: { Args: { p_audit_id: number }; Returns: number }
       queue_email: {
         Args: {
           p_entity: string
@@ -2979,6 +3113,10 @@ export type Database = {
         Returns: string
       }
       queue_offer_email: { Args: { p_application_id: string }; Returns: number }
+      queue_offer_notice: {
+        Args: { p_application_id: string }
+        Returns: number
+      }
       queue_reminders: { Args: never; Returns: number }
       quote_price: {
         Args: {
