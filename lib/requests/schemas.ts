@@ -169,6 +169,22 @@ export const RequestDetailRow = z.object({
 export type RequestDetailRow = z.infer<typeof RequestDetailRow>;
 
 /**
+ * Spec 0011-19b AC-6: one answered application question on the card, its label and chosen option from the
+ * application's snapshot. A text answer the scanner matches comes back `value` null, `hidden` true.
+ */
+export const OfferAnswer = z
+  .object({
+    key: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
+    label: Localized,
+    type: z.enum(['textarea', 'single_select', 'boolean']),
+    choice: z.object({ value: z.string(), label: Localized }).strict().nullable(),
+    value: z.union([z.string(), z.boolean(), z.null()]),
+    hidden: z.boolean(),
+  })
+  .strict();
+export type OfferAnswer = z.infer<typeof OfferAnswer>;
+
+/**
  * One offer as the customer reads it (spec 0010 AC-2, AC-3): named fields only. A message the scanner of 06
  * would refuse comes back null, with `message_hidden` (AC-13).
  */
@@ -183,6 +199,8 @@ export const Offer = z
       .nullable(),
     message: z.string().nullable(),
     message_hidden: z.boolean(),
+    // Spec 0011-19b AC-6: null for a message application.
+    answers: z.array(OfferAnswer).max(5).nullable(),
     created_at: z.string().min(1),
     // Spec 0011-17 AC-5: the provider's score, computed when read.
     rating: RatingSummary,

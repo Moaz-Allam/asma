@@ -42,6 +42,7 @@ const OFFER = {
   approved_since: '2026-03-01',
   message: 'I am free all week and live close by.',
   message_hidden: false,
+  answers: null,
   quality: null,
   created_at: '2026-11-17T08:05:00+00:00',
   rating: { state: 'new', count: 0 },

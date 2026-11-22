@@ -13,6 +13,7 @@ export function ChoiceChips<T extends string>({
   value,
   onChange,
   disabled,
+  describedBy,
 }: {
   name: string;
   legend: string;
@@ -20,9 +21,11 @@ export function ChoiceChips<T extends string>({
   value: T | null;
   onChange: (value: T) => void;
   disabled?: boolean;
+  /** Help or error lines outside the group, read with its legend. */
+  describedBy?: string;
 }) {
   return (
-    <fieldset className="flex flex-col gap-2" disabled={disabled}>
+    <fieldset className="flex flex-col gap-2" disabled={disabled} aria-describedby={describedBy}>
       <legend className="mb-2 text-body-s font-bold text-text-primary">{legend}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {

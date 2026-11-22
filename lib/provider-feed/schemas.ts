@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { REQUEST_STATUSES } from '@/lib/requests/schemas';
 
-import { APPLICATION_STATUSES } from './constants';
+import { APPLICATION_QUESTION_TYPES, APPLICATION_STATUSES } from './constants';
 
 /**
  * What the provider functions return (spec 0009 AC-7). Strict objects: a key the function starts sending
@@ -61,10 +61,54 @@ export const StructuredAnswer = z
   .strict();
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;
 
+const QuestionKey = z.string().regex(/^[a-z][a-z0-9_]{0,39}$/);
+const QuestionType = z.enum(APPLICATION_QUESTION_TYPES);
+
+/** Spec 0011-19b AC-3: one active application question, as the apply form draws it. */
+export const ApplicationQuestion = z
+  .object({
+    key: QuestionKey,
+    label: Localized,
+    help_text: Localized.nullable(),
+    type: QuestionType,
+    required: z.boolean(),
+    options: z.array(z.object({ value: z.string(), label: Localized }).strict()).nullable(),
+    max_length: z.number().int().positive().nullable(),
+  })
+  .strict();
+export type ApplicationQuestion = z.infer<typeof ApplicationQuestion>;
+
+/** Spec 0011-19b AC-4: what an application's answers answered, frozen at the apply (the chosen option only). */
+export const SnapshotQuestion = z
+  .object({
+    key: QuestionKey,
+    label: Localized,
+    type: QuestionType,
+    required: z.boolean(),
+    choice: z.object({ value: z.string(), label: Localized }).strict().optional(),
+  })
+  .strict();
+export type SnapshotQuestion = z.infer<typeof SnapshotQuestion>;
+
+export const AnswerValue = z.union([z.string(), z.boolean()]);
+
+/** Spec 0011-19b AC-3, X-8: the caller's own application on the request page, with its answers when it has them. */
+export const RequestOwnApplication = z
+  .object({
+    ...OwnApplication.shape,
+    application_answers: z.record(QuestionKey, AnswerValue).nullable(),
+    questions_snapshot: z.array(SnapshotQuestion).nullable(),
+  })
+  .strict();
+export type RequestOwnApplication = z.infer<typeof RequestOwnApplication>;
+
 export const RequestDetail = z
   .object({
     ...ShortDetails,
     ...Offers,
+    application: RequestOwnApplication.nullable(),
+    questions: z.array(ApplicationQuestion).max(5),
+    questions_version: z.string().nullable(),
     closed: z.boolean(),
     timezone: z.string(),
     answers: z.array(StructuredAnswer),
@@ -163,7 +207,17 @@ export type HomeCounts = z.infer<typeof HomeCounts>;
 
 export const ApplyResult = z.discriminatedUnion('status', [
   z.object({ status: z.literal('ok'), replayed: z.boolean(), application: OwnApplication }),
-  z.object({ status: z.literal('refused'), code: z.enum(['message_invalid', 'contact_info_in_message']) }),
+  z.object({
+    status: z.literal('refused'),
+    code: z.enum([
+      'message_invalid',
+      'contact_info_in_message',
+      'questions_changed',
+      'answers_invalid',
+      'contact_info_in_answer',
+    ]),
+    key: QuestionKey.optional(),
+  }),
 ]);
 
 /**

@@ -6,7 +6,7 @@ import type { Region } from '@/lib/region';
 import type { CatalogTable } from './options';
 
 /**
- * Admin's direct writes on the five catalog tables (spec 0007, Feature design). RLS and column grants
+ * Admin's direct writes on the catalog tables (since 19b, `application_questions` too) (spec 0007, Feature design). RLS and column grants
  * decide: an admin inserts every column but `id` and `created_at`, and updates none of the region, the
  * parent ids, or a question's key and type. So a write never upserts. It inserts or it updates, always
  * with `.select('id')`: RLS filters an update silently, and a token's role can lag behind `is_admin()`
@@ -30,6 +30,9 @@ export function catalogCode(error: unknown): string | null {
   if (typeof error !== 'object' || error === null) return null;
   const { code, message } = error as { code?: unknown; message?: unknown };
   if (message === 'question_in_use') return 'question_in_use';
+  // Spec 0011-19b AC-2: a sixth active application question, or a delete (deactivate instead).
+  if (message === 'too_many_questions') return 'too_many_questions';
+  if (message === 'application_question_retire') return 'application_question_retire';
   if (typeof code === 'string' && code in SQLSTATE) return SQLSTATE[code] ?? null;
   return null;
 }
@@ -47,6 +50,7 @@ const SCOPE: Readonly<Record<CatalogTable, string>> = {
   addons: 'service_id',
   zones: 'region',
   questions: 'category_id',
+  application_questions: 'category_id',
 };
 
 async function nextOrder(table: CatalogTable, scopeValue: string): Promise<number> {

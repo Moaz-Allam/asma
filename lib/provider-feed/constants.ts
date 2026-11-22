@@ -8,6 +8,16 @@ export const MESSAGE_MIN = 20;
 export const MESSAGE_MAX = 600;
 export const MESSAGE_INPUT_MAX = 2000;
 
+/**
+ * Spec 0011-19b AC-4: a text answer is 10 to its question's limit (600 at most) code points after the trim. The
+ * action accepts more, so the database gives the real refusal.
+ */
+export const ANSWER_MIN = 10;
+export const ANSWER_MAX = 600;
+export const ANSWERS_MAX_KEYS = 16;
+export const APPLICATION_QUESTION_TYPES = ['textarea', 'single_select', 'boolean'] as const;
+export type ApplicationQuestionType = (typeof APPLICATION_QUESTION_TYPES)[number];
+
 /** AC-3: the most picks one save may carry. */
 export const SETUP_LIMITS = { services: 50, zones: 100 } as const;
 
@@ -48,6 +58,10 @@ export const PROVIDER_FEED_DB_CODES = [
   'email_unconfirmed',
   // Spec 0011-19a AC-6: on probation, at the live job limit.
   'probation_limit',
+  // Spec 0011-19b AC-4: the form's questions changed, an answer is invalid, or holds contact details.
+  'questions_changed',
+  'answers_invalid',
+  'contact_info_in_answer',
 ] as const;
 export type ProviderFeedCode = (typeof PROVIDER_FEED_DB_CODES)[number];
 

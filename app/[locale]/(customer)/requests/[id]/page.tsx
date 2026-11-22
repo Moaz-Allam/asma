@@ -6,6 +6,7 @@ import { PayButton } from '@/components/features/payments/PayButton';
 import { NextStepPanel } from '@/components/features/requests/NextStepPanel';
 import { OfferCard } from '@/components/features/requests/OfferCard';
 import { OfferList } from '@/components/features/requests/OfferList';
+import { offerAnswerLines } from '@/lib/requests/offer-answers';
 import { RequestActions } from '@/components/features/requests/RequestActions';
 import { rowStatus, toneOf } from '@/components/features/requests/RequestRow';
 import { RequestTimeline } from '@/components/features/requests/RequestTimeline';
@@ -110,6 +111,15 @@ export default async function Page({ params, searchParams }: Props) {
       : null;
   const since = Object.fromEntries(
     offers.offers.map((o) => [o.application_id, monthYear(o.approved_since) ?? '']),
+  );
+  // Spec 0011-19b AC-6: the answers in the reader's locale, from each application's own snapshot.
+  const answerWords = {
+    yes: t('offers.answerYes'),
+    no: t('offers.answerNo'),
+    hidden: t('offers.answerHidden'),
+  };
+  const answers = Object.fromEntries(
+    offers.offers.map((o) => [o.application_id, offerAnswerLines(o.answers, text, answerWords)]),
   );
   const chosen = offers.chosen;
   // One read decides every 06 branch: the offers' own status, so a choose or cancel between the two reads never mixes states.
@@ -301,6 +311,7 @@ export default async function Page({ params, searchParams }: Props) {
                 requestId={request.id}
                 offers={offers.offers}
                 since={since}
+                answers={answers}
                 commission={request.commission_amount}
                 cashDue={request.cash_due}
                 currency={request.currency}
@@ -330,6 +341,10 @@ export default async function Page({ params, searchParams }: Props) {
                   since={monthYear(chosen.approved_since)}
                   message={chosen.message}
                   hidden={chosen.message_hidden ? t('offers.messageHidden') : null}
+                  answers={offerAnswerLines(chosen.answers, text, answerWords)}
+                  answersLabel={t('offers.answersLabel', {
+                    name: chosen.display_name ?? t('offers.provider'),
+                  })}
                   flag={
                     chosen.suspended && current === 'SELECTED'
                       ? t('offers.unavailable')

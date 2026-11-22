@@ -51,12 +51,15 @@ export type {
   JobRow,
   FeedRow,
   OwnApplication,
+  ApplicationQuestion,
   ProviderSetup,
   RequestDetail,
+  RequestOwnApplication,
+  SnapshotQuestion,
   StructuredAnswer,
 } from './schemas';
 
-type Refused = { ok: false; code: ProviderFeedCode; field?: SetupField };
+type Refused = { ok: false; code: ProviderFeedCode; field?: SetupField; key?: string };
 type Context = { region: Region | null };
 
 function refusal(error: unknown): Refused | null {
@@ -182,16 +185,26 @@ export async function loadRequest(
 
 export type ApplyOutcome = { ok: true; replayed: boolean; application: OwnApplication } | Refused;
 
-/** AC-10: the only way to apply. The message never leaves this call: not in a log, an error or an event. */
+/**
+ * AC-10: the only way to apply. The message and the answers never leave this call: not in a log, an error or an
+ * event. Spec 0011-19b X-7: all four arguments go every time, nulls included, so the call always names the one
+ * function.
+ */
 export async function applyToRequest(input: ApplyInput, context: Context): Promise<ApplyOutcome> {
   const result = await call(
     'apply_to_request',
-    { p_request_id: input.requestId, p_message: input.applicationMessage },
+    {
+      p_request_id: input.requestId,
+      p_message: input.applicationMessage ?? null,
+      p_answers: input.applicationAnswers ?? null,
+      p_questions_version: input.questionsVersion ?? null,
+    },
     context,
   );
   if ('ok' in result) return result;
   const parsed = ApplyResult.parse(result.data);
-  if (parsed.status === 'refused') return { ok: false, code: parsed.code };
+  if (parsed.status === 'refused')
+    return { ok: false, code: parsed.code, ...(parsed.key ? { key: parsed.key } : {}) };
   return { ok: true, replayed: parsed.replayed, application: parsed.application };
 }
 

@@ -867,7 +867,14 @@
     "optionLabel": "Shown as",
     "addOption": "Add option",
     "removeOption": "Remove option {value}",
-    "optionInUse": "A published formula matches it, so it cannot be removed."
+    "optionInUse": "A published formula matches it, so it cannot be removed.",
+    "providerQuestions": "Questions for providers",
+    "providerQuestionsNote": "Up to {limit} active. A category with none keeps the free message.",
+    "emptyProviderQuestions": "No questions for providers yet. Providers write a free message.",
+    "newProviderQuestion": "New question for providers",
+    "editProviderQuestion": "Edit question for providers",
+    "providerQuestionSheetNote": "Providers answer this when they apply, and the customer reads the answers on each offer. Key and type are set once. Answers never change the price.",
+    "answerLengthRule": "An answer is {min} to {limit} characters. Empty means {limit}."
   },
   "CatalogErrors": {
     "validation_failed": "Something in the form is not valid. Check each field and save again.",
@@ -880,7 +887,9 @@
     "addon_unavailable": "This addon is not available.",
     "rate_limited": "Too many changes at once. Wait a moment and try again.",
     "action_failed": "That did not work. Nothing was changed. Try again.",
-    "network": "The connection dropped. Nothing changed, and what you typed is still here. Try again."
+    "network": "The connection dropped. Nothing changed, and what you typed is still here. Try again.",
+    "too_many_questions": "A category holds at most 5 active questions for providers. Turn one off first.",
+    "application_question_retire": "Questions are never deleted. Turn it off instead."
   },
   "AdminPricing": {
     "title": "Pricing rules",
@@ -1188,7 +1197,11 @@
       "confirmContact": "Contact details open after both of you have paid.",
       "confirm": "Choose this provider",
       "keep": "Back",
-      "chosenTitle": "Your provider"
+      "chosenTitle": "Your provider",
+      "answerYes": "[draft] Yes",
+      "answerNo": "[draft] No",
+      "answerHidden": "[draft] Hidden: it contained contact details",
+      "answersLabel": "[draft] Answers from {name}"
     },
     "next": {
       "title": "Next: pay the commission",
@@ -1342,7 +1355,16 @@
       "appliedOn": "Applied on {date}",
       "full": "This request has reached the limit of offers.",
       "closed": "This request is closed.",
-      "probationLimit": "[draft] You can hold {limit} jobs at once during your first {needed} jobs. Finish one to apply again."
+      "probationLimit": "[draft] You can hold {limit} jobs at once during your first {needed} jobs. Finish one to apply again.",
+      "questionsTitle": "[draft] Answer the customer’s questions",
+      "answersWarning": "[draft] Do not share phone numbers, emails, links or social handles. Answers with contact details are refused.",
+      "required": "[draft] Required",
+      "optional": "[draft] Optional",
+      "yes": "[draft] Yes",
+      "no": "[draft] No",
+      "questionsChanged": "[draft] The questions for this job changed. Check them and send again.",
+      "checkAnswers": "[draft] Check the answer marked above and send again.",
+      "yourAnswers": "[draft] Your answers"
     },
     "applications": {
       "title": "My jobs",
@@ -1394,7 +1416,10 @@
       "apply_settings_invalid": "Applying is not possible right now. Please try again later.",
       "action_failed": "Something went wrong. Nothing was sent. Try again.",
       "email_unconfirmed": "Confirm your email on your account page before you apply.",
-      "probation_limit": "[draft] During your first jobs you can hold only a few jobs at once. Finish one to apply again."
+      "probation_limit": "[draft] During your first jobs you can hold only a few jobs at once. Finish one to apply again.",
+      "questions_changed": "[draft] The questions for this job changed. Check them and send again.",
+      "answers_invalid": "[draft] Answer this question within its limits: 10 characters or more for a text, or pick one option.",
+      "contact_info_in_answer": "[draft] This answer has contact details. Remove phone numbers, emails, links and social handles."
     },
     "chosen": {
       "line": "The customer is paying the commission by {date}. Your fee comes after that.",

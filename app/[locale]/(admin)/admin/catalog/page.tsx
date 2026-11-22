@@ -17,6 +17,7 @@ import {
   adminRegion,
   listAddons,
   listCategories,
+  listApplicationQuestions,
   listQuestions,
   listServices,
   listZones,
@@ -72,11 +73,12 @@ export default async function Page({ params, searchParams }: Props) {
     const tab: CatalogTab = CATALOG_TABS.includes(askedTab as CatalogTab)
       ? (askedTab as CatalogTab)
       : 'questions';
-    const [questionRows, matched, serviceRows, zoneRows] = await Promise.all([
+    const [questionRows, matched, serviceRows, zoneRows, applicationRows] = await Promise.all([
       categoryId ? listQuestions(categoryId) : Promise.resolve([]),
       categoryId ? matchedOptionValues(categoryId) : Promise.resolve(new Map<string, string[]>()),
       categoryId ? listServices(region, categoryId) : Promise.resolve([]),
       listZones(region),
+      categoryId ? listApplicationQuestions(categoryId) : Promise.resolve([]),
     ]);
     const addonRows = await listAddons(serviceRows.map((s) => s.id));
     const categoryActive = categoryRows.find((c) => c.id === categoryId)?.active ?? false;
@@ -125,6 +127,28 @@ export default async function Page({ params, searchParams }: Props) {
         inUseValues: matched.get(q.key) ?? [],
         active: q.active,
       })),
+      // Spec 0011-19b AC-2: the questions for providers, in the same row shape (no scope, never priced).
+      applicationQuestions: applicationRows.map<CatalogQuestion>((q) => ({
+        id: q.id,
+        ...texts(q.label),
+        key: q.key,
+        type: q.type,
+        help: q.helpText ? text(q.helpText) : '',
+        helpValues: asLocalizedText(q.helpText),
+        required: q.required,
+        affectsPricing: false,
+        options:
+          q.options?.map((o) => ({
+            value: o.value,
+            label: text(o.label),
+            values: asLocalizedText(o.label),
+          })) ?? null,
+        validation: q.validation,
+        serviceId: null,
+        scopeName: null,
+        inUseValues: [],
+        active: q.active,
+      })),
       addons: addonRows.map<CatalogAddon>((a) => ({
         id: a.id,
         serviceId: a.serviceId,
@@ -164,6 +188,7 @@ export default async function Page({ params, searchParams }: Props) {
         categoryId={data.categoryId}
         tab={data.tab}
         questions={data.questions}
+        applicationQuestions={data.applicationQuestions}
         services={data.services}
         addons={data.addons}
         zones={data.zones}

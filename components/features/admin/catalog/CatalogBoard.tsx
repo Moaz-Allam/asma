@@ -4,14 +4,14 @@ import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import { moveCatalogRow, setCatalogActive } from '@/actions/admin-catalog';
+import { moveApplicationQuestion, moveCatalogRow, setCatalogActive } from '@/actions/admin-catalog';
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
 import { StatusChip } from '@/components/shared/StatusChip';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Link } from '@/lib/i18n/navigation';
 import type { CatalogLocale } from '@/lib/catalog/localized';
-import { CATALOG_TABS, type CatalogTab, type CatalogTable } from '@/lib/catalog/options';
+import { CATALOG_LIMITS, CATALOG_TABS, type CatalogTab, type CatalogTable } from '@/lib/catalog/options';
 import { cn } from '@/lib/utils';
 
 import { AddonSheet, CategorySheet, ServiceSheet, ZoneSheet } from './CatalogSheets';
@@ -25,7 +25,8 @@ type Sheet =
   | { kind: 'service'; row: CatalogService | null }
   | { kind: 'addon'; row: CatalogAddon | null }
   | { kind: 'zone'; row: CatalogZone | null }
-  | { kind: 'question'; row: CatalogQuestion | null };
+  | { kind: 'question'; row: CatalogQuestion | null }
+  | { kind: 'application_question'; row: CatalogQuestion | null };
 
 /**
  * `/admin/catalog` (`app-05`, spec 0007 AC-17 to AC-19): the categories beside a panel with four tabs. Each
@@ -39,6 +40,7 @@ export function CatalogBoard({
   categoryId,
   tab,
   questions,
+  applicationQuestions = [],
   services,
   addons,
   zones,
@@ -49,6 +51,8 @@ export function CatalogBoard({
   categoryId: string | null;
   tab: CatalogTab;
   questions: CatalogQuestion[];
+  /** Spec 0011-19b AC-2: the category's questions for providers, a second list under the request questions. */
+  applicationQuestions?: CatalogQuestion[];
   services: CatalogService[];
   addons: CatalogAddon[];
   zones: CatalogZone[];
@@ -196,14 +200,26 @@ export function CatalogBoard({
           ) : !category ? (
             <p className="px-5.5 py-6 text-body-s text-text-secondary">{t('pickCategory')}</p>
           ) : tab === 'questions' ? (
-            <QuestionsTab
-              questions={questions}
-              busy={action.busy}
-              move={move}
-              toggle={toggle}
-              onEdit={(row) => open({ kind: 'question', row })}
-              onAdd={() => open({ kind: 'question', row: null })}
-            />
+            <>
+              <QuestionsTab
+                questions={questions}
+                busy={action.busy}
+                move={move}
+                toggle={toggle}
+                onEdit={(row) => open({ kind: 'question', row })}
+                onAdd={() => open({ kind: 'question', row: null })}
+              />
+              <ApplicationQuestionsList
+                questions={applicationQuestions}
+                busy={action.busy}
+                move={(_table, id) => (direction) =>
+                  action.run(() => moveApplicationQuestion({ id, direction }))
+                }
+                toggle={toggle}
+                onEdit={(row) => open({ kind: 'application_question', row })}
+                onAdd={() => open({ kind: 'application_question', row: null })}
+              />
+            </>
           ) : tab === 'services' ? (
             <ServicesTab
               services={services}
@@ -260,6 +276,18 @@ export function CatalogBoard({
       ) : null}
       {sheet?.kind === 'zone' ? (
         <ZoneSheet key={sheetKey} open onOpenChange={close} regionDefault={regionDefault} zone={sheet.row} />
+      ) : null}
+      {sheet?.kind === 'application_question' && categoryId ? (
+        <QuestionBuilder
+          key={sheetKey}
+          open
+          onOpenChange={close}
+          regionDefault={regionDefault}
+          categoryId={categoryId}
+          services={[]}
+          question={sheet.row}
+          purpose="application"
+        />
       ) : null}
       {sheet?.kind === 'question' && categoryId ? (
         <QuestionBuilder
@@ -369,6 +397,71 @@ function QuestionsTab({
       )}
       <AddRow label={t('newQuestion')} onAdd={onAdd} note={t('questionsNote')} />
     </div>
+  );
+}
+
+/**
+ * Spec 0011-19b AC-2: the category's questions for providers, below the request questions. Same rows and controls,
+ * no price chip and no scope; the note says the limit and what a category with none does.
+ */
+function ApplicationQuestionsList({
+  questions,
+  busy,
+  move,
+  toggle,
+  onEdit,
+  onAdd,
+}: RowHandlers<CatalogQuestion> & { questions: CatalogQuestion[] }) {
+  const t = useTranslations('AdminCatalog');
+  return (
+    <section aria-labelledby="provider-questions-title" className="border-t-2 border-border-light">
+      <div className="flex flex-col gap-1 px-5.5 pt-5">
+        <h3 id="provider-questions-title" className="text-label text-text-primary">
+          {t('providerQuestions')}
+        </h3>
+        <p className="text-meta text-text-secondary">
+          {t('providerQuestionsNote', { limit: CATALOG_LIMITS.applicationQuestions })}
+        </p>
+      </div>
+      {questions.length === 0 ? (
+        <Empty text={t('emptyProviderQuestions')} />
+      ) : (
+        <ul>
+          {questions.map((q, index) => (
+            <li
+              key={q.id}
+              className={cn(
+                'flex flex-col gap-3 border-t-2 border-border-light px-5.5 py-3.5 first:border-t-0 xl:flex-row xl:items-center',
+                !q.active && 'border-s-4 border-s-track',
+              )}
+            >
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-label text-text-primary">{q.name || t('untitled')}</span>
+                <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-meta text-text-secondary">
+                  <span dir="ltr" className="font-mono text-text-primary">
+                    {q.key}
+                  </span>
+                  <span>{t(`type.${q.type}`)}</span>
+                  <span>{summary(q, t)}</span>
+                </span>
+                <Missing missing={q.missing} />
+              </div>
+              <RowControls
+                name={q.name}
+                active={q.active}
+                first={index === 0}
+                last={index === questions.length - 1}
+                busy={busy}
+                onMove={move('application_questions', q.id)}
+                onToggle={toggle('application_questions', q.id)}
+                onEdit={() => onEdit(q)}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+      <AddRow label={t('newProviderQuestion')} onAdd={onAdd} />
+    </section>
   );
 }
 

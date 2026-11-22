@@ -95,6 +95,11 @@ export const NUMBER = {
   qualityEstablished: 56,
   qualityNew: 57,
   qualityAdmin: 58,
+  // Position 19b (spec 0011-19b AC-9): the customer who reads the answers, the provider who gives them, and the admin
+  // who writes the questions.
+  answersCustomer: 59,
+  answersProvider: 60,
+  answersAdmin: 61,
 } as const;
 
 /**

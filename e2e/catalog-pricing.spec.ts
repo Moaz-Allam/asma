@@ -156,7 +156,7 @@ test('admin builds a catalog, publishes a formula and is held to it', async ({ b
 
   // A number question and a select question, both priced and required, turned on.
   await openTab(page, locale, 'questions');
-  await page.getByRole('button', { name: m(locale, 'AdminCatalog.newQuestion') }).click();
+  await page.getByRole('button', { name: m(locale, 'AdminCatalog.newQuestion'), exact: true }).click();
   await page.locator('#question-key').fill('rooms');
   await page.locator('#question-label-tr').fill('Oda sayısı');
   await page.locator('#question-min').fill('1');
@@ -164,7 +164,7 @@ test('admin builds a catalog, publishes a formula and is held to it', async ({ b
   await saveSheet(page, locale);
   await turnOn(page, locale, 'Oda sayısı');
 
-  await page.getByRole('button', { name: m(locale, 'AdminCatalog.newQuestion') }).click();
+  await page.getByRole('button', { name: m(locale, 'AdminCatalog.newQuestion'), exact: true }).click();
   await page.locator('#question-key').fill('kind');
   await page.locator('#question-type').selectOption('single_select');
   await page.locator('#question-label-tr').fill('Ev tipi');

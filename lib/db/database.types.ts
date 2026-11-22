@@ -117,16 +117,81 @@ export type Database = {
           },
         ]
       }
+      application_questions: {
+        Row: {
+          active: boolean
+          category_id: string
+          created_at: string
+          display_order: number
+          help_text: Json | null
+          id: string
+          key: string
+          label: Json
+          options: Json | null
+          region: string
+          required: boolean
+          type: string
+          validation: Json | null
+        }
+        Insert: {
+          active?: boolean
+          category_id: string
+          created_at?: string
+          display_order?: number
+          help_text?: Json | null
+          id?: string
+          key: string
+          label: Json
+          options?: Json | null
+          region: string
+          required?: boolean
+          type: string
+          validation?: Json | null
+        }
+        Update: {
+          active?: boolean
+          category_id?: string
+          created_at?: string
+          display_order?: number
+          help_text?: Json | null
+          id?: string
+          key?: string
+          label?: Json
+          options?: Json | null
+          region?: string
+          required?: boolean
+          type?: string
+          validation?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_questions_category_fk"
+            columns: ["category_id", "region"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "application_questions_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       applications: {
         Row: {
+          answers: Json | null
           created_at: string
           fee_extended_at: string | null
           id: string
-          message: string
+          message: string | null
           payment_extended_at: string | null
           provider_fee_amount: number | null
           provider_fee_kind: string | null
           provider_id: string
+          questions_snapshot: Json | null
           region: string
           request_id: string
           status: string
@@ -134,14 +199,16 @@ export type Database = {
           unlocked_at: string | null
         }
         Insert: {
+          answers?: Json | null
           created_at?: string
           fee_extended_at?: string | null
           id?: string
-          message: string
+          message?: string | null
           payment_extended_at?: string | null
           provider_fee_amount?: number | null
           provider_fee_kind?: string | null
           provider_id: string
+          questions_snapshot?: Json | null
           region: string
           request_id: string
           status?: string
@@ -149,14 +216,16 @@ export type Database = {
           unlocked_at?: string | null
         }
         Update: {
+          answers?: Json | null
           created_at?: string
           fee_extended_at?: string | null
           id?: string
-          message?: string
+          message?: string | null
           payment_extended_at?: string | null
           provider_fee_amount?: number | null
           provider_fee_kind?: string | null
           provider_id?: string
+          questions_snapshot?: Json | null
           region?: string
           request_id?: string
           status?: string
@@ -2529,6 +2598,15 @@ export type Database = {
       after_commission_paid: { Args: { p_fee: string }; Returns: undefined }
       after_provider_fee_paid: { Args: { p_fee: string }; Returns: undefined }
       after_reopen: { Args: { p_request_id: string }; Returns: string }
+      application_questions_digest: { Args: { p_list: Json }; Returns: string }
+      application_questions_list: {
+        Args: { p_category_id: string; p_region: string }
+        Returns: Json
+      }
+      application_questions_version: {
+        Args: { p_category_id: string; p_region: string }
+        Returns: string
+      }
       apply_fee_paid: {
         Args: {
           p_amount: number
@@ -2547,7 +2625,12 @@ export type Database = {
       apply_needs_email: { Args: { p_region: string }; Returns: boolean }
       apply_settings: { Args: { p_region: string }; Returns: Json }
       apply_to_request: {
-        Args: { p_message: string; p_request_id: string }
+        Args: {
+          p_answers?: Json
+          p_message?: string
+          p_questions_version?: string
+          p_request_id: string
+        }
         Returns: Json
       }
       approved_applied_count: {
@@ -2793,14 +2876,16 @@ export type Database = {
       job_for_provider: {
         Args: { p_request_id: string }
         Returns: {
+          answers: Json | null
           created_at: string
           fee_extended_at: string | null
           id: string
-          message: string
+          message: string | null
           payment_extended_at: string | null
           provider_fee_amount: number | null
           provider_fee_kind: string | null
           provider_id: string
+          questions_snapshot: Json | null
           region: string
           request_id: string
           status: string
@@ -2879,6 +2964,10 @@ export type Database = {
       my_warning: { Args: never; Returns: Json }
       notices_enabled: { Args: { p_region: string }; Returns: boolean }
       notices_housekeeping: { Args: never; Returns: number }
+      offer_answers: {
+        Args: { p_answers: Json; p_snapshot: Json }
+        Returns: Json
+      }
       offer_card: {
         Args: {
           p_application: Database["public"]["Tables"]["applications"]["Row"]

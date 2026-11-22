@@ -867,7 +867,14 @@
     "optionLabel": "[tr] Shown as",
     "addOption": "[tr] Add option",
     "removeOption": "[tr] Remove option {value}",
-    "optionInUse": "[tr] A published formula matches it, so it cannot be removed."
+    "optionInUse": "[tr] A published formula matches it, so it cannot be removed.",
+    "providerQuestions": "[tr] Questions for providers",
+    "providerQuestionsNote": "[tr] Up to {limit} active. A category with none keeps the free message.",
+    "emptyProviderQuestions": "[tr] No questions for providers yet. Providers write a free message.",
+    "newProviderQuestion": "[tr] New question for providers",
+    "editProviderQuestion": "[tr] Edit question for providers",
+    "providerQuestionSheetNote": "[tr] Providers answer this when they apply, and the customer reads the answers on each offer. Key and type are set once. Answers never change the price.",
+    "answerLengthRule": "[tr] An answer is {min} to {limit} characters. Empty means {limit}."
   },
   "CatalogErrors": {
     "validation_failed": "[tr] Something in the form is not valid. Check each field and save again.",
@@ -880,7 +887,9 @@
     "addon_unavailable": "[tr] This addon is not available.",
     "rate_limited": "[tr] Too many changes at once. Wait a moment and try again.",
     "action_failed": "[tr] That did not work. Nothing was changed. Try again.",
-    "network": "[tr] The connection dropped. Nothing changed, and what you typed is still here. Try again."
+    "network": "[tr] The connection dropped. Nothing changed, and what you typed is still here. Try again.",
+    "too_many_questions": "[tr] A category holds at most 5 active questions for providers. Turn one off first.",
+    "application_question_retire": "[tr] Questions are never deleted. Turn it off instead."
   },
   "AdminPricing": {
     "title": "[tr] Pricing rules",
@@ -1188,7 +1197,11 @@
       "confirmContact": "[tr] Contact details open after both of you have paid.",
       "confirm": "[tr] Choose this provider",
       "keep": "[tr] Back",
-      "chosenTitle": "[tr] Your provider"
+      "chosenTitle": "[tr] Your provider",
+      "answerYes": "[draft] [tr] Yes",
+      "answerNo": "[draft] [tr] No",
+      "answerHidden": "[draft] [tr] Hidden: it contained contact details",
+      "answersLabel": "[draft] [tr] Answers from {name}"
     },
     "next": {
       "title": "[tr] Next: pay the commission",
@@ -1342,7 +1355,16 @@
       "appliedOn": "[tr] Applied on {date}",
       "full": "[tr] This request has reached the limit of offers.",
       "closed": "[tr] This request is closed.",
-      "probationLimit": "[draft] [tr] You can hold {limit} jobs at once during your first {needed} jobs. Finish one to apply again."
+      "probationLimit": "[draft] [tr] You can hold {limit} jobs at once during your first {needed} jobs. Finish one to apply again.",
+      "questionsTitle": "[draft] [tr] Answer the customer’s questions",
+      "answersWarning": "[draft] [tr] Do not share phone numbers, emails, links or social handles. Answers with contact details are refused.",
+      "required": "[draft] [tr] Required",
+      "optional": "[draft] [tr] Optional",
+      "yes": "[draft] [tr] Yes",
+      "no": "[draft] [tr] No",
+      "questionsChanged": "[draft] [tr] The questions for this job changed. Check them and send again.",
+      "checkAnswers": "[draft] [tr] Check the answer marked above and send again.",
+      "yourAnswers": "[draft] [tr] Your answers"
     },
     "applications": {
       "title": "[tr] My jobs",
@@ -1394,7 +1416,10 @@
       "apply_settings_invalid": "[tr] Applying is not possible right now. Please try again later.",
       "action_failed": "[tr] Something went wrong. Nothing was sent. Try again.",
       "email_unconfirmed": "[tr] Confirm your email on your account page before you apply.",
-      "probation_limit": "[draft] [tr] During your first jobs you can hold only a few jobs at once. Finish one to apply again."
+      "probation_limit": "[draft] [tr] During your first jobs you can hold only a few jobs at once. Finish one to apply again.",
+      "questions_changed": "[draft] [tr] The questions for this job changed. Check them and send again.",
+      "answers_invalid": "[draft] [tr] Answer this question within its limits: 10 characters or more for a text, or pick one option.",
+      "contact_info_in_answer": "[draft] [tr] This answer has contact details. Remove phone numbers, emails, links and social handles."
     },
     "chosen": {
       "line": "[tr] The customer is paying the commission by {date}. Your fee comes after that.",

@@ -5,8 +5,10 @@ import { revalidatePath } from 'next/cache';
 import { fail, guardedAction } from '@/lib/auth/action';
 import { adminRegion } from '@/lib/catalog/queries';
 import {
+  MoveApplicationQuestionSchema,
   MoveRowSchema,
   SaveAddonSchema,
+  SaveApplicationQuestionSchema,
   SaveCategorySchema,
   SaveQuestionSchema,
   SaveServiceSchema,
@@ -141,6 +143,43 @@ export const saveQuestion = guardedAction(
         type: input.type,
       };
       return { id: await insertRow('questions', row, input.categoryId) };
+    }),
+);
+
+/**
+ * Spec 0011-19b AC-2: create or edit an application question. Key and type are set on create only; there is no
+ * scope and no price flag, so an application question never reaches the pricing engine. A sixth active question
+ * is refused in Postgres (`too_many_questions`), and nothing is deleted (`application_question_retire`).
+ */
+export const saveApplicationQuestion = guardedAction(
+  { name: 'saveApplicationQuestion', access: ['admin'], schema: SaveApplicationQuestionSchema },
+  async (input) =>
+    mapped(async () => {
+      const fields = {
+        label: input.label,
+        help_text: input.helpText,
+        required: input.required,
+        options: input.type === 'single_select' ? input.options : null,
+        validation: input.type === 'textarea' ? input.validation : null,
+      };
+      if (input.id) {
+        await updateRow('application_questions', input.id, fields);
+        return { id: input.id };
+      }
+      const region = await parentRegion('service_categories', input.categoryId);
+      if (!region) return fail('forbidden');
+      const row = { ...fields, category_id: input.categoryId, region, key: input.key, type: input.type };
+      return { id: await insertRow('application_questions', row, input.categoryId) };
+    }),
+);
+
+/** Spec 0011-19b AC-2: move an application question up or down in its category's list. */
+export const moveApplicationQuestion = guardedAction(
+  { name: 'moveApplicationQuestion', access: ['admin'], schema: MoveApplicationQuestionSchema },
+  async ({ id, direction }) =>
+    mapped(async () => {
+      await moveRow('application_questions', id, direction);
+      return { done: true };
     }),
 );
 

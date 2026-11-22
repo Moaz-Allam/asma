@@ -11,6 +11,7 @@ import { track } from '@/lib/analytics/client';
 import { formatMoney } from '@/lib/format/money';
 import type { Locale } from '@/lib/i18n/direction';
 import { useRouter } from '@/lib/i18n/navigation';
+import type { OfferAnswerLine } from '@/lib/requests/offer-answers';
 import type { Offer } from '@/lib/requests/schemas';
 
 import {
@@ -33,6 +34,7 @@ export function OfferList({
   requestId,
   offers,
   since,
+  answers = {},
   commission,
   cashDue,
   currency,
@@ -43,6 +45,8 @@ export function OfferList({
   requestId: string;
   offers: readonly Offer[];
   since: Record<string, string>;
+  /** Spec 0011-19b AC-6: each offer's answers, rendered on the server, by application id. */
+  answers?: Record<string, OfferAnswerLine[] | null>;
   commission: number;
   cashDue: number;
   currency: 'TRY' | 'SAR';
@@ -121,6 +125,8 @@ export function OfferList({
             since={since[offer.application_id] ?? null}
             message={offer.message}
             hidden={offer.message_hidden ? t('offers.messageHidden') : null}
+            answers={answers[offer.application_id] ?? null}
+            answersLabel={t('offers.answersLabel', { name: nameOf(offer) })}
             action={
               readOnly ? null : (
                 <Button

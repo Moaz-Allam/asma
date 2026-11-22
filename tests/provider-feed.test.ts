@@ -174,6 +174,8 @@ describe('loadRequest (AC-8)', () => {
         closed: false,
         timezone: 'Europe/Istanbul',
         answers: [{ key: 'rooms', label: { tr: 'Oda' }, type: 'number', value: 3, option_labels: null }],
+        questions: [],
+        questions_version: null,
         payment_deadline: null,
       },
       error: null,
@@ -190,7 +192,13 @@ describe('applyToRequest and saveSetup (AC-3, AC-10)', () => {
       error: null,
     });
     const result = await applyToRequest({ requestId: REQUEST, applicationMessage: MESSAGE }, CONTEXT);
-    expect(m.rpc).toHaveBeenCalledWith('apply_to_request', { p_request_id: REQUEST, p_message: MESSAGE });
+    // Spec 0011-19b X-7: all four arguments, nulls included.
+    expect(m.rpc).toHaveBeenCalledWith('apply_to_request', {
+      p_request_id: REQUEST,
+      p_message: MESSAGE,
+      p_answers: null,
+      p_questions_version: null,
+    });
     expect(result).toEqual({ ok: true, replayed: false, application: APPLICATION });
   });
 

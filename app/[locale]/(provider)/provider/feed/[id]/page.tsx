@@ -9,6 +9,7 @@ import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
 import { needsEmailNudge } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
+import { formQuestions, ownAnswerRows } from '@/lib/provider-feed/answers';
 import { Link } from '@/lib/i18n/navigation';
 import { loadRequest, type StructuredAnswer } from '@/lib/provider-feed';
 import { dayParts, instantLabel, NUMBER_LOCALE, regionDefaultLocale } from '@/lib/requests/view';
@@ -104,6 +105,12 @@ export default async function Page({ params }: Props) {
             state={state}
             timezone={request.timezone}
             paymentDeadline={request.payment_deadline}
+            questions={formQuestions(request.questions, text)}
+            questionsVersion={request.questions_version}
+            ownAnswers={ownAnswerRows(request.application, text, {
+              yes: t('detail.yes'),
+              no: t('detail.no'),
+            })}
           />
         </div>
         <aside className="flex flex-col gap-3.5 lg:sticky lg:top-4">

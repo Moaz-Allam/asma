@@ -53,8 +53,23 @@ export function effectsFor(type: QuestionType | null, match: MatchType): EffectT
   return row?.[match] ? [...row[match]] : [];
 }
 
-/** The five catalog tables, as the two row actions name them. */
-export const CATALOG_TABLES = ['service_categories', 'services', 'addons', 'zones', 'questions'] as const;
+/** Spec 0011-19b AC-1: the three types an application question may take (no number, date or time). */
+export const APPLICATION_QUESTION_TYPES = [
+  'textarea',
+  'single_select',
+  'boolean',
+] as const satisfies readonly QuestionType[];
+export type ApplicationQuestionType = (typeof APPLICATION_QUESTION_TYPES)[number];
+
+/** The catalog tables, as the two row actions name them. Since 19b, the application questions too. */
+export const CATALOG_TABLES = [
+  'service_categories',
+  'services',
+  'addons',
+  'zones',
+  'questions',
+  'application_questions',
+] as const;
 export type CatalogTable = (typeof CATALOG_TABLES)[number];
 
 export const CATALOG_TABS = ['questions', 'services', 'addons', 'zones'] as const;
@@ -75,6 +90,10 @@ export const CATALOG_LIMITS = {
   hoursMin: 1,
   hoursMax: 24,
   modifiers: 50,
+  // Spec 0011-19b AC-1: an application question's text answer is 10 to 600 code points; at most 5 active.
+  answerMin: 10,
+  answerMax: 600,
+  applicationQuestions: 5,
 } as const;
 
 export const KEY_PATTERN = /^[a-z][a-z0-9_]{0,39}$/;
