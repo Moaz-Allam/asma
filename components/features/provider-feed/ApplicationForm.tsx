@@ -104,8 +104,12 @@ export function ApplicationForm({
             <dl className="flex flex-col gap-3 rounded-block bg-surface p-4 text-body-s">
               {ownAnswers.map((row) => (
                 <div key={row.key} className="flex flex-col gap-1">
-                  <dt className="font-semibold text-text-primary">{row.label}</dt>
-                  <dd className="break-words whitespace-pre-line text-text-secondary">{row.value}</dd>
+                  <dt dir="auto" className="font-semibold text-text-primary">
+                    {row.label}
+                  </dt>
+                  <dd dir="auto" className="break-words whitespace-pre-line text-text-secondary">
+                    {row.value}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -263,6 +267,14 @@ export function ApplicationForm({
   );
 }
 
+/**
+ * A label in a locale other than the page's (a Turkish fallback on an Arabic page) keeps its own direction, so its
+ * question mark stays on its own side (first strong isolate, then pop).
+ */
+function isolate(text: string): string {
+  return String.fromCharCode(0x2068) + text + String.fromCharCode(0x2069);
+}
+
 /** One application question: its label, help text, a Required or Optional mark, the control and its own error. */
 function QuestionField({
   question,
@@ -297,7 +309,7 @@ function QuestionField({
     return (
       <FormField
         id={id}
-        label={question.label}
+        label={isolate(question.label)}
         error={error}
         note={
           <span className="flex flex-wrap justify-between gap-2">
@@ -310,6 +322,8 @@ function QuestionField({
           id={id}
           value={text}
           rows={4}
+          dir="auto"
+          maxLength={max}
           disabled={disabled}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
@@ -341,7 +355,7 @@ function QuestionField({
       <ChoiceChips
         describedBy={error ? `${id}-help ${id}-error` : `${id}-help`}
         name={id}
-        legend={question.label}
+        legend={isolate(question.label)}
         options={options}
         value={current}
         disabled={disabled}

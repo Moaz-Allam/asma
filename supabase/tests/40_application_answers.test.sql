@@ -12,7 +12,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(100);
+SELECT plan(104);
 
 -- ── ids ──────────────────────────────────────────────────────────────────────
 CREATE FUNCTION pg_temp.u(p text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$
@@ -190,6 +190,9 @@ SELECT pg_temp.as_user('a1');
 SELECT throws_ok($$ INSERT INTO public.application_questions (category_id, region, key, label, type)
   VALUES ('00000000-0000-0000-0000-0000004000ca', 'TR', 'sneaky', '{"tr": "Sinsi"}', 'boolean') $$, '42501', NULL,
   'a provider writes none');
+SELECT throws_ok($$ INSERT INTO public.application_questions (category_id, region, key, label, type, active)
+  VALUES ('00000000-0000-0000-0000-0000004000ca', 'TR', 'sneaky_on', '{"tr": "Sinsi"}', 'boolean', true) $$, '42501', NULL,
+  'a provider inserting an active row is refused before the guard locks or counts anything');
 RESET ROLE;
 SET LOCAL ROLE anon;
 SELECT throws_ok($$ SELECT count(*) FROM public.application_questions $$, '42501', NULL, 'anon reads nothing');
@@ -401,6 +404,23 @@ SELECT is((SELECT jsonb_build_object('suspended', x -> 'suspended', 'answers', x
              FROM (SELECT public.request_offers(pg_temp.r(1)) -> 'chosen' AS x) t),
   '{"suspended": true, "answers": null, "message": null, "hidden": true}'::jsonb, 'the suspended chosen provider''s answers are hidden');
 RESET ROLE;
+
+-- ── figures split across two text answers, ten together (19b security review) ─
+UPDATE public.application_questions SET active = true WHERE key = 'extra_1';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('a4');
+SELECT is(pg_temp.ans(2, '{"approach": "A team of 5 and 42 rollers", "extra_1": "Ready by 9, 12 brushes, 40 rolls, 78 tins", "insured": true}'),
+  '{"status": "refused", "code": "contact_info_in_answer"}', 'three figures in one answer and seven in another, each passing alone, are refused together');
+SELECT is((SELECT count(*)::int FROM public.applications WHERE provider_id = pg_temp.u('a4')), 0, 'and nothing is stored');
+RESET ROLE;
+SELECT is(public.offer_answers('{"approach": "A team of 5 and 42 rollers", "extra_1": "Ready by 9, 12 brushes, 40 rolls, 78 tins", "insured": true}',
+  '[{"key": "approach", "label": {"tr": "A"}, "type": "textarea", "required": true},
+    {"key": "extra_1", "label": {"tr": "B"}, "type": "textarea", "required": false},
+    {"key": "insured", "label": {"tr": "C"}, "type": "boolean", "required": true}]'),
+  '[{"key": "approach", "label": {"tr": "A"}, "type": "textarea", "choice": null, "value": null, "hidden": true},
+    {"key": "extra_1", "label": {"tr": "B"}, "type": "textarea", "choice": null, "value": null, "hidden": true},
+    {"key": "insured", "label": {"tr": "C"}, "type": "boolean", "choice": null, "value": true, "hidden": false}]'::jsonb,
+  'on the card, a split number hides every text answer of that offer');
 
 SELECT * FROM finish();
 ROLLBACK;

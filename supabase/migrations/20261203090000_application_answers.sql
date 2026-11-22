@@ -82,6 +82,8 @@ create trigger catalog_audit after insert or update on public.application_questi
 
 -- The guard, for every role: never deleted (deactivate instead), key, type, category and region fixed, at most five
 -- active per category. Definer, so the category lock (X-4) works for any caller; it reads and locks one row only.
+-- A BEFORE trigger runs ahead of the RLS write check, so application_questions_access (invoker, named to fire first)
+-- refuses a signed in caller who is not admin before this guard can lock or count for them (19b security review).
 create function public.application_questions_guard()
   returns trigger
   language plpgsql
@@ -103,7 +105,7 @@ begin
   end if;
   if new.active and (tg_op = 'INSERT' or not old.active) then
     -- Two admins activating different questions at once queue here, so the second counts the first (X-4).
-    perform 1 from public.service_categories c where c.id = new.category_id for update;
+    perform 1 from public.service_categories c where c.id = new.category_id for no key update;
     select count(*) into v_active
       from public.application_questions q
      where q.category_id = new.category_id and q.active and q.id <> new.id;
@@ -117,6 +119,27 @@ $$;
 
 revoke all on function public.application_questions_guard() from public, anon, authenticated, service_role;
 
+create function public.application_questions_access()
+  returns trigger
+  language plpgsql
+  stable
+  security invoker
+  set search_path = ''
+as $$
+begin
+  -- Invoker, so current_user is the API role the caller holds: only admin writes through the API.
+  if current_user in ('authenticated', 'anon') and not public.is_admin() then
+    raise exception 'forbidden' using errcode = '42501';
+  end if;
+  return coalesce(new, old);
+end;
+$$;
+
+revoke all on function public.application_questions_access() from public, anon, authenticated, service_role;
+
+-- Same timing fires in name order: access before guard.
+create trigger application_questions_access before insert or update or delete on public.application_questions
+  for each row execute function public.application_questions_access();
 create trigger application_questions_guard before insert or update or delete on public.application_questions
   for each row execute function public.application_questions_guard();
 create trigger application_questions_guard_truncate before truncate on public.application_questions
@@ -275,6 +298,22 @@ revoke all on function public.applications_guard() from public, anon, authentica
 --    null). Answers in snapshot order, answered ones only; a text answer the scanner matches comes back hidden.
 -- ═══════════════════════════════════════════════════════════════════════════
 
+-- The text answers of one application joined in snapshot order, so the scanner reads a number split across fields
+-- as one (19b security review).
+create function public.answers_joined_text(p_answers jsonb, p_snapshot jsonb)
+  returns text
+  language sql
+  immutable
+  security invoker
+  set search_path = ''
+as $$
+  select string_agg(p_answers ->> (s.q ->> 'key'), ' ' order by s.ord)
+    from jsonb_array_elements(coalesce(p_snapshot, '[]'::jsonb)) with ordinality as s(q, ord)
+   where s.q ->> 'type' = 'textarea' and jsonb_typeof(p_answers -> (s.q ->> 'key')) = 'string'
+$$;
+
+revoke all on function public.answers_joined_text(jsonb, jsonb) from public, anon, authenticated, service_role;
+
 create function public.offer_answers(p_answers jsonb, p_snapshot jsonb)
   returns jsonb
   language sql
@@ -282,6 +321,10 @@ create function public.offer_answers(p_answers jsonb, p_snapshot jsonb)
   security invoker
   set search_path = ''
 as $$
+  -- A text answer is hidden when it alone, or the text answers together, would be refused today.
+  with joined as (
+    select coalesce(public.message_has_contact_info(public.answers_joined_text(p_answers, p_snapshot)), false) as hit
+  )
   select case when p_answers is null then null else coalesce((
     select jsonb_agg(jsonb_build_object(
              'key', s.q ->> 'key',
@@ -289,15 +332,17 @@ as $$
              'type', s.q ->> 'type',
              'choice', case when s.q ->> 'type' = 'single_select' then s.q -> 'choice' end,
              'value', case s.q ->> 'type'
-                        when 'textarea' then case when public.message_has_contact_info(p_answers ->> (s.q ->> 'key'))
+                        when 'textarea' then case when j.hit
+                                                    or coalesce(public.message_has_contact_info(p_answers ->> (s.q ->> 'key')), false)
                                                   then null else p_answers -> (s.q ->> 'key') end
                         when 'boolean' then p_answers -> (s.q ->> 'key')
                       end,
              'hidden', s.q ->> 'type' = 'textarea'
-                       and coalesce(public.message_has_contact_info(p_answers ->> (s.q ->> 'key')), false))
+                       and (j.hit or coalesce(public.message_has_contact_info(p_answers ->> (s.q ->> 'key')), false)))
            order by s.ord)
-      from jsonb_array_elements(p_snapshot) with ordinality as s(q, ord)
+      from jsonb_array_elements(p_snapshot) with ordinality as s(q, ord), joined j
      where p_answers ? (s.q ->> 'key')), '[]'::jsonb) end
+    from joined
 $$;
 
 revoke all on function public.offer_answers(jsonb, jsonb) from public, anon, authenticated, service_role;
@@ -676,6 +721,11 @@ begin
       end if;
       v_snapshot := v_snapshot || jsonb_build_array(v_item);
     end loop;
+
+    -- 12c. The text answers together, so a number split across fields is caught as one (19b security review).
+    if public.message_has_contact_info(public.answers_joined_text(v_clean, v_snapshot)) then
+      return jsonb_build_object('status', 'refused', 'code', 'contact_info_in_answer');
+    end if;
 
     -- 13b. The application, its answers and what they answered.
     insert into public.applications (region, request_id, provider_id, message, answers, questions_snapshot)

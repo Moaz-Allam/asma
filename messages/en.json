@@ -1418,7 +1418,7 @@
       "email_unconfirmed": "Confirm your email on your account page before you apply.",
       "probation_limit": "[draft] During your first jobs you can hold only a few jobs at once. Finish one to apply again.",
       "questions_changed": "[draft] The questions for this job changed. Check them and send again.",
-      "answers_invalid": "[draft] Answer this question: at least 10 characters for a text, or pick one option.",
+      "answers_invalid": "[draft] Answer this question within its limits: 10 characters or more for a text, or pick one option.",
       "contact_info_in_answer": "[draft] This answer has contact details. Remove phone numbers, emails, links and social handles."
     },
     "chosen": {

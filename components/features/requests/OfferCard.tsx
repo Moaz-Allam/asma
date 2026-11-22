@@ -73,8 +73,11 @@ export function OfferCard({
           >
             {answers.map((answer) => (
               <div key={answer.key} className="flex flex-col gap-1">
-                <dt className="font-semibold text-text-primary">{answer.label}</dt>
+                <dt dir="auto" className="font-semibold text-text-primary">
+                  {answer.label}
+                </dt>
                 <dd
+                  dir="auto"
                   className={
                     answer.hidden
                       ? 'text-text-secondary'

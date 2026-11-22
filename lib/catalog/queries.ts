@@ -339,7 +339,8 @@ export async function listApplicationQuestions(categoryId: string): Promise<Appl
     .select('id, key, type, label, help_text, required, options, validation, active')
     .eq('category_id', categoryId)
     .order('display_order')
-    .order('id');
+    // Spec 0011-19b AC-3: the same order as the provider's form and the version, display order then key.
+    .order('key');
   if (error) fail(error);
   return (data ?? []).map((row) => ({
     id: row.id,
