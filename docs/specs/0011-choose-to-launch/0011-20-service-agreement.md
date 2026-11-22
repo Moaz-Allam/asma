@@ -387,8 +387,8 @@ character street line; X-15 the notice map, the mail key, the alert path, the sc
 ## Follow-up
 
 - [ ] B10, S16: the lawyer's Turkish text as template version 2 (a migration), and the copy leaves `[draft]`.
-- [ ] Owner's lawyer: confirm keeping agreements forever against KVKK erasure (a contract record for legal claims); 21's
-  account deletion must keep them.
+- [x] Owner's lawyer: keeping agreements forever is allowed (owner, 2026-11-23, D223); 21's account deletion must keep
+  them.
 - [ ] `AGENTS.md` (`/sync`): pdfkit and its version in the stack table, `lib/agreements` as a door, the bucket in
   `lib/storage`.
 - [ ] `ui-registry.md`: `AgreementCheckbox`, `AgreementCard`, the admin agreements list.
