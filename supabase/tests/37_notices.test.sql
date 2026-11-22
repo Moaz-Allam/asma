@@ -121,12 +121,17 @@ CREATE FUNCTION pg_temp.m(p_who text, p_template text) RETURNS integer LANGUAGE 
 -- The latest audit row of one action on one of this file's requests.
 CREATE FUNCTION pg_temp.audit(p integer, p_action text) RETURNS bigint LANGUAGE sql STABLE AS $$
   SELECT max(id) FROM public.audit_log WHERE entity_id = pg_temp.r(p)::text AND action = p_action $$;
--- The pings on one person's topic, where Realtime has its table.
+-- Whether Realtime can hold a ping here: its table, and today's partition (CI's database only start may have neither;
+-- realtime.send swallows its own insert error, so a missing partition reads as no ping).
+CREATE FUNCTION pg_temp.rt_ready() RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT to_regclass('realtime.messages') IS NOT NULL
+     AND to_regclass('realtime.messages_' || to_char(now() AT TIME ZONE 'utc', 'YYYY_MM_DD')) IS NOT NULL $$;
+-- The pings on one person's topic, where Realtime can hold them.
 CREATE FUNCTION pg_temp.pings(p_who text) RETURNS integer LANGUAGE plpgsql AS $$
 DECLARE
   v integer;
 BEGIN
-  IF to_regclass('realtime.messages') IS NULL THEN
+  IF NOT pg_temp.rt_ready() THEN
     RETURN -1;
   END IF;
   EXECUTE 'SELECT count(*)::integer FROM realtime.messages WHERE topic = $1 AND extension = ''broadcast'' AND private'
@@ -379,7 +384,7 @@ CREATE FUNCTION pg_temp.rt_seen(p_as text, p_topic_of text) RETURNS integer LANG
 DECLARE
   v integer;
 BEGIN
-  IF to_regclass('realtime.messages') IS NULL THEN
+  IF NOT pg_temp.rt_ready() THEN
     RETURN -1;
   END IF;
   PERFORM set_config('request.jwt.claims', jsonb_build_object('sub', pg_temp.u(p_as), 'role', 'authenticated')::text, true);
