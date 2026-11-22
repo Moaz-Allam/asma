@@ -49,4 +49,12 @@ never enter git: the owner inserts them in the SQL editor.
 ## Follow-up
 
 - [ ] Owner: insert the verified number, set `NEXT_PUBLIC_PHONE_TEST_DIAL_CODES=+20` on Vercel and redeploy.
-- [ ] G3 checklist: `test_phones` empty and the env var unset on production.
+- [ ] G3 checklist: retire the test accounts first (`test_phones` refuses removing a number an account holds), then
+  empty `test_phones` and unset the env var on production; `profiles` with a region other than its phone's must be 0.
+
+## Security review (2026-11-23)
+
+Ship, nothing exploitable. Folded in before the merge: `phone_region()` is security definer; `test_phones_guard` keeps
+a number listed while an account holds it; negative tests as `anon` and `authenticated`; the D16 invariant as a
+pgTAP count; the password check covers a listed number; the variable is in `lib/env.ts`. Left as accepted: a listed
+number answers the sign up hook differently from an unlisted one (behind the bot check, until G3).

@@ -29,11 +29,12 @@ revoke all on table public.test_phones from anon, authenticated, service_role;
 
 -- 05's body plus the allow list. Stable now (it reads a table). Literal patterns unchanged, so lib/region/phone.ts and
 -- tests/region-phone.test.ts still agree with it.
+-- Definer (security review): its callers need not read test_phones; still no grant to any API role.
 create or replace function public.phone_region(p_phone text)
   returns text
   language sql
   stable
-  security invoker
+  security definer
   set search_path = ''
 as $$
   select case
@@ -68,3 +69,34 @@ revoke all on function public.profiles_phone_region() from public, anon, authent
 
 create trigger profiles_phone_region before insert or update of phone, region on public.profiles
   for each row execute function public.profiles_phone_region();
+
+-- A listed number leaves the list only once no account holds it (security review): emptying the list before G3 then
+-- means retiring the test accounts first, so no profile is left breaking D16.
+create function public.test_phones_guard()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+begin
+  if tg_op = 'TRUNCATE' then
+    if exists (select 1 from public.test_phones t join public.profiles p on p.phone = t.phone) then
+      raise exception 'test_phone_in_use';
+    end if;
+    return null;
+  end if;
+  if (tg_op = 'DELETE' or new.phone is distinct from old.phone or new.region is distinct from old.region)
+     and (exists (select 1 from public.profiles p where p.phone = old.phone)
+          or exists (select 1 from auth.users u where u.phone = ltrim(old.phone, '+'))) then
+    raise exception 'test_phone_in_use';
+  end if;
+  return coalesce(new, old);
+end;
+$$;
+
+revoke all on function public.test_phones_guard() from public, anon, authenticated, service_role;
+
+create trigger test_phones_guard before update or delete on public.test_phones
+  for each row execute function public.test_phones_guard();
+create trigger test_phones_guard_truncate before truncate on public.test_phones
+  for each statement execute function public.test_phones_guard();

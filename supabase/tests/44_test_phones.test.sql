@@ -6,7 +6,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(16);
+SELECT plan(23);
 
 SELECT has_table('public', 'test_phones', 'test_phones exists');
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid = 'public.test_phones'::regclass), 'RLS is on');
@@ -37,9 +37,30 @@ SELECT lives_ok($$ INSERT INTO public.profiles (id, role, region, phone, full_na
   'a listed number makes a TR profile');
 SELECT throws_ok($$ UPDATE public.profiles SET region = 'KSA' WHERE id = '00000000-0000-0000-0000-000000440001' $$, 'P0001',
   'immutable_field', 'its region never changes (01''s guard)');
-DELETE FROM public.test_phones WHERE phone = '+201012345678';
-SELECT throws_ok($$ UPDATE public.profiles SET phone = '+201012345678' WHERE id = '00000000-0000-0000-0000-000000440001' $$, '23514',
-  'phone_region_mismatch', 'once unlisted, the number cannot be written again');
+SELECT throws_ok($$ DELETE FROM public.test_phones WHERE phone = '+201012345678' $$, 'P0001', 'test_phone_in_use',
+  'a number an account holds cannot leave the list');
+SELECT throws_ok($$ TRUNCATE public.test_phones $$, 'P0001', 'test_phone_in_use', 'nor can the list be emptied');
+SELECT is((SELECT count(*)::int FROM public.profiles WHERE public.phone_region(phone) IS DISTINCT FROM region), 0,
+  'every profile''s region is its phone''s region (D16)');
+-- Once the account is gone (the G3 step retires test accounts first), the number leaves.
+ALTER TABLE public.profiles DISABLE TRIGGER USER;
+DELETE FROM public.profiles WHERE id = '00000000-0000-0000-0000-000000440001';
+ALTER TABLE public.profiles ENABLE TRIGGER USER;
+DELETE FROM auth.users WHERE id = '00000000-0000-0000-0000-000000440001';
+SELECT lives_ok($$ DELETE FROM public.test_phones WHERE phone = '+201012345678' $$, 'and then it can leave');
+
+-- No API role touches the list, or runs the helpers.
+SET LOCAL ROLE anon;
+SELECT throws_ok($$ SELECT * FROM public.test_phones $$, '42501', NULL, 'anon cannot read the list');
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT throws_ok($$ SELECT * FROM public.test_phones $$, '42501', NULL, 'a signed in user cannot read the list');
+SELECT throws_ok($$ INSERT INTO public.test_phones (phone) VALUES ('+201011111111') $$, '42501', NULL, 'nor add to it');
+RESET ROLE;
+SELECT ok(NOT has_function_privilege('authenticated', 'public.profiles_phone_region()', 'EXECUTE')
+          AND NOT has_function_privilege('authenticated', 'public.phone_region(text)', 'EXECUTE')
+          AND NOT has_function_privilege('anon', 'public.phone_region(text)', 'EXECUTE'),
+  'no API role runs phone_region or the guard');
 
 SELECT * FROM finish();
 ROLLBACK;

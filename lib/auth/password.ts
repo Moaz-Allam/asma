@@ -52,6 +52,8 @@ function nationalDigits(phone: string | null): string | null {
   const region = phoneRegion(phone);
   if (region === 'TR') return phone.slice(-10);
   if (region === 'KSA') return phone.slice(-9);
+  // Spec 0013: a listed test number has no pattern region; its last ten digits still count as the phone.
+  if (/^\+[1-9][0-9]{7,14}$/.test(phone)) return phone.slice(-10);
   return null;
 }
 
