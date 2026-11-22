@@ -8,6 +8,7 @@ import { getSessionUser } from '@/lib/auth/session';
 import { ADMIN_RAIL, menuFor } from '@/lib/navigation/menus';
 import { openReportsCount } from '@/lib/admin-reports';
 import { listFlags } from '@/lib/admin-requests';
+import { noticeCount } from '@/lib/notifications/centre';
 import { pendingCount } from '@/lib/provider/admin-queries';
 
 import { AdminRail } from './AdminRail';
@@ -47,6 +48,14 @@ export async function AdminShell({ children }: { children: ReactNode }) {
             return 0;
           })
       : 0;
+  // Spec 0011-18 AC-8: the bell's first count; a failed read shows no badge and is reported.
+  const notices =
+    user && role
+      ? await noticeCount().catch((error: unknown) => {
+          reportServerError('noticeCount', error);
+          return null;
+        })
+      : null;
   const items = role ? menuFor(role) : [];
 
   return (
@@ -58,6 +67,7 @@ export async function AdminShell({ children }: { children: ReactNode }) {
         <SiteHeader
           user={role && profile ? { role, name: profile.fullName } : null}
           railFromLg={role === 'admin'}
+          notices={user && role ? { userId: user.id, count: notices } : null}
         />
         <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 pb-28 lg:px-8.5 lg:pb-8.5">
           {children}

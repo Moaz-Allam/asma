@@ -85,6 +85,10 @@ export const NUMBER = {
   ratingCustomer: 50,
   ratingProvider: 51,
   ratingAdmin: 52,
+  // Position 18 (spec 0011-18 AC-14): the customer whose offers and pick write notices, and the provider whose bell
+  // rises live.
+  noticeCustomer: 53,
+  noticeProvider: 54,
 } as const;
 
 /**

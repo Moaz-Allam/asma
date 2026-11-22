@@ -59,15 +59,15 @@ function localSupabase() {
   let status = run('npx', ['supabase', 'status', '-o', 'json'], process.env, true);
   if (status.status !== 0) {
     console.log('e2e: local Supabase is not running; starting it (needs Docker)…');
-    // Only what the journeys use: Auth, the API gateway, PostgREST, Storage (spec 0006 AC-28) and
-    // the database. A stack started before position 02 has no Storage: restart it.
+    // Only what the journeys use: Auth, the API gateway, PostgREST, Storage (spec 0006 AC-28), Realtime (spec
+    // 0011-18 R-11: the bell's live pings) and the database. A stack started without them: restart it.
     const start = run(
       'npx',
       [
         'supabase',
         'start',
         '-x',
-        'realtime,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor',
+        'imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor',
       ],
       process.env,
     );
@@ -88,6 +88,19 @@ function localSupabase() {
   if (!json.STORAGE_S3_URL) {
     console.error(
       'e2e: local Storage is not running. Restart the stack: `npx supabase stop`, then run again.',
+    );
+    process.exit(1);
+  }
+  // Spec 0011-18 R-11: the notices journey waits for a live ping. A stack started before 18 has no Realtime.
+  const realtime = run(
+    'docker',
+    ['ps', '--filter', 'name=supabase_realtime_', '--format', '{{.Names}}'],
+    process.env,
+    true,
+  );
+  if (realtime.status !== 0 || !realtime.stdout.trim()) {
+    console.error(
+      'e2e: local Realtime is not running. Restart the stack: `npx supabase stop`, then run again.',
     );
     process.exit(1);
   }
