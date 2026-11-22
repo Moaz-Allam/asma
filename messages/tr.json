@@ -2236,7 +2236,7 @@
     },
     "rating_received": {
       "title": "[tr] You received a rating",
-      "line": "[tr] A customer rated your work on {service}."
+      "line": "[tr] A customer rated your work."
     }
   }
 }

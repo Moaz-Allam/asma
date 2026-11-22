@@ -30,6 +30,18 @@ derivation function, four replaced mail functions, three triggers, four reader a
 > has `realtime.messages`, `realtime.send(jsonb, text, text, boolean)` and `realtime.topic()` (created by the Realtime
 > service's own migrations, not by the Postgres image).
 
+> **As built (D210), where it differs from the text below.** `notifications.recipient_id` and `request_id` are
+> `on delete cascade` (a notice goes with the rows it names; the race tests' clean up deletes them). The Realtime policy
+> is named `aldebyani_notices_read_own`. `audit_notices` names its columns `o_recipient`, `o_kind`, `o_request`,
+> `o_entity`, `o_send_until`, `o_deadline`, `o_topic` (plpgsql output names would clash with table columns). The popover
+> is written by hand on the tokens (the pinned CLI's file imported an npm package `cn`). Turkish strings carry `[tr]`,
+> the UI convention, not `[draft]`. "Mark all as read" posts a plain form to an inline server function that calls the
+> guarded action; a failure leaves the count as it was, with no error line (the bell and the page then show the truth).
+> After the reviews (D211): `rating_received` stores no request or application id and its line names nothing (17's
+> D207 applies in app too); the three notice bodies that run inside a move set `lock_timeout = '250ms'`; the Realtime
+> policy also checks the row's own `topic` and is the only policy on `realtime.messages`; `open_notice` updates only an
+> unread row; a refused join stops after three errors; only `lib/notifications/live.ts` may call Realtime (a lint door).
+
 ## Amendment rules
 
 - **R-1, one recipient map, two channels.** 13's inline recipient logic moves, unchanged in effect, into one derivation

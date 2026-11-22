@@ -23,7 +23,7 @@ import { POPOVER_SIZE } from '@/lib/notifications/kinds';
 const OpenInput = z.object({ id: z.string().uuid() }).strict();
 const NoInput = z.undefined().or(z.object({}).strict());
 // The mark all form posts FormData (it works without script, AC-9); nothing in it is read.
-const FormInput = z.unknown();
+const FormInput = z.instanceof(FormData).or(z.undefined());
 
 /** AC-6, AC-7: mark one read and get where it leads. */
 export const openNoticeAction = guardedAction(

@@ -28,6 +28,8 @@ export function BellMenu({ userId, initialCount }: { userId: string; initialCoun
   const [failed, setFailed] = useState(false);
   const openRef = useRef(open);
   const firstPath = useRef(true);
+  // Code review: only the latest count request may set the badge, whatever order the answers come back in.
+  const countRequest = useRef(0);
 
   // A server render (a ping's refresh, the mark all form) passes a fresh count: take it during render.
   if (initialCount !== serverCount) {
@@ -40,16 +42,25 @@ export function BellMenu({ userId, initialCount }: { userId: string; initialCoun
   }, [open]);
 
   const refreshCount = useCallback(async () => {
-    const result = await refreshNoticeCountAction();
-    if (result.success) setCount(result.data.count);
+    const mine = ++countRequest.current;
+    try {
+      const result = await refreshNoticeCountAction();
+      if (result.success && mine === countRequest.current) setCount(result.data.count);
+    } catch {
+      // A dropped request keeps the count shown; the next navigation or ping asks again.
+    }
   }, []);
 
   const loadItems = useCallback(async () => {
-    const result = await recentNoticesAction();
-    if (result.success) {
-      setItems(result.data.notices);
-      setFailed(false);
-    } else {
+    try {
+      const result = await recentNoticesAction();
+      if (result.success) {
+        setItems(result.data.notices);
+        setFailed(false);
+      } else {
+        setFailed(true);
+      }
+    } catch {
       setFailed(true);
     }
   }, []);

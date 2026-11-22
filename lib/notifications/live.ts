@@ -12,6 +12,8 @@ import { createSupabaseBrowser } from '@/lib/db/client';
  */
 
 export const PING_DEBOUNCE_MS = 500;
+/** Security review: a refused join (no policy, a bad token) stops retrying after this many errors. */
+export const MAX_JOIN_ERRORS = 3;
 
 export function useNoticePings(userId: string, onPing: () => void): void {
   const latest = useRef(onPing);
@@ -28,6 +30,7 @@ export function useNoticePings(userId: string, onPing: () => void): void {
     }
     let timer: ReturnType<typeof setTimeout> | undefined;
     let closed = false;
+    let errors = 0;
     const channel = supabase
       .channel(`notices:${userId}`, { config: { private: true } })
       .on('broadcast', { event: 'notice' }, () => {
@@ -38,7 +41,13 @@ export function useNoticePings(userId: string, onPing: () => void): void {
     void (async () => {
       try {
         await supabase.realtime.setAuth();
-        if (!closed) channel.subscribe();
+        if (closed) return;
+        channel.subscribe((status) => {
+          if (status !== 'CHANNEL_ERROR') return;
+          errors += 1;
+          // Each retry runs the policy in Postgres: give up quietly, the count still refreshes on navigation.
+          if (errors >= MAX_JOIN_ERRORS) void supabase.removeChannel(channel);
+        });
       } catch {
         // Realtime is a nicety here (AC-10): the page still works without it.
       }

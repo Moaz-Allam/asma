@@ -168,6 +168,18 @@ describe('the copy (AC-12)', () => {
     });
   }
 
+  // Security review M-1 (17's D207): a rating notice never names the job, so its line takes no value at all.
+  const NO_SERVICE = ['rating_received', 'account_approved', 'account_rejected', 'account_suspended'];
+  for (const [locale, messages] of Object.entries(catalogues)) {
+    it(`${locale}: only the kinds allowed to name the service do`, () => {
+      const kinds = (messages as { NoticeKinds: Record<string, Record<string, string>> }).NoticeKinds;
+      for (const kind of NO_SERVICE) {
+        for (const text of Object.values(kinds[kind] ?? {}))
+          expect(text, `${locale} ${kind}`).not.toMatch(/\{\w+\}/);
+      }
+    });
+  }
+
   it('Turkish waits for the translator, marked [tr] (D58, D100)', () => {
     for (const kind of NOTICE_KINDS) {
       expect(tr.NoticeKinds[kind].title.startsWith('[tr] ')).toBe(true);

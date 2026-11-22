@@ -438,8 +438,13 @@ begin
   for v_r in
     select m.* from public.audit_notices(p_audit_id) m where m.o_kind not in ('confirm_email', 'password_changed')
   loop
+    -- Security review M-1 (17's D207): a rating notice never names the job or the service, so a provider cannot tie a
+    -- score to a customer. The mail blanks the same values at send time.
     v_n := v_n + public.insert_notice('notice:' || v_a.id || ':' || v_r.o_recipient || ':' || v_r.o_kind, v_a.region,
-                                      v_r.o_recipient, v_r.o_kind, v_r.o_request, v_r.o_entity, v_r.o_deadline);
+                                      v_r.o_recipient, v_r.o_kind,
+                                      case when v_r.o_kind = 'rating_received' then null else v_r.o_request end,
+                                      case when v_r.o_kind = 'rating_received' then null else v_r.o_entity end,
+                                      v_r.o_deadline);
   end loop;
   return v_n;
 end;
@@ -481,6 +486,9 @@ create function public.audit_log_notice()
   language plpgsql
   security definer
   set search_path = ''
+  -- Security review: a lock wait raises 55P03, which the block below catches, instead of running into a statement
+  -- timeout (57014), which no exception block catches and which would cancel the move itself.
+  set lock_timeout = '250ms'
 as $$
 declare
   v_state  text;
@@ -523,6 +531,7 @@ create function public.applications_offer_notice()
   language plpgsql
   security definer
   set search_path = ''
+  set lock_timeout = '250ms'
 as $$
 declare
   v_state  text;
@@ -781,7 +790,8 @@ begin
     raise exception 'not_found';
   end if;
   if v_n.read_at is null then
-    update public.notifications x set read_at = now() where x.id = v_n.id;
+    -- Code review: a concurrent open or mark all may have read it first; then this is a no op, never invalid_update.
+    update public.notifications x set read_at = now() where x.id = v_n.id and x.read_at is null;
   end if;
   return query select v_n.kind, v_n.request_id, v_n.entity_id;
 end;
@@ -824,6 +834,8 @@ create function public.notifications_ping()
   language plpgsql
   security definer
   set search_path = ''
+  -- Realtime's daily partition work locks realtime.messages: never wait long behind it inside a move.
+  set lock_timeout = '250ms'
 as $$
 begin
   begin
@@ -856,6 +868,8 @@ begin
       using (
         realtime.messages.extension = 'broadcast'
         and (select realtime.topic()) = 'notices:' || (select auth.uid())::text
+        -- Security review: the row's own topic as well, so a row on another topic is never readable through this policy.
+        and realtime.messages.topic = 'notices:' || (select auth.uid())::text
       )
   $p$;
 end;

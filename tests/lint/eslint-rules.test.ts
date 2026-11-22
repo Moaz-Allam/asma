@@ -614,6 +614,42 @@ const CASES: Array<{ name: string; file: string; code: string; rule: string; fir
     rule: 'no-restricted-syntax',
     fires: true,
   },
+  // ── Spec 0011-18 (security review): the Realtime door. ──
+  {
+    name: 'a component joining a Realtime channel',
+    file: 'components/features/notifications/BellMenu.tsx',
+    code: "declare const s: { channel(t: string): void };\nexport const c = s.channel('notices:x');\n",
+    rule: 'no-restricted-syntax',
+    fires: true,
+  },
+  {
+    name: 'a page setting the Realtime token',
+    file: 'app/[locale]/(account)/notifications/page.tsx',
+    code: 'declare const s: { realtime: { setAuth(): void } };\nexport const u = s.realtime.setAuth();\n',
+    rule: 'no-restricted-syntax',
+    fires: true,
+  },
+  {
+    name: 'realtime destructured off a client',
+    file: 'lib/db/client.ts',
+    code: 'declare const s: { realtime: unknown };\nconst { realtime } = s;\nexport const r = realtime;\n',
+    rule: 'no-restricted-syntax',
+    fires: true,
+  },
+  {
+    name: 'lib/notifications/live.ts is the Realtime door',
+    file: 'lib/notifications/live.ts',
+    code: "declare const s: { channel(t: string): unknown; realtime: { setAuth(): void }; removeChannel(c: unknown): void };\nexport const c = s.channel('notices:x');\nexport const u = s.realtime.setAuth();\nexport const r = s.removeChannel(c);\n",
+    rule: 'no-restricted-syntax',
+    fires: false,
+  },
+  {
+    name: 'the Realtime door still may not call supabase.auth',
+    file: 'lib/notifications/live.ts',
+    code: 'declare const s: { auth: { getUser(): void } };\nexport const u = s.auth.getUser();\n',
+    rule: 'no-restricted-syntax',
+    fires: true,
+  },
   // ── Spec 0011-13 AC-1: the email door. ──
   {
     name: 'a Server Action importing the email door',

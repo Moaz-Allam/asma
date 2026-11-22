@@ -14,7 +14,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(77);
+SELECT plan(93);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -297,6 +297,106 @@ SELECT is((SELECT count(*)::integer FROM public.audit_notices(
              (SELECT max(id) FROM public.audit_log WHERE action = 'auth.password_changed' AND entity_id = pg_temp.u('a2')::text))),
           1, 'R-1: the map still names the password mail');
 
+-- More map rows (slice review): the recipients and the deadline each one stores.
+-- please_confirm while auto close is on carries the confirm deadline.
+UPDATE public.platform_settings SET value = 'true' WHERE region = 'TR' AND key = 'auto_close_enabled';
+ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
+UPDATE public.requests SET actual_started_at = now() - interval '2 hours', actual_completed_at = now() - interval '1 hour',
+       confirm_deadline = now() + interval '2 days' WHERE id = pg_temp.r(3);
+ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
+INSERT INTO public.audit_log (actor_id, action, entity_type, entity_id, region, new_value)
+VALUES (pg_temp.u('a1'), 'job.done', 'request', pg_temp.r(3)::text, 'TR', jsonb_build_object('application_id', pg_temp.app(3, 'a1')));
+SELECT is((SELECT deadline_at FROM public.notifications
+            WHERE request_id = pg_temp.r(3) AND kind = 'please_confirm' AND recipient_id = pg_temp.u('c1')),
+          (SELECT confirm_deadline FROM public.requests WHERE id = pg_temp.r(3)),
+  'AC-2: please_confirm, to the customer, with the confirm deadline while auto close is on');
+UPDATE public.platform_settings SET value = 'false' WHERE region = 'TR' AND key = 'auto_close_enabled';
+-- An automatic close: job_completed to the provider, and the rating invite to the customer until the window's end.
+ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
+UPDATE public.requests SET status = 'COMPLETED', closed_at = now() - interval '1 hour', closed_by = 'auto' WHERE id = pg_temp.r(4);
+ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
+INSERT INTO public.audit_log (actor_id, action, entity_type, entity_id, region, new_value)
+VALUES (NULL, 'job.auto_closed', 'request', pg_temp.r(4)::text, 'TR', jsonb_build_object('application_id', pg_temp.app(4, 'a1')));
+SELECT is((SELECT count(*)::integer FROM public.notifications
+            WHERE request_id = pg_temp.r(4) AND kind = 'job_completed' AND recipient_id = pg_temp.u('a1')), 1,
+  'AC-2: job_completed, to the provider');
+SELECT is((SELECT deadline_at FROM public.notifications
+            WHERE request_id = pg_temp.r(4) AND kind = 'rate_provider' AND recipient_id = pg_temp.u('c1')),
+          (SELECT closed_at FROM public.requests WHERE id = pg_temp.r(4))
+            + make_interval(hours => 24 * (public.rating_settings('TR') ->> 'rating_window_days')::integer),
+  'AC-2: rate_provider, to the customer, until the rating window ends');
+-- An admin cancel: the customer and the provider of the pick.
+INSERT INTO public.audit_log (actor_id, action, entity_type, entity_id, region, new_value)
+VALUES (pg_temp.u('ad'), 'request.admin_cancelled', 'request', pg_temp.r(5)::text, 'TR', '{}');
+SELECT is((SELECT array_agg(recipient_id ORDER BY recipient_id) FROM public.notifications
+            WHERE request_id = pg_temp.r(5) AND kind = 'request_cancelled'),
+          (SELECT array_agg(x ORDER BY x) FROM unnest(ARRAY[pg_temp.u('c1'), pg_temp.u('a1')]) x),
+  'AC-2: an admin cancel tells the customer and the chosen provider');
+-- A late payment: the payer of the fee it names.
+INSERT INTO public.audit_log (actor_id, action, entity_type, entity_id, region, new_value)
+VALUES (NULL, 'fee.late', 'fee_payments', pg_temp.cfee(1)::text, 'TR', '{"fee_refund_id": null}');
+SELECT is((SELECT count(*)::integer FROM public.notifications
+            WHERE recipient_id = pg_temp.u('c1') AND kind = 'payment_too_late' AND request_id = pg_temp.r(1)), 1,
+  'AC-2: payment_too_late, to the payer');
+-- A new report: the reporter, and every admin of the region (a second admin here).
+INSERT INTO auth.users (id, aud, role, phone, phone_confirmed_at)
+VALUES (pg_temp.u('ae'), 'authenticated', 'authenticated', '905559370007', now());
+INSERT INTO public.profiles (id, role, region, phone, full_name, locale)
+VALUES (pg_temp.u('ae'), 'admin', 'TR', '+905559370007', 'İkinci Yönetici', 'tr');
+INSERT INTO public.problem_reports (id, region, request_id, reporter_id, against_id, side, reason, text, status)
+VALUES (pg_temp.u('b1'), 'TR', pg_temp.r(1), pg_temp.u('c1'), pg_temp.u('a1'), 'customer', 'poor_work',
+        'The work was left half done and the room was not cleaned.', 'open');
+INSERT INTO public.audit_log (actor_id, action, entity_type, entity_id, region)
+VALUES (pg_temp.u('c1'), 'report.opened', 'problem_report', pg_temp.u('b1')::text, 'TR');
+SELECT is((SELECT count(*)::integer FROM public.notifications
+            WHERE recipient_id = pg_temp.u('c1') AND kind = 'report_received' AND entity_id = pg_temp.u('b1')), 1,
+  'AC-2: report_received, to the reporter');
+SELECT is((SELECT count(*)::integer FROM public.notifications
+            WHERE recipient_id IN (pg_temp.u('ad'), pg_temp.u('ae')) AND kind = 'report_new_admin' AND entity_id = pg_temp.u('b1')), 2,
+  'AC-2: report_new_admin, to each admin of the region');
+SELECT is((SELECT count(*)::integer FROM public.notifications WHERE recipient_id = pg_temp.u('a1') AND entity_id = pg_temp.u('b1')), 0,
+  'AC-2: the reported party gets no notice from the report');
+-- A rating: the provider learns only that one arrived, never which job (security review M-1, 17's D207).
+INSERT INTO public.audit_log (actor_id, action, entity_type, entity_id, region, new_value)
+VALUES (pg_temp.u('c1'), 'rating.created', 'request', pg_temp.r(4)::text, 'TR', jsonb_build_object('application_id', pg_temp.app(4, 'a1')));
+SELECT is((SELECT request_id IS NULL AND entity_id IS NULL FROM public.notifications
+            WHERE recipient_id = pg_temp.u('a1') AND kind = 'rating_received'), true,
+  'M-1: rating_received names no request and no application');
+-- Every audit row of this file left exactly the notices of its map rows.
+SELECT is(
+  (SELECT bool_and((SELECT count(*) FROM public.audit_notices(a.id) m WHERE m.o_kind NOT IN ('confirm_email', 'password_changed'))
+                   = (SELECT count(*) FROM public.notifications n WHERE n.dedupe_key LIKE 'notice:' || a.id || ':%'))
+     FROM public.audit_log a
+    WHERE (a.entity_id IN (SELECT pg_temp.r(i)::text FROM generate_series(1, 7) i)
+           OR a.entity_id IN (pg_temp.u('a2')::text, pg_temp.u('b1')::text, pg_temp.cfee(1)::text))
+      -- The two moves made with notices off (request 4) and with the notice forced to fail (request 5).
+      AND NOT (a.action = 'request.provider_chosen' AND a.entity_id IN (pg_temp.r(4)::text, pg_temp.r(5)::text))),
+  true, 'R-1: every audit row of this file left the notices of its map rows');
+
+-- ══ AC-11: the Realtime policy, as each person ═══════════════════════════════
+-- realtime.topic() is the topic the joining client names; select on realtime.messages is what Realtime runs.
+CREATE FUNCTION pg_temp.rt_seen(p_as text, p_topic_of text) RETURNS integer LANGUAGE plpgsql AS $$
+DECLARE
+  v integer;
+BEGIN
+  IF to_regclass('realtime.messages') IS NULL THEN
+    RETURN -1;
+  END IF;
+  PERFORM set_config('request.jwt.claims', jsonb_build_object('sub', pg_temp.u(p_as), 'role', 'authenticated')::text, true);
+  PERFORM set_config('realtime.topic', 'notices:' || pg_temp.u(p_topic_of)::text, true);
+  SET LOCAL ROLE authenticated;
+  EXECUTE 'SELECT count(*)::integer FROM realtime.messages WHERE topic = $1' INTO v USING 'notices:' || pg_temp.u(p_topic_of)::text;
+  RESET ROLE;
+  PERFORM set_config('realtime.topic', '', true);
+  RETURN v;
+END $$;
+SELECT ok(pg_temp.rt_seen('a1', 'a1') <> 0, 'AC-11: a user reads the pings of their own topic (or Realtime is absent here)');
+SELECT ok(pg_temp.rt_seen('c1', 'a1') IN (0, -1), 'AC-11: a user who names another user''s topic reads none of its pings');
+SELECT ok(CASE WHEN to_regclass('realtime.messages') IS NULL THEN true
+               ELSE (SELECT array_agg(polname::text) FROM pg_policy WHERE polrelid = to_regclass('realtime.messages'))
+                    = ARRAY['aldebyani_notices_read_own'] END,
+  'Security review: ours is the only policy on realtime.messages (permissive policies add up)');
+
 -- ══ AC-5, AC-6: the readers and writers, as each person ══════════════════════
 SELECT is(pg_temp.call_as('c1', 'SELECT public.my_notice_count()::text'),
           (SELECT count(*)::text FROM public.notifications WHERE recipient_id = pg_temp.u('c1') AND read_at IS NULL),
@@ -322,6 +422,11 @@ SELECT is(pg_temp.call_as('c1', format('SELECT count(*)::text FROM public.my_not
             (SELECT id FROM public.notifications WHERE recipient_id = pg_temp.u('a1') LIMIT 1))),
           'not_found', 'AC-5: someone else''s cursor is not found');
 SELECT is(pg_temp.call_as('anon', 'SELECT public.my_notice_count()::text'), '42501', 'R-8: anon cannot count');
+-- AC-5: the count stops at 100.
+INSERT INTO public.notifications (region, recipient_id, kind, dedupe_key)
+SELECT 'TR', pg_temp.u('c2'), 'account_approved', 't37:cap:' || i FROM generate_series(1, 101) i;
+SELECT is(pg_temp.call_as('c2', 'SELECT public.my_notice_count()::text'), '100', 'AC-5: the unread count is capped at 100');
+DELETE FROM public.notifications WHERE dedupe_key LIKE 't37:cap:%';
 
 -- open_notice: marked once, own rows only.
 CREATE TEMP TABLE t37_one AS
@@ -337,6 +442,8 @@ SELECT isnt((SELECT read_at FROM public.notifications WHERE id = (SELECT id FROM
   'AC-6: and marks it read');
 SELECT is(pg_temp.call_as('c1', 'SELECT kind FROM public.open_notice((SELECT id FROM t37_one))'), 'commission_received',
   'AC-6: a second open is fine and keeps the first time');
+SELECT ok((SELECT prosrc LIKE '%x.read_at is null%' FROM pg_proc WHERE oid = 'public.open_notice(uuid)'::regprocedure),
+  'Code review: open_notice updates only an unread row, so a concurrent open or mark all is a no op');
 CREATE TEMP TABLE t37_unread AS
   SELECT count(*)::text AS c FROM public.notifications WHERE recipient_id = pg_temp.u('c1') AND read_at IS NULL;
 SELECT is(pg_temp.call_as('c1', 'SELECT public.mark_all_notices_read()::text'), (SELECT c FROM t37_unread),
@@ -405,6 +512,13 @@ SELECT ok((SELECT bool_and(p.prosecdef) FROM pg_proc p JOIN pg_namespace n ON n.
                                 'notifications_ping', 'my_notices', 'my_notice_count', 'open_notice', 'mark_all_notices_read',
                                 'notices_housekeeping')),
   'Security model: the trigger bodies and the readers are security definer');
+
+SELECT is((SELECT array_agg(p.proname::text ORDER BY p.proname)
+             FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+            WHERE n.nspname = 'public' AND 'lock_timeout=250ms' = ANY (coalesce(p.proconfig, '{}'))
+              AND p.proname IN ('applications_offer_notice', 'audit_log_notice', 'notifications_ping')),
+          ARRAY['applications_offer_notice', 'audit_log_notice', 'notifications_ping'],
+  'Security review: the notice bodies inside a move wait at most 250ms for a lock, which their block catches');
 
 -- ══ R-3: the two when lists ══════════════════════════════════════════════════
 SELECT is(

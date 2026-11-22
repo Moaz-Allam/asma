@@ -237,13 +237,25 @@ const STORAGE_DOOR_SELECTORS = [
   { selector: "ObjectPattern > Property[key.name='storage']", message: storageMessage },
 ];
 
-/** no-restricted-syntax for one door: its secrets, its modules by import() or require(), env access, Auth, Storage. */
+// Spec 0011-18 (security review): only lib/notifications/live.ts joins a Realtime channel or sets its token, so the one
+// private topic and its teardown live in one place.
+const realtimeMessage =
+  'Only lib/notifications/live.ts calls Realtime (spec 0011-18). Use useNoticePings, or add a door for a new channel.';
+const REALTIME_DOOR_SELECTORS = [
+  { selector: "MemberExpression[property.name='realtime']", message: realtimeMessage },
+  { selector: "ObjectPattern > Property[key.name='realtime']", message: realtimeMessage },
+  { selector: "CallExpression[callee.property.name='channel']", message: realtimeMessage },
+  { selector: "CallExpression[callee.property.name='removeChannel']", message: realtimeMessage },
+];
+
+/** no-restricted-syntax for one door: its secrets, its modules by import() or require(), env access, Auth, Storage, Realtime. */
 function restrictedSyntax({
   exempt = [],
   modules = {},
   envAccess = false,
   auth = false,
   storage = false,
+  realtime = false,
 } = {}) {
   return [
     'error',
@@ -252,6 +264,7 @@ function restrictedSyntax({
     ...(envAccess ? [] : ENV_ACCESS),
     ...(auth ? [] : AUTH_DOOR_SELECTORS),
     ...(storage ? [] : STORAGE_DOOR_SELECTORS),
+    ...(realtime ? [] : REALTIME_DOOR_SELECTORS),
     ...NO_GET_SESSION,
   ];
 }
@@ -346,6 +359,10 @@ const config = [
   },
   // ── Storage door (spec 0006 AC-26). ──
   { files: ['lib/storage/**'], rules: { 'no-restricted-syntax': restrictedSyntax({ storage: true }) } },
+  {
+    files: ['lib/notifications/live.ts'],
+    rules: { 'no-restricted-syntax': restrictedSyntax({ realtime: true }) },
+  },
   // ── Telemetry doors (spec 0004 AC-8). ──
   {
     files: OBSERVABILITY_DOOR,

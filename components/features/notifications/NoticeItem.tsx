@@ -31,10 +31,18 @@ export function NoticeItem({
     event.preventDefault();
     if (busy) return;
     setBusy(true);
-    const result = await openNoticeAction({ id: notice.id });
+    // Code review: a dropped request still follows the server rendered link, and never leaves the row stuck busy.
+    let href = notice.href;
+    try {
+      const result = await openNoticeAction({ id: notice.id });
+      if (result.success) href = result.data.href;
+    } catch {
+      // The link was computed on the server too; follow it.
+    } finally {
+      setBusy(false);
+    }
     onOpened?.();
-    router.push(result.success ? result.data.href : notice.href);
-    setBusy(false);
+    router.push(href);
   }
 
   return (
@@ -61,7 +69,7 @@ export function NoticeItem({
         </span>
         <span className="text-meta text-text-secondary">{notice.line}</span>
       </span>
-      <span className="shrink-0 text-chip text-text-muted">{notice.ago}</span>
+      <span className="shrink-0 text-chip text-text-secondary">{notice.ago}</span>
     </Link>
   );
 }
