@@ -145,7 +145,7 @@ download from Sentry's CDN) and `core-js` 3.51.0 (a donation banner, through `po
 | Layer | Package · version | Why this version |
 | --- | --- | --- |
 | Runtime | Node 24 LTS (`.nvmrc`), npm 11 | Matches local and CI |
-| App | `next` 16.4.3 · `react` / `react-dom` 19.2.8 · `typescript` 5.9.3 | TS 7 failed CI (dependabot PR). `next` 16.4.3 (2026-10-28, D66): 16.3.1 had critical unauthenticated remote code execution advisories |
+| App | `next` 16.4.6 · `react` / `react-dom` 19.2.8 · `typescript` 5.9.3 | TS 7 failed CI (dependabot PR). `next` 16.4.3 (2026-10-28, D66): 16.3.1 had critical unauthenticated remote code execution advisories. `next` 16.4.6 (2026-11-22, D216, D221): 16.0.0 to 16.4.4 carry seven moderate advisories (cache disclosure and poisoning, an SVG bypass, an Edge cookie leak); the build refused to run on 16.4.3 |
 | i18n | `next-intl` 4.13.7 | |
 | Data | `@supabase/supabase-js` 2.112.3 · `@supabase/ssr` 0.12.4 · `server-only` 0.0.1 | |
 | Errors, traces, logs | `@sentry/nextjs` 10.75.2 (brings `@sentry/cli` 2.58.6) | Spec 0004 AC-20: the lowest version with Turbopack source map upload and Sentry Logs with `beforeSendLog`, raised to the first one clear of the critical tunnel advisory GHSA-mchm-gjx6-7h55 (every 10.x below 10.75.2). Released 2026-09-22. Owner choice 2026-10-28. Imported only in `lib/observability/` |
@@ -153,7 +153,7 @@ download from Sentry's CDN) and `core-js` 3.51.0 (a donation banner, through `po
 | Validation | `zod` 4.6.7 | Below 4.6.6, oversized constrained collections can exhaust memory (advisory, D66) |
 | Styling | `tailwindcss` + `@tailwindcss/postcss` 4.3.3 | B4 resolved 2026-10-25 (D48). Tokens in `app/globals.css`, fonts in `lib/fonts.ts` |
 | UI primitives | `radix-ui` 1.8.1 · `input-otp` 1.5.0 · `class-variance-authority` 0.7.1 · `clsx` 2.1.1 · `tailwind-merge` 3.7.0 · `lucide-react` 1.59.0 · shadcn CLI 4.21.5 (through `npx`, never installed) | Spec 0005 AC-18, D105. Never `shadcn init`: it writes its own palette. `components.json` is by hand; read what `add` writes. None has an install script |
-| Lint | `eslint` 9.39.5 · `eslint-config-next` 16.4.3 · `typescript-eslint` 8.67.0 | ESLint 10 crashes eslint-config-next's react plugin; held at 9 (dependabot ignores ≥10) |
+| Lint | `eslint` 9.39.5 · `eslint-config-next` 16.4.6 · `typescript-eslint` 8.67.0 | ESLint 10 crashes eslint-config-next's react plugin; held at 9 (dependabot ignores ≥10) |
 | Format, pre commit | `prettier` 3.9.9 · `husky` 9.1.7 · `lint-staged` 17.6.0 | Owner pinned |
 | Unit tests | `vitest` 5.0.5 · `fast-check` 4.10.2 | Owner pinned vitest (5.0.5 for an advisory in `@vitest/mocker`, D66); fast-check for money property tests |
 | End to end | `@playwright/test` 1.63.0 · `@axe-core/playwright` 4.13.0 · override `playwright-core` 1.63.0 | Owner pinned Playwright; axe 4.14.0 was 2 days old; the override stops axe's open peer range pulling a second `playwright-core` |
