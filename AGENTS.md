@@ -110,6 +110,13 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   append only tables, a consistency trigger, two mails. Migration `20261130090000_ratings` pushed with the CLI right before
   the merge. Also fixes 16's revenue default range (D208). Merged on GitHub's checks with the repo public for the run, then
   private again (D202 route). Carry overs R23, two of them owner decisions before G1. Next: 18.
+- 2026-11-22 · **18 merged** (spec 0011-18, PR #60, `412ad4c`, D209 to D212): the in app notification centre and live
+  status. Notices ride 13's recipient map (`audit_notices`, one map for mail and notices), each channel with its own trigger;
+  ids only, rendered when read; the bell in every signed in header and `/notifications`; an empty ping per notice on the
+  private Realtime topic `notices:<uid>` (policy `aldebyani_notices_read_own`), `lib/notifications/live.ts` the lint
+  enforced Realtime door. Migration `20261201090000_notification_centre` pushed with the CLI right before the merge and read
+  back. Merged on GitHub's checks with the repo public for the run, then private again (D202 route, owner's choice). S45
+  owed (Realtime public access off). Carry overs R24. Next: 19.
 
 ## Stack (pinned exactly)
 
