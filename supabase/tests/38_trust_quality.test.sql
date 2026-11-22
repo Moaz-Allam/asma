@@ -15,7 +15,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(156);
+SELECT plan(157);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -513,7 +513,9 @@ SELECT is((public.admin_quality_flags(1) ->> 'total')::integer, (SELECT count(*)
 SELECT ok(NOT EXISTS (SELECT 1 FROM jsonb_array_elements(public.admin_quality_flags(1) -> 'rows') x
                        WHERE x ->> 'id' = pg_temp.flag('a1', 'high_cancellations')::text),
   'AC-10: a handled flag leaves the list');
-SELECT is((SELECT x - 'approved_at' - 'provider_name' FROM jsonb_array_elements(public.admin_probation(1) -> 'rows') x
+-- Every page is read, so providers an e2e run left on probation in a local database cannot push a5 off page 1.
+SELECT is((SELECT x - 'approved_at' - 'provider_name' FROM generate_series(1, 50) pg,
+                   jsonb_array_elements(public.admin_probation(pg) -> 'rows') x
             WHERE x ->> 'provider_id' = pg_temp.u('a5')::text),
   jsonb_build_object('provider_id', pg_temp.u('a5'), 'region', 'TR', 'timezone', 'Europe/Istanbul', 'jobs_done', 1,
                      'jobs_needed', 5, 'live', 0, 'live_limit', 2, 'reports', 1, 'open_flags', 0),
@@ -662,6 +664,14 @@ SELECT results_eq(
   $$ SELECT c.relname::text COLLATE "default", c.relrowsecurity FROM pg_class c
       WHERE c.oid IN ('public.quality_flags'::regclass, 'public.probation_waivers'::regclass) ORDER BY c.relname COLLATE "C" $$,
   $$ VALUES ('probation_waivers'::text, true), ('quality_flags', true) $$, 'AC-18: RLS on both tables');
+-- Security review G-2 (2026-11-22): no API role holds any privilege on either table, so a later grant is caught here.
+SELECT is_empty(
+  $$ SELECT r.rolname || ' ' || t.tbl || ' ' || p.priv
+       FROM (VALUES ('anon'), ('authenticated'), ('service_role')) AS r(rolname),
+            (VALUES ('public.quality_flags'), ('public.probation_waivers')) AS t(tbl),
+            (VALUES ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE'), ('REFERENCES'), ('TRIGGER')) AS p(priv)
+      WHERE has_table_privilege(r.rolname, t.tbl, p.priv) $$,
+  'AC-18, G-2: anon, authenticated and service_role hold no privilege on quality_flags or probation_waivers');
 SELECT results_eq(
   $$ SELECT jobname::text COLLATE "default", schedule::text COLLATE "default", command::text COLLATE "default" FROM cron.job
       WHERE jobname IN ('providers-quality-flags', 'providers-document-reminders') ORDER BY jobname COLLATE "C" $$,
