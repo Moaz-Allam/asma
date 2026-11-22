@@ -71,10 +71,42 @@ export function normalizePhone(input: string, dialCode: string): NormalizedPhone
 }
 
 /**
+ * Spec 0013 (D224): extra dial codes the form lets through, for numbers on the database's `test_phones` list only.
+ * Empty unless `NEXT_PUBLIC_PHONE_TEST_DIAL_CODES` is set (for example `+20`); the before_user_created hook still
+ * refuses any number that is not listed, so this only stops the browser refusing it first.
+ */
+export function testDialCodes(
+  raw: string | undefined = process.env.NEXT_PUBLIC_PHONE_TEST_DIAL_CODES,
+): string[] {
+  return (raw ?? '')
+    .split(',')
+    .map((code) => code.trim())
+    .filter((code) => /^\+[1-9][0-9]{0,3}$/.test(code));
+}
+
+/** A number typed with a `+` and one of the test dial codes, as E.164; null when it is not one of those. */
+export function normalizeTestPhone(input: string, codes: readonly string[]): NormalizedPhone | null {
+  if (codes.length === 0) return null;
+  const typed = foldDigits(input).replace(NOISE, '').replace(/^00/, '+');
+  if (!typed.startsWith('+')) return null;
+  const digits = typed.slice(1).replace(/\D/g, '');
+  if (!codes.some((code) => digits.startsWith(code.slice(1)))) return null;
+  const phone = `+${digits}`;
+  return /^\+[1-9][0-9]{7,14}$/.test(phone) ? { ok: true, phone } : { ok: false, reason: 'too_short' };
+}
+
+/**
  * The same, against every active region: the first that accepts the number wins, else the first answer.
  * One region at launch; switching KSA on is a data change, so `+966 ...` then simply works (AC-3).
+ * Since spec 0013, a number no region accepts is tried against the test dial codes last.
  */
-export function normalizeForRegions(input: string, dialCodes: readonly string[]): NormalizedPhone {
+export function normalizeForRegions(
+  input: string,
+  dialCodes: readonly string[],
+  testCodes: readonly string[] = testDialCodes(),
+): NormalizedPhone {
   const results = dialCodes.map((dialCode) => normalizePhone(input, dialCode));
-  return results.find((result) => result.ok) ?? results[0] ?? { ok: false, reason: 'other_country' };
+  const found = results.find((result) => result.ok);
+  if (found) return found;
+  return normalizeTestPhone(input, testCodes) ?? results[0] ?? { ok: false, reason: 'other_country' };
 }
