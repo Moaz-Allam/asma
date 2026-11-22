@@ -38,6 +38,7 @@ through tokens (pills, 2px borders, the radius scale) before registering it.
 | Switch | `components/ui/switch.tsx` | ✅ the thumb is written to move the other way in RTL | ✅ checked on `/ar/account` (01b) | `NotificationTable`. Inside a form Radix adds a hidden input, `absolute` and moved `translateX(-100%)`: give the box around the switches `relative` (with its `overflow-hidden`), or in RTL the page scrolls sideways (found by 01b's e2e) |
 | Accordion | `components/ui/accordion.tsx` | ✅ content stays mounted and CSS hides it, so answers are in the server HTML (AC-29) | ✅ | landing FAQ |
 | Sheet | `components/ui/sheet.tsx` | ✅ sides `start`, `end`, `top`, `bottom`; `closeLabel` required | ⚠️ needs RTL check | `PublicMenu` |
+| Popover | `components/ui/popover.tsx` | ✅ by hand on our tokens (`rounded-card border-2 bg-surface shadow-overlay`), `align` defaults to `end`, 16px collision padding. The pinned CLI's `add popover` imported an npm package `cn` and the shadcn palette, so it was not kept (D210) | ✅ | `BellMenu` |
 
 Added at shadcn CLI 4.21.5 with a hand written `components.json`, because `init` writes its own palette. No
 animation classes: the design adds no motion, and `tw-animate-css` is not installed.
@@ -166,8 +167,9 @@ Domain components. Path: `components/features/<domain>/`.
 
 | Component | Purpose | Design ref | Status | RTL | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `BellMenu` | Bell with count badge and dropdown | s13, p15 | 📋 planned | — | `shadow-overlay`; each item opens its request |
-| `NotificationList` | Full page, grouped by day | s13, p15 | 📋 planned | — | Unread dot `bg-alert` |
+| `BellMenu` | Bell with count badge and popover of the latest five (`components/features/notifications/BellMenu.tsx`) | s13, p15 | ✅ built (18) | ✅ | Client component: the shell passes the server's count; it asks again on a path change, a ping and an open (spec 0011-18 AC-8, X-3). 40px `bg-surface-secondary` circle, 18px `bg-alert` badge, `99+` from 100; the accessible name says the count. Holds the live subscription (`useNoticePings`) |
+| `NotificationList` | Full page, grouped Today and Earlier by the region's day (`components/features/notifications/NotificationList.tsx`) | s13, p15 | ✅ built (18) | ✅ | Server component; rows are `NoticeItem` |
+| `NoticeItem` | One notice: a link to its page, unread dot, title, line, time ago (`components/features/notifications/NoticeItem.tsx`) | s13, p15 | ✅ built (18) | ✅ | Opening marks it read first and follows the database's link; without script the link still works. Unread is never colour alone (dot, bold title, "Unread" for screen readers) |
 | `EmailNudge` | A quiet note asking for a confirmed email, linking to `/account`; never a block (`components/shared/EmailNudge.tsx`) | — (no design ref; `rounded-row bg-accent-light`, a white pill) | ✅ built (13) | ✅ | Spec 0011-13 AC-4: My requests and the choose dialog while mail is on; the feed and the apply page while the apply gate is on. Strings from the caller |
 | `EmailLinkButton` | "Send link again": a `type="button"` that calls `requestEmailConfirmation` and shows the sent line or the refusal (`components/features/account/EmailLinkButton.tsx`) | s12 | ✅ built (13) | ✅ | Inside the account form it never submits the form; shown only while mail is on |
 | `ConfirmEmailForm` | The confirm page's one button (a POST through `confirmEmail`), the done line, or one refusal (`invalid_link`, `link_expired`, `link_used`) with "Send link again" (`components/features/account/ConfirmEmailForm.tsx`) | — (s12 styles) | ✅ built (13) | ✅ | Opening the link changes nothing, so a mail scanner confirms no address (AC-7) |
@@ -221,7 +223,7 @@ Domain components. Path: `components/features/<domain>/`.
 | `GlobalError` | `app/global-error.tsx` | Last resort for a crash outside the locale layout: own `<html>`, locale from the path (`localeOfPath`), `Error` copy from each catalogue | s17 | ✅ done · ⚠️ restyle to the design |
 | `RootLayout` | `app/[locale]/layout.tsx` | `lang={locale}` + `dir={dirFor(locale)}`, **derived, never hardcoded**; providers; `setRequestLocale` | — | ✅ done (fonts per `ui-rules.md` §12 still to load) |
 | `LocaleSwitcher` | `components/layout/LocaleSwitcher.tsx` | ar / tr / en as a pill group; persists to the cookie, and to `profiles.locale` with `signedIn` | s12 | ✅ done |
-| `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, `NavLinks`, avatar; signed-out pills. No bell before 18 | s1, s3, s6 | ✅ done |
+| `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, `NavLinks`, the bell (18, `notices` prop), avatar; signed-out pills | s1, s3, s6 | ✅ done |
 | `FlowHeader` | `components/layout/FlowHeader.tsx` | `Stepper` at the start, cancel or back at the end (the wordmark stays in `AppShell`) | s4, s5, s7 | ✅ built (04) |
 | `BottomTabBar` | `components/layout/BottomTabBar.tsx` | Phone: three tabs, fixed, from `lib/navigation/menus.ts` | s18, p18 | ✅ done |
 | `SiteFooter` | `components/layout/SiteFooter.tsx` | Copyright, legal links, join link, support link, language | s1 | ✅ done |

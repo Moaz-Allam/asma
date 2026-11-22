@@ -568,6 +568,11 @@ SELECT set_eq(
             ('public.my_warning()'),
             ('public.open_report(uuid, text, text)'),
             ('public.report_photo_allowed(text, boolean)'),
+            -- Spec 0011-18 AC-5, AC-6: the caller's own notices, their count, open one, mark all read.
+            ('public.my_notices(uuid, integer)'),
+            ('public.my_notice_count()'),
+            ('public.open_notice(uuid)'),
+            ('public.mark_all_notices_read()'),
             -- Spec 0011-13 AC-7: the signed in owner asks for a link and confirms an address.
             ('public.request_email_confirmation()'),
             ('public.confirm_email(text)'),

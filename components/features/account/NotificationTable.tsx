@@ -8,7 +8,8 @@ import { Switch } from '@/components/ui/switch';
 import type { NoticeRow, Topic } from '@/lib/notifications/topics';
 
 /**
- * Which notices reach the email (`s12`, spec 0005 AC-32). Email only: no SMS and no in site column. A row
+ * Which notices reach the email (`s12`, spec 0005 AC-32). Email only: no SMS and no in site column (in app every
+ * notice is kept, spec 0011-18 R-4). A row
  * with a topic has a switch; the rest are always on and shown that way, with no switch to pretend otherwise.
  */
 export function NotificationTable({
@@ -44,6 +45,8 @@ export function NotificationTable({
       <div className="flex flex-col gap-3">
         <h2 className="font-display text-subhead text-text-primary">{t('noticesTitle')}</h2>
         <p className="text-meta leading-loose font-normal text-text-secondary">{t('noticesIntro')}</p>
+        {/* Spec 0011-18 AC-12: these switches are for email; in app every notice is kept. */}
+        <p className="text-meta leading-loose font-normal text-text-secondary">{t('noticesInApp')}</p>
       </div>
 
       {/* `relative`: each Radix switch in a form renders a hidden input, absolute and moved `translateX(-100%)`. In RTL

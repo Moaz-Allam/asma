@@ -362,7 +362,8 @@
         "bot_check_failed": "[tr] The security check did not pass. Try again.",
         "limit_ip": "[tr] Too many attempts from this connection. Wait a few minutes and try again."
       }
-    }
+    },
+    "noticesInApp": "[tr] Every notice also appears in your notifications."
   },
   "Legal": {
     "termsTitle": "[tr] Terms",
@@ -2113,5 +2114,129 @@
       "action_failed": "[tr] Something went wrong. Please try again."
     },
     "firstPage": "[tr] Back to the newest ratings"
+  },
+  "Notices": {
+    "bell": "[tr] Notifications",
+    "bellUnread": "[tr] Notifications, {count} unread",
+    "title": "[tr] Notifications",
+    "viewAll": "[tr] View all",
+    "emptyTitle": "[tr] Nothing yet",
+    "empty": "[tr] When something happens on your requests or your account, it shows here.",
+    "today": "[tr] Today",
+    "earlier": "[tr] Earlier",
+    "markAll": "[tr] Mark all as read",
+    "unreadTitle": "[tr] Unread",
+    "unreadHint": "[tr] A notification is marked read when you open it.",
+    "channelsTitle": "[tr] Email",
+    "channelsBody": "[tr] Important notices also reach your email once it is confirmed. Choose which ones on your account page.",
+    "channelsLink": "[tr] Edit on my account",
+    "showOlder": "[tr] Show older",
+    "unread": "[tr] Unread",
+    "loadFailed": "[tr] We could not load your notifications. Try again.",
+    "yourRequest": "[tr] your request",
+    "openFailed": "[tr] We could not open this notification. Try again."
+  },
+  "NoticeKinds": {
+    "new_offer": {
+      "title": "[tr] New offer",
+      "line": "[tr] A provider sent an offer on {service}."
+    },
+    "chosen": {
+      "title": "[tr] You were chosen",
+      "line": "[tr] The customer chose you for {service}. They pay the commission first, then you pay your fee."
+    },
+    "pay_your_fee": {
+      "title": "[tr] Pay your fee to see the contact details",
+      "line": "[tr] The customer paid for {service}. Pay your fee to see each other's contact details.",
+      "lineDeadline": "[tr] The customer paid for {service}. Pay your fee by {deadline} to see each other's contact details."
+    },
+    "commission_received": {
+      "title": "[tr] Commission received",
+      "line": "[tr] Your commission for {service} is paid. Now the provider pays their fee."
+    },
+    "contacts_ready": {
+      "title": "[tr] Contact details are open",
+      "line": "[tr] Both fees are paid for {service}. You can now see each other's contact details."
+    },
+    "job_started": {
+      "title": "[tr] Work started",
+      "line": "[tr] The provider started the work on {service}."
+    },
+    "please_confirm": {
+      "title": "[tr] Work done, please confirm",
+      "line": "[tr] The provider marked {service} as done. Please confirm the job.",
+      "lineDeadline": "[tr] The provider marked {service} as done. Confirm it by {deadline}, or it closes by itself."
+    },
+    "job_completed": {
+      "title": "[tr] Job completed",
+      "line": "[tr] The job for {service} is completed."
+    },
+    "request_cancelled": {
+      "title": "[tr] Request cancelled",
+      "line": "[tr] {service} was cancelled. Open it to see what happens to the fees."
+    },
+    "pick_again": {
+      "title": "[tr] Your chosen provider did not go ahead",
+      "line": "[tr] The provider you chose for {service} did not go ahead. You can choose another offer."
+    },
+    "pick_ended": {
+      "title": "[tr] The choice ended",
+      "line": "[tr] The customer did not pay for {service} in time, so their choice of you ended."
+    },
+    "window_missed": {
+      "title": "[tr] Your pay window ended",
+      "line": "[tr] The time to pay your fee for {service} ended, so the customer can choose someone else."
+    },
+    "payment_too_late": {
+      "title": "[tr] Your payment came too late",
+      "line": "[tr] Your payment for {service} arrived after the window closed. It is being refunded."
+    },
+    "fee_refunded": {
+      "title": "[tr] Fee refunded",
+      "line": "[tr] A fee for {service} was refunded."
+    },
+    "account_approved": {
+      "title": "[tr] Your account is approved",
+      "line": "[tr] You can now apply to requests that match your services and districts."
+    },
+    "account_rejected": {
+      "title": "[tr] Your account was not approved",
+      "line": "[tr] Open your profile to see why and what to change."
+    },
+    "account_suspended": {
+      "title": "[tr] Your account is suspended",
+      "line": "[tr] Open your profile to see the reason."
+    },
+    "pay_window_closing": {
+      "title": "[tr] Your pay window is closing",
+      "line": "[tr] The time to pay for {service} is running out.",
+      "lineDeadline": "[tr] Pay for {service} by {deadline}."
+    },
+    "closes_soon": {
+      "title": "[tr] The job closes by itself soon",
+      "line": "[tr] Confirm {service} or report a problem before it closes.",
+      "lineDeadline": "[tr] {service} closes by itself on {deadline}. Confirm it or report a problem before then."
+    },
+    "report_received": {
+      "title": "[tr] We received your report",
+      "line": "[tr] Your report about {service} reached us. We will look at it."
+    },
+    "report_new_admin": {
+      "title": "[tr] New problem report",
+      "line": "[tr] A problem was reported on {service}."
+    },
+    "report_handled": {
+      "title": "[tr] Your report was handled",
+      "line": "[tr] We handled your report about {service}. Open it to see the outcome."
+    },
+    "rate_provider": {
+      "title": "[tr] Rate your provider",
+      "line": "[tr] How did {service} go? Rating is optional.",
+      "lineDeadline": "[tr] How did {service} go? You can rate until {deadline}. It is optional."
+    },
+    "rating_received": {
+      "title": "[tr] You received a rating",
+      "line": "[tr] A customer rated your work."
+    }
   }
 }

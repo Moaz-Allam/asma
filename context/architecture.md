@@ -1116,6 +1116,8 @@ Application status is derived from the request lifecycle and updated **in the sa
 
 ### `notifications` — full definition
 
+> **v5 (2026-11-22, spec 0011-18, D209, D210):** superseded. As built: ids only, rendered when read (no `title`, `body`, `link_url` or `channels_sent`); `region`, `kind` (24 kinds), `request_id`, `entity_id`, `deadline_at`, `dedupe_key`, `created_at`, `read_at`. Written by triggers on `audit_log` and `applications` from the same recipient map as mail (`audit_notices`), read only through four definer functions; live pings on the private Realtime topic `notices:<uid>`. The spec wins.
+
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | uuid PK | |
