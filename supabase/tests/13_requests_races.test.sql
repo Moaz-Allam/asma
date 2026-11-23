@@ -69,8 +69,8 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
 CREATE FUNCTION pg_temp.post_sql(p_key text, p_hour integer) RETURNS text LANGUAGE sql STABLE AS $$
   SELECT format($q$ SELECT public.create_request(%L, '00000000-0000-0000-0000-000000130051',
                     '00000000-0000-0000-0000-000000130021', NULL, '{}',
-                    ((now() AT TIME ZONE 'Europe/Istanbul')::date + 1), %s, 'Moda Cad. No 5', NULL, 100000, 10000)::text $q$,
-                p_key, p_hour) $$;
+                    ((now() AT TIME ZONE 'Europe/Istanbul')::date + 1), %s, %L, NULL, 100000, 10000)::text $q$,
+                p_key, p_hour, '{"mahalle": "Caferağa", "street": "Moda Cad.", "building_no": "5"}') $$;
 
 SELECT extensions.dblink_connect('a', pg_temp.conn());
 SELECT extensions.dblink_connect('b', pg_temp.conn());

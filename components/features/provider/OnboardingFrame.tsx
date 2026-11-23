@@ -4,8 +4,8 @@ import type { ReactNode } from 'react';
 import { Stepper } from '@/components/shared/Stepper';
 
 /**
- * The frame of the two onboarding steps (`p2`, `p3`): the stepper, the gate line, the title and intro, the
- * form, and a side panel. Two steps: `p4` moved to position 05 (D111).
+ * The frame of the onboarding steps (`p2`, `p3`): the stepper, the gate line, the title and intro, the form, and a
+ * side panel. Three steps: the profile, the address (spec 0011-20b X-13) and the documents; `p4` moved to 05 (D111).
  */
 export async function OnboardingFrame({
   step,
@@ -14,7 +14,7 @@ export async function OnboardingFrame({
   aside,
   children,
 }: {
-  step: 1 | 2;
+  step: 1 | 2 | 3;
   title: string;
   intro: string;
   aside: ReactNode;
@@ -28,8 +28,13 @@ export async function OnboardingFrame({
         steps={[
           { label: t('steps.profile'), state: step === 1 ? 'current' : 'done', href: '/provider/profile' },
           {
+            label: t('steps.address'),
+            state: step === 2 ? 'current' : step > 2 ? 'done' : 'next',
+            href: '/provider/profile/address',
+          },
+          {
             label: t('steps.documents'),
-            state: step === 2 ? 'current' : 'next',
+            state: step === 3 ? 'current' : 'next',
             href: '/provider/profile/documents',
           },
         ]}

@@ -1,4 +1,6 @@
-import { test as base, type Request } from '@playwright/test';
+import { test as base, type Page, type Request } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 
 /**
@@ -72,6 +74,43 @@ function decodePostHog(request: Request): PostHogEvent[] {
   }
 }
 
+/**
+ * Spec 0011-20b AC-12, X-22: MapTiler answered in the browser, never the real service. A blank style for the map, the
+ * recorded geocoding answers (tests/fixtures/maptiler) for search and the pin; anything else is a 404.
+ */
+export const MAPTILER_ORIGIN = 'https://api.maptiler.com';
+const MAPTILER_REVERSE = readFileSync(
+  join(process.cwd(), 'tests/fixtures/maptiler/reverse-moda.json'),
+  'utf8',
+);
+const MAPTILER_FORWARD = readFileSync(
+  join(process.cwd(), 'tests/fixtures/maptiler/forward-kadikoy.json'),
+  'utf8',
+);
+const BLANK_STYLE = JSON.stringify({
+  version: 8,
+  sources: {},
+  layers: [{ id: 'background', type: 'background', paint: { 'background-color': 'rgb(240, 240, 240)' } }],
+});
+export const mapTilerCalls: string[] = [];
+export async function stubMapTiler(page: Page) {
+  await page.route(`${MAPTILER_ORIGIN}/**`, (route) => {
+    const url = new URL(route.request().url());
+    mapTilerCalls.push(url.pathname);
+    if (url.pathname.endsWith('/style.json'))
+      return route.fulfill({ status: 200, contentType: 'application/json', body: BLANK_STYLE });
+    if (url.pathname.startsWith('/geocoding/')) {
+      const reverse = /^\/geocoding\/-?[0-9.]+,-?[0-9.]+\.json$/.test(url.pathname);
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: reverse ? MAPTILER_REVERSE : MAPTILER_FORWARD,
+      });
+    }
+    return route.fulfill({ status: 404, body: '' });
+  });
+}
+
 export const test = base.extend<{ telemetry: Telemetry }>({
   telemetry: [
     async ({ page, baseURL }, use) => {
@@ -86,7 +125,7 @@ export const test = base.extend<{ telemetry: Telemetry }>({
 
       page.on('request', (request) => {
         const url = request.url();
-        const expected = [origin, SUPABASE_ORIGIN, TURNSTILE_ORIGIN, 'blob:', 'data:'];
+        const expected = [origin, SUPABASE_ORIGIN, TURNSTILE_ORIGIN, MAPTILER_ORIGIN, 'blob:', 'data:'];
         if (!expected.some((start) => url.startsWith(start))) telemetry.offOrigin.push(url);
       });
       await page.addInitScript(() => {
@@ -100,6 +139,7 @@ export const test = base.extend<{ telemetry: Telemetry }>({
           window.__cspViolations?.push(`${event.violatedDirective} ${event.blockedURI}`);
         });
       });
+      await stubMapTiler(page);
       await page.route(`${TURNSTILE_ORIGIN}/**`, (route) =>
         route.fulfill({ status: 200, contentType: 'text/javascript', body: TURNSTILE_STUB }),
       );

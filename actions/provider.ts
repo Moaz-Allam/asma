@@ -4,12 +4,14 @@ import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { z } from 'zod';
 
+import { ProviderAddressInput } from '@/lib/address/parts';
 import { fail, guardedAction } from '@/lib/auth/action';
 import { log } from '@/lib/observability/log';
 import { databaseCode, PROVIDER_DB_CODES } from '@/lib/provider/codes';
 import {
   acceptDocsConsentInDb,
   registerDocumentInDb,
+  saveAddressInDb,
   saveProfileInDb,
   submitFileInDb,
 } from '@/lib/provider/db';
@@ -46,6 +48,17 @@ export const saveProviderProfile = guardedAction(
       });
       revalidatePath('/', 'layout');
       return result;
+    }),
+);
+
+/** Spec 0011-20b AC-5: the provider's own address (any standing). The parts and the pin only; Postgres checks them. */
+export const saveProviderAddress = guardedAction(
+  { name: 'saveProviderAddress', access: ['provider'], schema: ProviderAddressInput },
+  async (input) =>
+    mapped(async () => {
+      await saveAddressInDb(input);
+      revalidatePath('/', 'layout');
+      return { saved: true };
     }),
 );
 

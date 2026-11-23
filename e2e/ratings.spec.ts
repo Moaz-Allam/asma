@@ -131,10 +131,10 @@ function seedJob(locale: string, f: ReturnType<typeof ids>) {
       ` perform set_config('pricing.publishing', 'off', true);` +
       request(f, 1, customer, provider) +
       ` perform set_config('request.jwt.claims', json_build_object('sub', ${customer}, 'role', 'authenticated')::text, true);` +
-      ` perform public.choose_provider('${f.request(1)}', '${f.offer(1)}', 'draft-1');` +
-      ` perform public.pay_commission('${f.request(1)}', 'tr', null, 'draft-1');` +
+      ` perform public.choose_provider('${f.request(1)}', '${f.offer(1)}', 'draft-2');` +
+      ` perform public.pay_commission('${f.request(1)}', 'tr', null, 'draft-2');` +
       ` perform set_config('request.jwt.claims', json_build_object('sub', ${provider}, 'role', 'authenticated')::text, true);` +
-      ` v_attempt := (public.pay_provider_fee('${f.offer(1)}', 'tr', null, 'draft-1') ->> 'attempt_id')::uuid;` +
+      ` v_attempt := (public.pay_provider_fee('${f.offer(1)}', 'tr', null, 'draft-2') ->> 'attempt_id')::uuid;` +
       ` select id, amount into v_fee, v_amount from public.fee_payments where request_id = '${f.request(1)}' and kind = 'provider_fee';` +
       ` perform public.apply_fee_paid(v_fee, v_attempt, 'e2e-ratings-${locale}-1', v_amount, 'TRY', 0);` +
       ` alter table public.requests disable trigger requests_guard;` +
@@ -251,8 +251,14 @@ test('a customer skips or gives a rating, the provider and admin read it, and a 
   await page.getByRole('link', { name: m(locale, 'Requests.detail.repeat') }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/new\\?from=${f.request(1)}$`));
   await expect(page.getByText(m(locale, 'Requests.form.repeated'))).toBeVisible();
-  const line = page.locator('#line');
-  if ((await line.inputValue()) === '') await line.fill('Moda Cad. No 9');
+  for (const [field, value] of [
+    ['#address-mahalle', 'Caferağa'],
+    ['#address-street', 'Moda Cad.'],
+    ['#address-building_no', '9'],
+  ] as const) {
+    const input = page.locator(field);
+    if ((await input.inputValue()) === '') await input.fill(value);
+  }
   await pickFirst(page, m(locale, 'Requests.form.date'));
   await pickFirst(page, m(locale, 'Requests.form.hour'));
   await page.getByRole('button', { name: m(locale, 'Requests.form.toReview') }).click();

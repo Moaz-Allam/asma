@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   AGREEMENT_FIELDS,
+  AgreementContentSchema,
   AgreementTemplateError,
   fieldValues,
   fillText,
@@ -11,6 +12,7 @@ import {
   formatAgreementInstant,
   formatAgreementMoney,
   labelText,
+  NOT_GIVEN,
   type AgreementContent,
 } from '@/lib/agreements/fields';
 import { AgreementRenderError, renderAgreementPdf, TEXT_FEATURES } from '@/lib/agreements/render';
@@ -30,6 +32,21 @@ const draft1 = JSON.parse(
   heading: string;
   paragraphs: string[];
 }[];
+
+// Spec 0011-20b AC-8, X-18: draft-2, seeded by the structured address migration.
+const sql2 = readFileSync('supabase/migrations/20261206090000_structured_address.sql', 'utf8');
+const draft2 = JSON.parse(
+  sql2.slice(sql2.indexOf('$json$[') + '$json$'.length, sql2.lastIndexOf(']$json$') + 1),
+) as {
+  heading: string;
+  paragraphs: string[];
+}[];
+const fieldsOf = (body: typeof draft1) =>
+  new Set(
+    body
+      .flatMap((section) => [section.heading, ...section.paragraphs])
+      .flatMap((text) => [...text.matchAll(/\{\{([a-z_]+)\}\}/g)].map((m) => m[1])),
+  );
 
 const content: AgreementContent = {
   agreement_number: 'HS-TR-2026-000042',
@@ -77,16 +94,39 @@ describe('agreement fields', () => {
     expect(formatAgreementDay('2026-11-23')).toBe('23 Kasım 2026');
   });
 
-  it('substitutes every field of draft-1 and leaves no braces', () => {
+  it('substitutes every field of draft-1 and draft-2 and leaves no braces', () => {
     const values = fieldValues(content);
-    const texts = draft1.flatMap((section) => [section.heading, ...section.paragraphs]);
-    const used = new Set(texts.flatMap((text) => [...text.matchAll(/\{\{([a-z_]+)\}\}/g)].map((m) => m[1])));
-    expect([...used].sort()).toEqual([...AGREEMENT_FIELDS].sort());
+    const texts = [...draft1, ...draft2].flatMap((section) => [section.heading, ...section.paragraphs]);
+    // draft-1 names every field but the three 20b added; draft-2 names those and every other but street_line.
+    const added = ['customer_address', 'customer_directions', 'provider_address'];
+    expect([...fieldsOf(draft1)].sort()).toEqual(AGREEMENT_FIELDS.filter((f) => !added.includes(f)).sort());
+    expect([...fieldsOf(draft2)].sort()).toEqual(AGREEMENT_FIELDS.filter((f) => f !== 'street_line').sort());
+    expect(draft2).toHaveLength(draft1.length);
     for (const text of texts) {
       const filled = fillText(text, values);
       expect(filled).not.toMatch(/\{\{|\}\}/);
     }
     expect(fillText('{{cash_due}} {{street_line}}', values)).toBe('₺1.111,50 Moda Cad. No 9 Daire 4');
+  });
+
+  it('prints both addresses and the directions, and falls back for content frozen before 20b (X-4)', () => {
+    const before = fieldValues(content);
+    expect(before.customer_address).toBe('Moda Cad. No 9 Daire 4');
+    expect(before.customer_directions).toBe(NOT_GIVEN);
+    expect(before.provider_address).toBe(NOT_GIVEN);
+    const after = fieldValues(
+      AgreementContentSchema.parse({
+        ...content,
+        template_version: 'draft-2',
+        customer_address: 'Caferağa Mah., Moda Cad., No: 9, Daire: 4, 34710 Kadıköy/İstanbul',
+        customer_directions: 'Mavi kapı, zile iki kez basın',
+        provider_address: 'Rasimpaşa Mah., Rıhtım Cad., No: 3, Kadıköy/İstanbul',
+      }),
+    );
+    expect(after.customer_address).toBe('Caferağa Mah., Moda Cad., No: 9, Daire: 4, 34710 Kadıköy/İstanbul');
+    expect(after.customer_directions).toBe('Mavi kapı, zile iki kez basın');
+    expect(after.provider_address).toBe('Rasimpaşa Mah., Rıhtım Cad., No: 3, Kadıköy/İstanbul');
+    expect(AgreementContentSchema.parse({ ...content, provider_address: null }).provider_address).toBeNull();
   });
 
   it('refuses a name off the list (rule 8)', () => {

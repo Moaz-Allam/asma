@@ -39,6 +39,10 @@ SELECT pg_temp.u(c), r, 'TR', '+' || p, n, 'tr'
                ('a6', 'provider', '905559400009', 'Ece Usta')) AS t(c, r, p, n);
 UPDATE public.providers SET status = 'approved', approved_at = now() - interval '30 days', approved_name = 'Usta ' || right(id::text, 2)
  WHERE id::text LIKE '00000000-0000-0000-0000-0000004000a%';
+-- Spec 0011-20b AC-5: an approved provider applies only with an address on file.
+INSERT INTO public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no)
+SELECT pr.id, pr.region, 'İstanbul', 'Kadıköy', 'Caferağa', 'Moda Cad.', '1' FROM public.providers pr
+    ON CONFLICT (provider_id) DO NOTHING;
 
 INSERT INTO public.service_categories (id, region, name, active) VALUES
   (pg_temp.u('ca'), 'TR', '{"tr": "Tadilat", "en": "Repairs"}', true),
@@ -395,7 +399,7 @@ SELECT is((SELECT jsonb_agg(jsonb_build_object('message', x -> 'message', 'hidde
 SELECT is(public.request_offers(pg_temp.r(5)) -> 'offers' -> 0 -> 'answers', 'null'::jsonb, 'a message card has answers null');
 
 -- A chosen provider suspended after the choose shows no answers (X-1).
-SELECT is(public.choose_provider(pg_temp.r(1), (SELECT j -> 'application' ->> 'id' FROM ok1)::uuid, 'draft-1') ->> 'status', 'ok', 'c1 chooses a1');
+SELECT is(public.choose_provider(pg_temp.r(1), (SELECT j -> 'application' ->> 'id' FROM ok1)::uuid, 'draft-2') ->> 'status', 'ok', 'c1 chooses a1');
 RESET ROLE;
 UPDATE public.providers SET status = 'suspended', suspension_reason = 'Repeated complaints from customers' WHERE id = pg_temp.u('a1');
 SET LOCAL ROLE authenticated;

@@ -6,6 +6,7 @@ import { ErrorState } from '@/components/shared/ErrorState';
 import { Button } from '@/components/ui/button';
 import { guardPage } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
+import { mapKey } from '@/lib/maps/key';
 import { loadRequestCatalog, prefillFrom } from '@/lib/requests';
 import { localizeCatalog } from '@/lib/requests/view';
 
@@ -20,7 +21,7 @@ const EMPTY: RequestFormInitial = {
   answers: {},
   addonIds: [],
   zoneId: null,
-  addressLine: '',
+  address: {},
   notes: '',
 };
 
@@ -68,7 +69,7 @@ export default async function Page({ params, searchParams }: Props) {
       answers: prefill.answers,
       addonIds: prefill.addonIds,
       zoneId: prefill.zoneId,
-      addressLine: prefill.addressLine,
+      address: prefill.address,
       notes: prefill.notes,
     };
     repeated = true;
@@ -86,6 +87,7 @@ export default async function Page({ params, searchParams }: Props) {
       initial={initial}
       repeated={repeated}
       serviceGone={serviceGone}
+      mapKey={mapKey()}
     />
   );
 }

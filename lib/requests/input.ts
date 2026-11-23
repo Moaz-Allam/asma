@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { RequestAddressInput } from '@/lib/address/parts';
+
 import { CANCEL_REASONS } from './constants';
 
 /**
@@ -35,7 +37,8 @@ export const CreateRequestInput = QuoteRequestInput.extend({
   clientKey: Uuid,
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   startHour: z.number().int().min(0).max(23),
-  addressLine: z.string().max(1000),
+  // Spec 0011-20b AC-3: the parts and the optional pin; Postgres checks each and composes the line.
+  address: RequestAddressInput,
   notes: z.string().max(2000).nullable(),
   expectedPrice: z.number().int().positive(),
   expectedCommission: z.number().int().nonnegative(),

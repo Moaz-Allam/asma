@@ -157,14 +157,14 @@ BEGIN
   PERFORM pg_temp.request(p, now() + interval '3 days', 100000 - p_commission, p_commission);
   PERFORM pg_temp.offer(p, 'a3');
   PERFORM pg_temp.as_user('c1');
-  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p, 'a3'), 'draft-1');
-  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
+  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p, 'a3'), 'draft-2');
+  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-2') ->> 'attempt_id')::uuid;
   IF p_commission > 0 THEN
     PERFORM public.apply_fee_paid((SELECT id FROM public.fee_payments WHERE request_id = pg_temp.r(p) AND kind = 'commission'),
                                   v_att, 'pay-32-c' || p, p_commission, 'TRY', 300);
   END IF;
   PERFORM pg_temp.as_user('a3');
-  v_att := (public.pay_provider_fee(pg_temp.app(p, 'a3'), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
+  v_att := (public.pay_provider_fee(pg_temp.app(p, 'a3'), 'tr', NULL, 'draft-2') ->> 'attempt_id')::uuid;
   IF p_commission > 0 THEN
     PERFORM public.apply_fee_paid((SELECT id FROM public.fee_payments WHERE request_id = pg_temp.r(p) AND kind = 'provider_fee'),
                                   v_att, 'pay-32-p' || p, 5000, 'TRY', 150);

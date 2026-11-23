@@ -138,7 +138,7 @@ function chosenRequest(locale: string, who: Who, key: string, commission: number
       ` insert into public.applications (id, region, request_id, provider_id, message) values` +
       ` ('${offer}', 'TR', '${request}', '${f.provider}', 'I can start at ten with my own tools, two people.');` +
       ` perform set_config('request.jwt.claims', json_build_object('sub', ${customerId(locale, who)}, 'role', 'authenticated')::text, true);` +
-      ` perform public.choose_provider('${request}', '${offer}', 'draft-1');`,
+      ` perform public.choose_provider('${request}', '${offer}', 'draft-2');`,
   );
   return request;
 }
@@ -293,7 +293,7 @@ test('a customer pays the commission, gets a receipt, and the request moves on',
     next.getByRole('link', {
       name: m(locale, 'Agreement.checkbox').match(/<agreement>(.*)<\/agreement>/)?.[1] ?? '',
     }),
-  ).toHaveAttribute('href', `/${locale}/agreement/draft-1`);
+  ).toHaveAttribute('href', `/${locale}/agreement/draft-2`);
   await expect(
     next.getByRole('button', { name: m(locale, 'Requests.next.pay', { amount: money(30000, locale) }) }),
   ).toBeDisabled();

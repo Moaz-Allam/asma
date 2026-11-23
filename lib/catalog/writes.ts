@@ -33,6 +33,8 @@ export function catalogCode(error: unknown): string | null {
   // Spec 0011-19b AC-2: a sixth active application question, or a delete (deactivate instead).
   if (message === 'too_many_questions') return 'too_many_questions';
   if (message === 'application_question_retire') return 'application_question_retire';
+  // Spec 0011-20b AC-1: an active TR zone needs its il and ilçe.
+  if (message === 'zone_place_required') return 'zone_place_required';
   if (typeof code === 'string' && code in SQLSTATE) return SQLSTATE[code] ?? null;
   return null;
 }

@@ -93,17 +93,17 @@ export const saveAddon = guardedAction(
 
 export const saveZone = guardedAction(
   { name: 'saveZone', access: ['admin'], schema: SaveZoneSchema },
-  async ({ id, name, multiplier }) =>
+  async ({ id, name, multiplier, il, ilce }) =>
     mapped(async () => {
       const value = parseFactor(multiplier, 2);
       if (value === null) return fail('validation_failed');
       if (id) {
-        await updateRow('zones', id, { name, multiplier: value });
+        await updateRow('zones', id, { name, multiplier: value, il, ilce });
         return { id };
       }
       const region = await activeRegion();
       if (!region) return fail('validation_failed');
-      return { id: await insertRow('zones', { region, name, multiplier: value }, region) };
+      return { id: await insertRow('zones', { region, name, multiplier: value, il, ilce }, region) };
     }),
 );
 

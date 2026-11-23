@@ -26,6 +26,8 @@ const SERVICE_ROLE_USERS = ['lib/db/**', 'app/api/webhooks/**', 'lib/jobs/**', .
 const OBSERVABILITY_DOOR = ['lib/observability/**'];
 const ANALYTICS_DOOR = ['lib/analytics/**'];
 const AUTH_DOOR = ['lib/auth/**'];
+// Spec 0011-20b AC-10: the map door. Only it imports the map packages or reads the MapTiler key.
+const MAPS_DOOR = ['lib/maps/**'];
 const TESTS = ['tests/**', 'e2e/**', '**/*.test.ts', '**/*.spec.ts'];
 
 const sentryMessage =
@@ -37,6 +39,9 @@ const emailImportMessage =
   'A move writes its audit row; a trigger queues the mail.';
 // Security review S20 (guardrail): the agreement file door takes the relay's handle and the renderer runs only in the
 // relay (rule 3), so only lib/relay imports them.
+const mapsMessage =
+  'The map packages are imported only in lib/maps/ (spec 0011-20b AC-10). Use AddressMap, forwardGeocode or ' +
+  'reverseGeocode.';
 const agreementFilesMessage =
   'lib/storage/agreements and lib/agreements/render belong to the relay (spec 0011-20 AC-6): pages and actions ' +
   'read agreements through lib/agreements and lib/admin-agreements.';
@@ -55,6 +60,7 @@ function restrictedImports({
   relay = false,
   email = false,
   agreementFiles = false,
+  maps = false,
 } = {}) {
   const paths = [];
   const patterns = [
@@ -88,6 +94,7 @@ function restrictedImports({
       message: emailImportMessage,
     });
   }
+  if (!maps) patterns.push({ regex: '^(maplibre-gl|@maptiler/)', message: mapsMessage });
   if (!agreementFiles) {
     patterns.push({
       group: ['@/lib/storage/agreements', '@/lib/agreements/render'],
@@ -122,6 +129,7 @@ function restrictedModules({
   posthog = false,
   email = false,
   agreementFiles = false,
+  maps = false,
 } = {}) {
   const modules = [];
   if (sentry === false) modules.push(['^@sentry.', sentryMessage]);
@@ -143,6 +151,7 @@ function restrictedModules({
     );
   }
   if (!email) modules.push(['^@.lib.email(.|$)', emailImportMessage]);
+  if (!maps) modules.push(['^(maplibre-gl|@maptiler.)', mapsMessage]);
   if (!agreementFiles) {
     modules.push(['^@.lib.(storage.agreements|agreements.render)$', agreementFilesMessage]);
   }
@@ -180,6 +189,11 @@ const emailKeyMessage =
 // Matched as a literal or template text anywhere outside the door, so no module calls Resend past it.
 const RESEND_HOST = 'api.resend.com';
 const resendMessage = 'Only lib/email calls Resend (spec 0011-13 AC-1). The relay sends mail through it.';
+// Spec 0011-20b AC-10: public by design, but read only by the map door (and validated in lib/env.ts), so one place
+// decides whether the map shows.
+const MAP_KEYS = ['NEXT_PUBLIC_MAPTILER_KEY'];
+const mapKeyMessage =
+  'The MapTiler key is read only inside lib/maps (spec 0011-20b AC-10) and lib/env.ts. Call mapKey() from lib/maps.';
 const telemetryMessage =
   'This key is read only inside its door (lib/observability, lib/analytics), lib/env.ts, lib/deployment.ts or ' +
   'next.config.ts (spec 0004 AC-8). Call a door function, or sentryDsn() / posthogKey() from lib/env.ts.';
@@ -189,6 +203,7 @@ function secretSelectors(exempt) {
     [SECRETS, secretMessage],
     [TELEMETRY_KEYS, telemetryMessage],
     [EMAIL_KEYS, emailKeyMessage],
+    [MAP_KEYS, mapKeyMessage],
   ]) {
     const names = all.filter((s) => !exempt.includes(s));
     if (names.length === 0) continue;
@@ -385,6 +400,14 @@ const config = [
     files: ['lib/notifications/live.ts'],
     rules: { 'no-restricted-syntax': restrictedSyntax({ realtime: true }) },
   },
+  // ── The map door (spec 0011-20b AC-10). ──
+  {
+    files: MAPS_DOOR,
+    rules: {
+      'no-restricted-imports': restrictedImports({ maps: true }),
+      'no-restricted-syntax': restrictedSyntax({ exempt: MAP_KEYS, modules: { maps: true } }),
+    },
+  },
   // ── Telemetry doors (spec 0004 AC-8). ──
   {
     files: OBSERVABILITY_DOOR,
@@ -431,7 +454,13 @@ const config = [
     files: ['lib/env.ts'],
     rules: {
       'no-restricted-syntax': restrictedSyntax({
-        exempt: ['NEXT_PUBLIC_SENTRY_DSN', 'NEXT_PUBLIC_POSTHOG_KEY', 'SENTRY_SERVER_DSN', ...EMAIL_KEYS],
+        exempt: [
+          'NEXT_PUBLIC_SENTRY_DSN',
+          'NEXT_PUBLIC_POSTHOG_KEY',
+          'SENTRY_SERVER_DSN',
+          ...EMAIL_KEYS,
+          ...MAP_KEYS,
+        ],
         envAccess: true,
       }),
     },

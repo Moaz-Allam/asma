@@ -1,0 +1,731 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:w228407761",
+        "country_code": "tr",
+        "kind": "street",
+        "place_type_name": ["Adresin çevirisi"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.025138431249843, 40.98625389548287]
+      },
+      "bbox": [29.025138431249832, 40.98625389548287, 29.025138431249832, 40.98625389548287],
+      "center": [29.025138431249843, 40.98625389548287],
+      "place_name": "Caferağa Mahallesi, Neşe Sokağı 3, 34710 Kadıköy/İstanbul, Türkiye",
+      "place_type": ["address"],
+      "relevance": 1,
+      "id": "address.13227298",
+      "text": "Neşe Sokağı",
+      "place_type_name": ["Adresin çevirisi"],
+      "context": [
+        {
+          "ref": "osm:w235253303",
+          "id": "postal_code.2915853",
+          "text": "34710",
+          "country_code": "tr",
+          "text_tr": "34710"
+        },
+        {
+          "ref": "osm:n1394941165",
+          "id": "place.4737197",
+          "text": "ISTANBUL",
+          "country_code": "tr",
+          "kind": "virtual_place",
+          "text_tr": "ISTANBUL"
+        },
+        {
+          "ref": "osm:r9441032",
+          "id": "municipal_district.83774",
+          "text": "Caferağa Mahallesi",
+          "country_code": "tr",
+          "wikidata": "Q6040926",
+          "kind": "admin_area",
+          "place_designation": "suburb",
+          "text_tr": "Caferağa Mahallesi"
+        },
+        {
+          "ref": "osm:r1276548",
+          "id": "joint_municipality.1140",
+          "text": "Kadıköy",
+          "country_code": "tr",
+          "wikidata": "Q932886",
+          "kind": "admin_area",
+          "place_designation": "town",
+          "language": "tr",
+          "text_tr": "Kadıköy",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r223474",
+          "id": "county.301",
+          "text": "İstanbul",
+          "country_code": "tr",
+          "wikidata": "Q534799",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "İstanbul",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r16700115",
+          "id": "major_landform.4178879",
+          "text": "Kocaeli Yarımadası",
+          "country_code": "tr",
+          "wikidata": "Q2596787",
+          "feature_tags": {
+            "natural": "peninsula",
+            "wikipedia": "tr:Kocaeli Yarımadası",
+            "type": "multipolygon"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Kocaeli Yarımadası",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        }
+      ],
+      "address": "3",
+      "text_tr": "Neşe Sokağı",
+      "place_name_tr": "Caferağa Mahallesi, Neşe Sokağı 3, 34710 Kadıköy/İstanbul, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:w235253303",
+        "country_code": "tr",
+        "place_type_name": ["Posta kodu"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.026275873184204, 40.98541722646721]
+      },
+      "bbox": [29.019252173602585, 40.971156236460175, 29.067308443054742, 40.99282177880667],
+      "center": [29.026275873184204, 40.98541722646721],
+      "place_name": "34710, Türkiye",
+      "place_type": ["postal_code"],
+      "relevance": 1,
+      "id": "postal_code.2915853",
+      "text": "34710",
+      "place_type_name": ["Posta kodu"],
+      "context": [
+        {
+          "ref": "osm:n1394941165",
+          "id": "place.4737197",
+          "text": "ISTANBUL",
+          "country_code": "tr",
+          "kind": "virtual_place",
+          "text_tr": "ISTANBUL"
+        },
+        {
+          "ref": "osm:r9441032",
+          "id": "municipal_district.83774",
+          "text": "Caferağa Mahallesi",
+          "country_code": "tr",
+          "wikidata": "Q6040926",
+          "kind": "admin_area",
+          "place_designation": "suburb",
+          "text_tr": "Caferağa Mahallesi"
+        },
+        {
+          "ref": "osm:r1276548",
+          "id": "joint_municipality.1140",
+          "text": "Kadıköy",
+          "country_code": "tr",
+          "wikidata": "Q932886",
+          "kind": "admin_area",
+          "place_designation": "town",
+          "language": "tr",
+          "text_tr": "Kadıköy",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r223474",
+          "id": "county.301",
+          "text": "İstanbul",
+          "country_code": "tr",
+          "wikidata": "Q534799",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "İstanbul",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r16700115",
+          "id": "major_landform.4178879",
+          "text": "Kocaeli Yarımadası",
+          "country_code": "tr",
+          "wikidata": "Q2596787",
+          "feature_tags": {
+            "natural": "peninsula",
+            "wikipedia": "tr:Kocaeli Yarımadası",
+            "type": "multipolygon"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Kocaeli Yarımadası",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        }
+      ],
+      "text_tr": "34710",
+      "place_name_tr": "34710, ISTANBUL, Caferağa Mahallesi, Kadıköy, İstanbul, Marmara Bölgesi, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:n1394941165",
+        "country_code": "tr",
+        "kind": "virtual_place",
+        "place_type_name": ["Yerinin çevirisi"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.072427396379453, 40.99839596576599]
+      },
+      "bbox": [28.995996741228687, 40.88805547866593, 29.23343119863312, 41.13867423691036],
+      "center": [29.072427396379453, 40.99839596576599],
+      "place_name": "ISTANBUL, Kadıköy, Türkiye",
+      "place_type": ["place"],
+      "relevance": 1,
+      "id": "place.4737197",
+      "text": "ISTANBUL",
+      "place_type_name": ["Yerinin çevirisi"],
+      "context": [
+        {
+          "ref": "osm:r9441032",
+          "id": "municipal_district.83774",
+          "text": "Caferağa Mahallesi",
+          "country_code": "tr",
+          "wikidata": "Q6040926",
+          "kind": "admin_area",
+          "place_designation": "suburb",
+          "text_tr": "Caferağa Mahallesi"
+        },
+        {
+          "ref": "osm:r1276548",
+          "id": "joint_municipality.1140",
+          "text": "Kadıköy",
+          "country_code": "tr",
+          "wikidata": "Q932886",
+          "kind": "admin_area",
+          "place_designation": "town",
+          "language": "tr",
+          "text_tr": "Kadıköy",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r223474",
+          "id": "county.301",
+          "text": "İstanbul",
+          "country_code": "tr",
+          "wikidata": "Q534799",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "İstanbul",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r16700115",
+          "id": "major_landform.4178879",
+          "text": "Kocaeli Yarımadası",
+          "country_code": "tr",
+          "wikidata": "Q2596787",
+          "feature_tags": {
+            "natural": "peninsula",
+            "wikipedia": "tr:Kocaeli Yarımadası",
+            "type": "multipolygon"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Kocaeli Yarımadası",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        }
+      ],
+      "text_tr": "ISTANBUL",
+      "place_name_tr": "ISTANBUL, Kadıköy, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:r9441032",
+        "country_code": "tr",
+        "wikidata": "Q6040926",
+        "kind": "admin_area",
+        "place_designation": "suburb",
+        "place_type_name": ["köy"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.024810045957565, 40.98504037128235]
+      },
+      "bbox": [29.014848992228508, 40.97828470595971, 29.034225605428215, 40.993193528275796],
+      "center": [29.024810045957565, 40.98504037128235],
+      "place_name": "Caferağa Mahallesi, Türkiye",
+      "place_type": ["municipal_district"],
+      "relevance": 1,
+      "id": "municipal_district.83774",
+      "text": "Caferağa Mahallesi",
+      "place_type_name": ["köy"],
+      "context": [
+        {
+          "ref": "osm:r1276548",
+          "id": "joint_municipality.1140",
+          "text": "Kadıköy",
+          "country_code": "tr",
+          "wikidata": "Q932886",
+          "kind": "admin_area",
+          "place_designation": "town",
+          "language": "tr",
+          "text_tr": "Kadıköy",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r223474",
+          "id": "county.301",
+          "text": "İstanbul",
+          "country_code": "tr",
+          "wikidata": "Q534799",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "İstanbul",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r16700115",
+          "id": "major_landform.4178879",
+          "text": "Kocaeli Yarımadası",
+          "country_code": "tr",
+          "wikidata": "Q2596787",
+          "feature_tags": {
+            "natural": "peninsula",
+            "wikipedia": "tr:Kocaeli Yarımadası",
+            "type": "multipolygon"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Kocaeli Yarımadası",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        }
+      ],
+      "text_tr": "Caferağa Mahallesi",
+      "place_name_tr": "Caferağa Mahallesi, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:r1276548",
+        "country_code": "tr",
+        "wikidata": "Q932886",
+        "kind": "admin_area",
+        "place_designation": "town",
+        "place_type_name": ["ilçe"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.02456294745207, 40.99129553420438]
+      },
+      "bbox": [29.014842286705967, 40.94996570032208, 29.111234843730927, 41.01230125906483],
+      "center": [29.02456294745207, 40.99129553420438],
+      "place_name": "Kadıköy, Türkiye",
+      "place_type": ["joint_municipality"],
+      "relevance": 1,
+      "id": "joint_municipality.1140",
+      "text": "Kadıköy",
+      "place_type_name": ["ilçe"],
+      "context": [
+        {
+          "ref": "osm:r223474",
+          "id": "county.301",
+          "text": "İstanbul",
+          "country_code": "tr",
+          "wikidata": "Q534799",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "İstanbul",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r16700115",
+          "id": "major_landform.4178879",
+          "text": "Kocaeli Yarımadası",
+          "country_code": "tr",
+          "wikidata": "Q2596787",
+          "feature_tags": {
+            "natural": "peninsula",
+            "wikipedia": "tr:Kocaeli Yarımadası",
+            "type": "multipolygon"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Kocaeli Yarımadası",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        }
+      ],
+      "language": "tr",
+      "text_tr": "Kadıköy",
+      "language_tr": "tr",
+      "place_name_tr": "Kadıköy, İstanbul, Marmara Bölgesi, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:r223474",
+        "country_code": "tr",
+        "wikidata": "Q534799",
+        "kind": "admin_area",
+        "place_type_name": ["il"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.05094113200903, 41.070745846041255]
+      },
+      "bbox": [27.970848083496094, 40.7376737201067, 29.958804510533813, 41.671000217990006],
+      "center": [29.05094113200903, 41.070745846041255],
+      "place_name": "İstanbul, Türkiye",
+      "place_type": ["county"],
+      "relevance": 1,
+      "id": "county.301",
+      "text": "İstanbul",
+      "place_type_name": ["il"],
+      "context": [
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r16700115",
+          "id": "major_landform.4178879",
+          "text": "Kocaeli Yarımadası",
+          "country_code": "tr",
+          "wikidata": "Q2596787",
+          "feature_tags": {
+            "natural": "peninsula",
+            "wikipedia": "tr:Kocaeli Yarımadası",
+            "type": "multipolygon"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Kocaeli Yarımadası",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        }
+      ],
+      "language": "tr",
+      "text_tr": "İstanbul",
+      "language_tr": "tr",
+      "place_name_tr": "İstanbul, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:r2094193",
+        "country_code": "tr",
+        "wikidata": "Q155583",
+        "kind": "admin_area",
+        "place_type_name": ["coğrafi bölge"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [28.173468693721247, 40.55879848567276]
+      },
+      "bbox": [25.565653927624226, 39.07197396574473, 31.012665890157223, 42.10480089200958],
+      "center": [28.173468693721247, 40.55879848567276],
+      "place_name": "Marmara Bölgesi, Türkiye",
+      "place_type": ["region"],
+      "relevance": 1,
+      "id": "region.926",
+      "text": "Marmara Bölgesi",
+      "place_type_name": ["coğrafi bölge"],
+      "context": [
+        {
+          "ref": "osm:r16700115",
+          "id": "major_landform.4178879",
+          "text": "Kocaeli Yarımadası",
+          "country_code": "tr",
+          "wikidata": "Q2596787",
+          "feature_tags": {
+            "natural": "peninsula",
+            "wikipedia": "tr:Kocaeli Yarımadası",
+            "type": "multipolygon"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Kocaeli Yarımadası",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        }
+      ],
+      "language": "tr",
+      "text_tr": "Marmara Bölgesi",
+      "language_tr": "tr",
+      "place_name_tr": "Marmara Bölgesi, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:r16700115",
+        "country_code": "tr",
+        "wikidata": "Q2596787",
+        "feature_tags": {
+          "natural": "peninsula",
+          "wikipedia": "tr:Kocaeli Yarımadası",
+          "type": "multipolygon"
+        },
+        "categories": ["peninsula"],
+        "place_type_name": [null]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.534443444743715, 40.99074326931973]
+      },
+      "bbox": [29.006362818181515, 40.74072061245676, 30.02669993788004, 41.23533351020689],
+      "center": [29.534443444743715, 40.99074326931973],
+      "place_name": "Kocaeli Yarımadası, Türkiye",
+      "place_type": ["major_landform"],
+      "relevance": 1,
+      "id": "major_landform.4178879",
+      "text": "Kocaeli Yarımadası",
+      "place_type_name": [null],
+      "context": [
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        }
+      ],
+      "language": "tr",
+      "text_tr": "Kocaeli Yarımadası",
+      "language_tr": "tr",
+      "place_name_tr": "Kocaeli Yarımadası, Europe/Istanbul, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:r174737",
+        "country_code": "tr",
+        "wikidata": "Q43",
+        "kind": "admin_area",
+        "place_type_name": ["Ülkenin çevirisi"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [35.23166298866272, 39.29407602434527]
+      },
+      "bbox": [25.5656305, 35.805897399999985, 44.8176638, 42.297000000000004],
+      "center": [35.23166298866272, 39.29407602434527],
+      "place_name": "Türkiye",
+      "place_type": ["country"],
+      "relevance": 1,
+      "id": "country.115",
+      "text": "Türkiye",
+      "place_type_name": ["Ülkenin çevirisi"],
+      "language": "tr",
+      "text_tr": "Türkiye",
+      "language_tr": "tr",
+      "place_name_tr": "Türkiye"
+    }
+  ],
+  "query": [29.02520000000004, 40.9863],
+  "attribution": "<a href=\"https://www.maptiler.com/copyright/\" target=\"_blank\">&copy; MapTiler</a> <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">&copy; OpenStreetMap contributors</a>"
+}

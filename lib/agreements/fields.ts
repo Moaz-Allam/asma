@@ -34,6 +34,9 @@ export const AGREEMENT_FIELDS = [
   'customer_accepted_at',
   'provider_accepted_at',
   'template_version',
+  'customer_address',
+  'customer_directions',
+  'provider_address',
 ] as const;
 export type AgreementField = (typeof AGREEMENT_FIELDS)[number];
 
@@ -61,6 +64,9 @@ export const FIELD_LABELS_TR: Readonly<Record<AgreementField, string>> = {
   customer_accepted_at: 'Hizmet alanın kabul zamanı',
   provider_accepted_at: 'Hizmet verenin kabul zamanı',
   template_version: 'Şablon sürümü',
+  customer_address: 'Hizmet alanın adresi',
+  customer_directions: 'Yol tarifi',
+  provider_address: 'Hizmet verenin adresi',
 };
 
 const Minor = z.number().int().nonnegative().max(1_000_000_000_000_000);
@@ -97,6 +103,10 @@ export const AgreementContentSchema = z
     customer_accepted_at: Instant,
     provider_accepted_at: Instant,
     template_version: z.string().regex(/^[a-z0-9._-]{1,40}$/),
+    // Spec 0011-20b AC-8, X-4: optional, so content frozen before 20b still parses.
+    customer_address: z.string().min(1).max(1000).nullable().optional(),
+    customer_directions: z.string().min(1).max(1000).nullable().optional(),
+    provider_address: z.string().min(1).max(1000).nullable().optional(),
   })
   .strict();
 export type AgreementContent = z.infer<typeof AgreementContentSchema>;
@@ -182,6 +192,9 @@ export function fieldValues(content: AgreementContent): Readonly<Record<Agreemen
     customer_accepted_at: instant(content.customer_accepted_at),
     provider_accepted_at: instant(content.provider_accepted_at),
     template_version: content.template_version,
+    customer_address: content.customer_address ?? content.street_line ?? NOT_GIVEN,
+    customer_directions: content.customer_directions ?? NOT_GIVEN,
+    provider_address: content.provider_address ?? NOT_GIVEN,
   };
 }
 

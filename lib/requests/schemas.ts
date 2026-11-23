@@ -1,3 +1,4 @@
+import { StoredAddress } from '@/lib/address/parts';
 import 'server-only';
 
 import { z } from 'zod';
@@ -60,7 +61,10 @@ export const RequestCatalog = z.object({
     first_hour: z.number().int(),
     last_hour: z.number().int(),
   }),
-  zones: z.array(z.object({ id: z.string(), name: Localized })),
+  // Spec 0011-20b X-10: il and ilçe of each zone, null until admin fills them (S47).
+  zones: z.array(
+    z.object({ id: z.string(), name: Localized, il: z.string().nullable(), ilce: z.string().nullable() }),
+  ),
   categories: z.array(z.object({ id: z.string(), name: Localized, services: z.array(CatalogService) })),
 });
 export type RequestCatalog = z.infer<typeof RequestCatalog>;
@@ -299,12 +303,21 @@ const ContactBase = {
   email_confirmed: z.boolean(),
 };
 export const Contacts = z.discriminatedUnion('side', [
-  z.object({ side: z.literal('customer'), ...ContactBase }).strict(),
+  z
+    .object({
+      side: z.literal('customer'),
+      ...ContactBase,
+      // Spec 0011-20b AC-6, X-6: the provider's composed address as frozen into the agreement, or null (not given).
+      provider_address: z.string().nullable(),
+    })
+    .strict(),
   z
     .object({
       side: z.literal('provider'),
       ...ContactBase,
       street: z.string().nullable(),
+      // Spec 0011-20b AC-6: the parts, the directions and the pin (null parts on a request before 20b, AC-9).
+      address: StoredAddress.nullable(),
       notes: z.string().nullable(),
       zone: Localized.nullable(),
       scheduled_start_at: z.string().min(1),

@@ -1424,6 +1424,69 @@ export type Database = {
           },
         ]
       }
+      provider_addresses: {
+        Row: {
+          apartment: string | null
+          building_no: string
+          floor: string | null
+          il: string
+          ilce: string
+          lat: number | null
+          lng: number | null
+          mahalle: string
+          postal_code: string | null
+          provider_id: string
+          region: string
+          street: string
+          updated_at: string
+        }
+        Insert: {
+          apartment?: string | null
+          building_no: string
+          floor?: string | null
+          il: string
+          ilce: string
+          lat?: number | null
+          lng?: number | null
+          mahalle: string
+          postal_code?: string | null
+          provider_id: string
+          region: string
+          street: string
+          updated_at?: string
+        }
+        Update: {
+          apartment?: string | null
+          building_no?: string
+          floor?: string | null
+          il?: string
+          ilce?: string
+          lat?: number | null
+          lng?: number | null
+          mahalle?: string
+          postal_code?: string | null
+          provider_id?: string
+          region?: string
+          street?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_addresses_provider_fk"
+            columns: ["provider_id", "region"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "provider_addresses_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       provider_availability: {
         Row: {
           end_hour: number
@@ -2180,25 +2243,58 @@ export type Database = {
       }
       request_addresses: {
         Row: {
+          apartment: string | null
+          building_no: string | null
           created_at: string
           customer_id: string
+          directions: string | null
+          floor: string | null
+          il: string | null
+          ilce: string | null
+          lat: number | null
           line: string
+          lng: number | null
+          mahalle: string | null
+          postal_code: string | null
           region: string
           request_id: string
+          street: string | null
         }
         Insert: {
+          apartment?: string | null
+          building_no?: string | null
           created_at?: string
           customer_id: string
+          directions?: string | null
+          floor?: string | null
+          il?: string | null
+          ilce?: string | null
+          lat?: number | null
           line: string
+          lng?: number | null
+          mahalle?: string | null
+          postal_code?: string | null
           region: string
           request_id: string
+          street?: string | null
         }
         Update: {
+          apartment?: string | null
+          building_no?: string | null
           created_at?: string
           customer_id?: string
+          directions?: string | null
+          floor?: string | null
+          il?: string | null
+          ilce?: string | null
+          lat?: number | null
           line?: string
+          lng?: number | null
+          mahalle?: string | null
+          postal_code?: string | null
           region?: string
           request_id?: string
+          street?: string | null
         }
         Relationships: [
           {
@@ -2679,6 +2775,8 @@ export type Database = {
           created_at: string
           display_order: number
           id: string
+          il: string | null
+          ilce: string | null
           multiplier: number
           name: Json
           region: string
@@ -2688,6 +2786,8 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          il?: string | null
+          ilce?: string | null
           multiplier?: number
           name: Json
           region: string
@@ -2697,6 +2797,8 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          il?: string | null
+          ilce?: string | null
           multiplier?: number
           name?: Json
           region?: string
@@ -2734,6 +2836,19 @@ export type Database = {
       add_report_photo: {
         Args: { p_object_path: string; p_report_id: string }
         Returns: Json
+      }
+      address_number_ok: { Args: { p_text: string }; Returns: boolean }
+      address_parse: {
+        Args: { p_address: Json; p_provider: boolean; p_region: string }
+        Returns: Json
+      }
+      address_part_ok: {
+        Args: { p_max: number; p_min: number; p_text: string }
+        Returns: boolean
+      }
+      address_pin_in_region: {
+        Args: { p_lat: number; p_lng: number; p_region: string }
+        Returns: boolean
       }
       admin_agreement_link: { Args: { p_id: string }; Returns: Json }
       admin_agreements: {
@@ -2783,6 +2898,10 @@ export type Database = {
         Returns: boolean
       }
       admin_probation: { Args: { p_page: number }; Returns: Json }
+      admin_provider_address: {
+        Args: { p_provider_id: string; p_reason: string }
+        Returns: Json
+      }
       admin_provider_quality: { Args: { p_provider_id: string }; Returns: Json }
       admin_provider_ratings: {
         Args: { p_page: number; p_provider_id: string }
@@ -2986,6 +3105,19 @@ export type Database = {
         }
         Returns: Json
       }
+      compose_address: {
+        Args: {
+          p_apartment: string
+          p_building_no: string
+          p_floor: string
+          p_il: string
+          p_ilce: string
+          p_mahalle: string
+          p_postal_code: string
+          p_street: string
+        }
+        Returns: string
+      }
       confirm_email: { Args: { p_token: string }; Returns: Json }
       confirm_job: { Args: { p_request_id: string }; Returns: Json }
       confirm_settings: { Args: { p_region: string }; Returns: number }
@@ -3003,7 +3135,7 @@ export type Database = {
       create_request: {
         Args: {
           p_addon_ids: string[]
-          p_address_line: string
+          p_address: Json
           p_answers: Json
           p_client_key: string
           p_expected_commission: number
@@ -3217,6 +3349,7 @@ export type Database = {
           timezone: string
         }[]
       }
+      my_provider_address: { Args: never; Returns: Json }
       my_provider_quality: { Args: never; Returns: Json }
       my_provider_rating: { Args: never; Returns: Json }
       my_receipt: { Args: { p_receipt_id: string }; Returns: Json }
@@ -3752,6 +3885,7 @@ export type Database = {
         }
         Returns: Json
       }
+      save_provider_address: { Args: { p_address: Json }; Returns: Json }
       save_provider_profile: {
         Args: {
           p_bio: string

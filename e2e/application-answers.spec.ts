@@ -96,6 +96,8 @@ function approveProvider(locale: string, f: Ids) {
   sql(
     `do $s$ begin` +
       ` update public.providers set status = 'approved', approved_at = now() - interval '40 days', approved_name = 'Cevap Usta' where id = ${provider};` +
+      // Spec 0011-20b AC-5: an approved provider applies only with an address.
+      ` insert into public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no) select p.id, p.region, 'İstanbul', 'Kadıköy', 'Caferağa', 'Moda Cad.', '1' from public.providers p where p.id = ${provider} on conflict (provider_id) do nothing;` +
       ` insert into public.provider_services (provider_id, service_id, region) select ${provider}, s, 'TR' from unnest(array['${f.askedService}', '${f.plainService}']::uuid[]) s;` +
       ` insert into public.provider_zones (provider_id, zone_id, region) select ${provider}, '${f.zone}', 'TR';` +
       ` insert into public.provider_availability (provider_id, region, work_days, start_hour, end_hour) select ${provider}, 'TR', '{0,1,2,3,4,5,6}', 0, 24;` +

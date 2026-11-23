@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { StoredAddress } from '@/lib/address/parts';
 import { createSupabaseServer } from '@/lib/db/server';
 import { raiseAlert } from '@/lib/observability/alert';
 import { log } from '@/lib/observability/log';
@@ -99,6 +100,9 @@ export const REQUEST_DB_CODES = [
   'rating_settings_invalid',
   // Spec 0011-20 (20): pay and the carried re-pick take the service agreement's version.
   'agreement_required',
+  // Spec 0011-20b (20b): the structured address's pin and the contact scanner on its parts.
+  'pin_invalid',
+  'contact_info_in_address',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -217,7 +221,7 @@ export async function createRequest(input: CreateRequestInput, context: Context)
     p_answers: input.answers,
     p_start_date: input.startDate,
     p_start_hour: input.startHour,
-    p_address_line: input.addressLine,
+    p_address: input.address,
     p_notes: input.notes,
     p_expected_price: input.expectedPrice,
     p_expected_commission: input.expectedCommission,
@@ -552,10 +556,14 @@ export async function listMyRequests(input: {
   };
 }
 
-export type MyRequest = { request: RequestDetailRow; addressLine: string | null; now: string };
+export type MyRequest = { request: RequestDetailRow; address: StoredAddress | null; now: string };
 
 const DETAIL_COLUMNS =
   'id, status, service_id, zone_id, addon_ids, answers, questions_snapshot, pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at, notes, cancelled_at, cancel_reason, created_at, fee_deadline, actual_started_at, actual_completed_at, confirm_deadline, closed_at, closed_by, region_info:regions(timezone)';
+
+// Spec 0011-20b AC-2, AC-9: the line (always there) and the parts and pin (null on a request before 20b).
+const ADDRESS_COLUMNS =
+  'line, il, ilce, mahalle, street, building_no, floor, apartment, postal_code, directions, lat, lng';
 
 /** One of the caller's own requests and its address, or null: another's, unknown or malformed (AC-14). */
 export async function getMyRequest(input: { userId: string; id: string }): Promise<MyRequest | null> {
@@ -572,11 +580,15 @@ export async function getMyRequest(input: { userId: string; id: string }): Promi
   const request = RequestDetailRow.parse(data);
   const address = await supabase
     .from('request_addresses')
-    .select('line')
+    .select(ADDRESS_COLUMNS)
     .eq('request_id', request.id)
     .maybeSingle();
   if (address.error) throw address.error;
-  return { request, addressLine: address.data?.line ?? null, now: new Date().toISOString() };
+  return {
+    request,
+    address: address.data ? StoredAddress.parse(address.data) : null,
+    now: new Date().toISOString(),
+  };
 }
 
 /**
@@ -597,6 +609,6 @@ export async function prefillFrom(input: {
     addonIds: found.request.addon_ids,
     answers: found.request.answers,
     notes: found.request.notes,
-    addressLine: found.addressLine,
+    address: found.address,
   });
 }

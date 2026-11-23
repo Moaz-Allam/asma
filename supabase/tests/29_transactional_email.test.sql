@@ -80,7 +80,7 @@ END $$;
 CREATE FUNCTION pg_temp.choose(p integer, w text, c text DEFAULT 'c1') RETURNS jsonb LANGUAGE plpgsql AS $$
 BEGIN
   PERFORM pg_temp.as_user(c);
-  RETURN public.choose_provider(pg_temp.r(p), pg_temp.app(p, w), 'draft-1');
+  RETURN public.choose_provider(pg_temp.r(p), pg_temp.app(p, w), 'draft-2');
 END $$;
 CREATE FUNCTION pg_temp.cfee(p integer) RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT id FROM public.fee_payments WHERE request_id = pg_temp.r(p) AND kind = 'commission' $$;
@@ -91,7 +91,7 @@ DECLARE
   v_att uuid;
 BEGIN
   PERFORM pg_temp.as_user('c1');
-  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
+  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-2') ->> 'attempt_id')::uuid;
   RETURN public.apply_fee_paid(pg_temp.cfee(p), v_att, 'pay-29-c' || p, 10000, 'TRY', 300);
 END $$;
 CREATE FUNCTION pg_temp.payfee(p integer, w text) RETURNS jsonb LANGUAGE plpgsql AS $$
@@ -99,7 +99,7 @@ DECLARE
   v_att uuid;
 BEGIN
   PERFORM pg_temp.as_user(w);
-  v_att := (public.pay_provider_fee(pg_temp.app(p, w), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
+  v_att := (public.pay_provider_fee(pg_temp.app(p, w), 'tr', NULL, 'draft-2') ->> 'attempt_id')::uuid;
   RETURN public.apply_fee_paid(pg_temp.pfee(p, w), v_att, 'pay-29-p' || p || w, 5000, 'TRY', 150);
 END $$;
 -- Move a request's windows, as the clock would (its order checks kept).
@@ -719,7 +719,7 @@ SELECT pg_temp.req(13); SELECT pg_temp.choose(13, 'a1'); SELECT pg_temp.age(13, 
 -- A commission of 0 settles at once (D171), so the provider's fee window opens with no fee row.
 SELECT pg_temp.req(14, 'c1', 0);
 SELECT pg_temp.choose(14, 'a2');
-SELECT pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, ''draft-1'')::text', pg_temp.r(14), 'tr'));
+SELECT pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, ''draft-2'')::text', pg_temp.r(14), 'tr'));
 SELECT is(pg_temp.ctx(pg_temp.k('request.commission_paid', pg_temp.r(14), 'c1', 'commission_received')) -> 'values' ->> 'amount', '0',
   'D171: a commission of 0 is mailed as 0');
 SELECT is(pg_temp.ctx(pg_temp.k('request.commission_paid', pg_temp.r(14), 'c1', 'commission_received')) -> 'values' ->> 'fee_id', NULL,

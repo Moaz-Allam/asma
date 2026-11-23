@@ -12,6 +12,10 @@ export const PROVIDER_DB_CODES = [
   'file_missing',
   'file_type_refused',
   'file_too_large',
+  // Spec 0011-20b AC-5: the provider's address.
+  'address_invalid',
+  'pin_invalid',
+  'contact_info_in_address',
 ] as const;
 
 export const ADMIN_DB_CODES = [

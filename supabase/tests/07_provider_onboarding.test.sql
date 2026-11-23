@@ -13,7 +13,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(266);
+SELECT plan(268);
 
 -- ── fixtures ─────────────────────────────────────────────────────────────────
 -- Rows an earlier local e2e run left behind; CI starts empty. Gone only inside this rolled back transaction.
@@ -363,7 +363,7 @@ SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000002a1", "role": "authenticated"}', true);
 SELECT is(
   public.submit_provider_file(),
-  '{"status": "draft", "missing": ["selfie", "criminal_record"], "rejected": [], "objectsMissing": []}'::jsonb,
+  '{"status": "draft", "missing": ["address", "selfie", "criminal_record"], "rejected": [], "objectsMissing": []}'::jsonb,
   'with documents missing, submit names them and writes nothing'
 );
 SELECT lives_ok($$ SELECT public.register_provider_document('selfie', (SELECT name FROM obj WHERE k = 'selfie')) $$, 'the selfie registers');
@@ -383,6 +383,10 @@ UPDATE obj SET id = pg_temp.put('provider-documents', '00000000-0000-0000-0000-0
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000002a1", "role": "authenticated"}', true);
 SELECT lives_ok($$ SELECT public.register_provider_document('selfie', (SELECT name FROM obj WHERE k = 'selfie')) $$, 'the selfie is uploaded again');
+-- Spec 0011-20b AC-5, X-13: the address is part of a complete file.
+SELECT is(public.submit_provider_file() -> 'missing', '["address"]'::jsonb, 'without an address, submit names it and writes nothing');
+SELECT is(public.save_provider_address('{"il": "İstanbul", "ilce": "Kadıköy", "mahalle": "Caferağa", "street": "Moda Cad.", "building_no": "12"}'),
+  '{"ok": true}'::jsonb, 'the provider saves an address');
 SELECT is(public.submit_provider_file() ->> 'status', 'pending', 'a complete file goes to pending');
 SELECT is(public.submit_provider_file() ->> 'status', 'pending', 'a second submit answers the status');
 SELECT is(public.provider_standing('00000000-0000-0000-0000-0000000002a1'), 'pending', 'the standing reads pending');

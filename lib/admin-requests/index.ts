@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { StoredAddress } from '@/lib/address/parts';
 import { createSupabaseServer } from '@/lib/db/server';
 
 import {
@@ -163,13 +164,14 @@ export async function extendDeadline(input: {
 export async function showAddress(input: {
   requestId: string;
   reason: string;
-}): Promise<{ ok: true; line: string } | Refused> {
+}): Promise<{ ok: true; address: StoredAddress } | Refused> {
   const result = await call('admin_request_address', {
     p_request_id: input.requestId,
     p_reason: input.reason,
   });
   if ('ok' in result) return result;
-  return { ok: true, line: AdminAddressResult.parse(result.data).line };
+  // Spec 0011-20b AC-7: the line with the parts and the pin (null parts before 20b, AC-9).
+  return { ok: true, address: StoredAddress.parse(AdminAddressResult.parse(result.data)) };
 }
 
 /** One page of open deadline flags, oldest first (R-7); `total` is the rail's badge. */

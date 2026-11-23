@@ -504,7 +504,7 @@ CREATE TEMP VIEW money_args AS
                   WHERE a ~* '(price|amount|total|fee|commission|base|factor|multiplier|rounding|cost|discount|unit)'
                     -- The one exemption (spec 0008 AC-10, D140): the figures the customer saw, compared and never
                     -- stored. Keyed on the function and the argument pair; supabase/tests/12 reads the source.
-                    AND NOT (p.oid = 'public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, text, text, bigint, bigint)'::regprocedure
+                    AND NOT (p.oid = 'public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, jsonb, text, bigint, bigint)'::regprocedure
                              AND a IN ('p_expected_price', 'p_expected_commission'))
                     -- The second (spec 0011-07 AC-2, R-12): the fee formula, granted to signed in users by the
                     -- spec. It stores nothing and returns a figure from the settings; every figure that is
@@ -547,6 +547,10 @@ SELECT set_eq(
             ('public.admin_request_address(uuid, text)'),
             ('public.admin_requests(text, text, date, date, boolean, integer)'),
             ('public.admin_revenue(date, date, text)'),
+            -- Spec 0011-20b: the provider's own address (save, read) and admin's audited read.
+            ('public.save_provider_address(jsonb)'),
+            ('public.my_provider_address()'),
+            ('public.admin_provider_address(uuid, text)'),
             -- Spec 0011-17: ratings. The customer's rating and its form, the provider's own summary, admin's list and hide.
             ('public.rate_provider(uuid, integer, integer, integer, integer)'),
             ('public.request_rating(uuid)'),
@@ -601,7 +605,7 @@ SELECT set_eq(
             ('public.request_close_info(uuid)'),
             ('public.start_job(uuid)'),
             ('public.contacts_visible(uuid)'),
-            ('public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, text, text, bigint, bigint)'),
+            ('public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, jsonb, text, bigint, bigint)'),
             ('public.decide_provider(uuid, text, timestamp with time zone, text, text)'),
             ('public.is_admin()'),
             ('public.ledger_check(text)'),

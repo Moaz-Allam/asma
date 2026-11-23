@@ -4,6 +4,7 @@ import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/serve
 import { ProviderFileReview, type ReviewDocument } from '@/components/features/admin/ProviderFileReview';
 import { ProviderQueue } from '@/components/features/admin/ProviderQueue';
 import { AdminQualitySection } from '@/components/features/admin/quality/AdminQualitySection';
+import { AdminProviderAddressButton } from '@/components/features/admin/requests/AdminRequestActions';
 import { AdminRatingsSection } from '@/components/features/ratings/AdminRatingsSection';
 import { STANDING_TONE } from '@/components/features/provider/StandingChip';
 import { InitialAvatar } from '@/components/shared/InitialAvatar';
@@ -38,6 +39,7 @@ export default async function Page({ params, searchParams }: Props) {
   const tReason = await getTranslations('Provider.reviewReason');
   const tEntity = await getTranslations('ProviderForm.entity');
   const tLang = await getTranslations('ProviderForm.languages');
+  const ta = await getTranslations('Address');
   const format = await getFormatter();
   const search = await searchParams;
   const query = parseQueueQuery(search);
@@ -156,6 +158,12 @@ export default async function Page({ params, searchParams }: Props) {
             </p>
           </section>
         ) : null}
+
+        {/* Spec 0011-20b AC-7: the provider's address on demand, audited with a reason. */}
+        <section className="flex flex-col gap-2 rounded-block bg-surface-secondary p-5">
+          <h2 className="text-meta font-bold text-text-secondary">{ta('admin.provider')}</h2>
+          <AdminProviderAddressButton providerId={file.id} />
+        </section>
 
         {file.status === 'suspended' && file.suspensionReason ? (
           <section className="flex flex-col gap-2 rounded-block bg-error-light p-5">

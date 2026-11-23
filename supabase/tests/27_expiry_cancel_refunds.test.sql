@@ -67,7 +67,7 @@ END $$;
 CREATE FUNCTION pg_temp.choose(p integer, w text) RETURNS jsonb LANGUAGE plpgsql AS $$
 BEGIN
   PERFORM pg_temp.as_user('c1');
-  RETURN public.choose_provider(pg_temp.r(p), pg_temp.app(p, w), 'draft-1');
+  RETURN public.choose_provider(pg_temp.r(p), pg_temp.app(p, w), 'draft-2');
 END $$;
 CREATE FUNCTION pg_temp.cfee(p integer) RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT id FROM public.fee_payments WHERE request_id = pg_temp.r(p) AND kind = 'commission' $$;
@@ -79,7 +79,7 @@ DECLARE
   v_att uuid;
 BEGIN
   PERFORM pg_temp.as_user('c1');
-  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
+  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-2') ->> 'attempt_id')::uuid;
   IF NOT p_apply THEN
     RETURN jsonb_build_object('attempt_id', v_att);
   END IF;
@@ -91,7 +91,7 @@ DECLARE
   v_att uuid;
 BEGIN
   PERFORM pg_temp.as_user(w);
-  v_att := (public.pay_provider_fee(pg_temp.app(p, w), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
+  v_att := (public.pay_provider_fee(pg_temp.app(p, w), 'tr', NULL, 'draft-2') ->> 'attempt_id')::uuid;
   IF NOT p_apply THEN
     RETURN jsonb_build_object('attempt_id', v_att);
   END IF;
@@ -327,7 +327,7 @@ SELECT is(public.expire_windows() >= 1, true, 'AC-2: expire_windows takes it');
 SELECT is(pg_temp.st(4), 'OPEN 0 EXPIRED APPLIED APPLIED -', 'row 4: the pick EXPIRED, the request OPEN, not a failed pick, the others restored');
 SELECT ok((SELECT actor_id IS NULL FROM public.audit_log WHERE action = 'request.pick_expired' AND entity_id = pg_temp.r(4)::text),
   'AC-2.1: one pick_expired row, no actor');
-SELECT is(pg_temp.call_as('c1', format('SELECT public.choose_provider(%L, %L, ''draft-1'')::text', pg_temp.r(4), pg_temp.app(4, 'a1'))),
+SELECT is(pg_temp.call_as('c1', format('SELECT public.choose_provider(%L, %L, ''draft-2'')::text', pg_temp.r(4), pg_temp.app(4, 'a1'))),
   'provider_not_eligible', 'AC-4: the provider whose pick expired is never picked again');
 SELECT pg_temp.choose(4, 'a2');
 SELECT is((pg_temp.paycom(4, false) ->> 'attempt_id') IS NOT NULL AND pg_temp.cfee(4) = (SELECT id FROM r4_fee), true,
@@ -391,7 +391,7 @@ SELECT ok((SELECT r.payment_deadline IS NULL AND r.selected_at = now()
   'R-3, R-4: no payment window, the fee window by 09''s rule, the provider fee frozen');
 SELECT is((SELECT count(*)::int FROM public.fee_payments WHERE request_id = pg_temp.r(6) AND kind = 'commission'), 1, 'AC-4: still one commission fee');
 SELECT is((pg_temp.choose(6, 'a2') ->> 'replayed')::boolean, true, 'AC-4: choosing the same offer again is a replay');
-SELECT is(pg_temp.call_as('c1', format('SELECT public.choose_provider(%L, %L, ''draft-1'')::text', pg_temp.r(6), pg_temp.app(6, 'a3'))),
+SELECT is(pg_temp.call_as('c1', format('SELECT public.choose_provider(%L, %L, ''draft-2'')::text', pg_temp.r(6), pg_temp.app(6, 'a3'))),
   'not_choosable', 'AC-4: a picked request takes no other choose');
 SELECT is((pg_temp.payfee(6, 'a2')) ->> 'status', 'paid', 'AC-4: the new pick pays its own fee');
 SELECT is(pg_temp.st(6), 'UNLOCKED 1 EXPIRED UNLOCKED NOT_SELECTED -', 'AC-4: and the carried commission unlocks the request');
@@ -629,7 +629,7 @@ SELECT is(public.expire_request(pg_temp.r(20)), 'reopened', 'R-7: then drops it 
 SELECT is(pg_temp.st(20), 'OPEN 0 APPLIED APPLIED APPLIED WITHDRAWN', 'R-7: WITHDRAWN, not EXPIRED, and the request reopened');
 SELECT is((public.apply_fee_paid(pg_temp.cfee(20), (SELECT a.id FROM public.checkout_attempts a WHERE a.fee_payment_id = pg_temp.cfee(20)),
                                  'pay-27-late20', 10000, 'TRY', 300)) ->> 'status', 'late', 'R-8: a payment for the dropped pick is refunded as late');
-SELECT is(pg_temp.call_as('c1', format('SELECT public.choose_provider(%L, %L, ''draft-1'')::text', pg_temp.r(17), pg_temp.app(17, 'b1'))),
+SELECT is(pg_temp.call_as('c1', format('SELECT public.choose_provider(%L, %L, ''draft-2'')::text', pg_temp.r(17), pg_temp.app(17, 'b1'))),
   'provider_not_eligible', 'AC-10: the suspended provider is not picked again');
 
 -- ══ AC-12, AC-14: the reads ═══════════════════════════════════════════════════
@@ -716,7 +716,7 @@ BEGIN
         PERFORM pg_temp.choose(v_p, v_w);
       ELSIF v_op = 1 THEN
         PERFORM pg_temp.as_user('c1');
-        v_att := (public.pay_commission(pg_temp.r(v_p), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
+        v_att := (public.pay_commission(pg_temp.r(v_p), 'tr', NULL, 'draft-2') ->> 'attempt_id')::uuid;
         IF v_att IS NOT NULL AND random() < 0.8 THEN
           PERFORM public.apply_fee_paid(pg_temp.cfee(v_p), v_att, 'prop-27-' || k, 10000, 'TRY', 300);
         END IF;
@@ -725,7 +725,7 @@ BEGIN
           JOIN public.requests r ON r.selected_application_id = pg_temp.app(v_p, p.w) WHERE r.id = pg_temp.r(v_p);
         IF v_w IS NOT NULL THEN
           PERFORM pg_temp.as_user(v_w);
-          v_att := (public.pay_provider_fee(pg_temp.app(v_p, v_w), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
+          v_att := (public.pay_provider_fee(pg_temp.app(v_p, v_w), 'tr', NULL, 'draft-2') ->> 'attempt_id')::uuid;
           IF v_att IS NOT NULL AND random() < 0.8 THEN
             PERFORM public.apply_fee_paid(pg_temp.pfee(v_p, v_w), v_att, 'prop-27-' || k, 5000, 'TRY', 150);
           END IF;

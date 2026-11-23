@@ -19,6 +19,11 @@ SELECT plan(154);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
+-- Spec 0011-20b: 20b made draft-2 the active template. This file proves position 20 on draft-1, so it makes draft-1
+-- the active one again for its own run (rolled back); pgTAP 45 proves draft-2.
+UPDATE public.agreement_templates SET active = false WHERE region = 'TR' AND version = 'draft-2';
+UPDATE public.agreement_templates SET active = true WHERE region = 'TR' AND version = 'draft-1';
+
 -- ── ids ──────────────────────────────────────────────────────────────────────
 CREATE FUNCTION pg_temp.u(p text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$
   SELECT ('00000000-0000-0000-0000-0000004200' || p)::uuid $$;
@@ -168,7 +173,7 @@ SELECT is(pg_temp.call_as('c1', $$ INSERT INTO public.agreement_acceptances (reg
   '42501', 'AC-11: a customer cannot insert an acceptance');
 
 -- The template.
-SELECT is((SELECT version || ' ' || active FROM public.agreement_templates WHERE region = 'TR'), 'draft-1 true',
+SELECT is((SELECT version || ' ' || active FROM public.agreement_templates WHERE region = 'TR' AND version = 'draft-1'), 'draft-1 true',
   'AC-1: TR has the draft-1 template, active');
 SELECT ok((SELECT bool_and(s ->> 'heading' LIKE '[draft] %'
                            AND (SELECT bool_and(p #>> '{}' LIKE '[draft] %') FROM jsonb_array_elements(s -> 'paragraphs') p))
@@ -287,12 +292,12 @@ SELECT is(pg_temp.call_as('a1', $$ SELECT (r ->> 'agreement_version') FROM jsonb
 -- The template changes after the customer accepted: the provider stays bound to draft-1.
 UPDATE public.agreement_templates SET active = false WHERE version = 'draft-1';
 INSERT INTO public.agreement_templates (region, version, body, active)
-VALUES ('TR', 'draft-2', '[{"heading": "[draft] İki", "paragraphs": ["[draft] {{customer_name}} ve {{provider_name}}."]}]', true);
-SELECT is(pg_temp.call_as('a1', format('SELECT public.pay_provider_fee(%L, %L, NULL, %L)::text', pg_temp.app(2, 'a1'), 'tr', 'draft-2')),
+VALUES ('TR', 'draft-x2', '[{"heading": "[draft] İki", "paragraphs": ["[draft] {{customer_name}} ve {{provider_name}}."]}]', true);
+SELECT is(pg_temp.call_as('a1', format('SELECT public.pay_provider_fee(%L, %L, NULL, %L)::text', pg_temp.app(2, 'a1'), 'tr', 'draft-x2')),
   'agreement_required', 'AC-3: the new active version is refused; the customer''s binds');
 SELECT is(pg_temp.call_as('a1', format('SELECT public.pay_provider_fee(%L, %L, NULL, %L) ->> %L', pg_temp.app(2, 'a1'), 'tr', 'draft-1', 'status')),
   'settled', 'AC-3: the customer''s version, no longer active, is accepted (a fee of 0 settles at once)');
-UPDATE public.agreement_templates SET active = false WHERE version = 'draft-2';
+UPDATE public.agreement_templates SET active = false WHERE version = 'draft-x2';
 UPDATE public.agreement_templates SET active = true WHERE version = 'draft-1';
 SELECT is((SELECT string_agg(c.role || ':' || t.version, ' ' ORDER BY c.role) FROM public.agreement_acceptances c
              JOIN public.agreement_templates t ON t.id = c.template_id WHERE c.application_id = pg_temp.app(2, 'a1')),
@@ -308,8 +313,9 @@ SELECT is((SELECT (application_id = pg_temp.app(2, 'a1')) AND rendered_at IS NUL
   'AC-5: for the pick, not rendered yet');
 SELECT is((SELECT array_agg(k ORDER BY k) FROM ag2, jsonb_object_keys(content) k),
   ARRAY['addon_names', 'agreement_date', 'agreement_number', 'cash_due', 'category_name', 'commission', 'currency',
-        'customer_accepted_at', 'customer_name', 'customer_phone', 'district', 'job_price', 'platform_name',
-        'provider_accepted_at', 'provider_fee', 'provider_name', 'provider_phone', 'scheduled_end', 'scheduled_start',
+        'customer_accepted_at', 'customer_address', 'customer_directions', 'customer_name', 'customer_phone', 'district',
+        'job_price', 'platform_name',
+        'provider_accepted_at', 'provider_address', 'provider_fee', 'provider_name', 'provider_phone', 'scheduled_end', 'scheduled_start',
         'service_name', 'street_line', 'template_version', 'timezone', 'unlocked_at'],
   'AC-5: content holds every template field (and the time zone and the reveal time)');
 SELECT is((SELECT jsonb_build_object('customer_name', content -> 'customer_name', 'customer_phone', content -> 'customer_phone',
@@ -594,12 +600,12 @@ SELECT pg_temp.as_user('c1');
 SELECT public.choose_provider(pg_temp.r(7), pg_temp.app(7, 'a1'));
 SELECT pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, %L)::text', pg_temp.r(7), 'tr', 'draft-1'));
 UPDATE public.agreement_templates SET active = false WHERE version = 'draft-1';
-UPDATE public.agreement_templates SET active = true WHERE version = 'draft-2';
-SELECT is(pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, %L)::text', pg_temp.r(7), 'tr', 'draft-2')),
+UPDATE public.agreement_templates SET active = true WHERE version = 'draft-x2';
+SELECT is(pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, %L)::text', pg_temp.r(7), 'tr', 'draft-x2')),
   'agreement_required', 'S20-4: the new active version is refused once draft-1 was accepted for this pick');
 SELECT is(pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, %L) ->> %L', pg_temp.r(7), 'tr', 'draft-1', 'status')),
   'checkout', 'S20-4: the accepted version still pays (the retry page offers it)');
-UPDATE public.agreement_templates SET active = false WHERE version = 'draft-2';
+UPDATE public.agreement_templates SET active = false WHERE version = 'draft-x2';
 UPDATE public.agreement_templates SET active = true WHERE version = 'draft-1';
 
 -- S20-5 and the single alert: no re-render while one is queued; a second failure does not alert again.

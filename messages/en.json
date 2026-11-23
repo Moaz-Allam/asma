@@ -432,7 +432,8 @@
     "steps": {
       "label": "Your file",
       "profile": "Professional profile",
-      "documents": "Verification"
+      "documents": "Verification",
+      "address": "Address"
     },
     "gate": "You cannot see or apply to requests until you finish these steps and admin approves your file.",
     "gateChip": "Required",
@@ -619,7 +620,8 @@
       "id_back": "ID back side",
       "selfie": "Selfie with your ID",
       "criminal_record": "Criminal record",
-      "skill_certificate": "Skill certificate"
+      "skill_certificate": "Skill certificate",
+      "address": "Your address"
     }
   },
   "ProviderErrors": {
@@ -635,7 +637,10 @@
     "file_incomplete": "Some parts are still missing:",
     "forbidden": "Your session ended. Sign in again.",
     "unauthorized": "Your session ended. Sign in again.",
-    "action_failed": "Something went wrong. Nothing changed. Please try again."
+    "action_failed": "Something went wrong. Nothing changed. Please try again.",
+    "address_invalid": "Check the address: il, ilçe, the neighbourhood, street and building number are needed.",
+    "pin_invalid": "The pin must be inside Turkey.",
+    "contact_info_in_address": "Please leave phone numbers, emails and links out of the address."
   },
   "Rejection": {
     "document_unclear": "The document is not clear",
@@ -879,7 +884,11 @@
     "newProviderQuestion": "New question for providers",
     "editProviderQuestion": "Edit question for providers",
     "providerQuestionSheetNote": "Providers answer this when they apply, and the customer reads the answers on each offer. Key and type are set once. Answers never change the price.",
-    "answerLengthRule": "An answer is {min} to {limit} characters. Empty means {limit}."
+    "answerLengthRule": "An answer is {min} to {limit} characters. Empty means {limit}.",
+    "fieldIl": "Province (il)",
+    "fieldIlce": "District (ilçe)",
+    "placeNote": "A request address in this district takes these two, as typed here.",
+    "placeMissing": "Il and ilçe not set"
   },
   "CatalogErrors": {
     "validation_failed": "Something in the form is not valid. Check each field and save again.",
@@ -894,7 +903,8 @@
     "action_failed": "That did not work. Nothing was changed. Try again.",
     "network": "The connection dropped. Nothing changed, and what you typed is still here. Try again.",
     "too_many_questions": "A category holds at most 5 active questions for providers. Turn one off first.",
-    "application_question_retire": "Questions are never deleted. Turn it off instead."
+    "application_question_retire": "Questions are never deleted. Turn it off instead.",
+    "zone_place_required": "An active district needs its il and ilçe."
   },
   "AdminPricing": {
     "title": "Pricing rules",
@@ -1158,7 +1168,7 @@
       "request_settings_invalid": "Requests cannot be posted right now. Please try again later.",
       "too_many_quotes": "Too many price checks. Try again within the hour.",
       "schedule_invalid": "That start time is no longer open. Pick another day or time.",
-      "address_invalid": "Write the street, building and floor, 5 to 200 characters.",
+      "address_invalid": "Check the address: the neighbourhood, street and building number are needed.",
       "notes_invalid": "Notes can be up to 500 characters.",
       "contact_info_in_notes": "Please leave phone numbers, emails and links out of the notes.",
       "too_many_open_requests": "You already have 5 open requests. Cancel one or wait for it to start.",
@@ -1179,7 +1189,9 @@
       "checkout_settings_invalid": "Payments are not possible right now. Please try again later.",
       "unlock_settings_invalid": "Payments are not possible right now. Please try again later.",
       "provider_not_eligible": "This provider can no longer be chosen for this request.",
-      "agreement_required": "[draft] Tick the box to accept the service agreement first."
+      "agreement_required": "[draft] Tick the box to accept the service agreement first.",
+      "pin_invalid": "The pin must be inside Turkey.",
+      "contact_info_in_address": "Please leave phone numbers, emails and links out of the address."
     },
     "offers": {
       "title": "{count, plural, =0 {No offers yet} one {# offer on your request} other {# offers on your request}}",
@@ -1425,7 +1437,8 @@
       "probation_limit": "[draft] During your first jobs you can hold only a few jobs at once. Finish one to apply again.",
       "questions_changed": "[draft] The questions for this job changed. Check them and send again.",
       "answers_invalid": "[draft] Answer this question within its limits: 10 characters or more for a text, or pick one option.",
-      "contact_info_in_answer": "[draft] This answer has contact details. Remove phone numbers, emails, links and social handles."
+      "contact_info_in_answer": "[draft] This answer has contact details. Remove phone numbers, emails, links and social handles.",
+      "address_required": "Add your address before you send an offer."
     },
     "chosen": {
       "line": "The customer is paying the commission by {date}. Your fee comes after that.",
@@ -2491,5 +2504,79 @@
       }
     },
     "unavailable": "[draft] The service agreement for this job is not available, so the fee cannot be paid here. Please contact support."
+  },
+  "Address": {
+    "title": "Address",
+    "optional": "{label} (optional)",
+    "fromZone": "From the district you picked. The price follows it.",
+    "fromZoneMissing": "Not set yet",
+    "privacy": "No provider sees your address or pin before you have both paid. Until then they see the district, the date and the price only.",
+    "providerPrivacy": "A customer sees your address only on a job you both paid for, and on its service agreement. Your pin is never shown to customers.",
+    "fields": {
+      "il": "Province (il)",
+      "ilce": "District (ilçe)",
+      "mahalle": "Neighbourhood (mahalle)",
+      "street": "Street",
+      "building_no": "Building number",
+      "floor": "Floor",
+      "apartment": "Apartment",
+      "postal_code": "Postal code",
+      "directions": "Directions for the provider"
+    },
+    "errors": {
+      "required": "Fill this in.",
+      "invalid": "Check this part: it is too short, too long or has characters it cannot hold.",
+      "postal_code": "A postal code is five digits.",
+      "number": "Up to 10 characters and at most 4 digits, like 12 or 12/A.",
+      "pin_invalid": "The pin must be inside Turkey.",
+      "contact_info_in_address": "Please leave phone numbers, emails and links out of the address.",
+      "address_invalid": "Check the address: the neighbourhood, street and building number are needed."
+    },
+    "map": {
+      "open": "Pick on the map",
+      "title": "Pick your address on the map",
+      "description": "Search, use your location or move the pin to your door. The fields fill in, and you can still change them.",
+      "search": "Search a street or a place",
+      "results": "Places found",
+      "searchEmpty": "No places found. Try another spelling.",
+      "locate": "Use my location",
+      "locating": "Finding you…",
+      "locationDenied": "Your location is off. Search or move the pin instead.",
+      "outside": "That point is outside Turkey. Move the pin.",
+      "unavailable": "The map is not available right now. Type the address instead.",
+      "filled": "The address fields were filled from the pin. Check each part.",
+      "pinned": "Pin set",
+      "remove": "Remove pin",
+      "done": "Done",
+      "close": "Close the map",
+      "label": "Map: tap to move the pin",
+      "mismatch": "The pin seems to be in {found}, but you picked {zone}. The price follows the district you picked."
+    },
+    "card": {
+      "title": "Address",
+      "openInMaps": "Open in Maps",
+      "directions": "Directions",
+      "notGiven": "Not given",
+      "providerAddress": "The provider's address",
+      "mapLabel": "Map of the job address"
+    },
+    "provider": {
+      "title": "Your address",
+      "intro": "Where you work from. It goes on each service agreement, and a customer sees it only after you both paid.",
+      "save": "Save the address",
+      "saving": "Saving…",
+      "saved": "Address saved.",
+      "change": "Change the address",
+      "banner": "Add your address before your next offer.",
+      "bannerLink": "Add the address",
+      "missing": "Your address"
+    },
+    "admin": {
+      "provider": "Address",
+      "show": "Show the address",
+      "reason": "Why you need it (kept in the audit log)",
+      "none": "No address given.",
+      "pin": "Pin"
+    }
   }
 }

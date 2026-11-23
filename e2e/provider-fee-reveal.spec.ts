@@ -125,8 +125,8 @@ function chosenAndSettled(locale: string, f: ReturnType<typeof ids>) {
       ` ('${f.offerA}', 'TR', '${f.request}', ${profileId(locale, 'revealProvider')}, 'I can start at ten with my own tools, two people.'),` +
       ` ('${f.offerB}', 'TR', '${f.request}', ${profileId(locale, 'revealRival')}, 'Free that day, I live close to your district.');` +
       ` perform set_config('request.jwt.claims', json_build_object('sub', ${profileId(locale, 'revealCustomer')}, 'role', 'authenticated')::text, true);` +
-      ` perform public.choose_provider('${f.request}', '${f.offerA}', 'draft-1');` +
-      ` perform public.pay_commission('${f.request}', 'tr', null, 'draft-1');`,
+      ` perform public.choose_provider('${f.request}', '${f.offerA}', 'draft-2');` +
+      ` perform public.pay_commission('${f.request}', 'tr', null, 'draft-2');`,
   );
 }
 

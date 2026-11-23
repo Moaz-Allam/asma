@@ -45,7 +45,7 @@ export type FormCatalog = {
   timezone: string;
   today: string;
   schedule: { leadDays: number; horizonDays: number; firstHour: number; lastHour: number };
-  zones: { id: string; name: string }[];
+  zones: { id: string; name: string; il: string | null; ilce: string | null }[];
   categories: { id: string; name: string; services: FormService[] }[];
 };
 
@@ -66,7 +66,7 @@ export function localizeCatalog(catalog: RequestCatalog, locale: string): FormCa
       firstHour: catalog.schedule.first_hour,
       lastHour: catalog.schedule.last_hour,
     },
-    zones: catalog.zones.map((z) => ({ id: z.id, name: text(z.name) })),
+    zones: catalog.zones.map((z) => ({ id: z.id, name: text(z.name), il: z.il, ilce: z.ilce })),
     categories: catalog.categories.map((c) => ({
       id: c.id,
       name: text(c.name),

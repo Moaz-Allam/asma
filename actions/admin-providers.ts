@@ -1,11 +1,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
 import { fail, guardedAction } from '@/lib/auth/action';
 import { log } from '@/lib/observability/log';
 import { ADMIN_DB_CODES, databaseCode } from '@/lib/provider/codes';
+import type { StoredAddress } from '@/lib/address/parts';
 import {
+  adminProviderAddressInDb,
   decideProviderInDb,
   logDocumentViewInDb,
   reinstateProviderInDb,
@@ -36,6 +39,29 @@ async function mapped<T>(run: () => Promise<T>) {
     throw error;
   }
 }
+
+/**
+ * Spec 0011-20b AC-7: a provider's address on demand, with a reason. Postgres writes `provider.address_viewed` (the
+ * reason in audit_log only) before it returns; the parts go back to the client component that asked, nowhere else.
+ */
+export const adminShowProviderAddress = guardedAction(
+  {
+    name: 'adminShowProviderAddress',
+    access: ['admin'],
+    schema: z.object({ providerId: z.string().uuid(), reason: z.string().max(2000) }).strict(),
+  },
+  async ({ providerId, reason }): Promise<{ address: StoredAddress | null } | ReturnType<typeof fail>> => {
+    try {
+      return { address: await adminProviderAddressInDb(providerId, reason) };
+    } catch (error) {
+      const code = databaseCode(error, ADMIN_DB_CODES);
+      if (code === 'not_found') return { address: null };
+      if (code === 'validation_failed') return fail('reason_required');
+      if (code) return fail(code);
+      throw error;
+    }
+  },
+);
 
 /**
  * Show a document (AC-16). The view row is written first; only then is a 60 second link signed, and

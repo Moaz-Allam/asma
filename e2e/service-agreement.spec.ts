@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import type { APIRequestContext, Browser, Page } from '@playwright/test';
 
-import { expect, test } from './fixtures';
+import { expect, stubMapTiler, test } from './fixtures';
 import { onboard, signIn } from './auth';
 import { testE164, testPhone } from './numbers';
 
@@ -23,6 +23,9 @@ import { testE164, testPhone } from './numbers';
  */
 
 const SECRET = 'e2e-relay-secret-0000000000000000000000';
+// Spec 0011-20b AC-6, AC-8: both addresses as Postgres composes them.
+const CUSTOMER_LINE = 'Caferağa Mah., Sözleşme Sok., No: 7, Kadıköy/İstanbul';
+const PROVIDER_LINE = 'Sinanpaşa Mah., Çarşı Cad., No: 8, Beşiktaş/İstanbul';
 const ORIGIN = `http://localhost:${process.env.E2E_PORT || 3100}`;
 const MAIL_FILE = process.env.EMAIL_FAKE_FILE ?? '';
 test.use({ baseURL: ORIGIN });
@@ -115,8 +118,12 @@ function chosen(locale: string, f: ReturnType<typeof ids>) {
       ` '${snapshot}', 250000, 0, 250000, 'TRY',` +
       ` ((now() at time zone 'Europe/Istanbul')::date + 3 + time '10:00') at time zone 'Europe/Istanbul',` +
       ` ((now() at time zone 'Europe/Istanbul')::date + 3 + time '13:00') at time zone 'Europe/Istanbul';` +
-      ` insert into public.request_addresses (request_id, region, customer_id, line)` +
-      ` select '${f.request}', 'TR', ${profileId(locale, 'agreementCustomer')}, 'Sözleşme Sok. No 7';` +
+      // Spec 0011-20b: the customer's address as parts with a pin, and the provider's own address.
+      ` insert into public.request_addresses (request_id, region, customer_id, line, il, ilce, mahalle, street, building_no, directions, lat, lng)` +
+      ` select '${f.request}', 'TR', ${profileId(locale, 'agreementCustomer')}, '${CUSTOMER_LINE}', 'İstanbul', 'Kadıköy', 'Caferağa', 'Sözleşme Sok.', '7', 'Mavi kapı', 40.986345, 29.0252;` +
+      ` insert into public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no)` +
+      ` select ${profileId(locale, 'agreementProvider')}, 'TR', 'İstanbul', 'Beşiktaş', 'Sinanpaşa', 'Çarşı Cad.', '8'` +
+      ` on conflict (provider_id) do nothing;` +
       ` insert into public.applications (id, region, request_id, provider_id, message) values` +
       ` ('${f.offer}', 'TR', '${f.request}', ${profileId(locale, 'agreementProvider')}, 'I can come at ten with my own tools and a helper.');` +
       ` perform set_config('request.jwt.claims', json_build_object('sub', ${profileId(locale, 'agreementCustomer')}, 'role', 'authenticated')::text, true);` +
@@ -141,13 +148,15 @@ async function axe(page: Page) {
 }
 
 async function newPage(browser: Browser) {
-  return (
+  const page = await (
     await browser.newContext({
       viewport: { width: 390, height: 844 },
       baseURL: ORIGIN,
       acceptDownloads: true,
     })
   ).newPage();
+  await stubMapTiler(page);
+  return page;
 }
 
 async function relay(request: APIRequestContext, task: 'drain' | 'email') {
@@ -217,7 +226,7 @@ test('both sides tick and pay, the reveal renders the agreement, both download i
     next.getByRole('link', {
       name: m(locale, 'Agreement.checkbox').match(/<agreement>(.*)<\/agreement>/)?.[1] ?? '',
     }),
-  ).toHaveAttribute('href', `/${locale}/agreement/draft-1`);
+  ).toHaveAttribute('href', `/${locale}/agreement/draft-2`);
   await axe(page);
   await tick.check();
   await expect(go).toBeEnabled();
@@ -230,10 +239,10 @@ test('both sides tick and pay, the reveal renders the agreement, both download i
       `select c.role, t.version from public.agreement_acceptances c join public.agreement_templates t on t.id = c.template_id` +
         ` where c.application_id = '${f.offer}' order by c.role;`,
     ),
-  ).toEqual([{ role: 'customer', version: 'draft-1' }]);
+  ).toEqual([{ role: 'customer', version: 'draft-2' }]);
 
   // AC-12: the full text page of that version, its fields shown as labels, the Turkish note in the reader's locale.
-  await page.goto(`/${locale}/agreement/draft-1`);
+  await page.goto(`/${locale}/agreement/draft-2`);
   await expect(page.locator('h1')).toHaveText(m(locale, 'Agreement.page.title'));
   await expect(page.getByText(m(locale, 'Agreement.page.turkish'))).toBeVisible();
   await expect(page.locator('article[lang="tr"]')).toContainText('[Hizmet alanın adı]');
@@ -269,6 +278,12 @@ test('both sides tick and pay, the reveal renders the agreement, both download i
     )
     .toBe(true);
   const number = agreement()!.number;
+  // Spec 0011-20b AC-8: the frozen content names both addresses and the directions (draft-2 prints them).
+  expect(
+    sql(
+      `select content ->> 'customer_address' as c, content ->> 'customer_directions' as d, content ->> 'provider_address' as p, content ->> 'template_version' as v from public.service_agreements where request_id = '${f.request}';`,
+    )[0],
+  ).toEqual({ c: CUSTOMER_LINE, d: 'Mavi kapı', p: PROVIDER_LINE, v: 'draft-2' });
 
   // AC-8: both mails, each with the PDF attached (the fake driver records name, size and hash only).
   await expect
@@ -295,6 +310,12 @@ test('both sides tick and pay, the reveal renders the agreement, both download i
   await page.goto(`/${locale}/requests/${f.request}`);
   const title = m(locale, 'Agreement.card.title');
   await expect(page.getByRole('region', { name: title })).toContainText(number);
+  // Spec 0011-20b AC-6: the customer's card shows the provider's address, never a pin or a map.
+  const customerCard = page
+    .getByRole('region', { name: m(locale, 'Contacts.titleProvider') })
+    .and(page.locator('[data-pii]'));
+  await expect(customerCard).toContainText(PROVIDER_LINE);
+  await expect(customerCard.getByRole('link', { name: m(locale, 'Address.card.openInMaps') })).toHaveCount(0);
   await axe(page);
   const customerFile = await downloadFrom(page, title);
   expect(customerFile).toEqual({ name: `Hizmet-Sozlesmesi-${number}.pdf`, head: '%PDF-' });
@@ -306,6 +327,15 @@ test('both sides tick and pay, the reveal renders the agreement, both download i
   // AC-9: the provider's card on My jobs (Active).
   await provider.goto(`/${locale}/provider/applications?tab=active`);
   await expect(provider.getByRole('region', { name: title })).toContainText(number);
+  // Spec 0011-20b AC-6: the provider's card shows the customer's address, the directions and Open in Maps by the pin.
+  const providerCard = provider
+    .getByRole('region', { name: m(locale, 'Contacts.titleCustomer') })
+    .and(provider.locator('[data-pii]'));
+  await expect(providerCard).toContainText(CUSTOMER_LINE);
+  await expect(providerCard).toContainText('Mavi kapı');
+  await expect(
+    providerCard.getByRole('link', { name: m(locale, 'Address.card.openInMaps') }),
+  ).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=40.986345,29.0252');
   await axe(provider);
   const providerFile = await downloadFrom(provider, title);
   expect(providerFile.head).toBe('%PDF-');

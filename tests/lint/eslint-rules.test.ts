@@ -799,6 +799,77 @@ const CASES: Array<{ name: string; file: string; code: string; rule: string; fir
     rule: 'no-restricted-syntax',
     fires: false,
   },
+  // Spec 0011-20b AC-10: the map door.
+  {
+    name: 'maplibre-gl imported outside lib/maps',
+    file: 'components/features/address/AddressFields.tsx',
+    code: "import maplibregl from 'maplibre-gl';\nexport const m = maplibregl;\n",
+    rule: 'no-restricted-imports',
+    fires: true,
+  },
+  {
+    name: 'the MapTiler client imported outside lib/maps',
+    file: 'lib/requests/index.ts',
+    code: "import { geocoding } from '@maptiler/client';\nexport const g = geocoding;\n",
+    rule: 'no-restricted-imports',
+    fires: true,
+  },
+  {
+    name: 'maplibre-gl loaded lazily outside lib/maps',
+    file: 'components/features/address/AddressFields.tsx',
+    code: "export const load = () => import('maplibre-gl');\n",
+    rule: 'no-restricted-syntax',
+    fires: true,
+  },
+  {
+    name: 'the MapTiler client required outside lib/maps',
+    file: 'app/[locale]/page.tsx',
+    code: "declare const require: (m: string) => unknown;\nexport const c = require('@maptiler/client');\n",
+    rule: 'no-restricted-syntax',
+    fires: true,
+  },
+  {
+    name: 'the MapTiler key read outside lib/maps',
+    file: 'components/features/address/AddressFields.tsx',
+    code: 'export const k = process.env.NEXT_PUBLIC_MAPTILER_KEY;\n',
+    rule: 'no-restricted-syntax',
+    fires: true,
+  },
+  {
+    name: 'the MapTiler key read from getEnv outside lib/maps',
+    file: 'app/[locale]/(customer)/requests/new/page.tsx',
+    code: "import { getEnv } from '@/lib/env';\nexport const k = getEnv().NEXT_PUBLIC_MAPTILER_KEY;\n",
+    rule: 'no-restricted-syntax',
+    fires: true,
+  },
+  {
+    name: 'lib/maps imports maplibre-gl',
+    file: 'lib/maps/AddressMap.tsx',
+    code: "import maplibregl from 'maplibre-gl';\nexport const m = maplibregl;\n",
+    rule: 'no-restricted-imports',
+    fires: false,
+  },
+  {
+    name: 'lib/maps imports the MapTiler client lazily',
+    file: 'lib/maps/geocode.ts',
+    code: "export const load = () => import('@maptiler/client');\n",
+    rule: 'no-restricted-syntax',
+    fires: false,
+  },
+  {
+    name: 'lib/maps reads its key',
+    file: 'lib/maps/key.ts',
+    code: "import { getEnv } from '@/lib/env';\nexport const k = getEnv().NEXT_PUBLIC_MAPTILER_KEY;\n",
+    rule: 'no-restricted-syntax',
+    fires: false,
+  },
+  {
+    name: 'lib/env.ts validates the MapTiler key',
+    file: 'lib/env.ts',
+    code: "export const k = 'NEXT_PUBLIC_MAPTILER_KEY';\n",
+    rule: 'no-restricted-syntax',
+    fires: false,
+  },
 ];
 
 describe('single door lint rules', () => {

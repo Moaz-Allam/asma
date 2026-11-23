@@ -116,9 +116,9 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
          '00000000-0000-0000-0000-000000220001', 'An offer for the commission races, long enough.'
     FROM generate_series(1, 7) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000002200c1", "role": "authenticated"}', true);
-  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002200e' || g)::uuid, ('00000000-0000-0000-0000-0000002200f' || g)::uuid, 'draft-1')
+  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002200e' || g)::uuid, ('00000000-0000-0000-0000-0000002200f' || g)::uuid, 'draft-2')
     FROM generate_series(1, 7) g;
-  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002200e' || g)::uuid, 'tr', NULL, 'draft-1') FROM generate_series(4, 5) g;
+  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002200e' || g)::uuid, 'tr', NULL, 'draft-2') FROM generate_series(4, 5) g;
   SELECT public.fail_attempt(a.id, 'psp_failed') FROM public.checkout_attempts a JOIN public.fee_payments f ON f.id = a.fee_payment_id
    WHERE f.request_id = '00000000-0000-0000-0000-0000002200e5';
   ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
@@ -139,7 +139,7 @@ CREATE FUNCTION pg_temp.one(p_sql text) RETURNS text LANGUAGE sql AS $$
 CREATE FUNCTION pg_temp.result(p_conn text) RETURNS jsonb LANGUAGE sql AS $$
   SELECT r::jsonb FROM extensions.dblink_get_result(p_conn, false) AS t(r text) $$;
 CREATE FUNCTION pg_temp.pay_sql(p text) RETURNS text LANGUAGE sql AS $$
-  SELECT format('SELECT public.pay_commission(%L, %L, NULL, ''draft-1'')::text', '00000000-0000-0000-0000-0000002200e' || p, 'tr') $$;
+  SELECT format('SELECT public.pay_commission(%L, %L, NULL, ''draft-2'')::text', '00000000-0000-0000-0000-0000002200e' || p, 'tr') $$;
 CREATE FUNCTION pg_temp.cancel_sql(p text) RETURNS text LANGUAGE sql AS $$
   SELECT format('SELECT public.cancel_request(%L, NULL)::text', '00000000-0000-0000-0000-0000002200e' || p) $$;
 -- The relay's call for a request's commission on its newest attempt, its ids read first as the owner.

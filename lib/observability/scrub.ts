@@ -108,6 +108,17 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   // Spec 0011-20: a service agreement's frozen content (both parties' names, phones and the street line).
   'content',
   'agreement_content',
+  // Spec 0011-20b X-23: the structured address parts and the pin, and the RPC argument (`p_address` also by suffix).
+  'mahalle',
+  'building_no',
+  'floor',
+  'directions',
+  'il',
+  'ilce',
+  'p_address',
+  'customer_address',
+  'customer_directions',
+  'provider_address',
 ]);
 const PERSONAL_SUFFIXES = [
   // Spec 0008 (review A5): the request RPC arguments p_address_line, p_notes, p_answers.
@@ -367,6 +378,22 @@ function cutStoragePath(path: string): string {
  */
 const FAKE_CHECKOUT_PATH = /(\/dev\/fake-checkout\/)[^/?#]+/g;
 
+/**
+ * Third party origins the browser calls with a person's data in the path (S20b-1, S20b-2): MapTiler's geocoding puts
+ * the typed search or the pin in it, and a tile path places a home to a few hundred metres. Such a URL keeps only its
+ * origin and first path segment (`https://api.maptiler.com/geocoding`), and its fetch breadcrumbs and spans are dropped.
+ * Keep in step with `MAPTILER_ORIGIN` in `lib/security/csp.ts` (a unit test checks).
+ */
+export const PATH_PRIVATE_ORIGINS: readonly string[] = ['https://api.maptiler.com'];
+
+/** True for a URL on one of `PATH_PRIVATE_ORIGINS`. */
+export function isPathPrivateUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  return PATH_PRIVATE_ORIGINS.some(
+    (origin) => lower.startsWith(origin) && /^(?:[/?#]|$)/.test(lower.slice(origin.length)),
+  );
+}
+
 export function scrubUrl(url: string): string {
   const withoutFragment = url.split('#', 1)[0] ?? '';
   const authority = SCHEME_AND_AUTHORITY.exec(withoutFragment);
@@ -374,6 +401,10 @@ export function scrubUrl(url: string): string {
   // `user:password@host` loses everything before the host.
   const origin = authority ? `${scheme}${hostPart.slice(hostPart.lastIndexOf('@') + 1)}` : '';
   const rest = withoutFragment.slice(prefix.length);
+  if (authority && PATH_PRIVATE_ORIGINS.includes(origin.toLowerCase())) {
+    const first = /^\/[^/?#]*/.exec(rest)?.[0] ?? '';
+    return origin + redactPath(first);
+  }
   const q = rest.indexOf('?');
   // The fake card page's path carries its checkout token (spec 0011-08, security review S7).
   const rawPath = (q === -1 ? rest : rest.slice(0, q)).replace(FAKE_CHECKOUT_PATH, '$1[token]');
@@ -596,7 +627,16 @@ export function scrubEvent<T extends object>(event: T): T | null {
 }
 
 export function scrubBreadcrumb<T extends object>(breadcrumb: T): T | null {
-  return failClosed(() => scrubCrumb(breadcrumb as Obj, newBudget()) as T);
+  return failClosed(() =>
+    isPathPrivateCall(breadcrumb as Obj) ? null : (scrubCrumb(breadcrumb as Obj, newBudget()) as T),
+  );
+}
+
+/** A fetch or xhr breadcrumb to a path private origin: dropped whole (S20b-1). */
+function isPathPrivateCall(crumb: Obj): boolean {
+  if (crumb.category !== 'fetch' && crumb.category !== 'xhr') return false;
+  const url = isObj(crumb.data) ? crumb.data.url : undefined;
+  return typeof url === 'string' && isPathPrivateUrl(url);
 }
 
 const SPAN_IDS = [

@@ -100,12 +100,12 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000004300c1", "role": "authenticated"}', false);
   SELECT public.choose_provider(('00000000-0000-0000-0000-0000004300e' || g)::uuid, ('00000000-0000-0000-0000-0000004300f' || g)::uuid)
     FROM generate_series(1, 2) g;
-  SELECT public.pay_commission('00000000-0000-0000-0000-0000004300e2', 'tr', NULL, 'draft-1');
+  SELECT public.pay_commission('00000000-0000-0000-0000-0000004300e2', 'tr', NULL, 'draft-2');
   ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
   UPDATE public.applications SET provider_fee_amount = 0 WHERE id = '00000000-0000-0000-0000-0000004300f2';
   ALTER TABLE public.applications ENABLE TRIGGER applications_guard;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000430001", "role": "authenticated"}', false);
-  SELECT public.pay_provider_fee('00000000-0000-0000-0000-0000004300f2', 'tr', NULL, 'draft-1');
+  SELECT public.pay_provider_fee('00000000-0000-0000-0000-0000004300f2', 'tr', NULL, 'draft-2');
   COMMIT; $$);
 
 CREATE FUNCTION pg_temp.one(p_sql text) RETURNS text LANGUAGE sql AS $$
@@ -140,9 +140,9 @@ SELECT ok((SELECT id FROM e2) IS NOT NULL, 'fixture: E2''s reveal made its agree
 SELECT pg_temp.as_customer('a');
 SELECT pg_temp.as_customer('b');
 SELECT extensions.dblink_exec('a', 'BEGIN');
-SELECT is((SELECT r FROM extensions.dblink('a', $$ SELECT public.pay_commission('00000000-0000-0000-0000-0000004300e1', 'tr', NULL, 'draft-1') ->> 'status' $$) AS t(r text)),
+SELECT is((SELECT r FROM extensions.dblink('a', $$ SELECT public.pay_commission('00000000-0000-0000-0000-0000004300e1', 'tr', NULL, 'draft-2') ->> 'status' $$) AS t(r text)),
   'checkout', 'AC-2: the first press stores the acceptance, still uncommitted');
-SELECT extensions.dblink_send_query('b', $$ SELECT public.pay_commission('00000000-0000-0000-0000-0000004300e1', 'tr', NULL, 'draft-1')::text $$);
+SELECT extensions.dblink_send_query('b', $$ SELECT public.pay_commission('00000000-0000-0000-0000-0000004300e1', 'tr', NULL, 'draft-2')::text $$);
 SELECT pg_sleep(0.3);
 SELECT is(extensions.dblink_is_busy('b'), 1, 'AC-2: the second press waits on the request row');
 SELECT extensions.dblink_exec('a', 'COMMIT');

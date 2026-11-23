@@ -1,9 +1,12 @@
-import { Mail, MessageCircle, Phone } from 'lucide-react';
+import { MapPin, Mail, MessageCircle, Phone } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
 import { Button } from '@/components/ui/button';
+import { openInMapsUrl } from '@/lib/address/parts';
 import { localized } from '@/lib/catalog/localized';
 import type { Contacts } from '@/lib/requests';
+import { LazyAddressMap } from '@/lib/maps/lazy';
+import { mapKey } from '@/lib/maps/key';
 import { instantLabel } from '@/lib/requests/view';
 
 import { ContactsSeen } from './ContactsSeen';
@@ -26,6 +29,16 @@ export async function ContactCard({
   fallbackLocale: string;
 }) {
   const t = await getTranslations('Contacts');
+  const ta = await getTranslations('Address');
+  const key = mapKey();
+  // Spec 0011-20b AC-6: the customer's pin and an Open in Maps link, to the provider only.
+  const place = contacts.side === 'provider' ? contacts.address : null;
+  const line = place?.line ?? (contacts.side === 'provider' ? contacts.street : null);
+  const pin =
+    typeof place?.lat === 'number' && typeof place?.lng === 'number'
+      ? { lat: place.lat, lng: place.lng }
+      : null;
+  const mapsUrl = contacts.side === 'provider' ? openInMapsUrl({ lat: pin?.lat, lng: pin?.lng, line }) : null;
   const title = contacts.side === 'customer' ? t('titleProvider') : t('titleCustomer');
 
   return (
@@ -64,11 +77,17 @@ export async function ContactCard({
             <div className="flex flex-col gap-0.5">
               <dt className="text-text-secondary">{t('address')}</dt>
               <dd className="text-text-primary">
-                {[contacts.street, contacts.zone ? localized(contacts.zone, locale, fallbackLocale) : null]
+                {[line, contacts.zone ? localized(contacts.zone, locale, fallbackLocale) : null]
                   .filter(Boolean)
                   .join(' · ')}
               </dd>
             </div>
+            {place?.directions ? (
+              <div className="flex flex-col gap-0.5">
+                <dt className="text-text-secondary">{ta('card.directions')}</dt>
+                <dd className="whitespace-pre-line text-text-primary">{place.directions}</dd>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-0.5">
               <dt className="text-text-secondary">{t('when')}</dt>
               <dd className="text-text-primary">
@@ -82,8 +101,25 @@ export async function ContactCard({
               </div>
             ) : null}
           </>
-        ) : null}
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            <dt className="text-text-secondary">{ta('card.providerAddress')}</dt>
+            <dd className="text-text-primary">{contacts.provider_address ?? ta('card.notGiven')}</dd>
+          </div>
+        )}
       </dl>
+      {pin && key ? (
+        <div className="h-48 overflow-hidden rounded-block border border-border-light">
+          <LazyAddressMap
+            apiKey={key}
+            center={pin}
+            zoom={16}
+            pin={pin}
+            editable={false}
+            label={ta('card.mapLabel')}
+          />
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-3">
         <Button asChild>
           <a href={`tel:${contacts.phone}`}>
@@ -97,6 +133,14 @@ export async function ContactCard({
             {t('whatsapp')}
           </a>
         </Button>
+        {mapsUrl ? (
+          <Button asChild variant="outline">
+            <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+              <MapPin aria-hidden className="size-4" />
+              {ta('card.openInMaps')}
+            </a>
+          </Button>
+        ) : null}
         {contacts.email ? (
           <Button asChild variant="outline">
             <a href={`mailto:${encodeURIComponent(contacts.email)}`}>

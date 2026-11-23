@@ -127,16 +127,16 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
     FROM generate_series(1, 6) g,
          (VALUES ('a', '00000000-0000-0000-0000-000000280001'::uuid), ('b', '00000000-0000-0000-0000-000000280002'::uuid)) AS p(l, provider);
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000002800c1", "role": "authenticated"}', true);
-  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002800e' || g)::uuid, ('00000000-0000-0000-0000-0000002800a' || g)::uuid, 'draft-1')
+  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002800e' || g)::uuid, ('00000000-0000-0000-0000-0000002800a' || g)::uuid, 'draft-2')
     FROM generate_series(1, 6) g;
-  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002800e' || g)::uuid, 'tr', NULL, 'draft-1') FROM generate_series(1, 6) g;
+  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002800e' || g)::uuid, 'tr', NULL, 'draft-2') FROM generate_series(1, 6) g;
   SELECT public.fail_attempt(a.id, 'psp_failed') FROM public.checkout_attempts a JOIN public.fee_payments f ON f.id = a.fee_payment_id
    WHERE f.request_id = '00000000-0000-0000-0000-0000002800e1';
   SELECT public.apply_fee_paid(f.id, a.id, 'race-28-c' || right(f.request_id::text, 1), 10000, 'TRY', 300)
     FROM public.fee_payments f JOIN public.checkout_attempts a ON a.fee_payment_id = f.id
    WHERE f.request_id IN ('00000000-0000-0000-0000-0000002800e4', '00000000-0000-0000-0000-0000002800e5', '00000000-0000-0000-0000-0000002800e6');
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000280001", "role": "authenticated"}', true);
-  SELECT public.pay_provider_fee(('00000000-0000-0000-0000-0000002800a' || g)::uuid, 'tr', NULL, 'draft-1') FROM generate_series(4, 5) g;
+  SELECT public.pay_provider_fee(('00000000-0000-0000-0000-0000002800a' || g)::uuid, 'tr', NULL, 'draft-2') FROM generate_series(4, 5) g;
   SELECT public.apply_fee_paid(f.id, a.id, 'race-28-p4', f.amount, 'TRY', 150)
     FROM public.fee_payments f JOIN public.checkout_attempts a ON a.fee_payment_id = f.id
    WHERE f.request_id = '00000000-0000-0000-0000-0000002800e4' AND f.kind = 'provider_fee';
@@ -225,7 +225,7 @@ SELECT is(pg_temp.state('2'), 'OPEN | commission:pending | late:late_payment:que
 -- ── the expiry first: the payment that waits goes late ───────────────────────
 -- The first run above reopened E3, so it is picked again (on p2) and its window moved past in a committed step.
 SELECT is(pg_temp.one($q$ SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000002800c1", "role": "authenticated"}', false)
-                            || ' ' || (public.choose_provider('00000000-0000-0000-0000-0000002800e3', '00000000-0000-0000-0000-0000002800b3', 'draft-1') ->> 'status') $q$),
+                            || ' ' || (public.choose_provider('00000000-0000-0000-0000-0000002800e3', '00000000-0000-0000-0000-0000002800b3', 'draft-2') ->> 'status') $q$),
   '{"sub": "00000000-0000-0000-0000-0000002800c1", "role": "authenticated"} ok', 'fixture: E3 picked again on its restored applicant');
 SELECT extensions.dblink_exec(pg_temp.conn(), $$
   BEGIN;

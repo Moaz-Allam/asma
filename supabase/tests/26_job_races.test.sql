@@ -88,11 +88,11 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
          '00000000-0000-0000-0000-000000260001', 'An offer for the work races, long enough.'
     FROM generate_series(1, 3) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000002600c1", "role": "authenticated"}', true);
-  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002600e' || g)::uuid, ('00000000-0000-0000-0000-0000002600f' || g)::uuid, 'draft-1')
+  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002600e' || g)::uuid, ('00000000-0000-0000-0000-0000002600f' || g)::uuid, 'draft-2')
     FROM generate_series(1, 3) g;
-  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002600e' || g)::uuid, 'tr', NULL, 'draft-1') FROM generate_series(1, 3) g;
+  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002600e' || g)::uuid, 'tr', NULL, 'draft-2') FROM generate_series(1, 3) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000260001", "role": "authenticated"}', true);
-  SELECT public.pay_provider_fee(('00000000-0000-0000-0000-0000002600f' || g)::uuid, 'tr', NULL, 'draft-1') FROM generate_series(1, 3) g;
+  SELECT public.pay_provider_fee(('00000000-0000-0000-0000-0000002600f' || g)::uuid, 'tr', NULL, 'draft-2') FROM generate_series(1, 3) g;
   UPDATE public.platform_settings SET value = '5' WHERE region = 'TR' AND key = 'provider_fee_value';
   UPDATE public.platform_settings SET value = '1000' WHERE region = 'TR' AND key = 'fee_min_minor';
   ALTER TABLE public.requests DISABLE TRIGGER requests_guard;

@@ -625,6 +625,9 @@ function ZonesTab({
             >
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="text-label text-text-primary">{z.name || t('untitled')}</span>
+                <span className="text-meta text-text-secondary">
+                  {z.il && z.ilce ? `${z.ilce}/${z.il}` : t('placeMissing')}
+                </span>
                 <Missing missing={z.missing} />
               </div>
               <span className="text-meta text-text-secondary">{t('multiplier')}</span>

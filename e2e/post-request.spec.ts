@@ -66,7 +66,7 @@ function seedCatalog(locale: string): { category: string; service: string; zone:
     `do $seed$ begin perform set_config('pricing.publishing', 'on', true);` +
       ` insert into public.service_categories (id, region, name, display_order, active) values ('${id('c1')}', 'TR', '{"tr": "${names.category}"}', 900, true) on conflict (id) do nothing;` +
       ` insert into public.services (id, category_id, region, name, hours_min, hours_max, display_order, active) values ('${id('51')}', '${id('c1')}', 'TR', '{"tr": "${names.service}"}', 3, 5, 1, true) on conflict (id) do nothing;` +
-      ` insert into public.zones (id, region, name, multiplier, display_order, active) values ('${id('21')}', 'TR', '{"tr": "${names.zone}"}', 1.00, 900, true) on conflict (id) do nothing;` +
+      ` insert into public.zones (id, region, name, multiplier, display_order, active, il, ilce) values ('${id('21')}', 'TR', '{"tr": "${names.zone}"}', 1.00, 900, true, 'İstanbul', 'Kadıköy') on conflict (id) do nothing;` +
       ` insert into public.addons (id, service_id, region, name, price, display_order, active) values ('${id('a1')}', '${id('51')}', 'TR', '{"tr": "${names.addon}"}', 40000, 1, true) on conflict (id) do nothing;` +
       ` insert into public.questions (category_id, region, key, label, type, required, affects_pricing, validation, display_order, active) values` +
       ` ('${id('c1')}', 'TR', 'e2e_rooms', '{"tr": "Oda"}', 'number', true, true, '{"min": 1, "max": 4, "step": 1}', 1, true),` +
@@ -153,7 +153,12 @@ test('a customer posts a request, sees it, repeats it and cancels it', async ({
   await expect(card).toContainText(m(locale, 'Requests.price.online'));
   await expect(card).toContainText(m(locale, 'Requests.price.cash'));
 
-  await page.locator('#line').fill('Moda Cad. No 5, Daire 3');
+  // Spec 0011-20b AC-4: the typed parts alone make the address; il and ilçe come from the district.
+  await expect(page.getByText('Kadıköy', { exact: true })).toBeVisible();
+  await page.locator('#address-mahalle').fill('Caferağa');
+  await page.locator('#address-street').fill('Moda Cad.');
+  await page.locator('#address-building_no').fill('5');
+  await page.locator('#address-apartment').fill('3');
   await pick(page, m(locale, 'Requests.form.date'), 'first');
   await pick(page, m(locale, 'Requests.form.hour'), 'first');
   await page.locator('#notes').fill('Zil çalışmıyor, kapıyı çalın');
@@ -162,7 +167,7 @@ test('a customer posts a request, sees it, repeats it and cancels it', async ({
   // Step two, then publish (AC-19, AC-22).
   await page.getByRole('button', { name: m(locale, 'Requests.form.toReview') }).click();
   await expect(page.getByRole('heading', { name: m(locale, 'Requests.review.title') })).toBeVisible();
-  await expect(page.getByText('Moda Cad. No 5, Daire 3')).toBeVisible();
+  await expect(page.getByText('Caferağa Mah., Moda Cad., No: 5, Daire: 3, Kadıköy/İstanbul')).toBeVisible();
   await axe(page);
   await page.getByRole('button', { name: m(locale, 'Requests.review.publish') }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/[0-9a-f-]{36}\\?posted=1$`), {
@@ -199,7 +204,9 @@ test('a customer posts a request, sees it, repeats it and cancels it', async ({
   await expect(
     page.getByRole('group', { name: 'Oda', exact: true }).getByRole('radio', { name: '3', exact: true }),
   ).toBeChecked();
-  await expect(page.locator('#line')).toHaveValue('Moda Cad. No 5, Daire 3');
+  // X-8: post again copies the typed parts, never the pin.
+  await expect(page.locator('#address-street')).toHaveValue('Moda Cad.');
+  await expect(page.locator('#address-apartment')).toHaveValue('3');
   await expect(
     page
       .getByRole('group', { name: m(locale, 'Requests.form.date'), exact: true })

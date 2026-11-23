@@ -41,6 +41,10 @@ UPDATE public.providers SET status = 'approved', approved_at = timestamptz '2026
                                WHEN pg_temp.u('a3') THEN 'Veli Demir' WHEN pg_temp.u('a4') THEN 'Deniz Ak'
                                ELSE 'Zeki Öz' END
  WHERE id IN (pg_temp.u('a1'), pg_temp.u('a2'), pg_temp.u('a3'), pg_temp.u('a4'), pg_temp.u('a5'));
+-- Spec 0011-20b AC-5: an approved provider applies only with an address on file.
+INSERT INTO public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no)
+SELECT pr.id, pr.region, 'İstanbul', 'Kadıköy', 'Caferağa', 'Moda Cad.', '1' FROM public.providers pr
+    ON CONFLICT (provider_id) DO NOTHING;
 INSERT INTO public.provider_documents (provider_id, region, type, storage_path, object_id, mime_type, size_bytes, status, valid_until)
 VALUES (pg_temp.u('a4'), 'TR', 'id_front', 'fixture-16/id-front.jpg', gen_random_uuid(), 'image/jpeg', 1000, 'approved', current_date - 1);
 
@@ -201,25 +205,25 @@ SELECT is_empty($$ SELECT id FROM public.applications $$, 'the customer still re
 
 -- ── choose: every refusal (AC-7, AC-18) ──────────────────────────────────────
 SELECT pg_temp.as_user('a1');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'not_found', 'a provider token');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'not_found', 'a provider token');
 SELECT pg_temp.as_user('c2');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'not_found', 'another customer');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'not_found', 'another customer');
 SELECT pg_temp.as_user('d1');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'not_found', 'an admin on another customer''s request');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'not_found', 'an admin on another customer''s request');
 SELECT pg_temp.as_user('00');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'not_found', 'no profile');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'not_found', 'no profile');
 SELECT pg_temp.as_user('c1');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', gen_random_uuid(), pg_temp.app(1, 'a1'))), 'not_found', 'an unknown request');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(3), pg_temp.app(3, 'a1'))), 'not_choosable', 'a request whose start passed');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), pg_temp.app(2, 'a2'))), 'offer_unavailable', 'an offer of another request');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), gen_random_uuid())), 'offer_unavailable', 'an unknown offer');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), pg_temp.app(1, 'a3'))), 'offer_unavailable', 'a suspended provider''s offer');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(2), pg_temp.app(2, 'a4'))), 'offer_unavailable', 'an offer from an expired document');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', gen_random_uuid(), pg_temp.app(1, 'a1'))), 'not_found', 'an unknown request');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(3), pg_temp.app(3, 'a1'))), 'not_choosable', 'a request whose start passed');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), pg_temp.app(2, 'a2'))), 'offer_unavailable', 'an offer of another request');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), gen_random_uuid())), 'offer_unavailable', 'an unknown offer');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), pg_temp.app(1, 'a3'))), 'offer_unavailable', 'a suspended provider''s offer');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(2), pg_temp.app(2, 'a4'))), 'offer_unavailable', 'an offer from an expired document');
 RESET ROLE;
 DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'payment_window_hours';
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c1');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'choose_settings_invalid', 'a missing window refuses, never a default');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), pg_temp.app(1, 'a1'))), 'choose_settings_invalid', 'a missing window refuses, never a default');
 SELECT is(public.request_offers(pg_temp.r(1)) -> 'payment_window_hours', 'null', 'and the offers still read, with no window');
 RESET ROLE;
 INSERT INTO public.platform_settings (region, key, value) VALUES ('TR', 'payment_window_hours', '24');
@@ -229,7 +233,7 @@ SELECT is((SELECT count(*)::int FROM public.audit_log WHERE action = 'request.pr
 -- ── choose: the happy path and the replay (AC-7) ─────────────────────────────
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c1');
-CREATE TEMP TABLE ch AS SELECT public.choose_provider(pg_temp.r(1), pg_temp.app(1, 'a1'), 'draft-1') AS j;
+CREATE TEMP TABLE ch AS SELECT public.choose_provider(pg_temp.r(1), pg_temp.app(1, 'a1'), 'draft-2') AS j;
 RESET ROLE;
 SELECT is((SELECT array_agg(k ORDER BY k) FROM ch, jsonb_object_keys(j) k), ARRAY['payment_deadline', 'replayed', 'selected_at', 'status'],
   'the answer has exactly these keys');
@@ -247,9 +251,9 @@ SELECT is((SELECT new_value FROM public.audit_log WHERE action = 'request.provid
   'one audit row, with ids and the deadline only');
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c1');
-SELECT is(public.choose_provider(pg_temp.r(1), pg_temp.app(1, 'a1'), 'draft-1'), (SELECT j || '{"replayed": true}' FROM ch), 'choosing the same offer again is the replay');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), pg_temp.app(1, 'a2'))), 'not_choosable', 'choosing another offer now refuses');
-SELECT is((public.choose_provider(pg_temp.r(4), pg_temp.app(4, 'a1'), 'draft-1') ->> 'payment_deadline')::timestamptz,
+SELECT is(public.choose_provider(pg_temp.r(1), pg_temp.app(1, 'a1'), 'draft-2'), (SELECT j || '{"replayed": true}' FROM ch), 'choosing the same offer again is the replay');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), pg_temp.app(1, 'a2'))), 'not_choosable', 'choosing another offer now refuses');
+SELECT is((public.choose_provider(pg_temp.r(4), pg_temp.app(4, 'a1'), 'draft-2') ->> 'payment_deadline')::timestamptz,
   (SELECT scheduled_start_at FROM public.requests WHERE id = pg_temp.r(4)), 'a start in 5 hours caps the deadline');
 RESET ROLE;
 SELECT is((SELECT count(*)::int FROM public.audit_log WHERE action = 'request.provider_chosen' AND entity_id = pg_temp.r(1)::text), 1,
@@ -365,7 +369,7 @@ SELECT pg_temp.as_user('c1');
 SELECT is((SELECT jsonb_build_object('offers', j -> 'offers', 'chosen', j -> 'chosen' ->> 'status', 'cancelled', j ->> 'cancelled_at' IS NOT NULL)
              FROM (SELECT public.request_offers(pg_temp.r(1)) AS j) x),
   '{"offers": [], "chosen": "CANCELLED", "cancelled": true}', 'a cancelled request lists no offers and keeps the chosen one, CANCELLED');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(1), pg_temp.app(1, 'a2'))), 'not_choosable', 'a cancelled request cannot be chosen on');
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-2'')', pg_temp.r(1), pg_temp.app(1, 'a2'))), 'not_choosable', 'a cancelled request cannot be chosen on');
 SELECT pg_temp.as_user('a1');
 SELECT is(public.provider_request(pg_temp.r(1)) #>> '{application,status}', 'CANCELLED', 'the chosen provider reads CANCELLED');
 RESET ROLE;

@@ -1,3 +1,5 @@
+import { REQUEST_ADDRESS_KEYS, type AddressDraft, type StoredAddress } from '@/lib/address/parts';
+
 import type { CatalogQuestion, RequestCatalog } from './schemas';
 
 /**
@@ -13,7 +15,7 @@ export type RequestSource = {
   addonIds: readonly string[];
   answers: Record<string, unknown>;
   notes: string | null;
-  addressLine: string | null;
+  address: StoredAddress | null;
 };
 
 export type Prefill =
@@ -24,7 +26,7 @@ export type Prefill =
       zoneId: string | null;
       addonIds: string[];
       answers: Record<string, unknown>;
-      addressLine: string;
+      address: AddressDraft;
       notes: string;
     }
   | { kind: 'service_unavailable' };
@@ -66,6 +68,16 @@ function answerStillValid(question: CatalogQuestion, answer: unknown): boolean {
   }
 }
 
+/** Spec 0011-20b X-8: post again copies the typed parts, never the pin; a request before 20b copies none. */
+function copyAddress(address: StoredAddress | null): AddressDraft {
+  const out: AddressDraft = {};
+  for (const key of REQUEST_ADDRESS_KEYS) {
+    const value = address?.[key];
+    if (typeof value === 'string' && value !== '') out[key] = value;
+  }
+  return out;
+}
+
 export function prefillFrom(catalog: RequestCatalog, source: RequestSource): Prefill {
   for (const category of catalog.categories) {
     const service = category.services.find((s) => s.id === source.serviceId);
@@ -85,7 +97,7 @@ export function prefillFrom(catalog: RequestCatalog, source: RequestSource): Pre
       zoneId: catalog.zones.some((z) => z.id === source.zoneId) ? source.zoneId : null,
       addonIds: source.addonIds.filter((id) => active.has(id)),
       answers,
-      addressLine: source.addressLine ?? '',
+      address: copyAddress(source.address),
       notes: source.notes ?? '',
     };
   }

@@ -52,7 +52,9 @@ describe('proxy: the nonce and the policy', () => {
     const forwarded = response.headers.get('x-middleware-request-content-security-policy');
 
     expect(sent).toMatch(/script-src 'self' 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/);
-    expect(sent).toContain("connect-src 'self' https://ref.supabase.co wss://ref.supabase.co");
+    expect(sent).toContain(
+      "connect-src 'self' https://ref.supabase.co wss://ref.supabase.co https://api.maptiler.com",
+    );
     expect(forwarded).toBe(sent);
     expect(response.headers.get('x-middleware-override-headers')).toContain('content-security-policy');
     expect(response.headers.get('x-middleware-request-x-nonce')).toBe(nonceOf(sent));
@@ -97,7 +99,7 @@ describe('proxy: the nonce and the policy', () => {
     const response = await proxy(new NextRequest('http://localhost/ar'));
     const policy = response.headers.get('content-security-policy') ?? '';
     expect(policy).toContain("'strict-dynamic'");
-    expect(policy).toContain("connect-src 'self';");
+    expect(policy).toContain("connect-src 'self' https://api.maptiler.com;");
   });
 });
 

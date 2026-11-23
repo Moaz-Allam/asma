@@ -64,7 +64,16 @@ export const SaveAddonSchema = z.object({
   price: z.string().max(20),
 });
 
-export const SaveZoneSchema = z.object({ id: Id.optional(), name: Name, multiplier: z.string().max(10) });
+// Spec 0011-20b AC-1, X-15: il and ilçe, trimmed and required, the same schema in the browser and on the server;
+// stored as typed (proper names, never folded).
+export const ZonePlace = z.string().trim().min(2).max(60);
+export const SaveZoneSchema = z.object({
+  id: Id.optional(),
+  name: Name,
+  multiplier: z.string().max(10),
+  il: ZonePlace,
+  ilce: ZonePlace,
+});
 
 const OptionSchema = z.object({ value: z.string(), label: Name }).strict();
 

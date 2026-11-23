@@ -98,6 +98,12 @@ function approve(locale: string, who: 'feedProvider' | 'feedRival') {
     `update public.providers set status = 'approved', approved_at = now()` +
       ` where id = (select id from public.profiles where phone = '${testE164(locale, who)}');`,
   );
+  // Spec 0011-20b AC-5: an approved provider applies only with an address.
+  sql(
+    ` insert into public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no)` +
+      ` select p.id, p.region, 'İstanbul', 'Kadıköy', 'Caferağa', 'Moda Cad.', '1' from public.providers p` +
+      ` where p.id = (select id from public.profiles where phone = '${testE164(locale, who)}') on conflict (provider_id) do nothing;`,
+  );
 }
 
 async function axe(page: Page) {
