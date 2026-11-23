@@ -61,8 +61,9 @@ export const ADDRESS_LIMITS: Readonly<Record<AddressTextKey, { min: number; max:
 const NUMBER_PARTS: ReadonlySet<AddressTextKey> = new Set(['building_no', 'floor', 'apartment']);
 const NUMBER_PART = /^[0-9A-Za-zÇĞİÖŞÜçğıöşü./ -]+$/;
 const POSTAL_CODE = /^[0-9]{5}$/;
-// Control characters plus Unicode format characters (zero width, bidi, BOM), as Postgres refuses them (S20b-3).
-const CONTROL = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/;
+// Control characters plus Unicode format characters (soft hyphen, Arabic letter mark, zero width, separators, bidi, BOM), as Postgres refuses them (S20b-3).
+const CONTROL =
+  /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff\ufff9-\ufffb]/;
 const EDGE_SPACE = /^[\s ­​-‏⁠﻿]+|[\s ­​-‏⁠﻿]+$/g;
 
 /** The region's pin box (`address_pin_in_region`). Only TR has one. */

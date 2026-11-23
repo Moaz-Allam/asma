@@ -62,7 +62,14 @@ export default function AddressMap({
     }
     map.current = instance;
     instance.addControl(new NavigationControl({ showCompass: false }), 'top-right');
-    instance.on('error', () => handlers.current.onFail?.());
+    // A failed tile, glyph or sprite is a blip MapLibre retries; only a map that never loaded its style fails (R20b-4).
+    let loaded = false;
+    instance.once('load', () => {
+      loaded = true;
+    });
+    instance.on('error', () => {
+      if (!loaded) handlers.current.onFail?.();
+    });
     if (editable) {
       instance.on('click', (event) =>
         handlers.current.onPin?.({ lat: event.lngLat.lat, lng: event.lngLat.lng }),

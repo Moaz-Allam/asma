@@ -6,14 +6,14 @@ Reviewer: `security-reviewer` (Opus), read only. Spec 0011-20b. **Recommendation
 
 | id | severity | file:line | issue | fix | resolution |
 | --- | --- | --- | --- | --- | --- |
-| S20b-1 | High | `lib/observability/scrub.ts` (`scrubUrl`, `redactPath`), `lib/observability/client.ts:63`, `lib/maps/geocode.ts` | `@maptiler/client` puts the search text and the pin in the URL path (`geocoding/<query>.json`, `geocoding/<lng>,<lat>.json`). Tracing makes an `http.client` span and a fetch breadcrumb for each; `scrubUrl` drops the query but keeps the path, so Sentry stores the customer's typed address and exact location | Cut every third party URL to its origin plus the first path segment; exclude `MAPTILER_ORIGIN` in `shouldCreateSpanForRequest`; drop fetch and xhr breadcrumbs to it in `beforeBreadcrumb`; scrubber unit rows for a forward, a reverse and a tile URL | owed |
-| S20b-2 | Medium | `lib/maps/AddressMap.tsx` (ContactCard at zoom 16, MapPicker at 17) | Tile paths (`/tiles/v3/16/x/y.pbf`) in spans and breadcrumbs place the customer's home to about 600 m | Covered by the S20b-1 fix; its test includes a tile URL | owed |
+| S20b-1 | High | `lib/observability/scrub.ts` (`scrubUrl`, `redactPath`), `lib/observability/client.ts:63`, `lib/maps/geocode.ts` | `@maptiler/client` puts the search text and the pin in the URL path (`geocoding/<query>.json`, `geocoding/<lng>,<lat>.json`). Tracing makes an `http.client` span and a fetch breadcrumb for each; `scrubUrl` drops the query but keeps the path, so Sentry stores the customer's typed address and exact location | Cut every third party URL to its origin plus the first path segment; exclude `MAPTILER_ORIGIN` in `shouldCreateSpanForRequest`; drop fetch and xhr breadcrumbs to it in `beforeBreadcrumb`; scrubber unit rows for a forward, a reverse and a tile URL | fixed (4b2ae01) |
+| S20b-2 | Medium | `lib/maps/AddressMap.tsx` (ContactCard at zoom 16, MapPicker at 17) | Tile paths (`/tiles/v3/16/x/y.pbf`) in spans and breadcrumbs place the customer's home to about 600 m | Covered by the S20b-1 fix; its test includes a tile URL | fixed (4b2ae01) |
 
 ## Likely
 
 | id | severity | file:line | issue | fix | resolution |
 | --- | --- | --- | --- | --- | --- |
-| S20b-3 | Low | migration `address_part_ok`, the zone checks | `[[:cntrl:]]` likely misses Unicode format characters (bidi overrides U+202A to 202E, U+2066 to 2069, zero width), which could make an address read differently on the card, the PDF and for admin | Confirm with a pgTAP probe, then refuse `[\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]` in `address_part_ok`, the zone checks and the client `CONTROL` regex | owed |
+| S20b-3 | Low | migration `address_part_ok`, the zone checks | `[[:cntrl:]]` likely misses Unicode format characters (bidi overrides U+202A to 202E, U+2066 to 2069, zero width), which could make an address read differently on the card, the PDF and for admin | Confirm with a pgTAP probe, then refuse `[\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]` in `address_part_ok`, the zone checks and the client `CONTROL` regex | fixed (4b2ae01; widened by R20b-5) |
 | S20b-4 | Low | `save_provider_address` | No rate limit; each change writes an audit row, so a script can flood `audit_log` | A per provider hourly counter, like `count_application` | carry over |
 | S20b-5 | Info | the number parts (X-2) | The four number parts together can carry a split phone; never breaks rule 2 (both phones are shown at the same moment) | Accept, as the spec does | accepted |
 

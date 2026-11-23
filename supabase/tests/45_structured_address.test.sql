@@ -12,7 +12,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(100);
+SELECT plan(101);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -205,6 +205,7 @@ SELECT is(pg_temp.parse(pg_temp.good() || jsonb_build_object('street', 'Moda' ||
 SELECT is(pg_temp.parse(pg_temp.good() || jsonb_build_object('street', 'Moda' || chr(8238) || 'Cad.')), 'address_invalid', 'S20b-3: a bidi override');
 SELECT is(pg_temp.parse(pg_temp.good() || jsonb_build_object('mahalle', 'Cafer' || chr(8203) || 'aga')), 'address_invalid', 'S20b-3: a zero width space');
 SELECT is(pg_temp.parse(pg_temp.good() || jsonb_build_object('directions', 'Mavi' || chr(8297) || ' kapi')), 'address_invalid', 'S20b-3: a bidi isolate');
+SELECT is(pg_temp.parse(pg_temp.good() || jsonb_build_object('street', 'Moda' || chr(1564) || 'Cad.')), 'address_invalid', 'R20b-5: an Arabic letter mark');
 SELECT throws_ok($$ update public.zones set il = 'Istan' || chr(65279) || 'bul' where id = (select id from public.zones limit 1) $$,
   '23514', NULL, 'S20b-3: a zone il with a BOM');
 SELECT is(pg_temp.parse(pg_temp.good() || jsonb_build_object('street', repeat('ş', 81))), 'address_invalid', 'a street of 81');

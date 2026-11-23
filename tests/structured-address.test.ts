@@ -124,7 +124,9 @@ describe('addressErrors (Address rules, X-9, X-21)', () => {
       street: 'address_invalid',
     });
     // S20b-3: Unicode format characters (a bidi override, a zero width space, a BOM) count as control.
-    for (const hidden of ['‮', '​', '⁦', '﻿']) {
+    for (const hidden of [0x202e, 0x200b, 0x2066, 0xfeff, 0x061c, 0x2028, 0x00ad].map((c) =>
+      String.fromCharCode(c),
+    )) {
       expect(addressErrors({ ...base, street: `Moda${hidden}Cad.` }, REQUEST_ADDRESS_KEYS)).toEqual({
         street: 'address_invalid',
       });

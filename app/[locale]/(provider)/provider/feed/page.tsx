@@ -11,6 +11,7 @@ import { needsEmailNudge } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { Link } from '@/lib/i18n/navigation';
+import { reportServerError } from '@/lib/observability/server';
 import { myAddressInDb } from '@/lib/provider/db';
 import { getProviderFile, getStanding } from '@/lib/provider/queries';
 import { loadFeed, loadSetup } from '@/lib/provider-feed';
@@ -50,14 +51,18 @@ export default async function Page({ params, searchParams }: Props) {
     getProviderFile(user.id),
     // Spec 0011-13 AC-4, R-10: while the apply gate is on, a provider without a confirmed email is told first.
     needsEmailNudge(user.id, 'provider'),
-    myAddressInDb(),
+    // An optional banner: a failed read hides it, never the feed (R20b-3).
+    myAddressInDb().catch((error: unknown) => {
+      reportServerError('myAddressInDb', error);
+      return undefined;
+    }),
   ]);
   const header = (
     <>
       <PageHeader title={t('feed.title')} intro={t('feed.intro')} />
       {emailNudge ? <EmailNudge text={t('emailPrompt.text')} linkLabel={t('emailPrompt.link')} /> : null}
       {/* Spec 0011-20b AC-5: an approved provider without an address is asked once, here and at apply. */}
-      {address === null ? (
+      {address === null && standing === 'approved' ? (
         <EmailNudge text={ta('banner')} linkLabel={ta('bannerLink')} href="/provider/profile/address" />
       ) : null}
     </>

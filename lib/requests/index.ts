@@ -100,6 +100,9 @@ export const REQUEST_DB_CODES = [
   'rating_settings_invalid',
   // Spec 0011-20 (20): pay and the carried re-pick take the service agreement's version.
   'agreement_required',
+  // Spec 0011-20b (20b): the structured address's pin and the contact scanner on its parts.
+  'pin_invalid',
+  'contact_info_in_address',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
