@@ -19,7 +19,7 @@ const STATIC_HEADERS = {
   'referrer-policy': 'strict-origin-when-cross-origin',
   'x-frame-options': 'DENY',
   'cross-origin-opener-policy': 'same-origin',
-  'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=(self), payment=()',
 };
 
 test('every page carries the security headers and a nonce CSP that Next stamps on its scripts', async ({

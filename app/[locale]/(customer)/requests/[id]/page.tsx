@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { ReactNode } from 'react';
 
+import { openInMapsUrl } from '@/lib/address/parts';
 import { AgreementCard } from '@/components/features/agreements/AgreementCard';
 import { JobActionButton } from '@/components/features/jobs/JobActionButton';
 import { PayButton } from '@/components/features/payments/PayButton';
@@ -69,7 +71,10 @@ export default async function Page({ params, searchParams }: Props) {
   const t = await getTranslations('Requests');
   // Spec 0011-13 AC-4: a customer without a confirmed email, while mail is on, sees a nudge in the choose dialog.
   const emailNudge = user.role === 'customer' ? await needsEmailNudge(user.id, 'customer') : false;
-  const { request, addressLine, now } = found;
+  const { request, address, now } = found;
+  const ta = await getTranslations('Address');
+  // Spec 0011-20b AC-6: the customer always sees their own address and pin (AC-9: a request before 20b has the line).
+  const mapsUrl = address ? openInMapsUrl({ lat: address.lat, lng: address.lng, line: address.line }) : null;
   const fallback = regionDefaultLocale(user.region ?? 'TR');
   const text = (value: unknown) => localized(value, locale, fallback);
   const timezone = request.region_info.timezone;
@@ -257,7 +262,7 @@ export default async function Page({ params, searchParams }: Props) {
       : []),
   ];
 
-  const rows: { term: string; value: string }[] = [
+  const rows: { term: string; value: ReactNode }[] = [
     {
       term: t('review.service'),
       value: `${text(snapshot.service.category_name)} · ${text(snapshot.service.name)}`,
@@ -277,7 +282,20 @@ export default async function Page({ params, searchParams }: Props) {
     { term: t('review.start'), value: instantLabel(request.scheduled_start_at, timezone, locale) },
     { term: t('review.end'), value: instantLabel(request.scheduled_end_at, timezone, locale) },
     { term: t('review.district'), value: snapshot.breakdown.zone ? text(snapshot.breakdown.zone.name) : '' },
-    { term: t('review.line'), value: addressLine ?? '' },
+    { term: t('review.line'), value: address?.line ?? '' },
+    ...(address?.directions ? [{ term: ta('card.directions'), value: address.directions }] : []),
+    ...(mapsUrl && typeof address?.lat === 'number'
+      ? [
+          {
+            term: ta('admin.pin'),
+            value: (
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-link underline">
+                {ta('card.openInMaps')}
+              </a>
+            ),
+          },
+        ]
+      : []),
     { term: t('review.notes'), value: request.notes ?? t('review.none') },
   ];
 

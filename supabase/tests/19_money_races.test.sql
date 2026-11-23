@@ -111,7 +111,7 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
          '00000000-0000-0000-0000-000000190001', 'An offer for the money races, long enough.'
     FROM generate_series(1, 6) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000001900c1", "role": "authenticated"}', true);
-  SELECT public.choose_provider(('00000000-0000-0000-0000-0000001900e' || g)::uuid, ('00000000-0000-0000-0000-0000001900f' || g)::uuid, 'draft-1')
+  SELECT public.choose_provider(('00000000-0000-0000-0000-0000001900e' || g)::uuid, ('00000000-0000-0000-0000-0000001900f' || g)::uuid, 'draft-2')
     FROM generate_series(1, 6) g;
   SELECT public.start_checkout(public.open_fee(('00000000-0000-0000-0000-0000001900e' || g)::uuid, 'commission'), 'tr', NULL)
     FROM generate_series(1, 6) g;

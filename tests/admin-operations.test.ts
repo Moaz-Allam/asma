@@ -238,7 +238,27 @@ describe('lib/admin-requests (R-11)', () => {
     m.rpc.mockResolvedValueOnce(ok({ line: 'Moda Cad. No 7' }));
     expect(await showAddress({ requestId: REQUEST, reason: 'The provider is lost.' })).toEqual({
       ok: true,
-      line: 'Moda Cad. No 7',
+      address: { line: 'Moda Cad. No 7' },
+    });
+    // Spec 0011-20b AC-7: the parts and the pin come with the line.
+    const parts = {
+      line: 'Caferağa Mah., Moda Cad., No: 7, 34710 Kadıköy/İstanbul',
+      il: 'İstanbul',
+      ilce: 'Kadıköy',
+      mahalle: 'Caferağa',
+      street: 'Moda Cad.',
+      building_no: '7',
+      floor: null,
+      apartment: null,
+      postal_code: '34710',
+      directions: 'Mavi kapı',
+      lat: 40.98,
+      lng: 29.03,
+    };
+    m.rpc.mockResolvedValueOnce(ok(parts));
+    expect(await showAddress({ requestId: REQUEST, reason: 'The provider is lost.' })).toEqual({
+      ok: true,
+      address: parts,
     });
     m.rpc.mockResolvedValueOnce(ok({ line: 'Moda Cad. No 7', phone: '+90' }));
     await expect(showAddress({ requestId: REQUEST, reason: 'The provider is lost.' })).rejects.toThrow();
@@ -310,7 +330,7 @@ describe('the actions (AC-9)', () => {
     m.rpc.mockResolvedValueOnce(ok({ line: 'Moda Cad. No 7' }));
     expect(await adminShowAddressAction({ requestId: REQUEST, reason: 'The provider is lost.' })).toEqual({
       success: true,
-      data: { line: 'Moda Cad. No 7' },
+      data: { address: { line: 'Moda Cad. No 7' } },
     });
     expect(m.revalidate).not.toHaveBeenCalled();
   });

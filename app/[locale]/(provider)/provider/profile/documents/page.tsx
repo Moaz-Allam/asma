@@ -82,7 +82,7 @@ export default async function Page({ params }: Props) {
 
   return (
     <OnboardingFrame
-      step={2}
+      step={3}
       title={t('title')}
       intro={t('intro')}
       aside={

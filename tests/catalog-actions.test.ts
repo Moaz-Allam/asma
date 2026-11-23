@@ -97,7 +97,9 @@ describe('catalog writes', () => {
 
   it('zero rows back from an update is forbidden, not a silent success (AC-14)', async () => {
     m.updateRow.mockRejectedValue(new ZeroRows());
-    expect(await saveZone({ id: ID, name: { tr: 'Merkez' }, multiplier: '1.15' })).toEqual({
+    expect(
+      await saveZone({ id: ID, name: { tr: 'Merkez' }, multiplier: '1.15', il: 'İstanbul', ilce: 'Kadıköy' }),
+    ).toEqual({
       success: false,
       error: 'forbidden',
     });
@@ -118,13 +120,20 @@ describe('catalog writes', () => {
   });
 
   it('sends a zone multiplier as canonical text, never rounded', async () => {
-    await saveZone({ name: { tr: 'Merkez' }, multiplier: '1,10' });
+    await saveZone({ name: { tr: 'Merkez' }, multiplier: '1,10', il: 'İstanbul', ilce: 'Kadıköy' });
     expect(m.insertRow).toHaveBeenCalledWith(
       'zones',
-      { region: 'TR', name: { tr: 'Merkez' }, multiplier: '1.1' },
+      { region: 'TR', name: { tr: 'Merkez' }, multiplier: '1.1', il: 'İstanbul', ilce: 'Kadıköy' },
       'TR',
     );
-    expect(await saveZone({ name: { tr: 'Merkez' }, multiplier: '1.155' })).toEqual({
+    // Spec 0011-20b AC-1, X-15: il and ilçe are trimmed and required by the one schema.
+    expect(await saveZone({ name: { tr: 'Merkez' }, multiplier: '1.10', il: ' ', ilce: 'Kadıköy' })).toEqual({
+      success: false,
+      error: 'validation_failed',
+    });
+    expect(
+      await saveZone({ name: { tr: 'Merkez' }, multiplier: '1.155', il: 'İstanbul', ilce: 'Kadıköy' }),
+    ).toEqual({
       success: false,
       error: 'validation_failed',
     });

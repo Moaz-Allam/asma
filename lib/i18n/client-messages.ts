@@ -23,6 +23,8 @@ export const CLIENT_NAMESPACES = [
   'CatalogErrors',
   // Spec 0008 AC-24: the request form, its price card and the cancel dialog of position 04.
   'Requests',
+  // Spec 0011-20b AC-4, AC-5: the address fields and the map panel, for the request form and the provider's address.
+  'Address',
   // Spec 0009 AC-22: the setup form and the apply form of position 05.
   'ProviderFeed',
   // Spec 0011-09 AC-11, AC-12: the pay and return pages poll in the browser.

@@ -8,12 +8,14 @@ import {
   adminExtendDeadlineAction,
   adminShowAddressAction,
 } from '@/actions/admin-requests';
+import { adminShowProviderAddress } from '@/actions/admin-providers';
 import { ChoiceChips } from '@/components/shared/ChoiceChips';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { openInMapsUrl, type StoredAddress } from '@/lib/address/parts';
 import {
   CANCEL_ATTRIBUTIONS,
   EXTEND_HOURS_MAX,
@@ -255,17 +257,34 @@ export function AdminExtendAction({
 export function AdminAddressButton({ requestId }: { requestId: string }) {
   const dialog = useReasonDialog();
   const { t } = dialog;
-  const [line, setLine] = useState<string | null>(null);
+  const [address, setAddress] = useState<StoredAddress | null>(null);
+  const ta = useTranslations('Address');
+  const mapsUrl = address ? openInMapsUrl(address) : null;
 
   return (
     <div className="flex flex-col gap-2">
-      {line ? (
-        <p className="flex flex-col gap-1 rounded-block bg-surface p-3" role="status">
+      {address ? (
+        <div className="flex flex-col gap-1 rounded-block bg-surface p-3" role="status" data-pii>
           <span className="text-meta text-text-secondary">{t('addressLine')}</span>
           <span className="text-body-s text-text-primary" dir="auto">
-            {line}
+            {address.line}
           </span>
-        </p>
+          {address.directions ? (
+            <span className="text-body-s text-text-secondary" dir="auto">
+              {ta('card.directions')}: {address.directions}
+            </span>
+          ) : null}
+          {mapsUrl && typeof address.lat === 'number' ? (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center text-body-s text-link underline"
+            >
+              {ta('admin.pin')}: {ta('card.openInMaps')}
+            </a>
+          ) : null}
+        </div>
       ) : (
         <Button variant="outline" size="sm" onClick={() => dialog.setOpen(true)}>
           {t('address')}
@@ -282,7 +301,61 @@ export function AdminAddressButton({ requestId }: { requestId: string }) {
         onConfirm={() =>
           dialog.run(
             () => adminShowAddressAction({ requestId, reason: dialog.text }),
-            (data) => setLine((data as { line: string }).line),
+            (data) => setAddress((data as { address: StoredAddress }).address),
+          )
+        }
+      >
+        {dialog.field(t('reason'))}
+      </ConfirmDialog>
+    </div>
+  );
+}
+
+/** Spec 0011-20b AC-7: a provider's address on demand, with a reason; audited in Postgres, held only here. */
+export function AdminProviderAddressButton({ providerId }: { providerId: string }) {
+  const dialog = useReasonDialog();
+  const { t } = dialog;
+  const ta = useTranslations('Address');
+  const [shown, setShown] = useState<{ address: StoredAddress | null } | null>(null);
+  const address = shown?.address ?? null;
+  const mapsUrl = address ? openInMapsUrl(address) : null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {shown ? (
+        <div className="flex flex-col gap-1 rounded-block bg-surface p-3" role="status" data-pii>
+          <span className="text-meta text-text-secondary">{ta('admin.provider')}</span>
+          <span className="text-body-s text-text-primary" dir="auto">
+            {address?.line ?? ta('admin.none')}
+          </span>
+          {mapsUrl && typeof address?.lat === 'number' ? (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center text-body-s text-link underline"
+            >
+              {ta('admin.pin')}: {ta('card.openInMaps')}
+            </a>
+          ) : null}
+        </div>
+      ) : (
+        <Button variant="outline" size="sm" onClick={() => dialog.setOpen(true)} className="self-start">
+          {ta('admin.show')}
+        </Button>
+      )}
+      <ConfirmDialog
+        open={dialog.open}
+        onOpenChange={dialog.onOpenChange}
+        title={ta('admin.show')}
+        body={ta('admin.reason')}
+        confirmLabel={ta('admin.show')}
+        cancelLabel={t('keep')}
+        busy={dialog.busy}
+        onConfirm={() =>
+          dialog.run(
+            () => adminShowProviderAddress({ providerId, reason: dialog.text }),
+            (data) => setShown(data as { address: StoredAddress | null }),
           )
         }
       >

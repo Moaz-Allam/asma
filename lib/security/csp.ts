@@ -1,7 +1,7 @@
 /**
  * The Content Security Policy, built per request in proxy.ts with a fresh nonce (spec 0004 AC-13, D69).
  * Exactly the directives of the spec's CSP table; each later position adds its own sources here
- * (Turnstile in 01, Supabase storage images in 02, the iyzico redirect in 09).
+ * (Turnstile in 01, Supabase storage images in 02, the iyzico redirect in 09, MapTiler in 20b).
  *
  * Never throws: a malformed Supabase URL leaves connect-src at 'self'. Violation reports go to our own
  * /api/csp handler, which scrubs them before they reach Sentry (D83), never straight to Sentry.
@@ -24,6 +24,12 @@ export const CSP_REPORT_PATH = '/api/csp';
 
 /** Where the Turnstile script and widget live (spec 0005 AC-23). */
 export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+
+/**
+ * MapTiler's API (spec 0011-20b AC-10): the browser fetches the map style, tiles, glyphs and geocoding from it. The
+ * map's worker already fits `worker-src blob:`, and its images arrive as blobs (`img-src blob:`).
+ */
+export const MAPTILER_ORIGIN = 'https://api.maptiler.com';
 
 /** The Supabase origin alone, for signed Storage links in `<img>` (spec 0006 AC-25). */
 function supabaseOrigin(supabaseUrl: string): string[] {
@@ -57,8 +63,8 @@ export function buildCsp(nonce: string, { dev, supabaseUrl, reportUri }: CspOpti
     ['img-src', ["'self'", 'blob:', 'data:', ...supabaseOrigin(supabaseUrl)]],
     // next/font serves the fonts from our own origin.
     ['font-src', ["'self'"]],
-    // Sentry's tunnel and PostHog's relay are same origin (/api/e, /api/a).
-    ['connect-src', ["'self'", ...supabaseSources(supabaseUrl)]],
+    // Sentry's tunnel and PostHog's relay are same origin (/api/e, /api/a); MapTiler for the optional map (20b).
+    ['connect-src', ["'self'", ...supabaseSources(supabaseUrl), MAPTILER_ORIGIN]],
     // Sentry Replay compresses in a worker started from a blob.
     ['worker-src', ["'self'", 'blob:']],
     // The Turnstile widget is an iframe (spec 0005 AC-23). Its script carries the page nonce.

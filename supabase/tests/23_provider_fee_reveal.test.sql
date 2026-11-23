@@ -68,12 +68,12 @@ BEGIN
     (pg_temp.app(p), 'TR', pg_temp.r(p), pg_temp.u('a1'), 'An offer for the reveal tests, long enough.'),
     (pg_temp.app2(p), 'TR', pg_temp.r(p), pg_temp.u('a2'), 'A second offer for the reveal tests, long enough.');
   PERFORM pg_temp.as_user('c1');
-  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p), 'draft-1');
+  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p), 'draft-2');
   IF p_settle THEN
     IF p_commission = 0 THEN
-      PERFORM public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1');
+      PERFORM public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-2');
     ELSE
-      v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
+      v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-2') ->> 'attempt_id')::uuid;
       SELECT f.id INTO v_fee FROM public.fee_payments f WHERE f.request_id = pg_temp.r(p) AND f.kind = 'commission';
       PERFORM public.apply_fee_paid(v_fee, v_att, 'pay-23-c' || p, p_commission, 'TRY', 0);
     END IF;
@@ -104,7 +104,7 @@ BEGIN
   RETURN v;
 END $$;
 CREATE FUNCTION pg_temp.pay(p integer, p_user text DEFAULT 'a1', p_app uuid DEFAULT NULL) RETURNS text LANGUAGE sql AS $$
-  SELECT pg_temp.call_as(p_user, format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-1'')::text', coalesce(p_app, pg_temp.app(p)), 'tr')) $$;
+  SELECT pg_temp.call_as(p_user, format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-2'')::text', coalesce(p_app, pg_temp.app(p)), 'tr')) $$;
 CREATE FUNCTION pg_temp.contacts(p integer, p_user text) RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.call_as(p_user, format('SELECT public.request_contacts(%L)::text', pg_temp.r(p))) $$;
 CREATE FUNCTION pg_temp.street(p integer, p_user text) RETURNS text LANGUAGE sql AS $$
@@ -173,7 +173,7 @@ SELECT is(pg_temp.err($$DELETE FROM public.platform_settings WHERE region = 'TR'
   'pricing_setting_required', 'R-10: the key cannot be deleted');
 
 -- ══ AC-2: pay_provider_fee, refusals in order ════════════════════════════════
-SELECT is(pg_temp.call_as('a1', format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-1'')::text', pg_temp.app(1), 'de')),
+SELECT is(pg_temp.call_as('a1', format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-2'')::text', pg_temp.app(1), 'de')),
   'validation_failed', 'AC-2 step 1: a locale outside ar, tr, en');
 SELECT is(pg_temp.pay(1, 'a2', pg_temp.app(1)), 'not_found', 'AC-2 step 2, R-14: another provider''s application is not found');
 SELECT is(pg_temp.pay(1, 'c1'), 'not_found', 'AC-2 step 2: the customer is not its provider');
@@ -298,7 +298,8 @@ SELECT results_eq(
               FROM (SELECT %s::jsonb AS j) x $$, quote_literal(pg_temp.contacts(1, 'a1'))),
   $$ VALUES ('provider'::text, 'Ece Müşteri'::text, '+905559230001'::text, 'https://wa.me/905559230001'::text, 'Moda Cad. No 5'::text, 'Ring twice'::text, 'Moda'::text) $$,
   'AC-5: the provider reads the customer''s name, phone, WhatsApp link, street line, notes and zone');
-SELECT is(pg_temp.street(1, 'a1'), 'Moda Cad. No 5', 'AC-6: the same query now returns the street line');
+-- Spec 0011-20b X-20: the direct read is gone; the chosen provider reads the address only through request_contacts.
+SELECT is(pg_temp.street(1, 'a1'), 'none', 'AC-6, 20b X-20: a direct select still returns no row after the reveal');
 SELECT is(pg_temp.contacts(1, 'a2'), 'not_found', 'AC-5, R-14: the second applicant gets nothing');
 SELECT is(pg_temp.street(1, 'a2'), 'none', 'AC-6: nor the street line');
 SELECT is(pg_temp.contacts(1, 'c2'), 'not_found', 'AC-5: a stranger gets nothing');
@@ -458,13 +459,13 @@ SELECT results_eq(
             ('provider_jobs', true, true, false, false), ('request_contacts', true, true, false, false) $$,
   'AC-2, AC-5, R-2, R-11: definers only where a user calls; internal functions have no grant');
 SELECT is((SELECT provolatile::text FROM pg_proc WHERE proname = 'request_contacts'), 'v', 'R-3: request_contacts is volatile');
-SELECT is(pg_temp.call_as('anon', format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-1'')::text', pg_temp.app(5), 'tr')), '42501',
+SELECT is(pg_temp.call_as('anon', format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-2'')::text', pg_temp.app(5), 'tr')), '42501',
   'R-14: anon cannot call pay_provider_fee');
 SELECT is(pg_temp.call_as('anon', $$SELECT public.provider_jobs('active', NULL, NULL)::text$$), '42501',
   'R-14: nor provider_jobs');
 SELECT is((SELECT count(*)::int FROM pg_policies WHERE schemaname = 'public' AND tablename = 'request_addresses'
-             AND policyname = 'request_addresses_read_unlocked' AND cmd = 'SELECT'), 1,
-  'AC-6: the unlocked provider''s address policy exists');
+             AND policyname = 'request_addresses_read_unlocked' AND cmd = 'SELECT'), 0,
+  'AC-6, 20b X-20: the unlocked provider''s direct address policy is dropped');
 
 SELECT * FROM finish();
 ROLLBACK;

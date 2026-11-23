@@ -46,6 +46,10 @@ SELECT pg_temp.u(t.c),
                ('b5', 18), ('b6', 19), ('b7', 20), ('b8', 21), ('ad', 22)) AS t(c, n);
 UPDATE public.providers SET status = 'approved', approved_at = now() - interval '30 days', approved_name = 'Usta ' || right(id::text, 2)
  WHERE id::text LIKE '00000000-0000-0000-0000-0000003800%';
+-- Spec 0011-20b AC-5: an approved provider applies only with an address on file.
+INSERT INTO public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no)
+SELECT pr.id, pr.region, 'İstanbul', 'Kadıköy', 'Caferağa', 'Moda Cad.', '1' FROM public.providers pr
+    ON CONFLICT (provider_id) DO NOTHING;
 UPDATE public.providers SET approved_at = now() - interval '400 days', approved_name = 'Metin Kaya' WHERE id = pg_temp.u('a1');
 UPDATE public.providers SET approved_at = now() - interval '10 days' WHERE id = pg_temp.u('a5');
 INSERT INTO public.service_categories (id, region, name, active) VALUES (pg_temp.u('ca'), 'TR', '{"tr": "Kalite"}', true);

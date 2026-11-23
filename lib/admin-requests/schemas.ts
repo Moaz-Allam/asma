@@ -2,6 +2,8 @@ import 'server-only';
 
 import { z } from 'zod';
 
+import { StoredAddress } from '@/lib/address/parts';
+
 import { REQUEST_STATUSES } from '@/lib/requests/schemas';
 import { APPLICATION_STATUSES } from '@/lib/provider-feed/constants';
 
@@ -213,4 +215,5 @@ export const AdminExtendResult = z
 export const AdminClearResult = z.object({ status: z.literal('ok'), flag_id: Id }).strict();
 
 /** `admin_request_address()` (R-8): the street line, only to the client component that asked. */
-export const AdminAddressResult = z.object({ line: z.string().min(1) }).strict();
+// Spec 0011-20b AC-7: the line, the parts and the pin.
+export const AdminAddressResult = StoredAddress.extend({ line: z.string().min(1) }).strict();

@@ -1,0 +1,554 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:r1276548",
+        "country_code": "tr",
+        "wikidata": "Q932886",
+        "kind": "admin_area",
+        "place_designation": "town",
+        "place_type_name": ["ilçe"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.02456294745207, 40.99129553420438]
+      },
+      "bbox": [29.014842286705967, 40.94996570032208, 29.111234843730927, 41.01230125906483],
+      "center": [29.02456294745207, 40.99129553420438],
+      "place_name": "Kadıköy, Türkiye",
+      "place_type": ["joint_municipality"],
+      "relevance": 1,
+      "id": "joint_municipality.1140",
+      "text": "Kadıköy",
+      "place_type_name": ["ilçe"],
+      "context": [
+        {
+          "ref": "osm:r223474",
+          "id": "county.301",
+          "text": "İstanbul",
+          "country_code": "tr",
+          "wikidata": "Q534799",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "İstanbul",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r16700115",
+          "id": "major_landform.4178879",
+          "text": "Kocaeli Yarımadası",
+          "country_code": "tr",
+          "wikidata": "Q2596787",
+          "feature_tags": {
+            "natural": "peninsula",
+            "wikipedia": "tr:Kocaeli Yarımadası",
+            "type": "multipolygon"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Kocaeli Yarımadası",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        }
+      ],
+      "language": "tr",
+      "text_tr": "Kadıköy",
+      "language_tr": "tr",
+      "place_name_tr": "Kadıköy, İstanbul, Marmara Bölgesi, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:r9643220",
+        "country_code": "tr",
+        "wikidata": "Q109962098",
+        "kind": "admin_area",
+        "place_designation": "village",
+        "place_type_name": ["köy"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [28.36367167532444, 41.13664610155489]
+      },
+      "bbox": [28.332023285329342, 41.11609633277631, 28.388737924396995, 41.18945790891695],
+      "center": [28.36367167532444, 41.13664610155489],
+      "place_name": "Kadıköy Mahallesi, Türkiye",
+      "place_type": ["municipal_district"],
+      "relevance": 1,
+      "id": "municipal_district.80746",
+      "text": "Kadıköy Mahallesi",
+      "place_type_name": ["köy"],
+      "context": [
+        {
+          "ref": "osm:r1275379",
+          "id": "joint_municipality.1106",
+          "text": "Silivri",
+          "country_code": "tr",
+          "wikidata": "Q732028",
+          "kind": "admin_area",
+          "place_designation": "town",
+          "language": "tr",
+          "text_tr": "Silivri",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r223474",
+          "id": "county.301",
+          "text": "İstanbul",
+          "country_code": "tr",
+          "wikidata": "Q534799",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "İstanbul",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r16700466",
+          "id": "major_landform.4178903",
+          "text": "Çatalca Yarımadası",
+          "country_code": "tr",
+          "wikidata": "Q4347531",
+          "feature_tags": {
+            "natural": "peninsula",
+            "wikipedia": "tr:Çatalca Yarımadası",
+            "type": "multipolygon",
+            "height": "0.001"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Çatalca Yarımadası",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r4016746",
+          "id": "major_landform.4191897",
+          "text": "Balkanlar",
+          "country_code": "rs,bg,si,me,hr,al,gr,ro,mk,tr,ba",
+          "wikidata": "Q23522",
+          "feature_tags": {
+            "boundary": "land_area",
+            "natural": "peninsula",
+            "wikipedia": "en:Balkans",
+            "type": "boundary"
+          },
+          "categories": ["peninsula"],
+          "language": "tr",
+          "text_tr": "Balkanlar",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:n36966065",
+          "id": "continental_marine.5",
+          "text": "Asya",
+          "wikidata": "Q48",
+          "feature_tags": {
+            "sqkm": "44614500",
+            "place": "continent",
+            "wikipedia": "en:Asia",
+            "population": "4950360147"
+          },
+          "categories": ["continent"],
+          "language": "tr",
+          "text_tr": "Asya",
+          "language_tr": "tr"
+        }
+      ],
+      "text_tr": "Kadıköy Mahallesi",
+      "place_name_tr": "Kadıköy Mahallesi, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:r12753886",
+        "country_code": "tr",
+        "wikidata": "Q6345862",
+        "kind": "admin_area",
+        "place_designation": "village",
+        "place_type_name": ["köy"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.22768160700798, 40.61935272159124]
+      },
+      "bbox": [29.19927466660738, 40.59143906370374, 29.251720234751705, 40.651383015189346],
+      "center": [29.22768160700798, 40.61935272159124],
+      "place_name": "Kadıköy Beldesi, Türkiye",
+      "place_type": ["municipal_district"],
+      "relevance": 0.8,
+      "id": "municipal_district.103007",
+      "text": "Kadıköy Beldesi",
+      "place_type_name": ["köy"],
+      "context": [
+        {
+          "ref": "osm:w103963309",
+          "id": "major_landform.2722793",
+          "text": "SELİMANDIRA DERESİ",
+          "country_code": "tr",
+          "feature_tags": {
+            "waterway": "stream"
+          },
+          "categories": ["stream"],
+          "text_tr": "SELİMANDIRA DERESİ"
+        },
+        {
+          "ref": "osm:r1840933",
+          "id": "joint_municipality.3297",
+          "text": "Yalova Merkez",
+          "country_code": "tr",
+          "wikidata": "Q205942",
+          "kind": "admin_area",
+          "place_designation": "city",
+          "language": "tr",
+          "text_tr": "Yalova Merkez",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r223472",
+          "id": "county.299",
+          "text": "Yalova",
+          "country_code": "tr",
+          "wikidata": "Q483083",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Yalova",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:n36966065",
+          "id": "continental_marine.5",
+          "text": "Asya",
+          "wikidata": "Q48",
+          "feature_tags": {
+            "sqkm": "44614500",
+            "place": "continent",
+            "wikipedia": "en:Asia",
+            "population": "4950360147"
+          },
+          "categories": ["continent"],
+          "language": "tr",
+          "text_tr": "Asya",
+          "language_tr": "tr"
+        }
+      ],
+      "text_tr": "Kadıköy Beldesi",
+      "place_name_tr": "Kadıköy Beldesi, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:n1754597228",
+        "country_code": "tr",
+        "wikidata": "Q10774985",
+        "kind": "place",
+        "place_designation": "village",
+        "place_type_name": ["Yerinin çevirisi"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [30.109962075948715, 40.54150748975252]
+      },
+      "bbox": [30.10996207594871, 40.54150748975252, 30.10996207594871, 40.54150748975252],
+      "center": [30.109962075948715, 40.54150748975252],
+      "place_name": "Kadıköy, Pamukova, Türkiye",
+      "place_type": ["place"],
+      "relevance": 0.8,
+      "id": "place.578874",
+      "text": "Kadıköy",
+      "place_type_name": ["Yerinin çevirisi"],
+      "context": [
+        {
+          "ref": "osm:r1775627",
+          "id": "joint_municipality.3532",
+          "text": "Pamukova",
+          "country_code": "tr",
+          "wikidata": "Q1947514",
+          "kind": "admin_area",
+          "place_designation": "town",
+          "language": "tr",
+          "text_tr": "Pamukova",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r223462",
+          "id": "county.272",
+          "text": "Sakarya",
+          "country_code": "tr",
+          "wikidata": "Q83069",
+          "kind": "admin_area",
+          "place_designation": "city",
+          "language": "tr",
+          "text_tr": "Sakarya",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r16682161",
+          "id": "major_landform.4178929",
+          "text": "Samanlı Dağları",
+          "country_code": "tr",
+          "wikidata": "Q3561122",
+          "feature_tags": {
+            "boundary": "region",
+            "natural": "mountain_range",
+            "region:type": "mountain_area",
+            "wikipedia": "tr:Samanlı Dağları",
+            "type": "boundary"
+          },
+          "categories": ["mountain range"],
+          "language": "tr",
+          "text_tr": "Samanlı Dağları",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:n36966065",
+          "id": "continental_marine.5",
+          "text": "Asya",
+          "wikidata": "Q48",
+          "feature_tags": {
+            "sqkm": "44614500",
+            "place": "continent",
+            "wikipedia": "en:Asia",
+            "population": "4950360147"
+          },
+          "categories": ["continent"],
+          "language": "tr",
+          "text_tr": "Asya",
+          "language_tr": "tr"
+        }
+      ],
+      "text_tr": "Kadıköy",
+      "place_name_tr": "Kadıköy, Pamukova, Türkiye"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ref": "osm:n5245239144",
+        "country_code": "tr",
+        "kind": "place",
+        "place_designation": "suburb",
+        "place_type_name": ["Yerinin çevirisi"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.948158152401447, 40.76764095522007]
+      },
+      "bbox": [29.94815815240145, 40.76764095522007, 29.94815815240145, 40.76764095522007],
+      "center": [29.948158152401447, 40.76764095522007],
+      "place_name": "Kadıköy, İzmit, Türkiye",
+      "place_type": ["place"],
+      "relevance": 0.8,
+      "id": "place.1750478",
+      "text": "Kadıköy",
+      "place_type_name": ["Yerinin çevirisi"],
+      "context": [
+        {
+          "ref": "osm:r7755941",
+          "id": "municipal_district.70940",
+          "text": "Kadıköy Mahallesi",
+          "country_code": "tr",
+          "wikidata": "Q97320670",
+          "kind": "admin_area",
+          "text_tr": "Kadıköy Mahallesi"
+        },
+        {
+          "ref": "osm:w1229958264",
+          "id": "major_landform.2880252",
+          "text": "Kanal Boyu Deresi",
+          "country_code": "tr",
+          "feature_tags": {},
+          "categories": [],
+          "text_tr": "Kanal Boyu Deresi"
+        },
+        {
+          "ref": "osm:r1211493",
+          "id": "joint_municipality.18405",
+          "text": "İzmit",
+          "country_code": "tr",
+          "wikidata": "Q129649",
+          "kind": "admin_area",
+          "place_designation": "town",
+          "language": "tr",
+          "text_tr": "İzmit",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r223473",
+          "id": "county.300",
+          "text": "Kocaeli",
+          "country_code": "tr",
+          "wikidata": "Q83965",
+          "kind": "admin_area",
+          "place_designation": "city",
+          "language": "tr",
+          "text_tr": "Kocaeli",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:r2094193",
+          "id": "region.926",
+          "text": "Marmara Bölgesi",
+          "country_code": "tr",
+          "wikidata": "Q155583",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Marmara Bölgesi",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "Europe/Istanbul",
+          "id": "timezone.356",
+          "text": "Europe/Istanbul",
+          "country_code": "tr",
+          "text_tr": "Europe/Istanbul"
+        },
+        {
+          "ref": "osm:r174737",
+          "id": "country.115",
+          "text": "Türkiye",
+          "country_code": "tr",
+          "wikidata": "Q43",
+          "kind": "admin_area",
+          "language": "tr",
+          "text_tr": "Türkiye",
+          "language_tr": "tr"
+        },
+        {
+          "ref": "osm:n36966065",
+          "id": "continental_marine.5",
+          "text": "Asya",
+          "wikidata": "Q48",
+          "feature_tags": {
+            "sqkm": "44614500",
+            "place": "continent",
+            "wikipedia": "en:Asia",
+            "population": "4950360147"
+          },
+          "categories": ["continent"],
+          "language": "tr",
+          "text_tr": "Asya",
+          "language_tr": "tr"
+        }
+      ],
+      "text_tr": "Kadıköy",
+      "place_name_tr": "Kadıköy, İzmit, Türkiye"
+    }
+  ],
+  "query": ["kadıköy", "i̇stanbul"],
+  "attribution": "<a href=\"https://www.maptiler.com/copyright/\" target=\"_blank\">&copy; MapTiler</a> <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">&copy; OpenStreetMap contributors</a>"
+}

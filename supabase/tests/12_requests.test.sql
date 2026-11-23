@@ -91,13 +91,16 @@ CREATE FUNCTION pg_temp.today() RETURNS date LANGUAGE sql STABLE AS $$
 CREATE FUNCTION pg_temp.ans() RETURNS jsonb LANGUAGE sql IMMUTABLE AS $$
   SELECT '{"rooms": 3, "bathrooms": 2, "property_type": "apartment", "has_pets": true, "details": "  "}'::jsonb $$;
 -- Publish fixture F at Z1 with A1: 350000, commission 35000.
-CREATE FUNCTION pg_temp.post(p_key uuid, p_date date, p_hour integer, p_line text, p_notes text,
+-- Spec 0011-20b AC-3: the address is parts now; pgTAP 45 proves each part's rule.
+CREATE FUNCTION pg_temp.addr() RETURNS jsonb LANGUAGE sql IMMUTABLE AS $$
+  SELECT '{"mahalle": "Caferağa", "street": "Moda Cad.", "building_no": "5"}'::jsonb $$;
+CREATE FUNCTION pg_temp.post(p_key uuid, p_date date, p_hour integer, p_line jsonb, p_notes text,
                              p_price bigint, p_commission bigint) RETURNS jsonb LANGUAGE sql AS $$
   SELECT public.create_request(p_key, '00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122001',
                                ARRAY['00000000-0000-0000-0000-00000012a001']::uuid[], pg_temp.ans(),
                                p_date, p_hour, p_line, p_notes, p_price, p_commission) $$;
 CREATE FUNCTION pg_temp.post_at(p_date date, p_hour integer) RETURNS jsonb LANGUAGE sql AS $$
-  SELECT pg_temp.post(gen_random_uuid(), p_date, p_hour, 'Moda Cad. No 5', NULL, 350000, 35000) $$;
+  SELECT pg_temp.post(gen_random_uuid(), p_date, p_hour, pg_temp.addr(), NULL, 350000, 35000) $$;
 CREATE FUNCTION pg_temp.quote() RETURNS jsonb LANGUAGE sql AS $$
   SELECT public.quote_request('00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122001',
                               ARRAY['00000000-0000-0000-0000-00000012a001']::uuid[], pg_temp.ans()) $$;
@@ -115,8 +118,8 @@ EXCEPTION WHEN raise_exception THEN
   RETURN ok;
 END;
 $$;
-GRANT EXECUTE ON FUNCTION pg_temp.as_user(text), pg_temp.today(), pg_temp.ans(),
-  pg_temp.post(uuid, date, integer, text, text, bigint, bigint), pg_temp.post_at(date, integer),
+GRANT EXECUTE ON FUNCTION pg_temp.as_user(text), pg_temp.today(), pg_temp.ans(), pg_temp.addr(),
+  pg_temp.post(uuid, date, integer, jsonb, text, bigint, bigint), pg_temp.post_at(date, integer),
   pg_temp.quote(), pg_temp.quotes(integer) TO authenticated;
 
 -- ── schema (AC-1, AC-2) ──────────────────────────────────────────────────────
@@ -309,8 +312,8 @@ SELECT is((SELECT array_agg(k ORDER BY k) FROM cat, jsonb_path_query(c, '$.categ
 SELECT is((SELECT s -> 'addons' FROM cat, jsonb_path_query(c, '$.categories[*].services[*]') s WHERE s ->> 'id' = '00000000-0000-0000-0000-000000125001'),
   '[{"id": "00000000-0000-0000-0000-00000012a001", "name": {"tr": "Cam"}, "price": 40000}]', 'only the active addon, with its price');
 SELECT is((SELECT coalesce(jsonb_agg(z ORDER BY ord), '[]') FROM cat, jsonb_array_elements(c -> 'zones') WITH ORDINALITY AS q(z, ord) WHERE z ->> 'id' LIKE '00000000-0000-0000-0000-00000012%'),
-  '[{"id": "00000000-0000-0000-0000-000000122001", "name": {"tr": "Kadıköy"}}, {"id": "00000000-0000-0000-0000-000000122002", "name": {"tr": "Beşiktaş"}}]',
-  'the active zones of the region, with no multiplier');
+  '[{"id": "00000000-0000-0000-0000-000000122001", "il": null, "ilce": null, "name": {"tr": "Kadıköy"}}, {"id": "00000000-0000-0000-0000-000000122002", "il": null, "ilce": null, "name": {"tr": "Beşiktaş"}}]',
+  'the active zones of the region, with no multiplier (20b X-10: il and ilçe, null until admin fills them)');
 SELECT is((SELECT s - 'questions' - 'addons' FROM cat, jsonb_path_query(c, '$.categories[*].services[*]') s WHERE s ->> 'id' = '00000000-0000-0000-0000-000000125001'),
   '{"id": "00000000-0000-0000-0000-000000125001", "name": {"en": "Home cleaning", "tr": "Ev temizliği"}, "note": null, "hours_min": 3, "hours_max": 5}',
   'a service: its name, note and hours');
@@ -330,7 +333,7 @@ SELECT throws_ok($$ SELECT public.request_catalog() $$, 'P0001', 'forbidden', 'n
 RESET ROLE;
 SELECT ok(NOT has_function_privilege('anon', 'public.request_catalog()', 'EXECUTE')
           AND NOT has_function_privilege('anon', 'public.quote_request(uuid, uuid, uuid[], jsonb)', 'EXECUTE')
-          AND NOT has_function_privilege('anon', 'public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, text, text, bigint, bigint)', 'EXECUTE')
+          AND NOT has_function_privilege('anon', 'public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, jsonb, text, bigint, bigint)', 'EXECUTE')
           AND NOT has_function_privilege('anon', 'public.cancel_request(uuid, text)', 'EXECUTE'),
   'anon runs none of the four');
 SELECT ok(NOT has_function_privilege('authenticated', 'public.request_settings(text)', 'EXECUTE')
@@ -361,7 +364,8 @@ SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c1');
 CREATE TEMP TABLE r1 AS
   SELECT pg_temp.post('00000000-0000-0000-0000-0000001200f1', pg_temp.today() + 1, 10,
-                      '   Moda Cad. No 5, D 3   ', ' ' || chr(160) || chr(8203) || ' ', 350000, 35000) AS r;
+                      '{"mahalle": "  Caferağa ", "street": "Moda Cad.", "building_no": "5", "apartment": " 3 "}',
+                      ' ' || chr(160) || chr(8203) || ' ', 350000, 35000) AS r;
 SELECT is((SELECT r - 'id' FROM r1), '{"status": "ok"}', 'the customer publishes');
 RESET ROLE;
 SELECT results_eq(
@@ -382,7 +386,7 @@ SELECT results_eq(
             '12:00', '15:00' $$,
   'a start at 10:00 local; hours_max 5 ends at 15:00 local, stored as 12:00 UTC');
 SELECT is((SELECT line FROM public.request_addresses WHERE request_id = (SELECT (r ->> 'id')::uuid FROM r1)),
-  'Moda Cad. No 5, D 3', 'the address line, trimmed, in its own table');
+  'Caferağa Mah., Moda Cad., No: 5, Daire: 3', 'the address line, composed from the trimmed parts, in its own table');
 SELECT is((SELECT answers FROM public.requests WHERE id = (SELECT (r ->> 'id')::uuid FROM r1)),
   '{"rooms": 3, "bathrooms": 2, "property_type": "apartment", "has_pets": true}', 'a blank answer is removed');
 SELECT is((SELECT jsonb_path_query_array(questions_snapshot, '$[*].key') FROM public.requests WHERE id = (SELECT (r ->> 'id')::uuid FROM r1)),
@@ -404,13 +408,13 @@ SELECT is((SELECT new_value FROM public.audit_log WHERE action = 'request.create
 -- Replays (AC-12).
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c1');
-SELECT is(pg_temp.post('00000000-0000-0000-0000-0000001200f1', pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 350000, 35000),
+SELECT is(pg_temp.post('00000000-0000-0000-0000-0000001200f1', pg_temp.today() + 1, 10, pg_temp.addr(), NULL, 350000, 35000),
   (SELECT r FROM r1), 'the same client key returns the same id');
 SELECT is(public.create_request('00000000-0000-0000-0000-0000001200f1', '00000000-0000-0000-0000-000000125001',
-            '00000000-0000-0000-0000-000000122002', NULL, '{"rooms": 1}', NULL, NULL, 'x', NULL, 1, 1),
+            '00000000-0000-0000-0000-000000122002', NULL, '{"rooms": 1}', NULL, NULL, '{"x": 1}', NULL, 1, 1),
   (SELECT r FROM r1), 'even with other inputs, checking nothing');
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c2');
-SELECT isnt((SELECT pg_temp.post('00000000-0000-0000-0000-0000001200f1', pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 350000, 35000) ->> 'id'),
+SELECT isnt((SELECT pg_temp.post('00000000-0000-0000-0000-0000001200f1', pg_temp.today() + 1, 10, pg_temp.addr(), NULL, 350000, 35000) ->> 'id'),
   (SELECT r ->> 'id' FROM r1), 'another customer''s equal key is a new request');
 RESET ROLE;
 SELECT is((SELECT count(*)::int FROM public.requests WHERE client_key = '00000000-0000-0000-0000-0000001200f1'), 2,
@@ -419,19 +423,19 @@ SELECT is((SELECT count(*)::int FROM public.requests WHERE client_key = '0000000
 -- Tamper (AC-10).
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c1');
-SELECT is((SELECT r ->> 'status' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, 'Moda Cad. No 5', NULL, 349900, 35000) r),
+SELECT is((SELECT r ->> 'status' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, pg_temp.addr(), NULL, 349900, 35000) r),
   'price_changed', 'an expected price one unit lower refuses');
-SELECT is((SELECT r -> 'quote' -> 'price' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, 'Moda Cad. No 5', NULL, 349900, 35000) r),
+SELECT is((SELECT r -> 'quote' -> 'price' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, pg_temp.addr(), NULL, 349900, 35000) r),
   '350000', 'with the new figures in the quote shape');
-SELECT is((SELECT r ->> 'status' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, 'Moda Cad. No 5', NULL, 350000, 34900) r),
+SELECT is((SELECT r ->> 'status' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, pg_temp.addr(), NULL, 350000, 34900) r),
   'price_changed', 'an expected commission one unit lower refuses');
-SELECT is((SELECT r ->> 'status' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, 'Moda Cad. No 5', NULL, NULL, 35000) r),
+SELECT is((SELECT r ->> 'status' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, pg_temp.addr(), NULL, NULL, 35000) r),
   'price_changed', 'a null expected price refuses');
-SELECT is((SELECT r ->> 'status' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, 'Moda Cad. No 5', NULL, 350000, NULL) r),
+SELECT is((SELECT r ->> 'status' FROM pg_temp.post(gen_random_uuid(), pg_temp.today() + 1, 11, pg_temp.addr(), NULL, 350000, NULL) r),
   'price_changed', 'a null expected commission refuses');
 SELECT is((SELECT count(*)::int FROM public.requests), 1, 'and none of them wrote a row');
 SELECT is((SELECT r ->> 'status' FROM public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125001',
-             '00000000-0000-0000-0000-000000122001', NULL, '{"rooms": 3}', pg_temp.today() + 1, 11, 'Moda Cad. No 5', NULL, 1, 1) r),
+             '00000000-0000-0000-0000-000000122001', NULL, '{"rooms": 3}', pg_temp.today() + 1, 11, pg_temp.addr(), NULL, 1, 1) r),
   'invalid', 'answer errors come back as invalid');
 SELECT throws_ok($$ INSERT INTO public.requests (region, customer_id, client_key, service_id, zone_id, answers, questions_snapshot,
                       pricing_snapshot, fixed_price, commission_amount, cash_due, currency, scheduled_start_at, scheduled_end_at)
@@ -471,23 +475,23 @@ SELECT throws_ok($$ SELECT pg_temp.post_at(NULL, 12) $$, 'P0001', 'schedule_inva
 SELECT throws_ok($$ SELECT pg_temp.post_at(pg_temp.today() + 1, NULL) $$, 'P0001', 'schedule_invalid', 'a null hour');
 
 -- The street line and the notes (AC-7).
-SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, 'Moda', NULL, 350000, 35000) $$,
-  'P0001', 'address_invalid', 'a line of 4 code points');
-SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, repeat('ş', 201), NULL, 350000, 35000) $$,
-  'P0001', 'address_invalid', 'a line of 201 code points');
-SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, '      ' || chr(160), NULL, 350000, 35000) $$,
-  'P0001', 'address_invalid', 'a line of only spaces');
+SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, '{"street": "Moda Cad.", "building_no": "5"}', NULL, 350000, 35000) $$,
+  'P0001', 'address_invalid', 'no mahalle');
+SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, pg_temp.addr() || jsonb_build_object('street', repeat('ş', 81)), NULL, 350000, 35000) $$,
+  'P0001', 'address_invalid', 'a street of 81 code points');
+SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, pg_temp.addr() || jsonb_build_object('mahalle', '      ' || chr(160)), NULL, 350000, 35000) $$,
+  'P0001', 'address_invalid', 'a mahalle of only spaces');
 SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, NULL, NULL, 350000, 35000) $$,
-  'P0001', 'address_invalid', 'no line');
-SELECT is(pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, repeat('ş', 200), repeat('ğ', 500), 350000, 35000) ->> 'status',
-  'ok', 'a line of 200 and notes of 500 code points');
-SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, 'Moda Cad. No 5', repeat('ğ', 501), 350000, 35000) $$,
+  'P0001', 'address_invalid', 'no address');
+SELECT is(pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, pg_temp.addr() || jsonb_build_object('street', repeat('ş', 80)), repeat('ğ', 500), 350000, 35000) ->> 'status',
+  'ok', 'a street of 80 and notes of 500 code points');
+SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, pg_temp.addr(), repeat('ğ', 501), 350000, 35000) $$,
   'P0001', 'notes_invalid', 'notes of 501 code points');
-SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, 'Moda Cad. No 5', 'beni ara 0555 123 45 67', 350000, 35000) $$,
+SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, pg_temp.addr(), 'beni ara 0555 123 45 67', 350000, 35000) $$,
   'P0001', 'contact_info_in_notes', 'notes with a phone number');
-SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, 'Moda Cad. No 5', 'yaz bana ali@example.com', 350000, 35000) $$,
+SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, pg_temp.addr(), 'yaz bana ali@example.com', 350000, 35000) $$,
   'P0001', 'contact_info_in_notes', 'notes with an email');
-SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, 'Moda Cad. No 5', 'bak https://example.com/x', 350000, 35000) $$,
+SELECT throws_ok($$ SELECT pg_temp.post(gen_random_uuid(), pg_temp.today() + 2, 10, pg_temp.addr(), 'bak https://example.com/x', 350000, 35000) $$,
   'P0001', 'contact_info_in_notes', 'notes with a link');
 RESET ROLE;
 UPDATE public.platform_settings SET value = '5' WHERE region = 'TR' AND key = 'max_open_requests';
@@ -502,16 +506,16 @@ SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200a1');
 SELECT is(pg_temp.post_at(pg_temp.today() + 1, 10) ->> 'status', 'ok', 'an admin may publish their own request');
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c1');
 SELECT throws_ok($$ SELECT public.create_request(NULL, '00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122001', NULL,
-                      pg_temp.ans(), pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 350000, 35000) $$,
+                      pg_temp.ans(), pg_temp.today() + 1, 10, pg_temp.addr(), NULL, 350000, 35000) $$,
   'P0001', 'validation_failed', 'a null client key');
 SELECT is((public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125002', '00000000-0000-0000-0000-000000122001', NULL,
-                      '{}', pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1)) ->> 'code',
+                      '{}', pg_temp.today() + 1, 10, pg_temp.addr(), NULL, 1, 1)) ->> 'code',
   'service_unavailable', 'a service with no formula, now a refused status that counts (R10 A1)');
 SELECT is((public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122003', NULL,
-                      pg_temp.ans(), pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1)) ->> 'code',
+                      pg_temp.ans(), pg_temp.today() + 1, 10, pg_temp.addr(), NULL, 1, 1)) ->> 'code',
   'zone_unavailable', 'an off zone, now a refused status that counts (R10 A1)');
 SELECT is((public.create_request(gen_random_uuid(), '00000000-0000-0000-0000-000000125001', '00000000-0000-0000-0000-000000122001',
-                      ARRAY['00000000-0000-0000-0000-00000012a002']::uuid[], pg_temp.ans(), pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1)) ->> 'code',
+                      ARRAY['00000000-0000-0000-0000-00000012a002']::uuid[], pg_temp.ans(), pg_temp.today() + 1, 10, pg_temp.addr(), NULL, 1, 1)) ->> 'code',
   'addon_unavailable', 'an off addon, now a refused status that counts (R10 A1)');
 RESET ROLE;
 
@@ -624,7 +628,7 @@ SELECT throws_ok($$ SELECT public.cancel_request((SELECT (r ->> 'id')::uuid FROM
 SELECT pg_temp.as_user('00000000-0000-0000-0000-0000001200c1');
 SELECT is(public.cancel_request((SELECT (r ->> 'id')::uuid FROM r1), 'plans_changed'), '{"status": "ok"}', 'the owner cancels');
 SELECT is(public.cancel_request((SELECT (r ->> 'id')::uuid FROM r1), NULL), '{"status": "ok"}', 'cancelling again is ok');
-SELECT is(pg_temp.post('00000000-0000-0000-0000-0000001200f1', pg_temp.today() + 1, 10, 'x', NULL, NULL, NULL), (SELECT r FROM r1),
+SELECT is(pg_temp.post('00000000-0000-0000-0000-0000001200f1', pg_temp.today() + 1, 10, '{"x": 1}', NULL, NULL, NULL), (SELECT r FROM r1),
   'a replay after a cancel still returns that id');
 RESET ROLE;
 SELECT results_eq(
@@ -689,7 +693,7 @@ SELECT set_eq(
         AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
         AND p.proname IN ('quote_price', 'request_catalog', 'quote_request', 'create_request', 'cancel_request') $$,
   $$ VALUES ('public.request_catalog()'), ('public.quote_request(uuid, uuid, uuid[], jsonb)'),
-            ('public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, text, text, bigint, bigint)'),
+            ('public.create_request(uuid, uuid, uuid, uuid[], jsonb, date, integer, jsonb, text, bigint, bigint)'),
             ('public.cancel_request(uuid, text)') $$,
   'a signed in user reaches the engine only through quote_request and create_request');
 

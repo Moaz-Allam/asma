@@ -162,6 +162,8 @@ export default async function Page({ params, searchParams }: Props) {
         ...texts(z.name),
         multiplier: z.multiplier,
         active: z.active,
+        il: z.il,
+        ilce: z.ilce,
       })),
     };
   })().catch((error: unknown) => {

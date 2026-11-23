@@ -270,6 +270,8 @@ export function ZoneSheet({
   const action = useCatalogAction();
   const [name, setName] = useState<LocalizedText>(zone?.values ?? {});
   const [multiplier, setMultiplier] = useState(zone?.multiplier ?? '1.00');
+  const [il, setIl] = useState(zone?.il ?? '');
+  const [ilce, setIlce] = useState(zone?.ilce ?? '');
   return (
     <CatalogSheet
       open={open}
@@ -279,7 +281,7 @@ export function ZoneSheet({
       error={action.error}
       onSubmit={() =>
         action.run(
-          () => saveZone({ id: zone?.id, name, multiplier }),
+          () => saveZone({ id: zone?.id, name, multiplier, il, ilce }),
           () => onOpenChange(false),
         )
       }
@@ -300,6 +302,13 @@ export function ZoneSheet({
           value={multiplier}
           onChange={(event) => setMultiplier(event.target.value)}
         />
+      </FormField>
+      {/* Spec 0011-20b AC-1: the Turkish il and ilçe the request address takes from this zone. */}
+      <FormField id="zone-il" label={t('fieldIl')} note={t('placeNote')}>
+        <Input id="zone-il" value={il} maxLength={60} onChange={(event) => setIl(event.target.value)} />
+      </FormField>
+      <FormField id="zone-ilce" label={t('fieldIlce')}>
+        <Input id="zone-ilce" value={ilce} maxLength={60} onChange={(event) => setIlce(event.target.value)} />
       </FormField>
     </CatalogSheet>
   );

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import type { StoredAddress } from '@/lib/address/parts';
 import {
   cancelRequest,
   clearFlag,
@@ -101,10 +102,10 @@ export const adminExtendDeadlineAction = guardedAction(
  */
 export const adminShowAddressAction = guardedAction(
   { name: 'adminShowAddress', access: ADMIN, schema: AddressInput },
-  async (input): Promise<{ line: string } | ReturnType<typeof fail>> => {
+  async (input): Promise<{ address: StoredAddress } | ReturnType<typeof fail>> => {
     const outcome = await showAddress(input);
     if (!outcome.ok) return fail(KNOWN.includes(outcome.code) ? outcome.code : 'action_failed');
-    return { line: outcome.line };
+    return { address: outcome.address };
   },
 );
 

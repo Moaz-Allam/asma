@@ -86,6 +86,21 @@ const PROVIDER_SIDE = {
   email: null,
   email_confirmed: false,
   street: 'Moda Cad. No 5',
+  // Spec 0011-20b AC-6: the parts and the pin, to the chosen provider only.
+  address: {
+    line: 'Moda Cad. No 5',
+    il: 'İstanbul',
+    ilce: 'Kadıköy',
+    mahalle: 'Caferağa',
+    street: 'Moda Cad.',
+    building_no: '5',
+    floor: null,
+    apartment: null,
+    postal_code: null,
+    directions: 'Ring twice',
+    lat: 40.98,
+    lng: 29.03,
+  },
   notes: 'Ring twice',
   zone: { tr: 'Moda' },
   scheduled_start_at: '2026-11-20T07:00:00+00:00',
@@ -276,10 +291,28 @@ describe('loadContacts (AC-5)', () => {
   });
 
   it('refuses an address field on the customer side', async () => {
-    const { street, notes, zone, scheduled_start_at, scheduled_end_at, timezone, ...base } = PROVIDER_SIDE;
+    const { street, address, notes, zone, scheduled_start_at, scheduled_end_at, timezone, ...base } =
+      PROVIDER_SIDE;
     void [notes, zone, scheduled_start_at, scheduled_end_at, timezone];
-    m.rpc.mockResolvedValue({ data: { ...base, side: 'customer', street }, error: null });
+    m.rpc.mockResolvedValue({
+      data: { ...base, side: 'customer', provider_address: null, street },
+      error: null,
+    });
     await expect(loadContacts(REQUEST, { region: 'TR', userId: USER })).rejects.toThrow();
+    // Spec 0011-20b AC-6: nor the customer's parts and pin.
+    m.rpc.mockResolvedValue({
+      data: { ...base, side: 'customer', provider_address: null, address },
+      error: null,
+    });
+    await expect(loadContacts(REQUEST, { region: 'TR', userId: USER })).rejects.toThrow();
+    // The provider's composed address (or null) is the customer's only address field.
+    m.rpc.mockResolvedValue({
+      data: { ...base, side: 'customer', provider_address: 'Rasimpaşa Mah., Rıhtım Cad., No: 3' },
+      error: null,
+    });
+    expect(await loadContacts(REQUEST, { region: 'TR', userId: USER })).toMatchObject({
+      provider_address: 'Rasimpaşa Mah., Rıhtım Cad., No: 3',
+    });
   });
 
   it('refuses a WhatsApp link that is not wa.me', async () => {

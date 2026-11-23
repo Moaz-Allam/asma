@@ -40,7 +40,14 @@ export type ServiceRow = {
 };
 
 export type AddonRow = { id: string; serviceId: string; name: unknown; price: number; active: boolean };
-export type ZoneRow = { id: string; name: unknown; multiplier: string; active: boolean };
+export type ZoneRow = {
+  id: string;
+  name: unknown;
+  multiplier: string;
+  active: boolean;
+  il: string | null;
+  ilce: string | null;
+};
 
 export type QuestionRow = {
   id: string;
@@ -95,7 +102,7 @@ export async function listZones(region: Region): Promise<ZoneRow[]> {
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from('zones')
-    .select('id, name, multiplier, active')
+    .select('id, name, multiplier, active, il, ilce')
     .eq('region', region)
     .order('display_order')
     .order('id');
@@ -105,6 +112,8 @@ export async function listZones(region: Region): Promise<ZoneRow[]> {
     name: row.name,
     multiplier: twoDecimals(row.multiplier),
     active: row.active,
+    il: row.il,
+    ilce: row.ilce,
   }));
 }
 

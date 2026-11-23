@@ -109,6 +109,11 @@ const EnvSchema = z.object({
   // Auth is the only caller of siteverify, so the app holds none.
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
 
+  // ── The optional map (spec 0011-20b AC-10) ────────────────────────────────
+  // Public by design and locked to our domains in MapTiler (S46). Optional everywhere: without it the map
+  // button hides and the typed address fields work alone. Read only through lib/maps (lint).
+  NEXT_PUBLIC_MAPTILER_KEY: z.string().min(1).max(200).optional(),
+
   // ── The public address (spec 0005 AC-30, lib/seo) ─────────────────────────
   // Empty until the real domain exists (S4). Setting it on production is what turns indexing on, so a
   // wrong shape is refused rather than published in every canonical link.

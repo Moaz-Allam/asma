@@ -27,7 +27,7 @@ describe('static security headers (AC-12)', () => {
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'X-Frame-Options': 'DENY',
       'Cross-Origin-Opener-Policy': 'same-origin',
-      'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self), payment=()',
     });
   });
 });
@@ -45,7 +45,7 @@ describe('buildCsp (AC-13)', () => {
       // Spec 0006 AC-25: signed Storage links to a photo or a document, from the Supabase origin only.
       'img-src': "'self' blob: data: https://ref.supabase.co",
       'font-src': "'self'",
-      'connect-src': "'self' https://ref.supabase.co wss://ref.supabase.co",
+      'connect-src': "'self' https://ref.supabase.co wss://ref.supabase.co https://api.maptiler.com",
       'worker-src': "'self' blob:",
       'frame-src': 'https://challenges.cloudflare.com',
       'frame-ancestors': "'none'",
@@ -65,7 +65,9 @@ describe('buildCsp (AC-13)', () => {
 
   it('takes http and ws from a local Supabase URL', () => {
     const local = directives(buildCsp('n', { dev: false, supabaseUrl: 'http://127.0.0.1:54421' }));
-    expect(local['connect-src']).toBe("'self' http://127.0.0.1:54421 ws://127.0.0.1:54421");
+    expect(local['connect-src']).toBe(
+      "'self' http://127.0.0.1:54421 ws://127.0.0.1:54421 https://api.maptiler.com",
+    );
     expect(local['img-src']).toBe("'self' blob: data: http://127.0.0.1:54421");
   });
 
@@ -79,7 +81,9 @@ describe('buildCsp (AC-13)', () => {
     expect(noReport).not.toHaveProperty('report-to');
     expect(noReport['script-src']).toBe("'self' 'nonce-n' 'strict-dynamic'");
     expect(() => buildCsp('n', { dev: false, supabaseUrl: 'not a url' })).not.toThrow();
-    expect(directives(buildCsp('n', { dev: false, supabaseUrl: 'not a url' }))['connect-src']).toBe("'self'");
+    expect(directives(buildCsp('n', { dev: false, supabaseUrl: 'not a url' }))['connect-src']).toBe(
+      "'self' https://api.maptiler.com",
+    );
     expect(directives(buildCsp('n', { dev: false, supabaseUrl: 'not a url' }))['img-src']).toBe(
       "'self' blob: data:",
     );

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
 import { createRequestAction, quoteRequestAction } from '@/actions/requests';
+import { AddressFields, type AddressFieldErrors } from '@/components/features/address/AddressFields';
 import { FlowHeader } from '@/components/layout/FlowHeader';
 import { ChoiceChips } from '@/components/shared/ChoiceChips';
 import { FormField } from '@/components/shared/FormField';
@@ -11,8 +12,16 @@ import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
 import { PriceCard, type PriceFigures } from '@/components/shared/PriceCard';
 import { ToggleRow } from '@/components/shared/ToggleRow';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  REQUEST_ADDRESS_KEYS,
+  addressErrors,
+  addressPayload,
+  composeAddress,
+  type AddressDraft,
+  type AddressError,
+  type AddressTextKey,
+} from '@/lib/address/parts';
 import { track } from '@/lib/analytics/client';
 import { useRouter } from '@/lib/i18n/navigation';
 import { isBlankAnswer, trimBlank } from '@/lib/requests/blank';
@@ -46,7 +55,7 @@ export type RequestFormInitial = {
   answers: Record<string, unknown>;
   addonIds: string[];
   zoneId: string | null;
-  addressLine: string;
+  address: AddressDraft;
   notes: string;
 };
 
@@ -57,17 +66,17 @@ type QuoteState =
   | { kind: 'invalid' }
   | { kind: 'refused'; code: string };
 
-type Field = 'date' | 'hour' | 'line' | 'notes';
+type Field = 'date' | 'hour' | 'address' | 'notes';
 
 const QUOTE_WAIT_MS = 400;
 const UNPRICED_TYPES: ReadonlySet<string> = new Set(['text', 'textarea', 'date', 'time']);
 const MAX_ZONE_CHIPS = 8;
-const LINE_MIN = 5;
-const LINE_MAX = 200;
 const NOTES_MAX = 500;
 const FIELD_CODES: Readonly<Record<string, Field>> = {
   schedule_invalid: 'date',
-  address_invalid: 'line',
+  address_invalid: 'address',
+  pin_invalid: 'address',
+  contact_info_in_address: 'address',
   notes_invalid: 'notes',
   contact_info_in_notes: 'notes',
 };
@@ -92,14 +101,18 @@ export function RequestForm({
   initial,
   repeated,
   serviceGone,
+  mapKey,
 }: {
   catalog: FormCatalog;
   locale: string;
   initial: RequestFormInitial;
   repeated: boolean;
   serviceGone: boolean;
+  /** The MapTiler key, or null: then the map button never shows (spec 0011-20b AC-4). */
+  mapKey: string | null;
 }) {
   const t = useTranslations('Requests');
+  const ta = useTranslations('Address');
   const router = useRouter();
   const [clientKey] = useState(() => crypto.randomUUID());
   const [step, setStep] = useState<'form' | 'review'>('form');
@@ -112,7 +125,8 @@ export function RequestForm({
   const [zoneId, setZoneId] = useState<string | null>(initial.zoneId);
   const [date, setDate] = useState<string | null>(null);
   const [hour, setHour] = useState<number | null>(null);
-  const [line, setLine] = useState(initial.addressLine);
+  const [address, setAddress] = useState<AddressDraft>(initial.address);
+  const [partErrors, setPartErrors] = useState<AddressFieldErrors>({});
   const [notes, setNotes] = useState(initial.notes);
   const [answered, setAnswered] = useState<{ key: string; state: QuoteState } | null>(null);
   const [answerErrors, setAnswerErrors] = useState<Record<string, string>>({});
@@ -229,12 +243,26 @@ export function RequestForm({
   else if (quote.kind === 'invalid') placeholder = t('form.fixBelow');
   else if (quote.kind === 'refused') placeholder = t(`errors.${quote.code}` as 'errors.action_failed');
 
+  // Spec 0011-20b X-21: the browser checks the same part rules as Postgres, one message per part.
+  function partMessage(key: AddressTextKey | 'pin', code: AddressError): string {
+    if (key === 'pin') return ta('errors.pin_invalid');
+    const value = address[key];
+    if (!value || value.trim() === '') return ta('errors.required');
+    if (key === 'postal_code') return ta('errors.postal_code');
+    if (key === 'building_no' || key === 'floor' || key === 'apartment') return ta('errors.number');
+    return code === 'pin_invalid' ? ta('errors.pin_invalid') : ta('errors.invalid');
+  }
+
   function toReview() {
     const errors: Partial<Record<Field, string>> = {};
-    const lineLength = [...trimBlank(line)].length;
     if (!date) errors.date = t('errors.schedule_invalid');
     if (hour === null) errors.hour = t('errors.schedule_invalid');
-    if (lineLength < LINE_MIN || lineLength > LINE_MAX) errors.line = t('errors.address_invalid');
+    const parts = addressErrors(address, REQUEST_ADDRESS_KEYS);
+    const messages: AddressFieldErrors = {};
+    for (const [key, code] of Object.entries(parts) as [AddressTextKey | 'pin', AddressError][])
+      messages[key] = partMessage(key, code);
+    setPartErrors(messages);
+    if (Object.keys(messages).length > 0) errors.address = ta('errors.address_invalid');
     if ([...trimBlank(notes)].length > NOTES_MAX) errors.notes = t('errors.notes_invalid');
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0 || quote.kind !== 'ok') return;
@@ -259,7 +287,7 @@ export function RequestForm({
           answers: sentAnswers,
           startDate: date,
           startHour: hour,
-          addressLine: line,
+          address: addressPayload(address, REQUEST_ADDRESS_KEYS),
           notes: trimBlank(notes) === '' ? null : notes,
           expectedPrice: shown.price,
           expectedCommission: shown.commission,
@@ -370,7 +398,16 @@ export function RequestForm({
                 )}`}
               />
               <ReviewRow term={t('review.district')} value={zone?.name ?? ''} />
-              <ReviewRow term={t('review.line')} value={trimBlank(line)} />
+              <ReviewRow
+                term={t('review.line')}
+                value={composeAddress({ ...address, il: zone?.il ?? null, ilce: zone?.ilce ?? null })}
+              />
+              {address.directions?.trim() ? (
+                <ReviewRow term={ta('card.directions')} value={address.directions.trim()} />
+              ) : null}
+              {typeof address.lat === 'number' ? (
+                <ReviewRow term={ta('admin.pin')} value={ta('map.pinned')} />
+              ) : null}
               <ReviewRow term={t('review.notes')} value={trimBlank(notes) || t('review.none')} />
             </dl>
             <section className="flex flex-col gap-3 rounded-panel bg-accent-light p-5 lg:p-7.5">
@@ -563,22 +600,27 @@ export function RequestForm({
                     </select>
                   </FormField>
                 )}
-                <FormField
-                  id="line"
-                  label={t('form.line')}
-                  error={fieldErrors.line}
-                  note={t('form.linePrivacy')}
-                >
-                  <Input
-                    id="line"
-                    value={line}
-                    maxLength={LINE_MAX + 20}
-                    autoComplete="street-address"
-                    aria-invalid={fieldErrors.line ? true : undefined}
-                    aria-describedby={fieldErrors.line ? 'line-error' : undefined}
-                    onChange={(e) => setLine(e.target.value)}
-                  />
-                </FormField>
+                {fieldErrors.address ? (
+                  <p id="address-error" role="alert" className="text-meta text-error">
+                    {fieldErrors.address}
+                  </p>
+                ) : null}
+                <AddressFields
+                  mode="request"
+                  value={address}
+                  onChange={(next) => {
+                    setAddress(next);
+                    setPartErrors({});
+                    setFieldErrors((e) => without(e, 'address'));
+                  }}
+                  errors={partErrors}
+                  place={{
+                    il: catalog.zones.find((z) => z.id === zoneId)?.il ?? null,
+                    ilce: catalog.zones.find((z) => z.id === zoneId)?.ilce ?? null,
+                  }}
+                  mapKey={mapKey}
+                />
+                <p className="text-meta text-text-secondary">{ta('privacy')}</p>
               </section>
 
               <section className="grid gap-6 md:grid-cols-2">

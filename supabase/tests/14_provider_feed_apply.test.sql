@@ -12,7 +12,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(282);
+SELECT plan(283);
 
 -- ── ids ──────────────────────────────────────────────────────────────────────
 CREATE FUNCTION pg_temp.u(p text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$
@@ -74,6 +74,10 @@ SELECT set_config('pricing.publishing', 'off', true);
 UPDATE public.providers SET status = 'approved', approved_at = now()
  WHERE id IN (pg_temp.u('a1'), pg_temp.u('a2'), pg_temp.u('a3'), pg_temp.u('a4'), pg_temp.u('a8'), pg_temp.u('a9'),
               pg_temp.u('b1'), pg_temp.u('b2'), pg_temp.u('b3'), pg_temp.u('b4'));
+-- Spec 0011-20b AC-5: an approved provider applies only with an address on file.
+INSERT INTO public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no)
+SELECT pr.id, pr.region, 'İstanbul', 'Kadıköy', 'Caferağa', 'Moda Cad.', '1' FROM public.providers pr
+    ON CONFLICT (provider_id) DO NOTHING;
 UPDATE public.providers SET status = 'pending', submitted_at = now(), review_reason = 'first_submission' WHERE id = pg_temp.u('a6');
 UPDATE public.providers SET status = 'rejected', rejection_code = 'document_unclear' WHERE id = pg_temp.u('a7');
 INSERT INTO public.provider_documents (provider_id, region, type, storage_path, object_id, mime_type, size_bytes, status, valid_until)
@@ -285,7 +289,7 @@ SELECT pg_temp.as_user('e1');
 SELECT throws_ok($$ SELECT public.request_catalog() $$, 'P0001', 'region_unavailable', 'A8: the catalog refuses a region that is off');
 SELECT throws_ok($$ SELECT public.quote_request(pg_temp.s(9), pg_temp.z(9), NULL, '{}') $$, 'P0001', 'region_unavailable', 'A8: so does a quote');
 SELECT throws_ok($$ SELECT public.create_request(gen_random_uuid(), pg_temp.s(9), pg_temp.z(9), NULL, '{}', pg_temp.today() + 1, 10,
-                      'King Fahd Road 5', NULL, 1, 1) $$, 'P0001', 'region_unavailable', 'A8: and a publish');
+                      '{"mahalle": "Olaya", "street": "King Fahd Road", "building_no": "5"}', NULL, 1, 1) $$, 'P0001', 'region_unavailable', 'A8: and a publish');
 RESET ROLE;
 SELECT is((SELECT count(*)::int FROM public.quote_counters WHERE user_id = pg_temp.u('e1')), 0, 'A8: and nothing was counted');
 -- A1: a quote the engine refuses comes back as a status, and counts.
@@ -298,7 +302,7 @@ SELECT is(public.quote_request(pg_temp.s(2), pg_temp.z(1), NULL, '{}'), '{"statu
   'A1: a service with no formula comes back refused');
 SELECT is(public.quote_request(pg_temp.s(1), pg_temp.z(1), ARRAY[gen_random_uuid()], '{}'), '{"status": "refused", "code": "addon_unavailable"}',
   'A1: an unknown addon comes back refused');
-SELECT is(public.create_request(gen_random_uuid(), pg_temp.s(2), pg_temp.z(1), NULL, '{}', pg_temp.today() + 1, 10, 'Moda Cad. No 5', NULL, 1, 1),
+SELECT is(public.create_request(gen_random_uuid(), pg_temp.s(2), pg_temp.z(1), NULL, '{}', pg_temp.today() + 1, 10, '{"mahalle": "Caferağa", "street": "Moda Cad.", "building_no": "5"}', NULL, 1, 1),
   '{"status": "refused", "code": "service_unavailable"}', 'A1: a publish the engine refuses comes back refused too');
 RESET ROLE;
 SELECT is((SELECT count FROM public.quote_counters WHERE user_id = pg_temp.u('c2')), 5, 'A1: all five counted against the hourly limit');
@@ -308,10 +312,10 @@ SELECT is((SELECT count(*)::int FROM public.requests WHERE customer_id = pg_temp
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c2');
 SELECT throws_ok($$ SELECT public.create_request(gen_random_uuid(), pg_temp.s(1), pg_temp.z(1), NULL, '{}', pg_temp.today() + 1, 10,
-                      'Moda Cad. No 5' || repeat(' ', 5000), NULL, 100000, 10000) $$, 'P0001', 'address_invalid',
+                      jsonb_build_object('mahalle', 'Caferağa', 'street', 'Moda Cad.', 'building_no', '5', 'directions', repeat(' ', 5000)), NULL, 100000, 10000) $$, 'P0001', 'address_invalid',
   'A2: a street line over 4096 bytes refuses before any trim');
 SELECT throws_ok($$ SELECT public.create_request(gen_random_uuid(), pg_temp.s(1), pg_temp.z(1), NULL, '{}', pg_temp.today() + 1, 10,
-                      'Moda Cad. No 5', 'temiz olsun' || repeat(' ', 5000), 100000, 10000) $$, 'P0001', 'notes_invalid',
+                      '{"mahalle": "Caferağa", "street": "Moda Cad.", "building_no": "5"}', 'temiz olsun' || repeat(' ', 5000), 100000, 10000) $$, 'P0001', 'notes_invalid',
   'A2: so do notes over 4096 bytes');
 RESET ROLE;
 -- F6: with a lead of 0 days and every hour open, the hour that is running now has already started.
@@ -320,10 +324,10 @@ UPDATE public.platform_settings SET value = '23' WHERE region = 'TR' AND key = '
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c2');
 SELECT throws_ok($$ SELECT public.create_request(gen_random_uuid(), pg_temp.s(1), pg_temp.z(1), NULL, '{}', pg_temp.today(),
-                      extract(hour FROM now() AT TIME ZONE 'Europe/Istanbul')::integer, 'Moda Cad. No 5', NULL, 100000, 10000) $$,
+                      extract(hour FROM now() AT TIME ZONE 'Europe/Istanbul')::integer, '{"mahalle": "Caferağa", "street": "Moda Cad.", "building_no": "5"}', NULL, 100000, 10000) $$,
   'P0001', 'schedule_invalid', 'F6: a start already past is refused with a lead of 0 days');
 SELECT is(public.create_request(gen_random_uuid(), pg_temp.s(1), pg_temp.z(5), NULL, '{}', pg_temp.today() + 1,
-            extract(hour FROM now() AT TIME ZONE 'Europe/Istanbul')::integer, 'Moda Cad. No 5', NULL, 100000, 10000) ->> 'status',
+            extract(hour FROM now() AT TIME ZONE 'Europe/Istanbul')::integer, '{"mahalle": "Caferağa", "street": "Moda Cad.", "building_no": "5"}', NULL, 100000, 10000) ->> 'status',
   'ok', 'F6: the same hour tomorrow is accepted');
 RESET ROLE;
 UPDATE public.platform_settings SET value = '1' WHERE region = 'TR' AND key = 'request_lead_days';
@@ -538,6 +542,19 @@ SELECT pg_temp.as_user('a1');
 SELECT throws_ok($$ SELECT public.apply_to_request(pg_temp.r(3), pg_temp.clean()) $$, 'P0001', 'not_found', 'an uncovered district reads as unknown');
 SELECT throws_ok($$ SELECT public.apply_to_request(gen_random_uuid(), pg_temp.clean()) $$, 'P0001', 'not_found', 'an unknown id');
 SELECT throws_ok($$ SELECT public.apply_to_request(NULL, pg_temp.clean()) $$, 'P0001', 'not_found', 'no id');
+-- Spec 0011-20b AC-5: an approved provider with a complete setup but no address is asked for one, right after the setup gate.
+RESET ROLE;
+ALTER TABLE public.provider_addresses DISABLE TRIGGER provider_addresses_no_delete;
+CREATE TEMP TABLE a1_address AS SELECT * FROM public.provider_addresses WHERE provider_id = pg_temp.u('a1');
+DELETE FROM public.provider_addresses WHERE provider_id = pg_temp.u('a1');
+ALTER TABLE public.provider_addresses ENABLE TRIGGER provider_addresses_no_delete;
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('a1');
+SELECT throws_ok($$ SELECT public.apply_to_request(pg_temp.r(1), pg_temp.clean()) $$, 'P0001', 'address_required', '20b AC-5: no address, no offer');
+RESET ROLE;
+INSERT INTO public.provider_addresses SELECT * FROM a1_address;
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('a1');
 SELECT throws_ok($$ SELECT public.apply_to_request(pg_temp.r(5), pg_temp.clean()) $$, 'P0001', 'request_closed', 'a CANCELLED request');
 SELECT throws_ok($$ SELECT public.apply_to_request(pg_temp.r(6), pg_temp.clean()) $$, 'P0001', 'request_closed', 'a SELECTED request');
 SELECT throws_ok($$ SELECT public.apply_to_request(pg_temp.r(7), pg_temp.clean()) $$, 'P0001', 'request_closed', 'a request whose start passed');

@@ -46,6 +46,9 @@ CREATE FUNCTION pg_temp.clean_up() RETURNS text LANGUAGE sql AS $fn$
     DELETE FROM public.services WHERE id::text LIKE '00000000-0000-0000-0000-0000001500%';
     DELETE FROM public.service_categories WHERE id::text LIKE '00000000-0000-0000-0000-0000001500%';
     DELETE FROM public.zones WHERE id::text LIKE '00000000-0000-0000-0000-0000001500%';
+    ALTER TABLE public.provider_addresses DISABLE TRIGGER USER;
+    DELETE FROM public.provider_addresses WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000001500%';
+    ALTER TABLE public.provider_addresses ENABLE TRIGGER USER;
     DELETE FROM public.providers WHERE id::text LIKE '00000000-0000-0000-0000-0000001500%';
     DELETE FROM public.profiles WHERE id::text LIKE '00000000-0000-0000-0000-0000001500%';
     DELETE FROM auth.users WHERE id::text LIKE '00000000-0000-0000-0000-0000001500%';
@@ -72,6 +75,11 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
   VALUES ('00000000-0000-0000-0000-0000001500c1', 'customer', 'TR', '+905559150099', 'Yarış Müşteri', 'tr');
   UPDATE public.providers SET status = 'approved', approved_at = now()
    WHERE id::text LIKE '00000000-0000-0000-0000-0000001500%';
+  -- Spec 0011-20b AC-5: an approved provider applies only with an address on file.
+  INSERT INTO public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no)
+  SELECT pr.id, pr.region, 'İstanbul', 'Kadıköy', 'Caferağa', 'Moda Cad.', '1' FROM public.providers pr
+     WHERE pr.id::text LIKE '00000000-0000-0000-0000-0000001500%'
+      ON CONFLICT (provider_id) DO NOTHING;
   INSERT INTO public.service_categories (id, region, name, active) VALUES
     ('00000000-0000-0000-0000-0000001500ca', 'TR', '{"tr": "Yarış"}', true);
   INSERT INTO public.services (id, category_id, region, name, hours_min, hours_max, active) VALUES

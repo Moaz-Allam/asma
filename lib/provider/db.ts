@@ -2,6 +2,7 @@ import 'server-only';
 
 import { z } from 'zod';
 
+import { StoredAddress, type ProviderAddressInput } from '@/lib/address/parts';
 import { createSupabaseServer } from '@/lib/db/server';
 
 /**
@@ -33,6 +34,24 @@ export async function saveProfileInDb(input: {
     p_languages: input.languages,
   });
   return z.object({ backToReview: z.boolean() }).parse(data);
+}
+
+/** Spec 0011-20b AC-5: the caller's own address, inserted or changed; Postgres checks every part. */
+export async function saveAddressInDb(address: ProviderAddressInput): Promise<void> {
+  z.object({ ok: z.literal(true) }).parse(await call('save_provider_address', { p_address: address }));
+}
+
+/** The caller's own address with its composed line, or null. */
+export async function myAddressInDb(): Promise<StoredAddress | null> {
+  const data = await call('my_provider_address', {});
+  return data === null ? null : StoredAddress.parse(data);
+}
+
+/** Spec 0011-20b AC-7: a provider's address for admin, audited with the reason in Postgres before it comes back. */
+export async function adminProviderAddressInDb(providerId: string, reason: string): Promise<StoredAddress> {
+  return StoredAddress.parse(
+    await call('admin_provider_address', { p_provider_id: providerId, p_reason: reason }),
+  );
 }
 
 export async function acceptDocsConsentInDb(locale: string): Promise<void> {

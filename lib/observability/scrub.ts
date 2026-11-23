@@ -108,6 +108,17 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   // Spec 0011-20: a service agreement's frozen content (both parties' names, phones and the street line).
   'content',
   'agreement_content',
+  // Spec 0011-20b X-23: the structured address parts and the pin, and the RPC argument (`p_address` also by suffix).
+  'mahalle',
+  'building_no',
+  'floor',
+  'directions',
+  'il',
+  'ilce',
+  'p_address',
+  'customer_address',
+  'customer_directions',
+  'provider_address',
 ]);
 const PERSONAL_SUFFIXES = [
   // Spec 0008 (review A5): the request RPC arguments p_address_line, p_notes, p_answers.

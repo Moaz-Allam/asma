@@ -121,11 +121,11 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
          '00000000-0000-0000-0000-000000240002', 'A second offer for the reveal races, long enough.'
     FROM generate_series(1, 3) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000002400c1", "role": "authenticated"}', true);
-  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002400e' || g)::uuid, ('00000000-0000-0000-0000-0000002400f' || g)::uuid, 'draft-1')
+  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002400e' || g)::uuid, ('00000000-0000-0000-0000-0000002400f' || g)::uuid, 'draft-2')
     FROM generate_series(1, 3) g;
-  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002400e' || g)::uuid, 'tr', NULL, 'draft-1') FROM generate_series(1, 3) g;
+  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002400e' || g)::uuid, 'tr', NULL, 'draft-2') FROM generate_series(1, 3) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000240001", "role": "authenticated"}', true);
-  SELECT public.pay_provider_fee('00000000-0000-0000-0000-0000002400f3', 'tr', NULL, 'draft-1');
+  SELECT public.pay_provider_fee('00000000-0000-0000-0000-0000002400f3', 'tr', NULL, 'draft-2');
   INSERT INTO public.checkout_attempts (region, fee_payment_id, status, locale, psp_token, url, started_at)
   SELECT 'TR', f.id, 'ready', 'tr', 'race-24-tok-b', 'https://pay.example.test/p/race-24-b', now() - interval '1 minute'
     FROM public.fee_payments f WHERE f.request_id = '00000000-0000-0000-0000-0000002400e3' AND f.kind = 'provider_fee';
@@ -136,7 +136,7 @@ CREATE FUNCTION pg_temp.one(p_sql text) RETURNS text LANGUAGE sql AS $$
 CREATE FUNCTION pg_temp.result(p_conn text) RETURNS jsonb LANGUAGE sql AS $$
   SELECT r::jsonb FROM extensions.dblink_get_result(p_conn, false) AS t(r text) $$;
 CREATE FUNCTION pg_temp.pay_sql(p text) RETURNS text LANGUAGE sql AS $$
-  SELECT format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-1'')::text', '00000000-0000-0000-0000-0000002400f' || p, 'tr') $$;
+  SELECT format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-2'')::text', '00000000-0000-0000-0000-0000002400f' || p, 'tr') $$;
 -- The relay's call for E3's provider fee on its n-th newest attempt, its ids read first as the owner.
 CREATE FUNCTION pg_temp.apply_sql(p_nth integer, p_psp text) RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.one(format(

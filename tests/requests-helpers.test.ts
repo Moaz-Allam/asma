@@ -106,7 +106,7 @@ describe('repeat prefill', () => {
     timezone: 'Europe/Istanbul',
     today: '2026-11-15',
     schedule: { lead_days: 1, horizon_days: 14, first_hour: 8, last_hour: 18 },
-    zones: [{ id: 'z1', name: { tr: 'Kadıköy' } }],
+    zones: [{ id: 'z1', name: { tr: 'Kadıköy' }, il: 'İstanbul', ilce: 'Kadıköy' }],
     categories: [
       {
         id: 'k1',
@@ -164,7 +164,16 @@ describe('repeat prefill', () => {
       addonIds: ['a1', 'a-gone'],
       answers: { rooms: 9, kind: 'flat', extras: ['a', 'b'], retired: true },
       notes: 'Kapı kodu yok',
-      addressLine: 'Moda Cad. No 5',
+      address: {
+        line: 'Caferağa Mah., Moda Cad., No: 5, Kadıköy/İstanbul',
+        mahalle: 'Caferağa',
+        street: 'Moda Cad.',
+        building_no: '5',
+        floor: null,
+        directions: 'Zile basın',
+        lat: 40.98,
+        lng: 29.03,
+      },
     });
     expect(prefill).toEqual({
       kind: 'prefilled',
@@ -173,7 +182,8 @@ describe('repeat prefill', () => {
       zoneId: null,
       addonIds: ['a1'],
       answers: { kind: 'flat' },
-      addressLine: 'Moda Cad. No 5',
+      // X-8: the typed parts, never the pin or the composed line.
+      address: { mahalle: 'Caferağa', street: 'Moda Cad.', building_no: '5', directions: 'Zile basın' },
       notes: 'Kapı kodu yok',
     });
   });
@@ -186,7 +196,7 @@ describe('repeat prefill', () => {
         addonIds: [],
         answers: {},
         notes: null,
-        addressLine: null,
+        address: null,
       }),
     ).toEqual({ kind: 'service_unavailable' });
   });

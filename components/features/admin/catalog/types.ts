@@ -29,7 +29,13 @@ export type CatalogAddon = Texts & {
   active: boolean;
 };
 
-export type CatalogZone = Texts & { id: string; multiplier: string; active: boolean };
+export type CatalogZone = Texts & {
+  id: string;
+  multiplier: string;
+  active: boolean;
+  il: string | null;
+  ilce: string | null;
+};
 
 export type CatalogOption = { value: string; label: string; values: LocalizedText };
 

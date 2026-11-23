@@ -16,5 +16,5 @@ export const SECURITY_HEADERS: ReadonlyArray<{ key: string; value: string }> = [
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
   // camera=() stays (spec 0006 AC-25): the selfie card's `capture="user"` opens the system camera, which
   // needs no getUserMedia, so no page of ours ever asks for the camera itself.
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self), payment=()' },
 ];

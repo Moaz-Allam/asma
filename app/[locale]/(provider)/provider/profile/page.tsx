@@ -12,6 +12,7 @@ import { getProfile } from '@/lib/account/profile';
 import { guardPage } from '@/lib/auth/session';
 import { Link } from '@/lib/i18n/navigation';
 import { reportServerError } from '@/lib/observability/server';
+import { myAddressInDb } from '@/lib/provider/db';
 import { getProviderFile, getStanding } from '@/lib/provider/queries';
 import { loadMyQuality, loadMyRating } from '@/lib/provider-feed';
 import { PHOTO_LINK_SECONDS, PHOTOS_BUCKET } from '@/lib/storage/buckets';
@@ -57,7 +58,8 @@ export default async function Page({ params, searchParams }: Props) {
     // Spec 0011-17 AC-7: the provider's own score, exactly what customers see. Optional (D4): a failed read hides the
     // card, never the profile.
     // Spec 0011-19a AC-4: beside it, the three quality figures and probation, read the same way.
-    const [mine, quality] = await Promise.all([
+    const ta = await getTranslations('Address');
+    const [mine, quality, address] = await Promise.all([
       loadMyRating({ region: user.region }).catch((error: unknown) => {
         reportServerError('myProviderRating', error);
         return { ok: false as const };
@@ -65,6 +67,11 @@ export default async function Page({ params, searchParams }: Props) {
       loadMyQuality({ region: user.region }).catch((error: unknown) => {
         reportServerError('myProviderQuality', error);
         return { ok: false as const };
+      }),
+      // Spec 0011-20b AC-5: the provider's own address, changeable at any time.
+      myAddressInDb().catch((error: unknown) => {
+        reportServerError('myProviderAddress', error);
+        return undefined;
       }),
     ]);
     return (
@@ -78,6 +85,22 @@ export default async function Page({ params, searchParams }: Props) {
           <>
             {mine.ok ? <MyRatingCard rating={mine.rating} /> : null}
             {quality.ok ? <MyQualityCard quality={quality.quality} /> : null}
+            {address !== undefined ? (
+              <section className="flex flex-col gap-2 rounded-panel border border-border-light bg-surface p-5">
+                <h2 className="font-display text-section text-text-primary">{ta('provider.title')}</h2>
+                <p className="text-body-s text-text-primary" data-pii>
+                  {address?.line ?? ta('card.notGiven')}
+                </p>
+                {standing !== 'suspended' ? (
+                  <Link
+                    href="/provider/profile/address"
+                    className="inline-flex min-h-11 items-center self-start text-body-s font-semibold text-link"
+                  >
+                    {address ? ta('provider.change') : ta('provider.bannerLink')}
+                  </Link>
+                ) : null}
+              </section>
+            ) : null}
           </>
         }
       />
@@ -92,7 +115,7 @@ export default async function Page({ params, searchParams }: Props) {
       hasPhoto={photo !== undefined}
       approved={approved}
       afterSave={
-        standing === 'draft' || standing === 'rejected' ? '/provider/profile/documents' : '/provider/profile'
+        standing === 'draft' || standing === 'rejected' ? '/provider/profile/address' : '/provider/profile'
       }
       saved={{
         entityType: file.entityType,
