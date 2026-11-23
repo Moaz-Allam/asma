@@ -1,18 +1,19 @@
 import { useTranslations } from 'next-intl';
 
+import { CategoryIcon } from '@/components/features/landing/CategoryIcon';
 import { CategoryRail } from '@/components/features/landing/CategoryRail';
 import { SectionHead } from '@/components/features/landing/SectionHead';
 import { Link } from '@/lib/i18n/navigation';
 import { SAMPLE_CATEGORIES } from '@/lib/landing/samples';
 import { cn } from '@/lib/utils';
 
-/** The tile colour and the plain shape the design gives each category. */
-const LOOK: Readonly<Record<(typeof SAMPLE_CATEGORIES)[number], { tile: string; mark: string }>> = {
-  home: { tile: 'bg-accent-light', mark: 'rounded-full bg-accent' },
-  deep: { tile: 'bg-accent-light', mark: 'rounded-xs bg-accent' },
-  windows: { tile: 'bg-accent-muted', mark: 'scale-82 rotate-45 rounded-xs bg-accent' },
-  carpets: { tile: 'bg-accent-muted', mark: 'rounded-full border-9 border-accent' },
-  other: { tile: 'bg-surface-secondary', mark: 'rounded-xs bg-accent' },
+/** The tile colour the design gives each category; the icon comes from `CategoryIcon`. */
+const TILE: Readonly<Record<(typeof SAMPLE_CATEGORIES)[number], string>> = {
+  home: 'bg-accent-light',
+  deep: 'bg-accent-light',
+  windows: 'bg-accent-muted',
+  carpets: 'bg-accent-muted',
+  other: 'bg-surface-secondary',
 };
 
 /** The categories of `s1`, as drawn, until the catalog replaces them (AC-28). */
@@ -30,12 +31,9 @@ export function Categories() {
               className="flex flex-col items-center gap-3"
             >
               <span
-                className={cn(
-                  'flex h-26 w-full items-center justify-center rounded-tile',
-                  LOOK[category].tile,
-                )}
+                className={cn('flex h-26 w-full items-center justify-center rounded-tile', TILE[category])}
               >
-                <span className={cn('size-7.5', LOOK[category].mark)} />
+                <CategoryIcon category={category} className="size-9 text-accent" />
               </span>
               <span className="text-label text-text-primary">{t(`category.${category}`)}</span>
             </Link>

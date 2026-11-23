@@ -11,11 +11,14 @@ export function LandingPhoto({
   sizes,
   priority = false,
   className,
+  focus,
 }: {
   slot: string;
   sizes: string;
   priority?: boolean;
   className?: string;
+  /** Where the crop centres, as CSS object-position (a landscape photo in a tall box). */
+  focus?: string;
 }) {
   return (
     <div className={cn('relative overflow-hidden rounded-panel', className)}>
@@ -26,6 +29,7 @@ export function LandingPhoto({
         sizes={sizes}
         priority={priority}
         className="object-cover"
+        style={focus ? { objectPosition: focus } : undefined}
       />
     </div>
   );

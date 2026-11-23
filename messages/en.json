@@ -210,6 +210,10 @@
       "submitting": "Signing in…",
       "forgot": "Forgot your password?",
       "newHere": "New here? Create an account"
+    },
+    "hero": {
+      "title": "Your home, in good hands",
+      "subtitle": "Trusted providers for every job around the house"
     }
   },
   "Onboarding": {

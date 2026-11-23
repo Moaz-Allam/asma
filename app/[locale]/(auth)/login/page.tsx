@@ -4,7 +4,6 @@ import { headers } from 'next/headers';
 import { LoginForm } from '@/components/features/auth/LoginForm';
 import { PasswordLoginForm } from '@/components/features/auth/PasswordLoginForm';
 import { LandingPhoto } from '@/components/features/landing/LandingPhoto';
-import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
 import { safeNext } from '@/lib/auth/roles';
 import { getSessionUser } from '@/lib/auth/session';
 import { getEnv } from '@/lib/env';
@@ -42,39 +41,58 @@ export default async function LoginPage({ params, searchParams }: Props) {
   const nonce = (await headers()).get('x-nonce') ?? undefined;
 
   return (
-    <div className="mx-auto grid max-w-4xl gap-4 lg:grid-cols-login">
-      <LandingPhoto slot="hallway" sizes="40vw" className="hidden rounded-card lg:block" />
-      <section className="flex min-h-120 flex-col gap-4 rounded-card bg-accent-light px-6.5 py-8 lg:px-7.5">
-        <Link href="/" dir="ltr" className="font-wordmark text-wordmark-sm text-text-primary">
-          Aldebyani
-        </Link>
-        {regions.length > 0 && codeMode ? (
-          <LoginForm
-            dialCodes={regions.map((region) => region.dialCode)}
-            siteKey={getEnv().NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-            nonce={nonce}
-            next={safe}
-            asProvider={asProvider}
-            supportWhatsapp={regions[0]?.supportWhatsapp}
-            reset={reset}
-            signOutFirst={signedIn}
-          />
-        ) : regions.length > 0 ? (
-          <PasswordLoginForm
-            dialCodes={regions.map((region) => region.dialCode)}
-            siteKey={getEnv().NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-            nonce={nonce}
-            next={safe}
-            asProvider={asProvider}
-            supportWhatsapp={regions[0]?.supportWhatsapp}
-          />
-        ) : (
-          <p role="alert" className="rounded-row bg-error-light px-4 py-3 text-body-s text-error">
-            {t('noRegion')}
-          </p>
-        )}
-        <LocaleSwitcher />
+    <div className="grid min-h-svh grid-cols-1 gap-3 p-3 lg:grid-cols-2 lg:gap-4 lg:p-4">
+      {/* The form box: the wordmark at the top, the card centred in the rest. */}
+      <section className="flex min-h-[calc(100svh-1.5rem)] flex-col rounded-card bg-accent-light px-5 py-6 lg:min-h-[calc(100svh-2rem)] lg:px-10 lg:py-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link href="/" dir="ltr" className="font-wordmark text-wordmark-sm text-text-primary">
+            Aldebyani
+          </Link>
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-5 py-6">
+          <div className="flex max-w-2xl flex-col items-center gap-2 text-center">
+            <p className="font-display text-title text-text-primary lg:text-[2.75rem] lg:leading-tight">
+              {t('hero.title')}
+            </p>
+            <p className="text-body text-text-lede">{t('hero.subtitle')}</p>
+          </div>
+          {/* Compact here only, as the reference: 50px fields and button, a smaller card heading. */}
+          <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-border-light bg-surface p-6 shadow-sm sm:p-7 [&_[type=submit]]:py-3.5 [&_[type=submit]]:text-btn-sm [&_h1]:text-[1.625rem] [&_form]:gap-3.5 [&_input]:h-12.5 [&_input]:py-2.5">
+            {regions.length > 0 && codeMode ? (
+              <LoginForm
+                dialCodes={regions.map((region) => region.dialCode)}
+                siteKey={getEnv().NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                nonce={nonce}
+                next={safe}
+                asProvider={asProvider}
+                supportWhatsapp={regions[0]?.supportWhatsapp}
+                reset={reset}
+                signOutFirst={signedIn}
+              />
+            ) : regions.length > 0 ? (
+              <PasswordLoginForm
+                dialCodes={regions.map((region) => region.dialCode)}
+                siteKey={getEnv().NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                nonce={nonce}
+                next={safe}
+                asProvider={asProvider}
+                supportWhatsapp={regions[0]?.supportWhatsapp}
+              />
+            ) : (
+              <p role="alert" className="rounded-row bg-error-light px-4 py-3 text-body-s text-error">
+                {t('noRegion')}
+              </p>
+            )}
+          </div>
+        </div>
       </section>
+      {/* The photo box, from lg: fills its half, edge to edge. */}
+      <LandingPhoto
+        slot="login-cleaner"
+        focus="58% 40%"
+        sizes="50vw"
+        className="hidden rounded-card lg:sticky lg:top-4 lg:block lg:h-[calc(100svh-2rem)]"
+      />
     </div>
   );
 }
