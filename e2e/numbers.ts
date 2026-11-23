@@ -104,6 +104,8 @@ export const NUMBER = {
   agreementCustomer: 62,
   agreementProvider: 63,
   agreementAdmin: 64,
+  // Position 20b (spec 0011-20b AC-12): the customer who posts with the map.
+  addressCustomer: 65,
 } as const;
 
 /**

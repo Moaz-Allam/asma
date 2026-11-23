@@ -175,6 +175,9 @@ function seed(locale: string, f: Ids) {
       ` perform set_config('pricing.publishing', 'off', true);` +
       ` update public.providers set status = 'approved', approved_at = now() - interval '200 days', approved_name = 'Kalite Usta' where id = ${established};` +
       ` update public.providers set status = 'approved', approved_at = now() - interval '3 days', approved_name = 'Yeni Usta' where id = ${fresh};` +
+      // Spec 0011-20b AC-5: an approved provider applies only with an address.
+      ` insert into public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no) select p.id, p.region, 'İstanbul', 'Kadıköy', 'Caferağa', 'Moda Cad.', '1' from public.providers p where p.id = ${established} on conflict (provider_id) do nothing;` +
+      ` insert into public.provider_addresses (provider_id, region, il, ilce, mahalle, street, building_no) select p.id, p.region, 'İstanbul', 'Kadıköy', 'Caferağa', 'Moda Cad.', '1' from public.providers p where p.id = ${fresh} on conflict (provider_id) do nothing;` +
       setup(f, established) +
       setup(f, fresh) +
       ` insert into auth.users (id, aud, role, phone, phone_confirmed_at) values ('${f.rater}', 'authenticated', 'authenticated', '${phone(0)}', now());` +

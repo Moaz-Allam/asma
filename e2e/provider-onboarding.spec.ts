@@ -156,9 +156,22 @@ test('a provider is reviewed, rejected, fixed and approved, then a replaced docu
     locale,
     'Ev ve ofis temizliğinde altı yıllık deneyimim var, malzemelerimi getiririm.',
   );
+  // Spec 0011-20b AC-5, X-13: step 2 is the provider's own address, typed (the map is optional).
+  await expect(page).toHaveURL(new RegExp(`/${locale}/provider/profile/address$`), { timeout: 20_000 });
+  await page.locator('#provider-address-il').fill('İstanbul');
+  await page.locator('#provider-address-ilce').fill('Kadıköy');
+  await page.locator('#provider-address-mahalle').fill('Rasimpaşa');
+  await page.locator('#provider-address-street').fill('Rıhtım Cad.');
+  await page.getByRole('button', { name: m(locale, 'Address.provider.save') }).click();
+  // The browser names the missing building number before anything is sent.
+  await expect(page.getByText(m(locale, 'Address.errors.required'))).toBeVisible();
+  await page.locator('#provider-address-building_no').fill('3');
+  await axe(page);
+  await noOverflow(page);
+  await page.getByRole('button', { name: m(locale, 'Address.provider.save') }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/provider/profile/documents$`), { timeout: 20_000 });
 
-  // Step 2: the cards wait for the consent (AC-6).
+  // Step 3: the cards wait for the consent (AC-6).
   const front = m(locale, 'ProviderDocs.id.id_front');
   await expect(page.locator(`input[type="file"][aria-label="${front}"]`)).toBeDisabled();
   await page.locator('#docs-consent').click();

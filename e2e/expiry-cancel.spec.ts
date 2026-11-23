@@ -163,9 +163,9 @@ function pickAndPay(locale: string, f: ReturnType<typeof ids>, key: string, offe
   const customer = profileId(locale, 'cancelCustomer');
   return (
     as(customer) +
-    ` perform public.choose_provider('${f.request(key)}', '${offer}', 'draft-1');` +
+    ` perform public.choose_provider('${f.request(key)}', '${offer}', 'draft-2');` +
     (pay
-      ? ` v_attempt := (public.pay_commission('${f.request(key)}', 'tr', null, 'draft-1') ->> 'attempt_id')::uuid;` +
+      ? ` v_attempt := (public.pay_commission('${f.request(key)}', 'tr', null, 'draft-2') ->> 'attempt_id')::uuid;` +
         ` if v_attempt is not null then` +
         ` select id, amount into v_fee, v_amount from public.fee_payments where request_id = '${f.request(key)}' and kind = 'commission';` +
         ` perform public.apply_fee_paid(v_fee, v_attempt, 'e2e-cancel-${locale}-${key}-' || gen_random_uuid(), v_amount, 'TRY', 0);` +
@@ -354,7 +354,7 @@ test('a window that passes reopens, the commission carries, a third failed pick 
     request(locale, f, 'c', 0, [{ offer: f.offer('c1'), provider: me }]) +
       pickAndPay(locale, f, 'c', f.offer('c1'), true) +
       as(me) +
-      ` v_attempt := (public.pay_provider_fee('${f.offer('c1')}', 'tr', null, 'draft-1') ->> 'attempt_id')::uuid;` +
+      ` v_attempt := (public.pay_provider_fee('${f.offer('c1')}', 'tr', null, 'draft-2') ->> 'attempt_id')::uuid;` +
       ` select id, amount into v_fee, v_amount from public.fee_payments where request_id = '${f.request('c')}' and kind = 'provider_fee';` +
       ` perform public.apply_fee_paid(v_fee, v_attempt, 'e2e-cancel-fee-${locale}', v_amount, 'TRY', 0);` +
       as(customer),

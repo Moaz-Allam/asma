@@ -139,6 +139,8 @@ const env = {
   NEXT_PUBLIC_POSTHOG_KEY: 'phc_e2e0000000000000000000000000000',
   // Cloudflare's always pass test key. The journeys stub the script anyway (e2e/fixtures.ts).
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+  // Spec 0011-20b: a map key, so the map shows; every MapTiler call is answered by e2e/fixtures.ts (stubMapTiler).
+  NEXT_PUBLIC_MAPTILER_KEY: 'e2e-maptiler-stub',
   // Spec 0011-08: the fake PSP, its card page on this server, the relay's secret (the journeys post to
   // /api/relay with it), and a server only DSN the client bundles must never hold.
   PSP_DRIVER: 'fake',
