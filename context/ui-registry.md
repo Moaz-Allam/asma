@@ -238,6 +238,7 @@ Domain components. Path: `components/features/<domain>/`.
 | `LandingPhoto` | `components/features/landing/LandingPhoto.tsx` | One photo slot, a file in `public/landing/` under the design's name. Borrowed photos until owned ones exist (D109, Q12) | s1, s2 | ✅ done |
 | `SectionHead` | `components/features/landing/SectionHead.tsx` | Landing section title with its outlined link | s1 | ✅ done |
 | `CategoryRail` | `components/features/landing/CategoryRail.tsx` | The category row and its two arrows | s1 | ✅ done |
+| `CategoryIcon` | `components/features/landing/CategoryIcon.tsx` | The landing categories' line icons (24px, 1.5 stroke, currentColor), from the reference set the owner supplied (Hugeicons stroke style), replacing the plain shapes | s1 | ✅ done (2026-11-23) |
 | `AppShell` | `components/layout/AppShell.tsx` | `SiteHeader`, content, `BottomTabBar` for every signed in group. Draws only: `guardPage` is the check | s3, s12 | ✅ done |
 | `NavLinks` | `components/layout/NavLinks.tsx` | Desktop role menu with `aria-current` | s3 | ✅ done |
 | `CustomerLayout` | `app/[locale]/(customer)/layout.tsx` | `AppShell`, `noindex` | s3 | ✅ done |

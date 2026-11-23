@@ -25,15 +25,17 @@ export default async function OnboardingPage({ params, searchParams }: Props) {
   const regions = await getPublicRegions();
 
   return (
-    <div className="flex max-w-220 flex-col gap-6">
-      <Link href="/" dir="ltr" className="self-start font-wordmark text-wordmark text-text-primary">
-        Aldebyani
-      </Link>
-      <PageHeader title={t('title')} intro={t('intro')} />
-      <OnboardingForm
-        preselect={as === 'provider' ? 'provider' : 'customer'}
-        supportWhatsapp={regions[0]?.supportWhatsapp}
-      />
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-5 lg:px-8.5 lg:pt-6.5">
+      <div className="flex max-w-220 flex-col gap-6">
+        <Link href="/" dir="ltr" className="self-start font-wordmark text-wordmark text-text-primary">
+          Aldebyani
+        </Link>
+        <PageHeader title={t('title')} intro={t('intro')} />
+        <OnboardingForm
+          preselect={as === 'provider' ? 'provider' : 'customer'}
+          supportWhatsapp={regions[0]?.supportWhatsapp}
+        />
+      </div>
     </div>
   );
 }
