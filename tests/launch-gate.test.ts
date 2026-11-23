@@ -92,11 +92,9 @@ describe('the markers in the catalogues (D58, D100)', () => {
   const english = new Map(flatten(en));
   const turkish = flatten(tr);
 
-  it('counts the Turkish strings awaiting the translator', () => {
-    const waiting = turkish.filter(([, value]) => value.includes('[tr] '));
-    // A number, so a change to it shows up in review. It only ever falls once the translator starts.
-    expect(waiting.length).toBeGreaterThan(0);
-    expect(waiting.length).toBeLessThanOrEqual(turkish.length);
+  it('has no Turkish string awaiting the translator (translated 2026-11-24)', () => {
+    const waiting = turkish.filter(([, value]) => value.includes('[tr]'));
+    expect(waiting.map(([key]) => key)).toEqual([]);
   });
 
   it('holds the English text behind every [tr] marker, never machine output', () => {
