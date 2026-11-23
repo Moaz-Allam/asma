@@ -93,6 +93,17 @@ const EnvSchema = z.object({
     .refine(isPostHogProjectKey, { message: 'must be a PostHog project key (phc_…), never a personal key' })
     .optional(),
 
+  // ── Test phones (spec 0013, D224) ─────────────────────────────────────────
+  // Public by design: dial codes the sign in form lets through for numbers the database lists. Off when unset;
+  // must be unset at G3. lib/region/phone.ts reads it in the browser.
+  NEXT_PUBLIC_PHONE_TEST_DIAL_CODES: z
+    .string()
+    .regex(
+      /^(\s*\+[1-9][0-9]{0,3}\s*)(,\s*\+[1-9][0-9]{0,3}\s*)*$|^$/,
+      'a comma list of dial codes, like +20',
+    )
+    .optional(),
+
   // ── Bot check (spec 0005 AC-4, D98) ───────────────────────────────────────
   // Public by design. Optional here, required on a deployment. There is no secret to validate: Supabase
   // Auth is the only caller of siteverify, so the app holds none.

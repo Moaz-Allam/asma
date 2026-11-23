@@ -6,8 +6,11 @@ import { describe, expect, it } from 'vitest';
 import {
   MOBILE_PATTERNS,
   foldDigits,
+  normalizeForRegions,
   normalizePhone,
+  normalizeTestPhone,
   phoneRegion,
+  testDialCodes,
   type PhoneRejection,
 } from '@/lib/region/phone';
 
@@ -48,6 +51,49 @@ describe('the three copies of the mobile pattern (AC-3)', () => {
     const source = MOBILE_PATTERNS[region].source;
     expect(sql).toContain(`(region = '${region}' and phone ~ '${source}')`);
     expect(sql).toContain(`when p_phone ~ '${source}' then '${region}'`);
+  });
+});
+
+describe('the test phones migration keeps the same patterns (spec 0013)', () => {
+  it.each(['TR', 'KSA'] as const)('phone_region still holds the %s pattern literally', (region) => {
+    const dir = 'supabase/migrations';
+    const file = readdirSync(dir).find((f) => f.endsWith('_test_phones.sql'));
+    if (!file) throw new Error('test phones migration not found');
+    expect(readFileSync(`${dir}/${file}`, 'utf8')).toContain(
+      `when p_phone ~ '${MOBILE_PATTERNS[region].source}' then '${region}'`,
+    );
+  });
+});
+
+describe('test dial codes (spec 0013, D224)', () => {
+  it('reads a comma list and drops anything that is not a dial code', () => {
+    expect(testDialCodes('+20, +1,20,+abc,')).toEqual(['+20', '+1']);
+    expect(testDialCodes(undefined)).toEqual([]);
+    expect(testDialCodes('')).toEqual([]);
+  });
+
+  it('passes a +20 number only when +20 is a test code', () => {
+    expect(normalizeTestPhone('+20 101 234 5678', ['+20'])).toEqual({ ok: true, phone: '+201012345678' });
+    expect(normalizeTestPhone('0020 101 234 5678', ['+20'])).toEqual({ ok: true, phone: '+201012345678' });
+    expect(normalizeTestPhone('+20 101 234 5678', [])).toBeNull();
+    expect(normalizeTestPhone('+44 7700 900123', ['+20'])).toBeNull();
+    expect(normalizeTestPhone('101 234 5678', ['+20'])).toBeNull();
+    expect(normalizeTestPhone('+20 12', ['+20'])).toEqual({ ok: false, reason: 'too_short' });
+  });
+
+  it('a region number still wins, and with no test code a +20 number is still refused', () => {
+    expect(normalizeForRegions('0555 123 45 67', ['+90'], ['+20'])).toEqual({
+      ok: true,
+      phone: '+905551234567',
+    });
+    expect(normalizeForRegions('+20 101 234 5678', ['+90'], [])).toEqual({
+      ok: false,
+      reason: 'other_country',
+    });
+    expect(normalizeForRegions('+20 101 234 5678', ['+90'], ['+20'])).toEqual({
+      ok: true,
+      phone: '+201012345678',
+    });
   });
 });
 
