@@ -44,6 +44,7 @@ export default function MapPicker({
   const [locating, setLocating] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
   const settleId = useRef(0);
+  const chosenLabel = useRef<string | null>(null);
 
   // The first centre: one forward geocode of the zone's ilçe and il, when there is no pin yet.
   useEffect(() => {
@@ -65,10 +66,11 @@ export default function MapPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // The search, 300 ms after the last key.
+  // The search, 300 ms after the last key. A picked result's label is not searched again: the list would come back
+  // under the map and push Done down while the pin settles.
   useEffect(() => {
     const text = query.trim();
-    if (text.length < 3) return;
+    if (text.length < 3 || text === chosenLabel.current) return;
     let live = true;
     const timer = setTimeout(() => {
       forwardGeocode(apiKey, text, center)
@@ -108,6 +110,7 @@ export default function MapPicker({
   }
 
   function choose(candidate: Candidate) {
+    chosenLabel.current = candidate.label.trim();
     setResults(null);
     setQuery(candidate.label);
     setCenter({ lat: candidate.lat, lng: candidate.lng });
