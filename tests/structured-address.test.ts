@@ -123,6 +123,12 @@ describe('addressErrors (Address rules, X-9, X-21)', () => {
     expect(addressErrors({ ...base, street: 'Moda\u0007' }, REQUEST_ADDRESS_KEYS)).toEqual({
       street: 'address_invalid',
     });
+    // S20b-3: Unicode format characters (a bidi override, a zero width space, a BOM) count as control.
+    for (const hidden of ['‮', '​', '⁦', '﻿']) {
+      expect(addressErrors({ ...base, street: `Moda${hidden}Cad.` }, REQUEST_ADDRESS_KEYS)).toEqual({
+        street: 'address_invalid',
+      });
+    }
   });
 
   it('refuses a pin outside Turkey or half a pin', () => {

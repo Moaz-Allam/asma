@@ -311,7 +311,9 @@ test('both sides tick and pay, the reveal renders the agreement, both download i
   const title = m(locale, 'Agreement.card.title');
   await expect(page.getByRole('region', { name: title })).toContainText(number);
   // Spec 0011-20b AC-6: the customer's card shows the provider's address, never a pin or a map.
-  const customerCard = page.getByRole('region', { name: m(locale, 'Contacts.titleProvider') });
+  const customerCard = page
+    .getByRole('region', { name: m(locale, 'Contacts.titleProvider') })
+    .and(page.locator('[data-pii]'));
   await expect(customerCard).toContainText(PROVIDER_LINE);
   await expect(customerCard.getByRole('link', { name: m(locale, 'Address.card.openInMaps') })).toHaveCount(0);
   await axe(page);
@@ -326,7 +328,9 @@ test('both sides tick and pay, the reveal renders the agreement, both download i
   await provider.goto(`/${locale}/provider/applications?tab=active`);
   await expect(provider.getByRole('region', { name: title })).toContainText(number);
   // Spec 0011-20b AC-6: the provider's card shows the customer's address, the directions and Open in Maps by the pin.
-  const providerCard = provider.getByRole('region', { name: m(locale, 'Contacts.titleCustomer') });
+  const providerCard = provider
+    .getByRole('region', { name: m(locale, 'Contacts.titleCustomer') })
+    .and(provider.locator('[data-pii]'));
   await expect(providerCard).toContainText(CUSTOMER_LINE);
   await expect(providerCard).toContainText('Mavi kapı');
   await expect(

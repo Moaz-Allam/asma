@@ -20,7 +20,8 @@
 --    and every fixture stay valid; an active TR zone saved through the API (admin's catalog) needs both (X-7).
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- One free text part: null, or trimmed, no control character, and min to max code points.
+-- One free text part: null, or trimmed, no control character, and min to max code points. Unicode format characters
+-- (zero width, bidi embeddings and isolates, the BOM) count as control: they make an address read differently (S20b-3).
 create function public.address_part_ok(p_text text, p_min integer, p_max integer)
   returns boolean
   language sql
@@ -30,7 +31,7 @@ create function public.address_part_ok(p_text text, p_min integer, p_max integer
 as $$
   select p_text is null
       or (p_text = public.catalog_trim(p_text)
-          and p_text !~ '[[:cntrl:]]'
+          and p_text !~ '[[:cntrl:]\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]'
           and char_length(p_text) between p_min and p_max)
 $$;
 
@@ -41,9 +42,9 @@ alter table public.zones
   add column il text,
   add column ilce text,
   add constraint zones_il_ok check (
-    il is null or (char_length(il) between 2 and 60 and il ~ '^\S(.*\S)?$' and il !~ '[[:cntrl:]]')),
+    il is null or (char_length(il) between 2 and 60 and il ~ '^\S(.*\S)?$' and il !~ '[[:cntrl:]\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]')),
   add constraint zones_ilce_ok check (
-    ilce is null or (char_length(ilce) between 2 and 60 and ilce ~ '^\S(.*\S)?$' and ilce !~ '[[:cntrl:]]'));
+    ilce is null or (char_length(ilce) between 2 and 60 and ilce ~ '^\S(.*\S)?$' and ilce !~ '[[:cntrl:]\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]'));
 
 grant insert (il, ilce) on table public.zones to authenticated;
 grant update (il, ilce) on table public.zones to authenticated;

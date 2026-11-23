@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+// This module runs in the browser too. Zod 4 probes `new Function("")` before its first object parse; our CSP
+// refuses eval, and the browser reports the caught probe as a violation. Jitless skips the probe (and the JIT).
+z.config({ jitless: true });
+
 /**
  * The structured address (spec 0011-20b). Shared by the browser and the server, so no `server-only`: the form checks
  * the same rules Postgres checks (`address_parse`) to show a message early, but Postgres is the check (AC-3). The
@@ -57,7 +61,8 @@ export const ADDRESS_LIMITS: Readonly<Record<AddressTextKey, { min: number; max:
 const NUMBER_PARTS: ReadonlySet<AddressTextKey> = new Set(['building_no', 'floor', 'apartment']);
 const NUMBER_PART = /^[0-9A-Za-zÇĞİÖŞÜçğıöşü./ -]+$/;
 const POSTAL_CODE = /^[0-9]{5}$/;
-const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
+// Control characters plus Unicode format characters (zero width, bidi, BOM), as Postgres refuses them (S20b-3).
+const CONTROL = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/;
 const EDGE_SPACE = /^[\s ­​-‏⁠﻿]+|[\s ­​-‏⁠﻿]+$/g;
 
 /** The region's pin box (`address_pin_in_region`). Only TR has one. */

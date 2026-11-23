@@ -251,8 +251,14 @@ test('a customer skips or gives a rating, the provider and admin read it, and a 
   await page.getByRole('link', { name: m(locale, 'Requests.detail.repeat') }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests/new\\?from=${f.request(1)}$`));
   await expect(page.getByText(m(locale, 'Requests.form.repeated'))).toBeVisible();
-  const line = page.locator('#line');
-  if ((await line.inputValue()) === '') await line.fill('Moda Cad. No 9');
+  for (const [field, value] of [
+    ['#address-mahalle', 'Caferağa'],
+    ['#address-street', 'Moda Cad.'],
+    ['#address-building_no', '9'],
+  ] as const) {
+    const input = page.locator(field);
+    if ((await input.inputValue()) === '') await input.fill(value);
+  }
   await pickFirst(page, m(locale, 'Requests.form.date'));
   await pickFirst(page, m(locale, 'Requests.form.hour'));
   await page.getByRole('button', { name: m(locale, 'Requests.form.toReview') }).click();

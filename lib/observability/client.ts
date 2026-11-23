@@ -8,7 +8,13 @@ import {
 } from '@sentry/nextjs';
 
 import { afterHydration } from '@/lib/browser/after-hydration';
-import { scrubBreadcrumb, scrubEvent, scrubRecordingEvent, scrubSpan } from '@/lib/observability/scrub';
+import {
+  isPathPrivateUrl,
+  scrubBreadcrumb,
+  scrubEvent,
+  scrubRecordingEvent,
+  scrubSpan,
+} from '@/lib/observability/scrub';
 import {
   DENY_URLS,
   IGNORE_ERRORS,
@@ -58,9 +64,14 @@ export function clientOptions(): Parameters<typeof init>[0] {
     tunnel: SENTRY_TUNNEL_ROUTE,
     sendDefaultPii: false,
     tracesSampleRate: tracesSampleRate(ENVIRONMENT),
-    // No trace header goes to any other origin (AC-2), and the telemetry paths get no span.
+    // No trace header goes to any other origin (AC-2). The telemetry paths get no span, nor do MapTiler's calls,
+    // whose paths hold the typed address, the pin or the tiles around a home (S20b-1).
     tracePropagationTargets: [],
-    integrations: [browserTracingIntegration({ shouldCreateSpanForRequest: (url) => !isTelemetryPath(url) })],
+    integrations: [
+      browserTracingIntegration({
+        shouldCreateSpanForRequest: (url) => !isTelemetryPath(url) && !isPathPrivateUrl(url),
+      }),
+    ],
     // A replay is kept only for a session in which an error happened (AC-4).
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 1,

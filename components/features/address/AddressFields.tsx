@@ -133,9 +133,9 @@ export function AddressFields({
               {place?.ilce ?? t('fromZoneMissing')}
             </dd>
           </div>
-          <p className="col-span-2 text-meta text-text-secondary">{t('fromZone')}</p>
         </dl>
       )}
+      {provider ? null : <p className="text-meta text-text-secondary">{t('fromZone')}</p>}
 
       {mapKey ? (
         <div className="flex flex-wrap items-center gap-3">

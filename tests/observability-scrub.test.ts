@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import {
   ALLOWED_REQUEST_HEADERS,
   FILTERED,
+  isPathPrivateUrl,
   isPersonalKey,
+  PATH_PRIVATE_ORIGINS,
   redactMessage,
   scrubBreadcrumb,
   scrubEvent,
@@ -13,6 +15,7 @@ import {
   scrubSpan,
   scrubUrl,
 } from '@/lib/observability/scrub';
+import { MAPTILER_ORIGIN } from '@/lib/security/csp';
 
 /**
  * Spec 0004 AC-3 and the key invariants: personal data never leaves. Tests first, property based.
@@ -924,4 +927,42 @@ describe('spec 0011-10 AC-13, S10-9: a contacts answer leaves nothing personal',
       }
     },
   );
+});
+
+describe('spec 0011-20b S20b-1, S20b-2: MapTiler paths never reach Sentry', () => {
+  const forward =
+    'https://api.maptiler.com/geocoding/Moda%20Cad.%20No%205%20Kad%C4%B1k%C3%B6y.json?key=abc&language=tr';
+  const reverse = 'https://api.maptiler.com/geocoding/29.0262,40.9869.json?key=abc';
+  const tile = 'https://api.maptiler.com/tiles/v3/16/38053/24727.pbf?key=abc';
+
+  it('keeps only the origin and the first path segment', () => {
+    expect(scrubUrl(forward)).toBe('https://api.maptiler.com/geocoding');
+    expect(scrubUrl(reverse)).toBe('https://api.maptiler.com/geocoding');
+    expect(scrubUrl(tile)).toBe('https://api.maptiler.com/tiles');
+    expect(scrubUrl('HTTPS://API.MAPTILER.COM/geocoding/x.json')).toBe('HTTPS://API.MAPTILER.COM/geocoding');
+  });
+
+  it('cuts the path inside a span description too', () => {
+    const span = scrubSpan({ op: 'http.client', description: `GET ${reverse}`, data: { url: tile } }) as {
+      description: string;
+      data: { url: string };
+    };
+    expect(span.description).toBe('GET https://api.maptiler.com/geocoding');
+    expect(span.data.url).toBe('https://api.maptiler.com/tiles');
+  });
+
+  it('drops a fetch or xhr breadcrumb to MapTiler whole, and keeps others', () => {
+    expect(scrubBreadcrumb({ category: 'fetch', data: { method: 'GET', url: forward } })).toBeNull();
+    expect(scrubBreadcrumb({ category: 'xhr', data: { method: 'GET', url: tile } })).toBeNull();
+    expect(
+      scrubBreadcrumb({ category: 'fetch', data: { method: 'GET', url: '/api/health' } }),
+    ).not.toBeNull();
+  });
+
+  it('knows MapTiler, and only by its origin', () => {
+    expect(PATH_PRIVATE_ORIGINS).toContain(MAPTILER_ORIGIN);
+    expect(isPathPrivateUrl(forward)).toBe(true);
+    expect(isPathPrivateUrl('https://api.maptiler.com.evil.example/geocoding/x')).toBe(false);
+    expect(isPathPrivateUrl('/geocoding/x.json')).toBe(false);
+  });
 });

@@ -193,6 +193,8 @@ test('admin builds a catalog, publishes a formula and is held to it', async ({ b
   await page.getByRole('button', { name: m(locale, 'AdminCatalog.newZone') }).click();
   await page.locator('#zone-name-tr').fill(zone);
   await page.locator('#zone-multiplier').fill('1,15');
+  await page.locator('#zone-il').fill('İstanbul');
+  await page.locator('#zone-ilce').fill('Kadıköy');
   await saveSheet(page, locale);
   await expect(page.getByText(zone, { exact: true })).toBeVisible();
   await axe(page);
