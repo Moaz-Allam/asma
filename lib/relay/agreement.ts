@@ -85,7 +85,11 @@ export async function agreementGaveUp(db: Db, row: Pick<OutboxRow, 'payload' | '
     raiseAlert('outbox_failed', { recordId: row.id, region });
     return;
   }
-  const result = await call<{ status: 'failed' | 'rendered' }>(db, 'fail_agreement_render', { p_id: id });
+  const result = await call<{ status: 'failed' | 'already_failed' | 'rendered' }>(
+    db,
+    'fail_agreement_render',
+    { p_id: id },
+  );
   if (result.status === 'failed') raiseAlert('agreement_render_failed', { recordId: id, region });
 }
 

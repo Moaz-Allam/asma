@@ -1,5 +1,6 @@
 import { AgreementCard } from '@/components/features/agreements/AgreementCard';
 import { loadMyAgreement } from '@/lib/agreements';
+import { reportServerError } from '@/lib/observability/server';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
@@ -34,7 +35,10 @@ export default async function Page({ params }: Props) {
     loadRequest(id, { region: user.region }),
     needsEmailNudge(user.id, 'provider'),
     // Spec 0011-20 AC-9: the job's agreement card, while Postgres still shows it to this provider.
-    loadMyAgreement(id).catch(() => null),
+    loadMyAgreement(id).catch((error: unknown) => {
+      reportServerError('providerAgreement', error);
+      return null;
+    }),
   ]);
   if (!result.ok) {
     return <ErrorState title={t('feed.error.title')} body={t('feed.error.body')} />;

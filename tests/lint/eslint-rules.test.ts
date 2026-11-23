@@ -650,6 +650,42 @@ const CASES: Array<{ name: string; file: string; code: string; rule: string; fir
     rule: 'no-restricted-syntax',
     fires: true,
   },
+  // ── Security review S20: the agreement file door and the renderer belong to the relay. ──
+  {
+    name: 'a Server Action importing the agreement file door',
+    file: 'actions/agreements.ts',
+    code: "import { uploadAgreement } from '@/lib/storage/agreements';\nexport const u = uploadAgreement;\n",
+    rule: 'no-restricted-imports',
+    fires: true,
+  },
+  {
+    name: 'a page importing the agreement renderer',
+    file: 'app/[locale]/(account)/agreement/[version]/page.tsx',
+    code: "import { renderAgreementPdf } from '@/lib/agreements/render';\nexport const r = renderAgreementPdf;\n",
+    rule: 'no-restricted-imports',
+    fires: true,
+  },
+  {
+    name: 'a module importing the agreement renderer lazily',
+    file: 'lib/requests/service.ts',
+    code: "export const load = () => import('@/lib/agreements/render');\n",
+    rule: 'no-restricted-syntax',
+    fires: true,
+  },
+  {
+    name: 'the relay imports the agreement file door and the renderer',
+    file: 'lib/relay/agreement.ts',
+    code: "import { uploadAgreement } from '@/lib/storage/agreements';\nimport { renderAgreementPdf } from '@/lib/agreements/render';\nexport const x = [uploadAgreement, renderAgreementPdf];\n",
+    rule: 'no-restricted-imports',
+    fires: false,
+  },
+  {
+    name: 'a page reads agreements through the parties door',
+    file: 'app/[locale]/(customer)/requests/[id]/page.tsx',
+    code: "import { loadMyAgreement } from '@/lib/agreements';\nexport const l = loadMyAgreement;\n",
+    rule: 'no-restricted-imports',
+    fires: false,
+  },
   // ── Spec 0011-13 AC-1: the email door. ──
   {
     name: 'a Server Action importing the email door',

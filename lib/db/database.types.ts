@@ -3198,6 +3198,7 @@ export type Database = {
       mark_refund_failed: { Args: { p_fee_refund_id: string }; Returns: Json }
       message_digit_limit: { Args: never; Returns: number }
       message_has_contact_info: { Args: { p_text: string }; Returns: boolean }
+      my_accepted_agreement: { Args: { p_request_id: string }; Returns: string }
       my_agreement: { Args: { p_request_id: string }; Returns: Json }
       my_checkout: { Args: { p_attempt_id: string }; Returns: Json }
       my_notice_count: { Args: never; Returns: number }

@@ -2485,6 +2485,7 @@
         "validation_failed": "[draft] [tr] That search is too long.",
         "action_failed": "[draft] [tr] Something went wrong. Try again."
       }
-    }
+    },
+    "unavailable": "[draft] [tr] The service agreement for this job is not available, so the fee cannot be paid here. Please contact support."
   }
 }

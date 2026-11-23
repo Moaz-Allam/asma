@@ -111,7 +111,7 @@ export default async function Page({ params, searchParams }: Props) {
       ? await Promise.all(rows.map((row) => jobCancelPreview(row.id, { region: user.region })))
       : [];
   const tj = await getTranslations('Jobs');
-  const tq = await getTranslations('Requests');
+  const ta = await getTranslations('Agreement');
   // Spec 0011-14 AC-7: the provider's own report on each revealed job (null where they are not a party).
   const reports =
     tab === 'active' || tab === 'done'
@@ -213,7 +213,7 @@ export default async function Page({ params, searchParams }: Props) {
                       />
                     ) : (
                       <p role="status" className="rounded-block bg-surface p-4 text-body-s text-text-primary">
-                        {tq('errors.agreement_required')}
+                        {ta('unavailable')}
                       </p>
                     )}
                   </>

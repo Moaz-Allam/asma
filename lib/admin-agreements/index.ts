@@ -31,6 +31,7 @@ const AgreementRow = z
     id: z.string().regex(UUID),
     number: z.string(),
     region: z.string(),
+    timezone: z.string().min(1),
     request_id: z.string().regex(UUID),
     request_status: z.string(),
     customer_name: z.string().nullable(),

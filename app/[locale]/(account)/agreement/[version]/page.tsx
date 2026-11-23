@@ -20,7 +20,13 @@ export default async function AgreementPage({ params }: Props) {
   const { locale, version } = await params;
   setRequestLocale(locale);
   await guardPage('any');
-  const template = await loadAgreementTemplate(decodeURIComponent(version));
+  let name: string;
+  try {
+    name = decodeURIComponent(version);
+  } catch {
+    notFound();
+  }
+  const template = await loadAgreementTemplate(name);
   if (!template) notFound();
   const t = await getTranslations('Agreement.page');
 
