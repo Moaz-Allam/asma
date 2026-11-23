@@ -43,6 +43,7 @@ const PROVIDER_TEMPLATES: ReadonlySet<EmailTemplate> = new Set([
   'account_rejected',
   'account_suspended',
   'rating_received',
+  'agreement_ready_provider',
 ]);
 
 function context(
@@ -71,6 +72,9 @@ function context(
       ...(REPORT_TEMPLATES.has(template) ? { report_id: REPORT, reason: 'poor_work' as const } : {}),
       ...(template === 'password_changed' ? { changed_at: '2026-11-20T09:30:00+00:00' } : {}),
       ...(template === 'rate_provider' ? { provider_name: HOSTILE } : {}),
+      ...(template.startsWith('agreement_ready')
+        ? { agreement_id: REPORT, agreement_number: 'HS-TR-2026-000001' }
+        : {}),
       ...(template === 'document_expiring'
         ? { document_type: 'id_front' as const, valid_until: '2026-12-02' }
         : {}),
@@ -101,7 +105,7 @@ const CASES = EMAIL_TEMPLATES.flatMap((template) =>
 );
 
 const HREF = new RegExp(
-  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|account|admin/reports/${REPORT}|account/email/confirm\\?t=${TOKEN}|login\\?mode=code&reset=1|provider/profile|provider/profile/documents)$`,
+  `^${ORIGIN}/(ar|tr|en)/(requests/${REQUEST}|receipts/${FEE}|provider/applications|provider/applications\\?tab=active|account|admin/reports/${REPORT}|account/email/confirm\\?t=${TOKEN}|login\\?mode=code&reset=1|provider/profile|provider/profile/documents)$`,
 );
 
 describe('every template renders in every locale (AC-2)', () => {

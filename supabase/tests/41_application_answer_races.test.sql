@@ -22,6 +22,17 @@ CREATE FUNCTION pg_temp.clean_up() RETURNS text LANGUAGE sql AS $fn$
     BEGIN;
     DELETE FROM public.audit_log WHERE actor_id::text LIKE '00000000-0000-0000-0000-0000004100%'
        OR entity_id LIKE '00000000-0000-0000-0000-0000004100%';
+    -- Spec 0011-20: the agreements and acceptances of these picks (append only, so their guards are lifted here).
+    ALTER TABLE public.service_agreements DISABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances DISABLE TRIGGER USER;
+    ALTER TABLE public.outbox_events DISABLE TRIGGER USER;
+    DELETE FROM public.outbox_events WHERE kind = 'agreement.render'
+       AND payload ->> 'agreement_id' IN (SELECT id::text FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000004100%'));
+    DELETE FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000004100%');
+    DELETE FROM public.agreement_acceptances WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000004100%');
+    ALTER TABLE public.outbox_events ENABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances ENABLE TRIGGER USER;
+    ALTER TABLE public.service_agreements ENABLE TRIGGER USER;
     ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
     DELETE FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000004100%';
     ALTER TABLE public.applications ENABLE TRIGGER applications_guard;

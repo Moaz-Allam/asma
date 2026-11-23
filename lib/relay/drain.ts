@@ -6,6 +6,7 @@ import { log } from '@/lib/observability/log';
 import type { PspAdapter } from '@/lib/psp';
 import { isRegion } from '@/lib/region';
 
+import { agreementGaveUp, renderAgreement } from './agreement';
 import { ALERTING_CODES, call, RelayDbError } from './db';
 import {
   initializeCheckout,
@@ -53,6 +54,9 @@ async function handle(db: Db, psp: PspAdapter, row: OutboxRow): Promise<Outcome>
       return verifyPayment(db, psp, row);
     case 'refund.request':
       return refundPayment(db, psp, row);
+    case 'agreement.render':
+      // Spec 0011-20 AC-6: the service agreement PDF, rendered and stored here, never in a request path.
+      return renderAgreement(db, row);
     default:
       // claim_outbox leaves email.send rows to the mail lane (spec 0011-13 R-12), so only an unknown kind lands
       // here; it runs out of tries and alerts outbox_failed.
@@ -86,6 +90,7 @@ async function giveUp(db: Db, row: OutboxRow): Promise<void> {
   try {
     if (row.kind === 'checkout.initialize') await initializeGaveUp(db, row);
     if (row.kind === 'refund.request') await refundGaveUp(db, row);
+    if (row.kind === 'agreement.render') await agreementGaveUp(db, row);
   } catch {
     // The heartbeat covers it: the failed row is alerted there (R-12).
   }

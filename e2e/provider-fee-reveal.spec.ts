@@ -125,8 +125,8 @@ function chosenAndSettled(locale: string, f: ReturnType<typeof ids>) {
       ` ('${f.offerA}', 'TR', '${f.request}', ${profileId(locale, 'revealProvider')}, 'I can start at ten with my own tools, two people.'),` +
       ` ('${f.offerB}', 'TR', '${f.request}', ${profileId(locale, 'revealRival')}, 'Free that day, I live close to your district.');` +
       ` perform set_config('request.jwt.claims', json_build_object('sub', ${profileId(locale, 'revealCustomer')}, 'role', 'authenticated')::text, true);` +
-      ` perform public.choose_provider('${f.request}', '${f.offerA}');` +
-      ` perform public.pay_commission('${f.request}', 'tr', null);`,
+      ` perform public.choose_provider('${f.request}', '${f.offerA}', 'draft-1');` +
+      ` perform public.pay_commission('${f.request}', 'tr', null, 'draft-1');`,
   );
 }
 
@@ -199,6 +199,8 @@ test('the chosen provider pays the fee and both sides see each other; the rival 
   await expect(chosen.locator('main')).toContainText(money(300000, locale));
   await axe(chosen);
   const payUrl = chosen.waitForURL(new RegExp(`/${locale}/pay/[0-9a-f-]{36}$`), { timeout: 20_000 });
+  // Spec 0011-20 AC-3: the provider ticks the version the customer accepted.
+  await chosen.locator('main').getByRole('checkbox').check();
   await chosen
     .getByRole('button', { name: m(locale, 'ProviderFeed.jobs.pay', { amount: money(15000, locale) }) })
     .click();

@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 
 import { chooseProviderAction } from '@/actions/requests';
+import { AgreementCheckbox } from '@/components/features/agreements/AgreementCheckbox';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { EmailNudge } from '@/components/shared/EmailNudge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,8 @@ export function OfferList({
   windowHours,
   readOnly,
   emailNudge = false,
+  carried = false,
+  agreementVersion = null,
 }: {
   requestId: string;
   offers: readonly Offer[];
@@ -54,6 +57,10 @@ export function OfferList({
   readOnly: boolean;
   /** Spec 0011-13 AC-4: no confirmed email while mail is on, so the deadlines would not reach the customer. */
   emailNudge?: boolean;
+  /** Spec 0011-20 AC-4: the paid commission carries to this pick, so the choose takes the agreement tick. */
+  carried?: boolean;
+  /** The region's active agreement version (`agreement_template`), read only when `carried`. */
+  agreementVersion?: string | null;
 }) {
   const t = useTranslations('Requests');
   const locale = useLocale() as Locale;
@@ -61,6 +68,8 @@ export function OfferList({
   const [picked, setPicked] = useState<Offer | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, start] = useTransition();
+  const [accepted, setAccepted] = useState(false);
+  const needsTick = carried && agreementVersion !== null;
 
   const nameOf = (offer: Offer) => offer.display_name ?? t('offers.provider');
   const firstOf = (offer: Offer) => offer.first_name ?? t('offers.provider');
@@ -72,11 +81,16 @@ export function OfferList({
     start(async () => {
       let result: Awaited<ReturnType<typeof chooseProviderAction>>;
       try {
-        result = await chooseProviderAction({ requestId, applicationId: offer.application_id });
+        result = await chooseProviderAction({
+          requestId,
+          applicationId: offer.application_id,
+          agreementVersion: needsTick ? agreementVersion : null,
+        });
       } catch {
         result = { success: false, error: 'action_failed' };
       }
       setPicked(null);
+      setAccepted(false);
       if (result.success) {
         if (!result.data.replayed) track('provider_chosen', {});
         router.refresh();
@@ -155,6 +169,7 @@ export function OfferList({
         cancelLabel={t('offers.keep')}
         onConfirm={choose}
         busy={busy}
+        confirmDisabled={needsTick && !accepted}
       >
         <ul className="flex flex-col gap-2 rounded-block bg-surface-secondary p-4 text-body-s text-text-primary">
           <li>
@@ -165,6 +180,9 @@ export function OfferList({
           <li>{t('offers.confirmCash', { amount: money(cashDue) })}</li>
           <li>{t('offers.confirmContact')}</li>
         </ul>
+        {needsTick && agreementVersion ? (
+          <AgreementCheckbox version={agreementVersion} checked={accepted} onCheckedChange={setAccepted} />
+        ) : null}
         {emailNudge ? <EmailNudge text={t('emailBanner.text')} linkLabel={t('emailBanner.link')} /> : null}
       </ConfirmDialog>
     </section>

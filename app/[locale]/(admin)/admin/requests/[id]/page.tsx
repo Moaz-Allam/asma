@@ -10,10 +10,12 @@ import {
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusChip, type ChipTone } from '@/components/shared/StatusChip';
+import { listAgreements } from '@/lib/admin-agreements';
 import { loadAdminRequest } from '@/lib/admin-requests';
 import { adminMayCancel, extendableDeadline } from '@/lib/admin-requests/constants';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
+import { Link } from '@/lib/i18n/navigation';
 import { instantLabel, regionDefaultLocale } from '@/lib/requests/view';
 
 /** Money and audit rows render here; never cached. */
@@ -46,6 +48,10 @@ export default async function Page({ params }: Props) {
   if (!detail) notFound();
 
   const t = await getTranslations('AdminRequests');
+  // Spec 0011-20 AC-10: the request's agreement (its current pick's), linked to the agreements page.
+  const tAgreement = await getTranslations('Agreement.admin');
+  const agreements = await listAgreements(id, null);
+  const agreement = 'ok' in agreements ? null : (agreements.rows[0] ?? null);
   const { request, applications, fees, refunds, ledger, flags, timeline } = detail;
   const tz = request.timezone;
   const at = (value: string | null) => (value ? instantLabel(value, tz, locale) : '—');
@@ -170,6 +176,22 @@ export default async function Page({ params }: Props) {
           </div>
         </section>
       ) : null}
+
+      <section className={section} aria-labelledby="req-agreement">
+        <h2 id="req-agreement" className={heading}>
+          {tAgreement('title')}
+        </h2>
+        {agreement ? (
+          <Link
+            href={`/admin/agreements?q=${encodeURIComponent(agreement.number)}`}
+            className="self-start text-body-s font-semibold text-link underline underline-offset-4"
+          >
+            {tAgreement('requestLink', { number: agreement.number })}
+          </Link>
+        ) : (
+          <p className="text-body-s text-text-secondary">{tAgreement('none')}</p>
+        )}
+      </section>
 
       <section className={section} aria-labelledby="req-picks">
         <h2 id="req-picks" className={heading}>

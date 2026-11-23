@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { appendFile } from 'node:fs/promises';
 
 import type { EmailDriver, OutgoingEmail, SendResult } from './types';
@@ -31,6 +32,16 @@ export function createFakeDriver(file: string | undefined): EmailDriver {
         html: mail.html,
         template: mail.template,
         locale: mail.locale,
+        // Spec 0011-20 AC-8: each attachment's name, size and SHA256, never its bytes.
+        ...(mail.attachments && mail.attachments.length > 0
+          ? {
+              attachments: mail.attachments.map((file) => ({
+                filename: file.filename,
+                size: file.content.byteLength,
+                sha256: createHash('sha256').update(file.content).digest('hex'),
+              })),
+            }
+          : {}),
       });
       await appendFile(file, `${line}\n`, 'utf8');
       return { outcome: 'sent' };
@@ -87,6 +98,15 @@ export function createResendDriver(options: ResendOptions): EmailDriver {
             subject: mail.subject,
             html: mail.html,
             text: mail.text,
+            // Spec 0011-20 AC-8: Resend takes each file as base64 content.
+            ...(mail.attachments && mail.attachments.length > 0
+              ? {
+                  attachments: mail.attachments.map((file) => ({
+                    filename: file.filename,
+                    content: Buffer.from(file.content).toString('base64'),
+                  })),
+                }
+              : {}),
           }),
           signal: AbortSignal.timeout(timeoutMs),
         });

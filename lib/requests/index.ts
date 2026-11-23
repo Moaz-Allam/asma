@@ -97,6 +97,8 @@ export const REQUEST_DB_CODES = [
   // Spec 0011-17 (17): rating the provider.
   'already_rated',
   'rating_settings_invalid',
+  // Spec 0011-20 (20): pay and the carried re-pick take the service agreement's version.
+  'agreement_required',
 ] as const;
 export type RequestCode = (typeof REQUEST_DB_CODES)[number];
 
@@ -273,12 +275,14 @@ export type ChooseOutcome =
  * request whose commission is paid carries it (spec 0011-12 AC-4, R-3).
  */
 export async function chooseProvider(
-  input: { requestId: string; applicationId: string },
+  input: { requestId: string; applicationId: string; agreementVersion: string | null },
   context: Context,
 ): Promise<ChooseOutcome> {
   const result = await call('choose_provider', {
     p_request_id: input.requestId,
     p_application_id: input.applicationId,
+    // Spec 0011-20 AC-4: read by the carried re-pick only; a first pick ignores it.
+    p_agreement_version: input.agreementVersion,
   });
   if ('ok' in result) {
     signal(result.code, input.requestId, context);
@@ -349,13 +353,15 @@ export type PayOutcome =
  * null, and is never logged (R-10). No figure is sent: the database charges the stored commission (rule 1).
  */
 export async function payCommission(
-  input: { requestId: string; locale: 'ar' | 'tr' | 'en'; payerIp: string | null },
+  input: { requestId: string; locale: 'ar' | 'tr' | 'en'; payerIp: string | null; agreementVersion: string },
   context: Context,
 ): Promise<PayOutcome> {
   const result = await call('pay_commission', {
     p_request_id: input.requestId,
     p_locale: input.locale,
     p_payer_ip: input.payerIp,
+    // Spec 0011-20 AC-2: the version the customer ticked; Postgres stores the acceptance or refuses.
+    p_agreement_version: input.agreementVersion,
   });
   if ('ok' in result) {
     signal(result.code, input.requestId, context);

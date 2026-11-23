@@ -183,7 +183,7 @@ test('the bell rises live, a notice opens its page, and mark all clears the coun
   sql(
     `do $s$ begin` +
       ` perform set_config('request.jwt.claims', json_build_object('sub', ${profileId(locale, 'noticeCustomer')}, 'role', 'authenticated')::text, true);` +
-      ` perform public.choose_provider('${f.request(1)}', '${f.offer(1)}');` +
+      ` perform public.choose_provider('${f.request(1)}', '${f.offer(1)}', 'draft-1');` +
       ` end $s$;`,
   );
   await expect(provider.getByTestId('bell-count')).toHaveText('1', { timeout: 20_000 });

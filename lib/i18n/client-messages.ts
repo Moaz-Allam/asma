@@ -46,6 +46,8 @@ export const CLIENT_NAMESPACES = [
   'Notices',
   // Spec 0011-19a AC-3, AC-4, AC-9: the offer card's line, the profile card and admin's quality dialogs.
   'Quality',
+  // Spec 0011-20 AC-2 to AC-4, AC-9, AC-10: the agreement tick, the download card and admin's agreement buttons.
+  'Agreement',
 ] as const;
 
 /** `PublicMenu` reads these two from the landing copy. */

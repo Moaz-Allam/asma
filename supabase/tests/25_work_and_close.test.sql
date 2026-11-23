@@ -59,10 +59,10 @@ BEGIN
   INSERT INTO public.applications (id, region, request_id, provider_id, message) VALUES
     (pg_temp.app(p), 'TR', pg_temp.r(p), pg_temp.u('a1'), 'An offer for the work tests, long enough to pass.');
   PERFORM pg_temp.as_user('c1');
-  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p));
-  PERFORM public.pay_commission(pg_temp.r(p), 'tr', NULL);
+  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p), 'draft-1');
+  PERFORM public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1');
   PERFORM pg_temp.as_user('a1');
-  PERFORM public.pay_provider_fee(pg_temp.app(p), 'tr', NULL);
+  PERFORM public.pay_provider_fee(pg_temp.app(p), 'tr', NULL, 'draft-1');
   RETURN pg_temp.r(p);
 END $$;
 -- Move a request's start into the past (its deadlines with it), as the clock would on the start day.

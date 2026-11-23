@@ -49,16 +49,23 @@ export const CancelRequestInput = z.object({
   reason: z.enum(CANCEL_REASONS).nullable(),
 });
 
-/** Spec 0010 AC-7: two ids, nothing else. */
+/** The version of the service agreement a payer ticked (spec 0011-20 AC-2 to AC-4); Postgres checks it. */
+export const AgreementVersion = z.string().regex(/^[a-z0-9._-]{1,40}$/);
+
+/** Spec 0010 AC-7: two ids; spec 0011-20 AC-4: and the agreement version, read only by a carried re-pick. */
 export const ChooseProviderInput = z
   .object({
     requestId: Uuid,
     applicationId: Uuid,
+    agreementVersion: AgreementVersion.nullable(),
   })
   .strict();
 
-/** Spec 0011-09 AC-9: Pay takes the request id only; the locale and the IP are read on the server. */
-export const PayCommissionInput = z.object({ requestId: Uuid }).strict();
+/**
+ * Spec 0011-09 AC-9: Pay takes the request id (the locale and the IP are read on the server); spec 0011-20 AC-2: and
+ * the agreement version the customer ticked.
+ */
+export const PayCommissionInput = z.object({ requestId: Uuid, agreementVersion: AgreementVersion }).strict();
 
 /** Spec 0011-09 AC-9: the pay and return pages ask about one attempt. */
 export const CheckoutStatusInput = z.object({ attemptId: Uuid }).strict();

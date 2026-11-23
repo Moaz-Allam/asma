@@ -117,6 +117,110 @@ export type Database = {
           },
         ]
       }
+      agreement_acceptances: {
+        Row: {
+          accepted_at: string
+          application_id: string
+          id: string
+          region: string
+          request_id: string
+          role: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          application_id: string
+          id?: string
+          region: string
+          request_id: string
+          role: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          application_id?: string
+          id?: string
+          region?: string
+          request_id?: string
+          role?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agreement_acceptances_application_fk"
+            columns: ["application_id", "request_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id", "request_id"]
+          },
+          {
+            foreignKeyName: "agreement_acceptances_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "agreement_acceptances_request_fk"
+            columns: ["request_id", "region"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "agreement_acceptances_template_fk"
+            columns: ["template_id", "region"]
+            isOneToOne: false
+            referencedRelation: "agreement_templates"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "agreement_acceptances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agreement_templates: {
+        Row: {
+          active: boolean
+          body: Json
+          created_at: string
+          id: string
+          region: string
+          version: string
+        }
+        Insert: {
+          active?: boolean
+          body: Json
+          created_at?: string
+          id?: string
+          region: string
+          version: string
+        }
+        Update: {
+          active?: boolean
+          body?: Json
+          created_at?: string
+          id?: string
+          region?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agreement_templates_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       application_questions: {
         Row: {
           active: boolean
@@ -2264,6 +2368,89 @@ export type Database = {
           },
         ]
       }
+      service_agreements: {
+        Row: {
+          application_id: string
+          byte_size: number | null
+          content: Json
+          created_at: string
+          customer_opened_at: string | null
+          failed_at: string | null
+          id: string
+          number: string
+          provider_opened_at: string | null
+          region: string
+          rendered_at: string | null
+          request_id: string
+          sha256: string | null
+          storage_path: string | null
+          template_id: string
+        }
+        Insert: {
+          application_id: string
+          byte_size?: number | null
+          content: Json
+          created_at?: string
+          customer_opened_at?: string | null
+          failed_at?: string | null
+          id?: string
+          number: string
+          provider_opened_at?: string | null
+          region: string
+          rendered_at?: string | null
+          request_id: string
+          sha256?: string | null
+          storage_path?: string | null
+          template_id: string
+        }
+        Update: {
+          application_id?: string
+          byte_size?: number | null
+          content?: Json
+          created_at?: string
+          customer_opened_at?: string | null
+          failed_at?: string | null
+          id?: string
+          number?: string
+          provider_opened_at?: string | null
+          region?: string
+          rendered_at?: string | null
+          request_id?: string
+          sha256?: string | null
+          storage_path?: string | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_agreements_application_fk"
+            columns: ["application_id", "request_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id", "request_id"]
+          },
+          {
+            foreignKeyName: "service_agreements_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "service_agreements_request_fk"
+            columns: ["request_id", "region"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id", "region"]
+          },
+          {
+            foreignKeyName: "service_agreements_template_fk"
+            columns: ["template_id", "region"]
+            isOneToOne: false
+            referencedRelation: "agreement_templates"
+            referencedColumns: ["id", "region"]
+          },
+        ]
+      }
       service_categories: {
         Row: {
           active: boolean
@@ -2395,6 +2582,35 @@ export type Database = {
           },
         ]
       }
+      test_phones: {
+        Row: {
+          created_at: string
+          note: string | null
+          phone: string
+          region: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          phone: string
+          region?: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          phone?: string
+          region?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_phones_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       user_warnings: {
         Row: {
           acknowledged_at: string | null
@@ -2514,8 +2730,14 @@ export type Database = {
         Returns: boolean
       }
       acknowledge_warning: { Args: { p_warning_id: string }; Returns: Json }
+      active_agreement_template: { Args: { p_region: string }; Returns: string }
       add_report_photo: {
         Args: { p_object_path: string; p_report_id: string }
+        Returns: Json
+      }
+      admin_agreement_link: { Args: { p_id: string }; Returns: Json }
+      admin_agreements: {
+        Args: { p_after?: string; p_query?: string }
         Returns: Json
       }
       admin_cancel_request: {
@@ -2591,6 +2813,7 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_rerender_agreement: { Args: { p_id: string }; Returns: Json }
       admin_revenue: {
         Args: { p_from: string; p_grain: string; p_to: string }
         Returns: Json
@@ -2598,6 +2821,27 @@ export type Database = {
       after_commission_paid: { Args: { p_fee: string }; Returns: undefined }
       after_provider_fee_paid: { Args: { p_fee: string }; Returns: undefined }
       after_reopen: { Args: { p_request_id: string }; Returns: string }
+      agreement_body_valid: { Args: { p_body: Json }; Returns: boolean }
+      agreement_field_names: { Args: never; Returns: string[] }
+      agreement_file: { Args: { p_id: string }; Returns: Json }
+      agreement_gaps: { Args: never; Returns: Json }
+      agreement_read_allowed: { Args: { p_name: string }; Returns: boolean }
+      agreement_render_context: { Args: { p_id: string }; Returns: Json }
+      agreement_side: {
+        Args: {
+          p_s: Database["public"]["Tables"]["service_agreements"]["Row"]
+          p_uid: string
+        }
+        Returns: string
+      }
+      agreement_template: { Args: { p_version?: string }; Returns: Json }
+      agreement_text_valid: { Args: { p_text: string }; Returns: boolean }
+      agreement_tr_text: { Args: { p_name: Json }; Returns: string }
+      agreement_visible: { Args: { p_id: string }; Returns: boolean }
+      answers_joined_text: {
+        Args: { p_answers: Json; p_snapshot: Json }
+        Returns: string
+      }
       application_questions_digest: { Args: { p_list: Json }; Returns: string }
       application_questions_list: {
         Args: { p_category_id: string; p_region: string }
@@ -2704,7 +2948,11 @@ export type Database = {
       checkout_limit: { Args: { p_region: string }; Returns: number }
       checkout_settings: { Args: { p_region: string }; Returns: Json }
       choose_provider: {
-        Args: { p_application_id: string; p_request_id: string }
+        Args: {
+          p_agreement_version?: string
+          p_application_id: string
+          p_request_id: string
+        }
         Returns: Json
       }
       choose_settings: { Args: { p_region: string }; Returns: number }
@@ -2807,6 +3055,7 @@ export type Database = {
         Args: { p_cap: string; p_new: string; p_old: string }
         Returns: boolean
       }
+      fail_agreement_render: { Args: { p_id: string }; Returns: Json }
       fail_attempt: {
         Args: { p_attempt_id: string; p_reason: string }
         Returns: Json
@@ -2823,6 +3072,15 @@ export type Database = {
       }
       fee_settings: {
         Args: { p_region: string; p_unit?: number }
+        Returns: Json
+      }
+      finish_agreement_render: {
+        Args: {
+          p_byte_size: number
+          p_id: string
+          p_path: string
+          p_sha256: string
+        }
         Returns: Json
       }
       finish_email: {
@@ -2940,6 +3198,7 @@ export type Database = {
       mark_refund_failed: { Args: { p_fee_refund_id: string }; Returns: Json }
       message_digit_limit: { Args: never; Returns: number }
       message_has_contact_info: { Args: { p_text: string }; Returns: boolean }
+      my_agreement: { Args: { p_request_id: string }; Returns: Json }
       my_checkout: { Args: { p_attempt_id: string }; Returns: Json }
       my_notice_count: { Args: never; Returns: number }
       my_notices: {
@@ -2992,13 +3251,24 @@ export type Database = {
         Args: { p_reason: string; p_request_id: string; p_text: string }
         Returns: Json
       }
+      open_service_agreement: { Args: { p_id: string }; Returns: Json }
       outbox_health: { Args: never; Returns: Json }
       pay_commission: {
-        Args: { p_locale: string; p_payer_ip: string; p_request_id: string }
+        Args: {
+          p_agreement_version?: string
+          p_locale: string
+          p_payer_ip: string
+          p_request_id: string
+        }
         Returns: Json
       }
       pay_provider_fee: {
-        Args: { p_application_id: string; p_locale: string; p_payer_ip: string }
+        Args: {
+          p_agreement_version?: string
+          p_application_id: string
+          p_locale: string
+          p_payer_ip: string
+        }
         Returns: Json
       }
       payments_enabled: { Args: { p_region: string }; Returns: boolean }
@@ -3323,6 +3593,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      queue_agreement: {
+        Args: { p_application_id: string; p_request_id: string }
+        Returns: string
+      }
       queue_audit_email: { Args: { p_audit_id: number }; Returns: number }
       queue_audit_mail: {
         Args: {
@@ -3399,6 +3673,16 @@ export type Database = {
         Returns: Json
       }
       reconcile_pending: { Args: never; Returns: Json }
+      record_acceptance: {
+        Args: {
+          p_application_id: string
+          p_request_id: string
+          p_role: string
+          p_template: string
+          p_user: string
+        }
+        Returns: undefined
+      }
       record_psp_event: {
         Args: {
           p_event_key: string

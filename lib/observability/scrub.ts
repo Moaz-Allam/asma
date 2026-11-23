@@ -105,6 +105,9 @@ const PERSONAL_KEYS: ReadonlySet<string> = new Set([
   'payer_ip',
   // Spec 0011-09 R-10: pay_commission's argument, should a failed call's arguments ever be logged.
   'p_payer_ip',
+  // Spec 0011-20: a service agreement's frozen content (both parties' names, phones and the street line).
+  'content',
+  'agreement_content',
 ]);
 const PERSONAL_SUFFIXES = [
   // Spec 0008 (review A5): the request RPC arguments p_address_line, p_notes, p_answers.

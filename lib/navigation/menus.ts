@@ -21,6 +21,7 @@ export type MenuItem = {
     | 'flags'
     | 'revenue'
     | 'quality'
+    | 'agreements'
     | 'history';
   href: string;
 };
@@ -109,6 +110,8 @@ export const ADMIN_RAIL: readonly MenuItem[] = [
   { key: 'revenue', href: '/admin/revenue' },
   // Spec 0011-19a AC-10: the watchlist, probation and the funnel.
   { key: 'quality', href: '/admin/quality' },
+  // Spec 0011-20 AC-10: every service agreement, each view audited.
+  { key: 'agreements', href: '/admin/agreements' },
   { key: 'catalog', href: '/admin/catalog' },
   { key: 'pricing', href: '/admin/pricing' },
   { key: 'account', href: '/account' },

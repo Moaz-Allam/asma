@@ -25,6 +25,7 @@ export default async function Page({ params }: Props) {
         initial={page.status}
         receiptHref={page.receiptHref}
         canRetry={page.canRetry}
+        agreementVersion={page.agreementVersion}
       />
     </div>
   );

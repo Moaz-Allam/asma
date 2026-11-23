@@ -32,6 +32,17 @@ CREATE FUNCTION pg_temp.clean_up() RETURNS text LANGUAGE sql AS $fn$
            confirm_deadline = NULL
      WHERE customer_id::text LIKE '00000000-0000-0000-0000-0000002600%' AND selected_application_id IS NOT NULL;
     ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
+    -- Spec 0011-20: the agreements and acceptances of these picks (append only, so their guards are lifted here).
+    ALTER TABLE public.service_agreements DISABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances DISABLE TRIGGER USER;
+    ALTER TABLE public.outbox_events DISABLE TRIGGER USER;
+    DELETE FROM public.outbox_events WHERE kind = 'agreement.render'
+       AND payload ->> 'agreement_id' IN (SELECT id::text FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000002600%'));
+    DELETE FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000002600%');
+    DELETE FROM public.agreement_acceptances WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000002600%');
+    ALTER TABLE public.outbox_events ENABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances ENABLE TRIGGER USER;
+    ALTER TABLE public.service_agreements ENABLE TRIGGER USER;
     ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
     DELETE FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000002600%';
     ALTER TABLE public.applications ENABLE TRIGGER applications_guard;
@@ -77,11 +88,11 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
          '00000000-0000-0000-0000-000000260001', 'An offer for the work races, long enough.'
     FROM generate_series(1, 3) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000002600c1", "role": "authenticated"}', true);
-  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002600e' || g)::uuid, ('00000000-0000-0000-0000-0000002600f' || g)::uuid)
+  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002600e' || g)::uuid, ('00000000-0000-0000-0000-0000002600f' || g)::uuid, 'draft-1')
     FROM generate_series(1, 3) g;
-  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002600e' || g)::uuid, 'tr', NULL) FROM generate_series(1, 3) g;
+  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002600e' || g)::uuid, 'tr', NULL, 'draft-1') FROM generate_series(1, 3) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000260001", "role": "authenticated"}', true);
-  SELECT public.pay_provider_fee(('00000000-0000-0000-0000-0000002600f' || g)::uuid, 'tr', NULL) FROM generate_series(1, 3) g;
+  SELECT public.pay_provider_fee(('00000000-0000-0000-0000-0000002600f' || g)::uuid, 'tr', NULL, 'draft-1') FROM generate_series(1, 3) g;
   UPDATE public.platform_settings SET value = '5' WHERE region = 'TR' AND key = 'provider_fee_value';
   UPDATE public.platform_settings SET value = '1000' WHERE region = 'TR' AND key = 'fee_min_minor';
   ALTER TABLE public.requests DISABLE TRIGGER requests_guard;

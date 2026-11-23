@@ -14,9 +14,17 @@ import type { Bucket } from './buckets';
  */
 
 /** A signed link, or null when Storage refuses or the object is gone. */
-export async function signedLink(bucket: Bucket, path: string, seconds: number): Promise<string | null> {
+export async function signedLink(
+  bucket: Bucket,
+  path: string,
+  seconds: number,
+  options: { download?: string } = {},
+): Promise<string | null> {
   const supabase = await createSupabaseServer();
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, seconds);
+  // Spec 0011-20 AC-9: an agreement opens as a file download under its own name.
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, seconds, options.download ? { download: options.download } : undefined);
   if (error || !data?.signedUrl) return null;
   return data.signedUrl;
 }

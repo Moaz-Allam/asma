@@ -76,6 +76,7 @@ const JOB = {
   confirm_deadline: null,
   closed_at: null,
   can_start: false,
+  agreement_version: null,
 };
 const PROVIDER_SIDE = {
   side: 'provider',
@@ -105,7 +106,12 @@ describe('payProviderFee (AC-2, AC-8)', () => {
       data: { status: 'checkout', attempt_id: ATTEMPT, reused: false },
       error: null,
     });
-    expect(await payProviderFee({ applicationId: APP, locale: 'tr', payerIp: null }, CTX)).toEqual({
+    expect(
+      await payProviderFee(
+        { applicationId: APP, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' },
+        CTX,
+      ),
+    ).toEqual({
       ok: true,
       status: 'checkout',
       attemptId: ATTEMPT,
@@ -115,12 +121,18 @@ describe('payProviderFee (AC-2, AC-8)', () => {
       p_application_id: APP,
       p_locale: 'tr',
       p_payer_ip: null,
+      p_agreement_version: 'draft-1',
     });
   });
 
   it('settles a fee of 0', async () => {
     m.rpc.mockResolvedValue({ data: { status: 'settled' }, error: null });
-    expect(await payProviderFee({ applicationId: APP, locale: 'tr', payerIp: null }, CTX)).toEqual({
+    expect(
+      await payProviderFee(
+        { applicationId: APP, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' },
+        CTX,
+      ),
+    ).toEqual({
       ok: true,
       status: 'settled',
     });
@@ -130,7 +142,12 @@ describe('payProviderFee (AC-2, AC-8)', () => {
     'maps %s to its code with no alert',
     async (code) => {
       m.rpc.mockResolvedValue(refuse(code));
-      expect(await payProviderFee({ applicationId: APP, locale: 'tr', payerIp: null }, CTX)).toEqual({
+      expect(
+        await payProviderFee(
+          { applicationId: APP, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' },
+          CTX,
+        ),
+      ).toEqual({
         ok: false,
         code,
       });
@@ -140,20 +157,25 @@ describe('payProviderFee (AC-2, AC-8)', () => {
 
   it.each(['checkout_settings_invalid', 'unlock_settings_invalid'])('alerts on %s', async (code) => {
     m.rpc.mockResolvedValue(refuse(code));
-    await payProviderFee({ applicationId: APP, locale: 'tr', payerIp: null }, CTX);
+    await payProviderFee(
+      { applicationId: APP, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' },
+      CTX,
+    );
     expect(m.alert).toHaveBeenCalledWith(code, { recordId: 'pay_provider_fee', region: 'TR' });
   });
 
   it('refuses a key the function must never send', async () => {
     m.rpc.mockResolvedValue({ data: { status: 'settled', amount: 5000 }, error: null });
-    await expect(payProviderFee({ applicationId: APP, locale: 'tr', payerIp: null }, CTX)).rejects.toThrow();
+    await expect(
+      payProviderFee({ applicationId: APP, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' }, CTX),
+    ).rejects.toThrow();
   });
 });
 
 describe('the actions (AC-8, R-13)', () => {
   it('the provider pays with the page locale and the IP Vercel saw', async () => {
     m.rpc.mockResolvedValue({ data: { status: 'checkout', attempt_id: ATTEMPT, reused: true }, error: null });
-    expect(await payProviderFeeAction({ applicationId: APP })).toEqual({
+    expect(await payProviderFeeAction({ applicationId: APP, agreementVersion: 'draft-1' })).toEqual({
       success: true,
       data: { status: 'checkout', attemptId: ATTEMPT, reused: true },
     });
@@ -161,12 +183,13 @@ describe('the actions (AC-8, R-13)', () => {
       p_application_id: APP,
       p_locale: 'tr',
       p_payer_ip: '203.0.113.7',
+      p_agreement_version: 'draft-1',
     });
   });
 
   it('a customer on the provider fee action is forbidden', async () => {
     m.role.current = 'customer';
-    expect(await payProviderFeeAction({ applicationId: APP })).toEqual({
+    expect(await payProviderFeeAction({ applicationId: APP, agreementVersion: 'draft-1' })).toEqual({
       success: false,
       error: 'forbidden',
     });
@@ -174,7 +197,10 @@ describe('the actions (AC-8, R-13)', () => {
   });
 
   it('a provider on the commission action is forbidden', async () => {
-    expect(await payCommissionAction({ requestId: REQUEST })).toEqual({ success: false, error: 'forbidden' });
+    expect(await payCommissionAction({ requestId: REQUEST, agreementVersion: 'draft-1' })).toEqual({
+      success: false,
+      error: 'forbidden',
+    });
     expect(m.rpc).not.toHaveBeenCalled();
   });
 

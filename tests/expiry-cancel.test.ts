@@ -119,7 +119,12 @@ describe('the customer door (AC-4, AC-6, AC-14)', () => {
         fee_deadline: AT,
       }),
     );
-    expect(await chooseProvider({ requestId: REQUEST, applicationId: APPLICATION }, CONTEXT)).toEqual({
+    expect(
+      await chooseProvider(
+        { requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null },
+        CONTEXT,
+      ),
+    ).toEqual({
       ok: true,
       replayed: false,
       selectedAt: AT,
@@ -132,7 +137,7 @@ describe('the customer door (AC-4, AC-6, AC-14)', () => {
   it('a pick with neither a payment window nor a carry fails the parse', async () => {
     m.rpc.mockResolvedValue(ok({ status: 'ok', replayed: false, selected_at: AT, payment_deadline: null }));
     await expect(
-      chooseProvider({ requestId: REQUEST, applicationId: APPLICATION }, CONTEXT),
+      chooseProvider({ requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null }, CONTEXT),
     ).rejects.toThrow();
     m.rpc.mockResolvedValue(
       ok({
@@ -145,13 +150,18 @@ describe('the customer door (AC-4, AC-6, AC-14)', () => {
       }),
     );
     await expect(
-      chooseProvider({ requestId: REQUEST, applicationId: APPLICATION }, CONTEXT),
+      chooseProvider({ requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null }, CONTEXT),
     ).rejects.toThrow();
   });
 
   it('maps provider_not_eligible with no alert', async () => {
     m.rpc.mockResolvedValue(refuse('provider_not_eligible'));
-    expect(await chooseProvider({ requestId: REQUEST, applicationId: APPLICATION }, CONTEXT)).toEqual({
+    expect(
+      await chooseProvider(
+        { requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null },
+        CONTEXT,
+      ),
+    ).toEqual({
       ok: false,
       code: 'provider_not_eligible',
     });
@@ -439,7 +449,9 @@ describe('the actions take their own role (AC-5, AC-6, AC-8, AC-9)', () => {
         fee_deadline: AT,
       }),
     );
-    expect(await chooseProviderAction({ requestId: REQUEST, applicationId: APPLICATION })).toEqual({
+    expect(
+      await chooseProviderAction({ requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null }),
+    ).toEqual({
       success: true,
       data: { replayed: false, selectedAt: AT, paymentDeadline: null, carried: true, feeDeadline: AT },
     });

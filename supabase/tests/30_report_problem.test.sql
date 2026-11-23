@@ -81,12 +81,12 @@ DECLARE
 BEGIN
   PERFORM pg_temp.base(p, 'a1', 10000);
   PERFORM pg_temp.as_user('c1');
-  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p, 'a1'));
-  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL) ->> 'attempt_id')::uuid;
+  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p, 'a1'), 'draft-1');
+  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
   PERFORM public.apply_fee_paid((SELECT id FROM public.fee_payments WHERE request_id = pg_temp.r(p) AND kind = 'commission'),
                                 v_att, 'pay-30-c' || p, 10000, 'TRY', 300);
   PERFORM pg_temp.as_user('a1');
-  v_att := (public.pay_provider_fee(pg_temp.app(p, 'a1'), 'tr', NULL) ->> 'attempt_id')::uuid;
+  v_att := (public.pay_provider_fee(pg_temp.app(p, 'a1'), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
   PERFORM public.apply_fee_paid((SELECT id FROM public.fee_payments WHERE request_id = pg_temp.r(p) AND kind = 'provider_fee'),
                                 v_att, 'pay-30-p' || p, 5000, 'TRY', 150);
   RETURN pg_temp.r(p);
@@ -96,10 +96,10 @@ CREATE FUNCTION pg_temp.req(p integer, w text DEFAULT 'a1') RETURNS uuid LANGUAG
 BEGIN
   PERFORM pg_temp.base(p, w, 0);
   PERFORM pg_temp.as_user('c1');
-  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p, w));
-  PERFORM public.pay_commission(pg_temp.r(p), 'tr', NULL);
+  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p, w), 'draft-1');
+  PERFORM public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1');
   PERFORM pg_temp.as_user(w);
-  PERFORM public.pay_provider_fee(pg_temp.app(p, w), 'tr', NULL);
+  PERFORM public.pay_provider_fee(pg_temp.app(p, w), 'tr', NULL, 'draft-1');
   RETURN pg_temp.r(p);
 END $$;
 -- The start day, then Started and Done by provider w: AWAITING_CONFIRMATION.

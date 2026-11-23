@@ -1,3 +1,5 @@
+import { AgreementCard } from '@/components/features/agreements/AgreementCard';
+import { loadMyAgreement } from '@/lib/agreements';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
@@ -28,9 +30,11 @@ export default async function Page({ params }: Props) {
   const user = await guardPage(['provider']);
   const t = await getTranslations('ProviderFeed');
 
-  const [result, emailNudge] = await Promise.all([
+  const [result, emailNudge, agreement] = await Promise.all([
     loadRequest(id, { region: user.region }),
     needsEmailNudge(user.id, 'provider'),
+    // Spec 0011-20 AC-9: the job's agreement card, while Postgres still shows it to this provider.
+    loadMyAgreement(id).catch(() => null),
   ]);
   if (!result.ok) {
     return <ErrorState title={t('feed.error.title')} body={t('feed.error.body')} />;
@@ -95,6 +99,9 @@ export default async function Page({ params }: Props) {
               </p>
             ) : null}
           </div>
+          {agreement ? (
+            <AgreementCard agreementId={agreement.id} number={agreement.number} opened={agreement.opened} />
+          ) : null}
           <ShortDetailsList rows={rows} />
           <p className="rounded-block bg-surface-secondary p-4 text-body-s text-text-secondary">
             {t('detail.privacy')}

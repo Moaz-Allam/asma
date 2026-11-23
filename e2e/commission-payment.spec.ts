@@ -138,7 +138,7 @@ function chosenRequest(locale: string, who: Who, key: string, commission: number
       ` insert into public.applications (id, region, request_id, provider_id, message) values` +
       ` ('${offer}', 'TR', '${request}', '${f.provider}', 'I can start at ten with my own tools, two people.');` +
       ` perform set_config('request.jwt.claims', json_build_object('sub', ${customerId(locale, who)}, 'role', 'authenticated')::text, true);` +
-      ` perform public.choose_provider('${request}', '${offer}');`,
+      ` perform public.choose_provider('${request}', '${offer}', 'draft-1');`,
   );
   return request;
 }
@@ -167,6 +167,11 @@ const attemptOf = (page: Page) => /\/pay\/([0-9a-f-]{36})/.exec(page.url())?.[1]
 /** Press Pay on the request page and land on the pay page; returns the attempt id. */
 async function pressPay(page: Page, locale: string, requestId: string, amount = 30000) {
   await page.goto(`/${locale}/requests/${requestId}`);
+  // Spec 0011-20 AC-2: the service agreement tick comes first; Pay waits for it.
+  await page
+    .getByRole('region', { name: m(locale, 'Requests.next.title') })
+    .getByRole('checkbox')
+    .check();
   return toPayPage(page, locale, requestId, () =>
     page
       .getByRole('button', { name: m(locale, 'Requests.next.pay', { amount: money(amount, locale) }) })
@@ -272,15 +277,26 @@ test('a customer pays the commission, gets a receipt, and the request moves on',
   const zero = chosenRequest(locale, 'payCustomer', '3', 0);
   const open = chosenRequest(locale, 'payCustomer', '4', 30000);
 
-  // The pay panel (AC-10): the split, the deadline, the agreement line with its link, the button.
+  // The pay panel (AC-10): the split, the deadline, the agreement tick with its two links (spec 0011-20 AC-2), and
+  // the button, disabled until the tick.
   await page.goto(`/${locale}/requests/${paid}`);
   const next = page.getByRole('region', { name: m(locale, 'Requests.next.title') });
   for (const text of [money(300000, locale), money(30000, locale), money(270000, locale)]) {
     await expect(next).toContainText(text);
   }
   await expect(
-    next.getByRole('link', { name: m(locale, 'Payment.agreement').match(/<terms>(.*)<\/terms>/)?.[1] ?? '' }),
+    next.getByRole('link', {
+      name: m(locale, 'Agreement.checkbox').match(/<terms>(.*)<\/terms>/)?.[1] ?? '',
+    }),
   ).toHaveAttribute('href', `/${locale}/terms`);
+  await expect(
+    next.getByRole('link', {
+      name: m(locale, 'Agreement.checkbox').match(/<agreement>(.*)<\/agreement>/)?.[1] ?? '',
+    }),
+  ).toHaveAttribute('href', `/${locale}/agreement/draft-1`);
+  await expect(
+    next.getByRole('button', { name: m(locale, 'Requests.next.pay', { amount: money(30000, locale) }) }),
+  ).toBeDisabled();
   if (locale === 'ar') await expect(next).toContainText(m(locale, 'Requests.next.cardEnglish'));
   await axe(page);
 
@@ -372,6 +388,10 @@ test('a customer pays the commission, gets a receipt, and the request moves on',
 
   // A commission of 0 (D171, R-4): Continue, no card page, no fee row.
   await page.goto(`/${locale}/requests/${zero}`);
+  await page
+    .getByRole('region', { name: m(locale, 'Requests.next.title') })
+    .getByRole('checkbox')
+    .check();
   await page.getByRole('button', { name: m(locale, 'Requests.next.continue') }).click();
   await expect(page.locator('#paid-title')).toHaveText(m(locale, 'Requests.next.paidTitle'), {
     timeout: 20_000,

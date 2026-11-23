@@ -36,11 +36,14 @@ export function CheckoutWaiter({
   initial,
   receiptHref,
   canRetry,
+  agreementVersion = null,
 }: {
   mode: Mode;
   initial: CheckoutStatus;
   receiptHref: string | null;
   canRetry: boolean;
+  /** Spec 0011-20 AC-2, AC-3: the version the payer accepted, sent again by Try again. */
+  agreementVersion?: string | null;
 }) {
   const t = useTranslations('Payment');
   const tr = useTranslations('Requests');
@@ -130,9 +133,11 @@ export function CheckoutWaiter({
       try {
         // Spec 0011-10 AC-9 (R14): Try again pays the fee this attempt was for.
         result =
-          status.fee_kind === 'provider_fee' && status.application_id
-            ? await payProviderFeeAction({ applicationId: status.application_id })
-            : await payCommissionAction({ requestId: status.request_id });
+          agreementVersion === null
+            ? { success: false as const, error: 'agreement_required' }
+            : status.fee_kind === 'provider_fee' && status.application_id
+              ? await payProviderFeeAction({ applicationId: status.application_id, agreementVersion })
+              : await payCommissionAction({ requestId: status.request_id, agreementVersion });
       } catch {
         result = { success: false, error: 'action_failed' };
       }

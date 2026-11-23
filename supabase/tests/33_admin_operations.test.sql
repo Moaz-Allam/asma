@@ -71,7 +71,7 @@ END $$;
 CREATE FUNCTION pg_temp.choose(p integer, w text) RETURNS jsonb LANGUAGE plpgsql AS $$
 BEGIN
   PERFORM pg_temp.as_user('c1');
-  RETURN public.choose_provider(pg_temp.r(p), pg_temp.app(p, w));
+  RETURN public.choose_provider(pg_temp.r(p), pg_temp.app(p, w), 'draft-1');
 END $$;
 CREATE FUNCTION pg_temp.cfee(p integer) RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT id FROM public.fee_payments WHERE request_id = pg_temp.r(p) AND kind = 'commission' $$;
@@ -82,7 +82,7 @@ DECLARE
   v_att uuid;
 BEGIN
   PERFORM pg_temp.as_user('c1');
-  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL) ->> 'attempt_id')::uuid;
+  v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
   IF NOT p_apply THEN
     RETURN jsonb_build_object('attempt_id', v_att);
   END IF;
@@ -93,7 +93,7 @@ DECLARE
   v_att uuid;
 BEGIN
   PERFORM pg_temp.as_user(w);
-  v_att := (public.pay_provider_fee(pg_temp.app(p, w), 'tr', NULL) ->> 'attempt_id')::uuid;
+  v_att := (public.pay_provider_fee(pg_temp.app(p, w), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
   RETURN public.apply_fee_paid(pg_temp.pfee(p, w), v_att, 'pay-33-p' || p || w, 5000, 'TRY', 150);
 END $$;
 -- Move a revealed job's start and end far into the past, as the clock would.

@@ -241,7 +241,7 @@ SELECT is_empty($$ SELECT id FROM public.applications WHERE status = 'SELECTED' 
   'AC-0: every SELECTED application holds a fee (local rows back filled)');
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c1');
-SELECT is(public.choose_provider(pg_temp.r(1), pg_temp.app(1, 'a1')) ->> 'status', 'ok', 'AC-0: the customer chooses on R1');
+SELECT is(public.choose_provider(pg_temp.r(1), pg_temp.app(1, 'a1'), 'draft-1') ->> 'status', 'ok', 'AC-0: the customer chooses on R1');
 RESET ROLE;
 SELECT results_eq(
   $$ SELECT provider_id, status, provider_fee_amount, provider_fee_kind FROM public.applications
@@ -253,7 +253,7 @@ SELECT is((SELECT provider_fee_amount FROM public.applications WHERE id = pg_tem
   'R-4: a settings change after the choose leaves the fee as it was');
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c1');
-SELECT is(public.choose_provider(pg_temp.r(1), pg_temp.app(1, 'a1')) ->> 'replayed', 'true', 'R-4: the replay is unchanged');
+SELECT is(public.choose_provider(pg_temp.r(1), pg_temp.app(1, 'a1'), 'draft-1') ->> 'replayed', 'true', 'R-4: the replay is unchanged');
 RESET ROLE;
 SELECT is((SELECT provider_fee_amount FROM public.applications WHERE id = pg_temp.app(1, 'a1')), 15000::bigint,
   'R-4: and the replay does not recompute the fee');
@@ -270,7 +270,7 @@ ALTER TABLE public.platform_settings DISABLE TRIGGER pricing_settings_guard;
 UPDATE public.platform_settings SET key = 'provider_fee_gone' WHERE region = 'TR' AND key = 'provider_fee_kind';
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c1');
-SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L)', pg_temp.r(2), pg_temp.app(2, 'a1'))), 'fee_settings_invalid',
+SELECT is(pg_temp.err(format('SELECT public.choose_provider(%L, %L, ''draft-1'')', pg_temp.r(2), pg_temp.app(2, 'a1'))), 'fee_settings_invalid',
   'AC-0: a missing fee setting refuses the choose');
 RESET ROLE;
 UPDATE public.platform_settings SET key = 'provider_fee_kind' WHERE region = 'TR' AND key = 'provider_fee_gone';
@@ -286,10 +286,10 @@ SELECT ok((SELECT position('public.fee_settings(' in prosrc) > 0
 -- Choose on R4, R5 and R6 for the money paths below.
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('c1');
-SELECT public.choose_provider(pg_temp.r(4), pg_temp.app(4, 'a2'));
-SELECT public.choose_provider(pg_temp.r(5), pg_temp.app(5, 'a1'));
+SELECT public.choose_provider(pg_temp.r(4), pg_temp.app(4, 'a2'), 'draft-1');
+SELECT public.choose_provider(pg_temp.r(5), pg_temp.app(5, 'a1'), 'draft-1');
 SELECT pg_temp.as_user('c2');
-SELECT public.choose_provider(pg_temp.r(6), pg_temp.app(6, 'a2'));
+SELECT public.choose_provider(pg_temp.r(6), pg_temp.app(6, 'a2'), 'draft-1');
 RESET ROLE;
 
 -- ══ meta: tables, region, grants (rule 7, AC-6, AC-13) ═══════════════════════
@@ -872,7 +872,7 @@ ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
 SELECT pg_temp.req(pg_temp.r(10 + g), 'c2', 50000 + g * 7000) FROM generate_series(1, 12) g;
 SELECT pg_temp.offer(10 + g, 'a1') FROM generate_series(1, 12) g;
 SELECT pg_temp.as_user('c2');
-SELECT public.choose_provider(pg_temp.r(10 + g), pg_temp.app(10 + g, 'a1')) FROM generate_series(1, 12) g;
+SELECT public.choose_provider(pg_temp.r(10 + g), pg_temp.app(10 + g, 'a1'), 'draft-1') FROM generate_series(1, 12) g;
 
 CREATE TEMP TABLE prop_pay (n integer, fee uuid, psp text, amount bigint, currency text, psp_fee bigint, pre_fee text,
                             pre_req text, accept_ok boolean, figures_ok boolean, result jsonb);

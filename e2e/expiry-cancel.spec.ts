@@ -163,9 +163,9 @@ function pickAndPay(locale: string, f: ReturnType<typeof ids>, key: string, offe
   const customer = profileId(locale, 'cancelCustomer');
   return (
     as(customer) +
-    ` perform public.choose_provider('${f.request(key)}', '${offer}');` +
+    ` perform public.choose_provider('${f.request(key)}', '${offer}', 'draft-1');` +
     (pay
-      ? ` v_attempt := (public.pay_commission('${f.request(key)}', 'tr', null) ->> 'attempt_id')::uuid;` +
+      ? ` v_attempt := (public.pay_commission('${f.request(key)}', 'tr', null, 'draft-1') ->> 'attempt_id')::uuid;` +
         ` if v_attempt is not null then` +
         ` select id, amount into v_fee, v_amount from public.fee_payments where request_id = '${f.request(key)}' and kind = 'commission';` +
         ` perform public.apply_fee_paid(v_fee, v_attempt, 'e2e-cancel-${locale}-${key}-' || gen_random_uuid(), v_amount, 'TRY', 0);` +
@@ -274,6 +274,9 @@ test('a window that passes reopens, the commission carries, a third failed pick 
     })
     .click();
   const dialog = page.getByRole('alertdialog').or(page.getByRole('dialog'));
+  // Spec 0011-20 AC-4: the carried re-pick takes the agreement tick; the confirm waits for it.
+  await expect(dialog.getByRole('button', { name: m(locale, 'Requests.offers.confirm') })).toBeDisabled();
+  await dialog.getByRole('checkbox').check();
   await dialog.getByRole('button', { name: m(locale, 'Requests.offers.confirm') }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect.poll(() => state(f, 'a')?.status, { timeout: 20_000 }).toBe('COMMISSION_PAID');
@@ -351,7 +354,7 @@ test('a window that passes reopens, the commission carries, a third failed pick 
     request(locale, f, 'c', 0, [{ offer: f.offer('c1'), provider: me }]) +
       pickAndPay(locale, f, 'c', f.offer('c1'), true) +
       as(me) +
-      ` v_attempt := (public.pay_provider_fee('${f.offer('c1')}', 'tr', null) ->> 'attempt_id')::uuid;` +
+      ` v_attempt := (public.pay_provider_fee('${f.offer('c1')}', 'tr', null, 'draft-1') ->> 'attempt_id')::uuid;` +
       ` select id, amount into v_fee, v_amount from public.fee_payments where request_id = '${f.request('c')}' and kind = 'provider_fee';` +
       ` perform public.apply_fee_paid(v_fee, v_attempt, 'e2e-cancel-fee-${locale}', v_amount, 'TRY', 0);` +
       as(customer),

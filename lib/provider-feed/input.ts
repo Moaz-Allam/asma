@@ -46,4 +46,7 @@ export const ApplyInput = z
 export type ApplyInput = z.input<typeof ApplyInput>;
 
 /** Spec 0011-10 AC-8: Pay on My jobs sends the application id only; the database charges the frozen fee. */
-export const PayProviderFeeInput = z.object({ applicationId: Uuid }).strict();
+/** Spec 0011-20 AC-3: and the agreement version the provider ticked (the one the customer accepted). */
+export const PayProviderFeeInput = z
+  .object({ applicationId: Uuid, agreementVersion: z.string().regex(/^[a-z0-9._-]{1,40}$/) })
+  .strict();

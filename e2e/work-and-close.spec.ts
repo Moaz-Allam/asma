@@ -106,10 +106,10 @@ function unlockedToday(locale: string, f: ReturnType<typeof ids>) {
     ` insert into public.applications (id, region, request_id, provider_id, message) values` +
     ` ('${f.offer(n)}', 'TR', '${f.request(n)}', ${provider}, 'I can start at ten with my own tools, two people.');` +
     ` perform set_config('request.jwt.claims', json_build_object('sub', ${customer}, 'role', 'authenticated')::text, true);` +
-    ` perform public.choose_provider('${f.request(n)}', '${f.offer(n)}');` +
-    ` perform public.pay_commission('${f.request(n)}', 'tr', null);` +
+    ` perform public.choose_provider('${f.request(n)}', '${f.offer(n)}', 'draft-1');` +
+    ` perform public.pay_commission('${f.request(n)}', 'tr', null, 'draft-1');` +
     ` perform set_config('request.jwt.claims', json_build_object('sub', ${provider}, 'role', 'authenticated')::text, true);` +
-    ` v_attempt := (public.pay_provider_fee('${f.offer(n)}', 'tr', null) ->> 'attempt_id')::uuid;` +
+    ` v_attempt := (public.pay_provider_fee('${f.offer(n)}', 'tr', null, 'draft-1') ->> 'attempt_id')::uuid;` +
     ` select id, amount into v_fee, v_amount from public.fee_payments where request_id = '${f.request(n)}' and kind = 'provider_fee';` +
     ` perform public.apply_fee_paid(v_fee, v_attempt, 'e2e-work-${locale}-${n}', v_amount, 'TRY', 0);`;
   sql(

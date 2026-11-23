@@ -141,6 +141,8 @@ export const JobRow = z
     confirm_deadline: Instant.nullable(),
     closed_at: Instant.nullable(),
     can_start: z.boolean(),
+    // Spec 0011-20 AC-3: the version the customer accepted for this pick; null without an acceptance.
+    agreement_version: z.string().nullable(),
   })
   .strict();
 export type JobRow = z.infer<typeof JobRow>;

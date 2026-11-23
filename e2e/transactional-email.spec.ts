@@ -247,8 +247,8 @@ test('an address is confirmed once through its link, and a choose and a paid com
       ` insert into public.applications (id, region, request_id, provider_id, message) values` +
       ` ('${f.offer}', 'TR', '${f.request}', ${profileId(locale, 'emailProvider')}, 'I can start at ten with my own tools, two people.');` +
       ` perform set_config('request.jwt.claims', json_build_object('sub', ${profileId(locale, 'emailCustomer')}, 'role', 'authenticated')::text, true);` +
-      ` perform public.choose_provider('${f.request}', '${f.offer}');` +
-      ` perform public.pay_commission('${f.request}', '${locale}', null);`,
+      ` perform public.choose_provider('${f.request}', '${f.offer}', 'draft-1');` +
+      ` perform public.pay_commission('${f.request}', '${locale}', null, 'draft-1');`,
   );
   expect(sql(`select status from public.requests where id = '${f.request}';`)).toEqual([
     { status: 'COMMISSION_PAID' },
