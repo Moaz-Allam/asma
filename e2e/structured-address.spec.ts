@@ -58,7 +58,7 @@ function sql(query: string): Record<string, unknown>[] {
 /** One flat priced service and one district (İstanbul, Kadıköy) per project. */
 function seed(locale: string) {
   const d = { ar: '1', tr: '2', en: '3' }[locale] ?? '9';
-  const id = (kind: string) => `00000000-0000-4000-8000-0020b0${kind}00${d}`;
+  const id = (kind: string) => `00000000-0000-4000-8000-0020b0${kind}000${d}`;
   const names = {
     category: `Adres ${locale}`,
     service: `Adres hizmet ${locale}`,
