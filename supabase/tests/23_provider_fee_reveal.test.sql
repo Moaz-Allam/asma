@@ -68,12 +68,12 @@ BEGIN
     (pg_temp.app(p), 'TR', pg_temp.r(p), pg_temp.u('a1'), 'An offer for the reveal tests, long enough.'),
     (pg_temp.app2(p), 'TR', pg_temp.r(p), pg_temp.u('a2'), 'A second offer for the reveal tests, long enough.');
   PERFORM pg_temp.as_user('c1');
-  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p));
+  PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p), 'draft-1');
   IF p_settle THEN
     IF p_commission = 0 THEN
-      PERFORM public.pay_commission(pg_temp.r(p), 'tr', NULL);
+      PERFORM public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1');
     ELSE
-      v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL) ->> 'attempt_id')::uuid;
+      v_att := (public.pay_commission(pg_temp.r(p), 'tr', NULL, 'draft-1') ->> 'attempt_id')::uuid;
       SELECT f.id INTO v_fee FROM public.fee_payments f WHERE f.request_id = pg_temp.r(p) AND f.kind = 'commission';
       PERFORM public.apply_fee_paid(v_fee, v_att, 'pay-23-c' || p, p_commission, 'TRY', 0);
     END IF;
@@ -104,7 +104,7 @@ BEGIN
   RETURN v;
 END $$;
 CREATE FUNCTION pg_temp.pay(p integer, p_user text DEFAULT 'a1', p_app uuid DEFAULT NULL) RETURNS text LANGUAGE sql AS $$
-  SELECT pg_temp.call_as(p_user, format('SELECT public.pay_provider_fee(%L, %L, NULL)::text', coalesce(p_app, pg_temp.app(p)), 'tr')) $$;
+  SELECT pg_temp.call_as(p_user, format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-1'')::text', coalesce(p_app, pg_temp.app(p)), 'tr')) $$;
 CREATE FUNCTION pg_temp.contacts(p integer, p_user text) RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.call_as(p_user, format('SELECT public.request_contacts(%L)::text', pg_temp.r(p))) $$;
 CREATE FUNCTION pg_temp.street(p integer, p_user text) RETURNS text LANGUAGE sql AS $$
@@ -173,7 +173,7 @@ SELECT is(pg_temp.err($$DELETE FROM public.platform_settings WHERE region = 'TR'
   'pricing_setting_required', 'R-10: the key cannot be deleted');
 
 -- ══ AC-2: pay_provider_fee, refusals in order ════════════════════════════════
-SELECT is(pg_temp.call_as('a1', format('SELECT public.pay_provider_fee(%L, %L, NULL)::text', pg_temp.app(1), 'de')),
+SELECT is(pg_temp.call_as('a1', format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-1'')::text', pg_temp.app(1), 'de')),
   'validation_failed', 'AC-2 step 1: a locale outside ar, tr, en');
 SELECT is(pg_temp.pay(1, 'a2', pg_temp.app(1)), 'not_found', 'AC-2 step 2, R-14: another provider''s application is not found');
 SELECT is(pg_temp.pay(1, 'c1'), 'not_found', 'AC-2 step 2: the customer is not its provider');
@@ -458,7 +458,7 @@ SELECT results_eq(
             ('provider_jobs', true, true, false, false), ('request_contacts', true, true, false, false) $$,
   'AC-2, AC-5, R-2, R-11: definers only where a user calls; internal functions have no grant');
 SELECT is((SELECT provolatile::text FROM pg_proc WHERE proname = 'request_contacts'), 'v', 'R-3: request_contacts is volatile');
-SELECT is(pg_temp.call_as('anon', format('SELECT public.pay_provider_fee(%L, %L, NULL)::text', pg_temp.app(5), 'tr')), '42501',
+SELECT is(pg_temp.call_as('anon', format('SELECT public.pay_provider_fee(%L, %L, NULL, ''draft-1'')::text', pg_temp.app(5), 'tr')), '42501',
   'R-14: anon cannot call pay_provider_fee');
 SELECT is(pg_temp.call_as('anon', $$SELECT public.provider_jobs('active', NULL, NULL)::text$$), '42501',
   'R-14: nor provider_jobs');

@@ -37,6 +37,9 @@ export const EMAIL_TEMPLATES = [
   'rating_received',
   // Spec 0011-19a AC-14.
   'document_expiring',
+  // Spec 0011-20 AC-8: the service agreement, each side, with the PDF attached.
+  'agreement_ready_customer',
+  'agreement_ready_provider',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -85,6 +88,13 @@ export const EmailValuesSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .nullable()
       .optional(),
+    // Spec 0011-20 AC-8: the two agreement mails only, the agreement id and its number (never a path).
+    agreement_id: id.nullable().optional(),
+    agreement_number: z
+      .string()
+      .regex(/^HS-[A-Z]{2,3}-\d{4}-\d{6}$/)
+      .nullable()
+      .optional(),
     reason: z
       .enum([
         'no_show',
@@ -120,13 +130,23 @@ export type SendContext = Extract<EmailContext, { status: 'send' }>;
 /** One rendered mail (AC-2). */
 export type RenderedEmail = { subject: string; text: string; html: string };
 
+/** A file sent with a mail (spec 0011-20 AC-8: the service agreement PDF). */
+export type EmailAttachment = { filename: string; content: Uint8Array };
+
 /** What a driver is handed: the rendered mail, its address, and the outbox key (the Idempotency-Key, AC-8). */
 export type OutgoingEmail = RenderedEmail & {
   to: string;
   key: string;
   template: EmailTemplate;
   locale: EmailLocale;
+  attachments?: readonly EmailAttachment[];
 };
+
+/** The templates that carry the agreement PDF (spec 0011-20 AC-8). */
+export const AGREEMENT_TEMPLATES: readonly EmailTemplate[] = [
+  'agreement_ready_customer',
+  'agreement_ready_provider',
+];
 
 /** A driver's answer: the outcome, and for `rejected` or `retry` a code (`http_422:validation_error`), never a message. */
 export type SendResult = { outcome: SendOutcome; detail?: string };

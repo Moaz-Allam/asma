@@ -90,7 +90,12 @@ describe('payCommission (AC-4, AC-9)', () => {
       data: { status: 'checkout', attempt_id: ATTEMPT, reused: false },
       error: null,
     });
-    expect(await payCommission({ requestId: REQUEST, locale: 'ar', payerIp: '203.0.113.7' }, CTX)).toEqual({
+    expect(
+      await payCommission(
+        { requestId: REQUEST, locale: 'ar', payerIp: '203.0.113.7', agreementVersion: 'draft-1' },
+        CTX,
+      ),
+    ).toEqual({
       ok: true,
       status: 'checkout',
       attemptId: ATTEMPT,
@@ -100,12 +105,18 @@ describe('payCommission (AC-4, AC-9)', () => {
       p_request_id: REQUEST,
       p_locale: 'ar',
       p_payer_ip: '203.0.113.7',
+      p_agreement_version: 'draft-1',
     });
   });
 
   it('a commission of 0 comes back settled (D171)', async () => {
     m.rpc.mockResolvedValue({ data: { status: 'settled' }, error: null });
-    expect(await payCommission({ requestId: REQUEST, locale: 'tr', payerIp: null }, CTX)).toEqual({
+    expect(
+      await payCommission(
+        { requestId: REQUEST, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' },
+        CTX,
+      ),
+    ).toEqual({
       ok: true,
       status: 'settled',
     });
@@ -116,12 +127,19 @@ describe('payCommission (AC-4, AC-9)', () => {
       data: { status: 'checkout', attempt_id: ATTEMPT, reused: false, amount: 10000 },
       error: null,
     });
-    await expect(payCommission({ requestId: REQUEST, locale: 'tr', payerIp: null }, CTX)).rejects.toThrow();
+    await expect(
+      payCommission({ requestId: REQUEST, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' }, CTX),
+    ).rejects.toThrow();
   });
 
   it.each(['checkout_settings_invalid', 'unlock_settings_invalid'])('alerts on %s', async (code) => {
     m.rpc.mockResolvedValue(refuse(code));
-    expect(await payCommission({ requestId: REQUEST, locale: 'tr', payerIp: null }, CTX)).toEqual({
+    expect(
+      await payCommission(
+        { requestId: REQUEST, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' },
+        CTX,
+      ),
+    ).toEqual({
       ok: false,
       code,
     });
@@ -137,7 +155,12 @@ describe('payCommission (AC-4, AC-9)', () => {
     'too_many_checkouts',
   ])('maps %s to its code with no alert', async (code) => {
     m.rpc.mockResolvedValue(refuse(code));
-    expect(await payCommission({ requestId: REQUEST, locale: 'tr', payerIp: null }, CTX)).toEqual({
+    expect(
+      await payCommission(
+        { requestId: REQUEST, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' },
+        CTX,
+      ),
+    ).toEqual({
       ok: false,
       code,
     });
@@ -147,7 +170,7 @@ describe('payCommission (AC-4, AC-9)', () => {
   it('throws a raw database error for the action to report', async () => {
     m.rpc.mockResolvedValue({ data: null, error: { message: 'connection reset', code: '08006' } });
     await expect(
-      payCommission({ requestId: REQUEST, locale: 'tr', payerIp: null }, CTX),
+      payCommission({ requestId: REQUEST, locale: 'tr', payerIp: null, agreementVersion: 'draft-1' }, CTX),
     ).rejects.toBeTruthy();
   });
 });
@@ -155,7 +178,7 @@ describe('payCommission (AC-4, AC-9)', () => {
 describe('payCommissionAction (AC-9, AC-14)', () => {
   it('reads the locale from the route and the IP from x-real-ip, for the customer role only', async () => {
     m.rpc.mockResolvedValue({ data: { status: 'checkout', attempt_id: ATTEMPT, reused: true }, error: null });
-    expect(await payCommissionAction({ requestId: REQUEST })).toEqual({
+    expect(await payCommissionAction({ requestId: REQUEST, agreementVersion: 'draft-1' })).toEqual({
       success: true,
       data: { status: 'checkout', attemptId: ATTEMPT, reused: true },
     });
@@ -163,6 +186,7 @@ describe('payCommissionAction (AC-9, AC-14)', () => {
       p_request_id: REQUEST,
       p_locale: 'en',
       p_payer_ip: '203.0.113.7',
+      p_agreement_version: 'draft-1',
     });
     expect(m.requireRole).toHaveBeenCalledWith('customer');
   });
@@ -171,14 +195,15 @@ describe('payCommissionAction (AC-9, AC-14)', () => {
     m.rpc.mockResolvedValue({ data: { status: 'settled' }, error: null });
     m.header.mockReturnValueOnce(null);
     m.locale.mockResolvedValueOnce('de');
-    await payCommissionAction({ requestId: REQUEST });
+    await payCommissionAction({ requestId: REQUEST, agreementVersion: 'draft-1' });
     expect(m.rpc).toHaveBeenLastCalledWith('pay_commission', {
       p_request_id: REQUEST,
       p_locale: 'tr',
       p_payer_ip: null,
+      p_agreement_version: 'draft-1',
     });
     m.header.mockReturnValueOnce('1'.repeat(46));
-    await payCommissionAction({ requestId: REQUEST });
+    await payCommissionAction({ requestId: REQUEST, agreementVersion: 'draft-1' });
     expect(m.rpc).toHaveBeenLastCalledWith('pay_commission', expect.objectContaining({ p_payer_ip: null }));
   });
 
@@ -187,10 +212,10 @@ describe('payCommissionAction (AC-9, AC-14)', () => {
       data: { status: 'checkout', attempt_id: ATTEMPT, reused: false },
       error: null,
     });
-    await payCommissionAction({ requestId: REQUEST });
+    await payCommissionAction({ requestId: REQUEST, agreementVersion: 'draft-1' });
     expect(m.revalidate).not.toHaveBeenCalled();
     m.rpc.mockResolvedValueOnce({ data: { status: 'settled' }, error: null });
-    expect(await payCommissionAction({ requestId: REQUEST })).toEqual({
+    expect(await payCommissionAction({ requestId: REQUEST, agreementVersion: 'draft-1' })).toEqual({
       success: true,
       data: { status: 'settled' },
     });
@@ -199,7 +224,7 @@ describe('payCommissionAction (AC-9, AC-14)', () => {
 
   it('maps a refusal to its code with no Sentry report', async () => {
     m.rpc.mockResolvedValue(refuse('payments_disabled'));
-    expect(await payCommissionAction({ requestId: REQUEST })).toEqual({
+    expect(await payCommissionAction({ requestId: REQUEST, agreementVersion: 'draft-1' })).toEqual({
       success: false,
       error: 'payments_disabled',
     });

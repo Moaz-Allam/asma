@@ -1,19 +1,20 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Fragment } from 'react';
 
+import { AgreementCard } from '@/components/features/agreements/AgreementCard';
 import { CancelJobButton } from '@/components/features/jobs/CancelJobButton';
 import { JobActionButton } from '@/components/features/jobs/JobActionButton';
 import { WithdrawButton } from '@/components/features/jobs/WithdrawButton';
 import { PayButton } from '@/components/features/payments/PayButton';
 import { ReportStatus } from '@/components/features/reports/ReportStatus';
 import { ApplicationRow } from '@/components/features/provider-feed/ApplicationRow';
-import { AgreementLine } from '@/components/shared/AgreementLine';
 import { ContactCard } from '@/components/shared/ContactCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
+import { loadMyAgreement } from '@/lib/agreements';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { formatMoney } from '@/lib/format/money';
@@ -110,6 +111,7 @@ export default async function Page({ params, searchParams }: Props) {
       ? await Promise.all(rows.map((row) => jobCancelPreview(row.id, { region: user.region })))
       : [];
   const tj = await getTranslations('Jobs');
+  const tq = await getTranslations('Requests');
   // Spec 0011-14 AC-7: the provider's own report on each revealed job (null where they are not a party).
   const reports =
     tab === 'active' || tab === 'done'
@@ -123,6 +125,22 @@ export default async function Page({ params, searchParams }: Props) {
         )
       : [];
   const reportHref = (requestId: string) => `/provider/applications/${requestId}/report`;
+  // Spec 0011-20 AC-9: the agreement card on each active job, while Postgres still shows it (7 days, or 10 minutes
+  // after the open); a job unlocked more than 7 days ago never has one, so it is not asked.
+  const weekAgo = Date.parse(now) - 7 * 24 * 60 * 60 * 1000;
+  const agreements =
+    tab === 'active'
+      ? await Promise.all(
+          rows.map((row) =>
+            row.unlocked_at && Date.parse(row.unlocked_at) > weekAgo
+              ? loadMyAgreement(row.id).catch((error: unknown) => {
+                  reportServerError('providerAgreements', error);
+                  return null;
+                })
+              : null,
+          ),
+        )
+      : [];
 
   return (
     <>
@@ -177,18 +195,27 @@ export default async function Page({ params, searchParams }: Props) {
                     <p className="text-body font-semibold text-text-primary">
                       {t('jobs.deadline', { date: instantLabel(row.fee_deadline, timezone, locale) })}
                     </p>
-                    <AgreementLine />
                     {locale === 'ar' && fee > 0 ? (
                       <p className="text-body-s text-text-secondary">{t('jobs.cardEnglish')}</p>
                     ) : null}
-                    <PayButton
-                      target={{ kind: 'provider_fee', applicationId: row.application_id }}
-                      label={
-                        fee === 0
-                          ? t('jobs.continue')
-                          : t('jobs.pay', { amount: formatMoney(fee, row.currency, locale as Locale) })
-                      }
-                    />
+                    {row.agreement_version ? (
+                      <PayButton
+                        target={{
+                          kind: 'provider_fee',
+                          applicationId: row.application_id,
+                          agreementVersion: row.agreement_version,
+                        }}
+                        label={
+                          fee === 0
+                            ? t('jobs.continue')
+                            : t('jobs.pay', { amount: formatMoney(fee, row.currency, locale as Locale) })
+                        }
+                      />
+                    ) : (
+                      <p role="status" className="rounded-block bg-surface p-4 text-body-s text-text-primary">
+                        {tq('errors.agreement_required')}
+                      </p>
+                    )}
                   </>
                 ) : (
                   <p role="status" className="rounded-block bg-surface p-4 text-body-s text-text-primary">
@@ -206,12 +233,20 @@ export default async function Page({ params, searchParams }: Props) {
         <ul className="flex flex-col gap-3.5">
           {rows.map((row, index) => {
             const card = contacts[index];
+            const agreement = agreements[index] ?? null;
             return (
               <li key={row.application_id} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1">
                   <h2 className="font-display text-title-s text-text-primary">{text(row.service_name)}</h2>
                   <p className="text-body-s text-text-secondary">{where(row)}</p>
                 </div>
+                {agreement ? (
+                  <AgreementCard
+                    agreementId={agreement.id}
+                    number={agreement.number}
+                    opened={agreement.opened}
+                  />
+                ) : null}
                 {card ? (
                   <ContactCard contacts={card} requestId={row.id} locale={locale} fallbackLocale={fallback} />
                 ) : (

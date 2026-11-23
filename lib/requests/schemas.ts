@@ -219,6 +219,8 @@ export const RequestOffers = z
     selected_at: z.string().nullable(),
     payment_deadline: z.string().nullable(),
     cancelled_at: z.string().nullable(),
+    // Spec 0011-20 AC-4: a paid commission carries to the next pick, so the choose takes the agreement.
+    carried: z.boolean(),
     offers: z.array(Offer),
     chosen: Offer.extend({
       status: z.string(),

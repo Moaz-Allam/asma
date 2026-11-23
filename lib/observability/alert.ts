@@ -58,6 +58,11 @@ export type AlertReason =
   // The PSP answered something we cannot read, or a card page URL off its hosts. The record is the attempt or
   // refund id.
   | 'psp_bad_response'
+  // Spec 0011-20 AC-7: an agreement's render or upload ran out of tries (or its lease ran out). The record is the
+  // agreement id.
+  | 'agreement_render_failed'
+  // Spec 0011-20 AC-5: a pick unlocked without both acceptances, so no agreement exists. The record is the application id.
+  | 'agreement_missing'
   // A region's checkout hold or buyer city is missing or malformed, or (spec 0011-09 AC-1, R-6) its checkout limit.
   // The record is the attempt id, the fee id (a payment the relay could not apply), or the request id.
   | 'checkout_settings_invalid'

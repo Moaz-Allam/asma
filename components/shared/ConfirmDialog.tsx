@@ -19,6 +19,7 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   busy,
+  confirmDisabled = false,
   children,
 }: {
   open: boolean;
@@ -29,6 +30,8 @@ export function ConfirmDialog({
   cancelLabel: string;
   onConfirm: () => void;
   busy?: boolean;
+  /** The confirm waits on a field in `children` (spec 0011-20 AC-4: the agreement tick on a carried re-pick). */
+  confirmDisabled?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -40,7 +43,7 @@ export function ConfirmDialog({
           <Dialog.Description className="text-body-s text-text-secondary">{body}</Dialog.Description>
           {children}
           <div className="flex flex-wrap gap-2.5">
-            <Button size="lg" className="flex-1" onClick={onConfirm} disabled={busy}>
+            <Button size="lg" className="flex-1" onClick={onConfirm} disabled={busy || confirmDisabled}>
               {confirmLabel}
             </Button>
             <Dialog.Close asChild>

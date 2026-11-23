@@ -133,6 +133,11 @@ describe('isPersonalKey: the keys whose values never leave', () => {
     'admin_note',
     'p_text',
     'p_note',
+    // Spec 0011-20: an agreement's frozen content, and its street line (by the _line suffix).
+    'content',
+    'agreement_content',
+    'agreementContent',
+    'street_line',
   ])('%s is personal', (key) => {
     expect(isPersonalKey(key)).toBe(true);
   });

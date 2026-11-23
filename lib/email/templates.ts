@@ -41,6 +41,7 @@ type Parts = {
     name: string;
     document: string;
     until: string;
+    number: string;
   };
   side: 'customer' | 'provider' | null;
   carried: boolean;
@@ -58,6 +59,7 @@ type Parts = {
     adminReport: () => { label: string; href: string };
     profile: () => { label: string; href: string };
     documents: () => { label: string; href: string };
+    job: () => { label: string; href: string };
   };
 };
 
@@ -234,6 +236,17 @@ const TEMPLATES: Readonly<Record<EmailTemplate, (p: Parts) => Draft>> = {
     lines: [p.t('document_expiring.lead', p.vals)],
     action: p.link.documents(),
   }),
+  // Spec 0011-20 AC-8: the agreement number, the PDF attached by the relay, and the request or the job.
+  agreement_ready_customer: (p) => ({
+    subject: p.t('agreement_ready.subject', p.vals),
+    lines: [p.t('agreement_ready.leadCustomer', p.vals), p.t('agreement_ready.keep', p.vals)],
+    action: p.link.request(),
+  }),
+  agreement_ready_provider: (p) => ({
+    subject: p.t('agreement_ready.subject', p.vals),
+    lines: [p.t('agreement_ready.leadProvider', p.vals), p.t('agreement_ready.keep', p.vals)],
+    action: p.link.job(),
+  }),
 };
 
 function translator(locale: EmailLocale): Translate {
@@ -278,6 +291,7 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
       name: cleanValue(values.provider_name ?? ''),
       document: values.document_type ? cleanValue(t(`document_expiring.types.${values.document_type}`)) : '',
       until: values.valid_until ? cleanValue(dayParts(values.valid_until, locale).long) : '',
+      number: cleanValue(values.agreement_number ?? ''),
     },
     side: values.side,
     carried: values.carried === true,
@@ -310,6 +324,7 @@ export function renderEmail(context: SendContext, origin: string): RenderedEmail
       }),
       profile: () => ({ label: t('rating_received.action'), href: `${base}/provider/profile` }),
       documents: () => ({ label: t('document_expiring.action'), href: `${base}/provider/profile/documents` }),
+      job: () => ({ label: t('shell.openApplications'), href: `${base}/provider/applications?tab=active` }),
     },
   };
   const draft = TEMPLATES[context.template](parts);

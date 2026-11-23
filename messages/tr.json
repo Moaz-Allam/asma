@@ -153,7 +153,8 @@
     "reports": "[tr] Reports",
     "flags": "Gecikme işaretleri",
     "revenue": "Gelir",
-    "quality": "[tr] Quality"
+    "quality": "[tr] Quality",
+    "agreements": "[tr] Agreements"
   },
   "Login": {
     "title": "[tr] Welcome",
@@ -1173,7 +1174,8 @@
       "checkout_open": "[tr] A card payment is in progress. Try again in a few minutes.",
       "checkout_settings_invalid": "[tr] Payments are not possible right now. Please try again later.",
       "unlock_settings_invalid": "[tr] Payments are not possible right now. Please try again later.",
-      "provider_not_eligible": "[tr] This provider can no longer be chosen for this request."
+      "provider_not_eligible": "[tr] This provider can no longer be chosen for this request.",
+      "agreement_required": "[draft] [tr] Tick the box to accept the service agreement first."
     },
     "offers": {
       "title": "[tr] {count, plural, =0 {No offers yet} one {# offer on your request} other {# offers on your request}}",
@@ -1473,7 +1475,6 @@
     }
   },
   "Payment": {
-    "agreement": "[draft] [tr] Before you pay: the platform may take legal action if one of the two parties does something wrong. Read the <terms>terms</terms>.",
     "opening": "[tr] Opening the secure card page",
     "openingBody": "[tr] Please wait. Keep this page open.",
     "slow": "[tr] The card page is taking longer than usual. Try again in a few minutes.",
@@ -1848,6 +1849,12 @@
         "criminal_record": "[tr] criminal record",
         "skill_certificate": "[tr] skill certificate"
       }
+    },
+    "agreement_ready": {
+      "subject": "[draft] [tr] Your service agreement {number}",
+      "leadCustomer": "[draft] [tr] Both fees are paid, so your service agreement with the provider is ready. It is attached to this email as a PDF.",
+      "leadProvider": "[draft] [tr] Both fees are paid, so your service agreement with the customer is ready. It is attached to this email as a PDF.",
+      "keep": "[draft] [tr] Keep this email: the job page offers the download only for a short time."
     }
   },
   "Reports": {
@@ -2288,6 +2295,10 @@
       "title": "[tr] A document expires soon",
       "line": "[tr] A required document expires soon. Upload a new one to keep applying.",
       "lineDeadline": "[tr] A required document expires on {deadline}. Upload a new one to keep applying."
+    },
+    "agreement_ready": {
+      "title": "[tr] [draft] Your service agreement is ready",
+      "line": "[tr] [draft] The agreement for {service} is ready. Download it from the job, or keep the copy in your email."
     }
   },
   "Quality": {
@@ -2425,6 +2436,54 @@
         "warned": "[tr] Warned",
         "suspended": "[tr] Suspended",
         "cleared": "[tr] Cleared"
+      }
+    }
+  },
+  "Agreement": {
+    "checkbox": "[draft] [tr] I accept the <agreement>service agreement</agreement> and the <terms>terms</terms>.",
+    "required": "[draft] [tr] Tick the box to accept the service agreement first.",
+    "card": {
+      "title": "[draft] [tr] Your service agreement is ready",
+      "number": "[draft] [tr] Agreement {number}",
+      "download": "[draft] [tr] Download",
+      "again": "[draft] [tr] Download again",
+      "opened": "[draft] [tr] Opened. Your copy is in your email.",
+      "failed": "[draft] [tr] The download did not start. Try again."
+    },
+    "page": {
+      "title": "[draft] [tr] Service agreement",
+      "version": "[draft] [tr] Version {version}",
+      "turkish": "[draft] [tr] The Turkish text below is the agreement. The parts in brackets are filled in with your job’s details once both of you have paid.",
+      "inactive": "[draft] [tr] This version is no longer offered for new jobs. It still binds the jobs that accepted it."
+    },
+    "admin": {
+      "title": "[draft] [tr] Agreements",
+      "intro": "[draft] [tr] Every service agreement, newest first. Each view is recorded.",
+      "search": "[draft] [tr] Number or request id",
+      "searchButton": "[draft] [tr] Search",
+      "clear": "[draft] [tr] Clear",
+      "empty": "[draft] [tr] No agreements match.",
+      "request": "[draft] [tr] Request",
+      "customer": "[draft] [tr] Customer",
+      "provider": "[draft] [tr] Provider",
+      "rendered": "[draft] [tr] Ready {date}",
+      "queued": "[draft] [tr] Being prepared",
+      "failed": "[draft] [tr] Render failed",
+      "openedCustomer": "[draft] [tr] Customer opened",
+      "openedProvider": "[draft] [tr] Provider opened",
+      "notOpened": "[draft] [tr] Not opened yet",
+      "view": "[draft] [tr] View PDF",
+      "renderAgain": "[draft] [tr] Render again",
+      "renderQueued": "[draft] [tr] A new render is queued.",
+      "next": "[draft] [tr] Next page",
+      "requestLink": "[draft] [tr] Service agreement {number}",
+      "none": "[draft] [tr] No service agreement for this job.",
+      "errors": {
+        "forbidden": "[draft] [tr] This page is for admins.",
+        "not_found": "[draft] [tr] That agreement is not available.",
+        "invalid_state": "[draft] [tr] Only a failed agreement can be rendered again.",
+        "validation_failed": "[draft] [tr] That search is too long.",
+        "action_failed": "[draft] [tr] Something went wrong. Try again."
       }
     }
   }

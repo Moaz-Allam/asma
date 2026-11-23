@@ -2,17 +2,20 @@ import 'server-only';
 
 import type { Db } from '@/lib/db/types';
 import {
+  AGREEMENT_TEMPLATES,
   EMAIL_CALL_TIMEOUT_MS,
   EmailContextSchema,
   EmailRenderError,
   renderEmail,
   type EmailContext,
+  type EmailAttachment,
   type EmailDriver,
   type FinishOutcome,
   type RenderedEmail,
   type SendResult,
 } from '@/lib/email';
 import { log } from '@/lib/observability/log';
+import { downloadAgreement } from '@/lib/storage/agreements';
 
 import { call } from './db';
 
@@ -31,7 +34,10 @@ export const EMAIL_SEND_INTERVAL_MS = 500;
 // Security review 2026-11-19 (item 1): every claimed row must finish inside the route's 60 second maxDuration, even
 // if each send waits its full 15 second timeout, so a claim takes no more rows than the time left allows.
 export const EMAIL_RUN_BUDGET_MS = 50_000;
-const WORST_ROW_MS = EMAIL_CALL_TIMEOUT_MS + EMAIL_SEND_INTERVAL_MS;
+// Spec 0011-20 AC-8: an agreement mail first downloads its PDF (up to 5 seconds more), so a row may take 20 seconds;
+// the claim size counts every row at that worst case.
+export const AGREEMENT_DOWNLOAD_MS = 5_000;
+const WORST_ROW_MS = EMAIL_CALL_TIMEOUT_MS + AGREEMENT_DOWNLOAD_MS + EMAIL_SEND_INTERVAL_MS;
 
 /** How many rows one claim may take with `left` milliseconds of the run's budget remaining: 1 to 10. */
 export function claimLimit(left: number): number {
@@ -55,6 +61,19 @@ export type EmailRunOptions = {
 export type EmailRunResult = { sent: number; skipped: number; failed: number; retried: number };
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** The promise's value, or null once `ms` pass (or when it throws). */
+async function withTimeout<T>(promise: Promise<T | null>, ms: number): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limit = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), ms);
+  });
+  try {
+    return await Promise.race([promise.catch(() => null), limit]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function finish(db: Db, row: EmailRow, outcome: FinishOutcome, detail?: string): Promise<void> {
   try {
@@ -129,6 +148,23 @@ export async function runEmail(options: EmailRunOptions): Promise<EmailRunResult
         continue;
       }
 
+      // Spec 0011-20 AC-8: the agreement PDF, read through lib/storage (the path comes from the row) and checked
+      // against its hash; a read that fails now ends the row as retry.
+      let attachments: EmailAttachment[] | undefined;
+      if (AGREEMENT_TEMPLATES.includes(context.template)) {
+        const agreementId = context.values.agreement_id;
+        const file = agreementId
+          ? await withTimeout(downloadAgreement(options.db, agreementId), AGREEMENT_DOWNLOAD_MS)
+          : null;
+        if (!file) {
+          await finish(options.db, row, 'retry', 'attachment_unavailable');
+          log.warn('agreement_attachment_failed', { request_id: row.id });
+          result.retried += 1;
+          continue;
+        }
+        attachments = [{ filename: `Hizmet-Sozlesmesi-${file.number}.pdf`, content: file.bytes }];
+      }
+
       const wait = lastSend + EMAIL_SEND_INTERVAL_MS - now();
       if (wait > 0) await sleep(wait);
       lastSend = now();
@@ -140,6 +176,7 @@ export async function runEmail(options: EmailRunOptions): Promise<EmailRunResult
           key: row.idempotency_key,
           template: context.template,
           locale: context.locale,
+          ...(attachments ? { attachments } : {}),
         });
       } catch {
         sent = { outcome: 'retry', detail: 'driver_error' };

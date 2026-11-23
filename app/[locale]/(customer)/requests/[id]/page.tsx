@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { AgreementCard } from '@/components/features/agreements/AgreementCard';
 import { JobActionButton } from '@/components/features/jobs/JobActionButton';
 import { PayButton } from '@/components/features/payments/PayButton';
 import { NextStepPanel } from '@/components/features/requests/NextStepPanel';
@@ -14,12 +15,12 @@ import { RatingForm } from '@/components/features/ratings/RatingForm';
 import { RatingSummary } from '@/components/features/ratings/RatingSummary';
 import { ReportStatus } from '@/components/features/reports/ReportStatus';
 import { ContactCard } from '@/components/shared/ContactCard';
-import { AgreementLine } from '@/components/shared/AgreementLine';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PriceCard } from '@/components/shared/PriceCard';
 import { StatusChip } from '@/components/shared/StatusChip';
 import { Button } from '@/components/ui/button';
 import { needsEmailNudge } from '@/lib/account/profile';
+import { activeAgreementVersion, loadMyAgreement } from '@/lib/agreements';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { formatMoney } from '@/lib/format/money';
@@ -136,6 +137,11 @@ export default async function Page({ params, searchParams }: Props) {
   // Spec 0011-10 AC-11: both fees settled; the contacts come from Postgres, which decides (rule 2).
   const revealed = ['UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION', 'COMPLETED'].includes(current);
   const contacts = revealed ? await loadContacts(request.id, { region: user.region, userId: user.id }) : null;
+  // Spec 0011-20 AC-2, AC-4: the version the customer accepts now (the pay tick, and the carried re-pick's tick);
+  // AC-9: the agreement card after the reveal, while Postgres still shows it.
+  const agreementVersion =
+    current === 'SELECTED' || (current === 'OPEN' && offers.carried) ? await activeAgreementVersion() : null;
+  const agreement = revealed || current === 'CANCELLED' ? await loadMyAgreement(request.id) : null;
   // Spec 0011-11 AC-8, R-2, R-5: whether the job closes by itself here, and whether "Job done" may be pressed now.
   const working = ['UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION'].includes(current);
   const closeInfo = working ? await loadCloseInfo(request.id) : null;
@@ -318,6 +324,8 @@ export default async function Page({ params, searchParams }: Props) {
                 windowHours={offers.payment_window_hours}
                 readOnly={!liveOpen}
                 emailNudge={emailNudge}
+                carried={offers.carried}
+                agreementVersion={agreementVersion}
               />
             ) : (
               <EmptyState
@@ -374,14 +382,13 @@ export default async function Page({ params, searchParams }: Props) {
               cashDue={request.cash_due}
               currency={request.currency}
             >
-              {payOpen ? (
+              {payOpen && agreementVersion ? (
                 <>
-                  <AgreementLine />
                   {locale === 'ar' && request.commission_amount > 0 ? (
                     <p className="text-body-s text-text-secondary">{t('next.cardEnglish')}</p>
                   ) : null}
                   <PayButton
-                    target={{ kind: 'commission', requestId: request.id }}
+                    target={{ kind: 'commission', requestId: request.id, agreementVersion }}
                     label={
                       request.commission_amount === 0
                         ? t('next.continue')
@@ -397,7 +404,7 @@ export default async function Page({ params, searchParams }: Props) {
                 </>
               ) : (
                 <p role="status" className="rounded-block bg-surface p-4 text-body-s text-text-primary">
-                  {t('next.ended')}
+                  {payOpen ? t('errors.agreement_required') : t('next.ended')}
                 </p>
               )}
             </NextStepPanel>
@@ -485,6 +492,9 @@ export default async function Page({ params, searchParams }: Props) {
                   : null
               }
             />
+          ) : null}
+          {agreement ? (
+            <AgreementCard agreementId={agreement.id} number={agreement.number} opened={agreement.opened} />
           ) : null}
           {contacts ? (
             <ContactCard

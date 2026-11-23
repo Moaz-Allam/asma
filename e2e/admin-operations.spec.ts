@@ -122,16 +122,16 @@ function seed(locale: string, f: ReturnType<typeof ids>) {
       // 1: SELECTED, waiting for the commission (extend).
       request(f, 1, 10000) +
       asUser(f.customer) +
-      ` perform public.choose_provider('${f.request(1)}', '${f.offer(1)}');` +
+      ` perform public.choose_provider('${f.request(1)}', '${f.offer(1)}', 'draft-1');` +
       // 2: OPEN (cancel).
       request(f, 2, 10000) +
       // 3: revealed, its start passed: a late start flag (address, clear).
       request(f, 3, 0) +
       asUser(f.customer) +
-      ` perform public.choose_provider('${f.request(3)}', '${f.offer(3)}');` +
-      ` perform public.pay_commission('${f.request(3)}', 'tr', null);` +
+      ` perform public.choose_provider('${f.request(3)}', '${f.offer(3)}', 'draft-1');` +
+      ` perform public.pay_commission('${f.request(3)}', 'tr', null, 'draft-1');` +
       asUser(f.provider) +
-      ` v_attempt := (public.pay_provider_fee('${f.offer(3)}', 'tr', null) ->> 'attempt_id')::uuid;` +
+      ` v_attempt := (public.pay_provider_fee('${f.offer(3)}', 'tr', null, 'draft-1') ->> 'attempt_id')::uuid;` +
       ` select id, amount into v_fee, v_amount from public.fee_payments where request_id = '${f.request(3)}' and kind = 'provider_fee';` +
       ` perform public.apply_fee_paid(v_fee, v_attempt, 'e2e-ops-${locale}-3', v_amount, 'TRY', 0);` +
       ` alter table public.requests disable trigger requests_guard;` +

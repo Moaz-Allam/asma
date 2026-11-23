@@ -56,6 +56,17 @@ CREATE FUNCTION pg_temp.clean_up() RETURNS text LANGUAGE sql AS $fn$
            selected_application_id = NULL, selected_at = NULL, payment_deadline = NULL, fee_deadline = NULL
      WHERE customer_id::text LIKE '00000000-0000-0000-0000-0000001900%' AND selected_application_id IS NOT NULL;
     ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
+    -- Spec 0011-20: the agreements and acceptances of these picks (append only, so their guards are lifted here).
+    ALTER TABLE public.service_agreements DISABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances DISABLE TRIGGER USER;
+    ALTER TABLE public.outbox_events DISABLE TRIGGER USER;
+    DELETE FROM public.outbox_events WHERE kind = 'agreement.render'
+       AND payload ->> 'agreement_id' IN (SELECT id::text FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000001900%'));
+    DELETE FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000001900%');
+    DELETE FROM public.agreement_acceptances WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000001900%');
+    ALTER TABLE public.outbox_events ENABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances ENABLE TRIGGER USER;
+    ALTER TABLE public.service_agreements ENABLE TRIGGER USER;
     ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
     DELETE FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000001900%';
     ALTER TABLE public.applications ENABLE TRIGGER applications_guard;
@@ -100,7 +111,7 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
          '00000000-0000-0000-0000-000000190001', 'An offer for the money races, long enough.'
     FROM generate_series(1, 6) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000001900c1", "role": "authenticated"}', true);
-  SELECT public.choose_provider(('00000000-0000-0000-0000-0000001900e' || g)::uuid, ('00000000-0000-0000-0000-0000001900f' || g)::uuid)
+  SELECT public.choose_provider(('00000000-0000-0000-0000-0000001900e' || g)::uuid, ('00000000-0000-0000-0000-0000001900f' || g)::uuid, 'draft-1')
     FROM generate_series(1, 6) g;
   SELECT public.start_checkout(public.open_fee(('00000000-0000-0000-0000-0000001900e' || g)::uuid, 'commission'), 'tr', NULL)
     FROM generate_series(1, 6) g;

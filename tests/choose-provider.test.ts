@@ -54,6 +54,7 @@ const OFFERS = {
   selected_at: null,
   payment_deadline: null,
   cancelled_at: null,
+  carried: false,
   offers: [OFFER],
   chosen: null,
 };
@@ -107,12 +108,13 @@ describe('chooseProvider (AC-7, AC-8)', () => {
   it('sends the two ids only and returns the stored deadline', async () => {
     m.rpc.mockResolvedValue({ data: CHOSEN, error: null });
     const outcome = await chooseProvider(
-      { requestId: REQUEST, applicationId: APPLICATION },
+      { requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null },
       { region: 'TR', userId: USER },
     );
     expect(m.rpc).toHaveBeenCalledWith('choose_provider', {
       p_request_id: REQUEST,
       p_application_id: APPLICATION,
+      p_agreement_version: null,
     });
     expect(outcome).toEqual({
       ok: true,
@@ -128,7 +130,7 @@ describe('chooseProvider (AC-7, AC-8)', () => {
     m.rpc.mockResolvedValue(refuse('choose_settings_invalid'));
     expect(
       await chooseProvider(
-        { requestId: REQUEST, applicationId: APPLICATION },
+        { requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null },
         { region: 'TR', userId: USER },
       ),
     ).toEqual({
@@ -140,14 +142,17 @@ describe('chooseProvider (AC-7, AC-8)', () => {
     m.rpc.mockResolvedValue(refuse('fee_settings_invalid'));
     expect(
       await chooseProvider(
-        { requestId: REQUEST, applicationId: APPLICATION },
+        { requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null },
         { region: 'TR', userId: USER },
       ),
     ).toEqual({ ok: false, code: 'fee_settings_invalid' });
     expect(m.alert).toHaveBeenCalledWith('fee_settings_invalid', { recordId: REQUEST, region: 'TR' });
     m.alert.mockClear();
     m.rpc.mockResolvedValue(refuse('offer_unavailable'));
-    await chooseProvider({ requestId: REQUEST, applicationId: APPLICATION }, { region: 'TR', userId: USER });
+    await chooseProvider(
+      { requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null },
+      { region: 'TR', userId: USER },
+    );
     expect(m.alert).not.toHaveBeenCalled();
   });
 });
@@ -155,7 +160,9 @@ describe('chooseProvider (AC-7, AC-8)', () => {
 describe('chooseProviderAction', () => {
   it('maps a refusal to its code with no Sentry report', async () => {
     m.rpc.mockResolvedValue(refuse('not_choosable'));
-    expect(await chooseProviderAction({ requestId: REQUEST, applicationId: APPLICATION })).toEqual({
+    expect(
+      await chooseProviderAction({ requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null }),
+    ).toEqual({
       success: false,
       error: 'not_choosable',
     });
@@ -175,13 +182,15 @@ describe('chooseProviderAction', () => {
 
   it('revalidates after a new choose, not after a replay, and asks for the customer or admin role', async () => {
     m.rpc.mockResolvedValueOnce({ data: { ...CHOSEN, replayed: true }, error: null });
-    expect(await chooseProviderAction({ requestId: REQUEST, applicationId: APPLICATION })).toMatchObject({
+    expect(
+      await chooseProviderAction({ requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null }),
+    ).toMatchObject({
       success: true,
       data: { replayed: true },
     });
     expect(m.revalidate).not.toHaveBeenCalled();
     m.rpc.mockResolvedValueOnce({ data: CHOSEN, error: null });
-    await chooseProviderAction({ requestId: REQUEST, applicationId: APPLICATION });
+    await chooseProviderAction({ requestId: REQUEST, applicationId: APPLICATION, agreementVersion: null });
     expect(m.revalidate).toHaveBeenCalledWith('/', 'layout');
     expect(m.requireRole).toHaveBeenCalledWith('customer', 'admin');
   });

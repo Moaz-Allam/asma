@@ -235,7 +235,12 @@ export async function listApplications(
  * fee frozen at the choose (rule 1). The IP is the one Vercel saw, or null, and is never logged.
  */
 export async function payProviderFee(
-  input: { applicationId: string; locale: 'ar' | 'tr' | 'en'; payerIp: string | null },
+  input: {
+    applicationId: string;
+    locale: 'ar' | 'tr' | 'en';
+    payerIp: string | null;
+    agreementVersion: string;
+  },
   context: Context,
 ): Promise<
   | { ok: true; status: 'settled' }
@@ -244,7 +249,13 @@ export async function payProviderFee(
 > {
   const result = await call(
     'pay_provider_fee',
-    { p_application_id: input.applicationId, p_locale: input.locale, p_payer_ip: input.payerIp },
+    {
+      p_application_id: input.applicationId,
+      p_locale: input.locale,
+      p_payer_ip: input.payerIp,
+      // Spec 0011-20 AC-3: the version the provider ticked; Postgres binds it to the customer's acceptance.
+      p_agreement_version: input.agreementVersion,
+    },
     context,
   );
   if ('ok' in result) return result;

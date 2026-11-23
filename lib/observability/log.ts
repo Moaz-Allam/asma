@@ -51,7 +51,13 @@ export type LogEvent =
   | 'email_context_failed'
   | 'email_render_failed'
   // Spec 0011-13 AC-7: the account page could not read the email standing; it shows the plain field.
-  | 'email_standing_failed';
+  | 'email_standing_failed'
+  // Spec 0011-20 AC-6 to AC-9: the service agreement. The agreement id rides in request_id; never a path or a name.
+  | 'agreement_rendered'
+  | 'agreement_render_failed'
+  | 'agreement_upload_failed'
+  | 'agreement_attachment_failed'
+  | 'agreement_link_failed';
 
 /** The only ids a record may carry: internal ids, never personal data. */
 export type LogIds = {

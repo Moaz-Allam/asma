@@ -50,7 +50,12 @@ export const payCommissionAction = guardedAction(
   { name: 'payCommission', access: ACCESS, schema: PayCommissionInput },
   async (input, user): Promise<PayActionData | ReturnType<typeof fail>> => {
     const outcome = await payCommission(
-      { requestId: input.requestId, locale: await pageLocale(), payerIp: await payerIp() },
+      {
+        requestId: input.requestId,
+        locale: await pageLocale(),
+        payerIp: await payerIp(),
+        agreementVersion: input.agreementVersion,
+      },
       { region: user.region, userId: user.id },
     );
     if (!outcome.ok) return fail(KNOWN.includes(outcome.code) ? outcome.code : 'action_failed');
@@ -67,7 +72,12 @@ export const payProviderFeeAction = guardedAction(
   { name: 'payProviderFee', access: PROVIDER, schema: PayProviderFeeInput },
   async (input, user): Promise<PayActionData | ReturnType<typeof fail>> => {
     const outcome = await payProviderFee(
-      { applicationId: input.applicationId, locale: await pageLocale(), payerIp: await payerIp() },
+      {
+        applicationId: input.applicationId,
+        locale: await pageLocale(),
+        payerIp: await payerIp(),
+        agreementVersion: input.agreementVersion,
+      },
       { region: user.region },
     );
     if (!outcome.ok) return fail(KNOWN_PROVIDER.includes(outcome.code) ? outcome.code : 'action_failed');

@@ -69,6 +69,7 @@ const OFFERS = {
   selected_at: null,
   payment_deadline: null,
   cancelled_at: null,
+  carried: false,
   offers: [OFFER],
   chosen: null,
 };

@@ -5,6 +5,7 @@ import {
   Calculator,
   ChartColumn,
   CirclePlus,
+  FileText,
   Flag,
   History,
   LayoutDashboard,
@@ -40,6 +41,7 @@ const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
   flags: AlarmClock,
   revenue: ChartColumn,
   quality: ShieldCheck,
+  agreements: FileText,
   history: History,
 };
 

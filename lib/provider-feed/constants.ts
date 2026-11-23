@@ -62,6 +62,8 @@ export const PROVIDER_FEED_DB_CODES = [
   'questions_changed',
   'answers_invalid',
   'contact_info_in_answer',
+  // Spec 0011-20 AC-3: the provider fee takes the version the customer accepted.
+  'agreement_required',
 ] as const;
 export type ProviderFeedCode = (typeof PROVIDER_FEED_DB_CODES)[number];
 

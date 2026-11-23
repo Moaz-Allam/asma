@@ -40,7 +40,7 @@ describe('the kinds', () => {
       /constraint notifications_kind_valid check \(kind in \(([^)]*)\)\)/.exec(migration())?.[1] ?? '';
     const kinds = [...check.matchAll(/'([a-z_]+)'/g)].map((match) => match[1]);
     expect(kinds.sort()).toEqual([...NOTICE_KINDS].sort());
-    expect(NOTICE_KINDS).toHaveLength(25);
+    expect(NOTICE_KINDS).toHaveLength(26);
   });
 });
 
@@ -67,9 +67,11 @@ describe('noticeHref (AC-7)', () => {
             ? '/provider/profile/documents'
             : ['report_received', 'report_handled'].includes(kind)
               ? `/provider/applications/${REQ}/report`
-              : kind === 'report_new_admin'
-                ? '/notifications'
-                : '/provider/applications',
+              : kind === 'agreement_ready'
+                ? '/provider/applications?tab=active'
+                : kind === 'report_new_admin'
+                  ? '/notifications'
+                  : '/provider/applications',
     admin: (kind) => (kind === 'report_new_admin' ? `/admin/reports/${ENT}` : '/notifications'),
   };
 

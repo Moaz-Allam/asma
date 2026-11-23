@@ -116,8 +116,8 @@ describe('the email task (AC-8, R-12)', () => {
       sleep: c.sleep,
     });
     expect(result).toEqual({ sent: 2, skipped: 0, failed: 0, retried: 0 });
-    // 50 seconds of budget at 15.5 seconds a row in the worst case: 3 rows (security review item 1).
-    expect(rpc).toHaveBeenCalledWith('claim_email_outbox', { p_limit: 3, p_worker: 'w' });
+    // 50 seconds of budget at 20.5 seconds a row in the worst case (an agreement mail downloads its PDF): 2 rows.
+    expect(rpc).toHaveBeenCalledWith('claim_email_outbox', { p_limit: 2, p_worker: 'w' });
     expect(d.sent.map((m) => [m.key, m.to, m.template])).toEqual([
       [row(1).idempotency_key, ADDRESS, 'new_offer'],
       [row(2).idempotency_key, ADDRESS, 'job_started'],
@@ -227,8 +227,10 @@ describe('the email task (AC-8, R-12)', () => {
   });
 
   it('claims only as many rows as the time left lets finish, at least 1 and at most 10', () => {
-    expect(claimLimit(50_000)).toBe(3);
-    expect(claimLimit(31_000)).toBe(2);
+    // Spec 0011-20 AC-8: every row counts at 20.5 seconds (an agreement mail downloads its PDF first).
+    expect(claimLimit(50_000)).toBe(2);
+    expect(claimLimit(41_000)).toBe(2);
+    expect(claimLimit(40_000)).toBe(1);
     expect(claimLimit(25_000)).toBe(1);
     expect(claimLimit(1_000)).toBe(1);
     expect(claimLimit(1_000_000)).toBe(10);

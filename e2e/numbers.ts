@@ -100,6 +100,10 @@ export const NUMBER = {
   answersCustomer: 59,
   answersProvider: 60,
   answersAdmin: 61,
+  // Position 20 (spec 0011-20 AC-14): the customer and the provider who tick and pay, and the admin who views the PDF.
+  agreementCustomer: 62,
+  agreementProvider: 63,
+  agreementAdmin: 64,
 } as const;
 
 /**

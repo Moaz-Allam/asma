@@ -59,6 +59,17 @@ CREATE FUNCTION pg_temp.clean_up() RETURNS text LANGUAGE sql AS $fn$
            fee_deadline = NULL
      WHERE customer_id::text LIKE '00000000-0000-0000-0000-0000002200%' AND selected_application_id IS NOT NULL;
     ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
+    -- Spec 0011-20: the agreements and acceptances of these picks (append only, so their guards are lifted here).
+    ALTER TABLE public.service_agreements DISABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances DISABLE TRIGGER USER;
+    ALTER TABLE public.outbox_events DISABLE TRIGGER USER;
+    DELETE FROM public.outbox_events WHERE kind = 'agreement.render'
+       AND payload ->> 'agreement_id' IN (SELECT id::text FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000002200%'));
+    DELETE FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000002200%');
+    DELETE FROM public.agreement_acceptances WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000002200%');
+    ALTER TABLE public.outbox_events ENABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances ENABLE TRIGGER USER;
+    ALTER TABLE public.service_agreements ENABLE TRIGGER USER;
     ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
     DELETE FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000002200%';
     ALTER TABLE public.applications ENABLE TRIGGER applications_guard;
@@ -105,9 +116,9 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
          '00000000-0000-0000-0000-000000220001', 'An offer for the commission races, long enough.'
     FROM generate_series(1, 7) g;
   SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000002200c1", "role": "authenticated"}', true);
-  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002200e' || g)::uuid, ('00000000-0000-0000-0000-0000002200f' || g)::uuid)
+  SELECT public.choose_provider(('00000000-0000-0000-0000-0000002200e' || g)::uuid, ('00000000-0000-0000-0000-0000002200f' || g)::uuid, 'draft-1')
     FROM generate_series(1, 7) g;
-  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002200e' || g)::uuid, 'tr', NULL) FROM generate_series(4, 5) g;
+  SELECT public.pay_commission(('00000000-0000-0000-0000-0000002200e' || g)::uuid, 'tr', NULL, 'draft-1') FROM generate_series(4, 5) g;
   SELECT public.fail_attempt(a.id, 'psp_failed') FROM public.checkout_attempts a JOIN public.fee_payments f ON f.id = a.fee_payment_id
    WHERE f.request_id = '00000000-0000-0000-0000-0000002200e5';
   ALTER TABLE public.requests DISABLE TRIGGER requests_guard;
@@ -128,7 +139,7 @@ CREATE FUNCTION pg_temp.one(p_sql text) RETURNS text LANGUAGE sql AS $$
 CREATE FUNCTION pg_temp.result(p_conn text) RETURNS jsonb LANGUAGE sql AS $$
   SELECT r::jsonb FROM extensions.dblink_get_result(p_conn, false) AS t(r text) $$;
 CREATE FUNCTION pg_temp.pay_sql(p text) RETURNS text LANGUAGE sql AS $$
-  SELECT format('SELECT public.pay_commission(%L, %L, NULL)::text', '00000000-0000-0000-0000-0000002200e' || p, 'tr') $$;
+  SELECT format('SELECT public.pay_commission(%L, %L, NULL, ''draft-1'')::text', '00000000-0000-0000-0000-0000002200e' || p, 'tr') $$;
 CREATE FUNCTION pg_temp.cancel_sql(p text) RETURNS text LANGUAGE sql AS $$
   SELECT format('SELECT public.cancel_request(%L, NULL)::text', '00000000-0000-0000-0000-0000002200e' || p) $$;
 -- The relay's call for a request's commission on its newest attempt, its ids read first as the owner.

@@ -51,6 +51,13 @@ export default function config(phase: string): NextConfig {
     // PostHog calls its endpoints with a trailing slash (/api/a/e/), which must reach the handler as a
     // POST, not a redirect; the cost is that /ar and /ar/ both answer.
     skipTrailingSlashRedirect: true,
+
+    // Spec 0011-20 AC-6: the relay renders the service agreement PDF with pdfkit, loaded with Node's own require
+    // (it reads files next to itself), and the vendored Noto Sans travels with the relay route's bundle.
+    serverExternalPackages: ['pdfkit', 'fontkit'],
+    outputFileTracingIncludes: {
+      '/api/relay': ['./lib/agreements/fonts/**/*'],
+    },
   };
 
   const release = appRelease(process.env);

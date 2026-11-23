@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { myAcceptedAgreement } from '@/lib/agreements';
+
 import { checkoutStatus, loadOffers, type CheckoutStatus } from './index';
 
 /**
@@ -11,9 +13,12 @@ import { checkoutStatus, loadOffers, type CheckoutStatus } from './index';
  * reads the request). A provider has no read on requests, so a provider fee reads only what `my_checkout`
  * returns: the fee still pending before its own deadline (`fee_deadline`).
  */
-export async function loadCheckoutPage(
-  attemptId: string,
-): Promise<{ status: CheckoutStatus; canRetry: boolean; receiptHref: string | null } | null> {
+export async function loadCheckoutPage(attemptId: string): Promise<{
+  status: CheckoutStatus;
+  canRetry: boolean;
+  receiptHref: string | null;
+  agreementVersion: string | null;
+} | null> {
   const status = await checkoutStatus(attemptId);
   if (!status) return null;
   let canRetry: boolean;
@@ -29,5 +34,7 @@ export async function loadCheckoutPage(
       status.fee_status === 'pending' && status.deadline !== null && Date.parse(status.deadline) > Date.now();
   }
   const receiptHref = status.fee_status !== 'pending' ? `/receipts/${status.fee_id}` : null;
-  return { status, canRetry, receiptHref };
+  // Spec 0011-20 AC-2, AC-3: Try again sends the version this payer already accepted; without one it cannot pay.
+  const agreementVersion = canRetry ? await myAcceptedAgreement(status.request_id) : null;
+  return { status, canRetry: canRetry && agreementVersion !== null, receiptHref, agreementVersion };
 }

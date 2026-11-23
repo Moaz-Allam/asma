@@ -28,6 +28,17 @@ CREATE FUNCTION pg_temp.clean_up() RETURNS text LANGUAGE sql AS $fn$
            selected_application_id = NULL, selected_at = NULL, payment_deadline = NULL
      WHERE customer_id::text LIKE '00000000-0000-0000-0000-0000001700%' AND selected_application_id IS NOT NULL;
     ALTER TABLE public.requests ENABLE TRIGGER requests_guard;
+    -- Spec 0011-20: the agreements and acceptances of these picks (append only, so their guards are lifted here).
+    ALTER TABLE public.service_agreements DISABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances DISABLE TRIGGER USER;
+    ALTER TABLE public.outbox_events DISABLE TRIGGER USER;
+    DELETE FROM public.outbox_events WHERE kind = 'agreement.render'
+       AND payload ->> 'agreement_id' IN (SELECT id::text FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000001700%'));
+    DELETE FROM public.service_agreements WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000001700%');
+    DELETE FROM public.agreement_acceptances WHERE application_id IN (SELECT id FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000001700%');
+    ALTER TABLE public.outbox_events ENABLE TRIGGER USER;
+    ALTER TABLE public.agreement_acceptances ENABLE TRIGGER USER;
+    ALTER TABLE public.service_agreements ENABLE TRIGGER USER;
     ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
     DELETE FROM public.applications WHERE provider_id::text LIKE '00000000-0000-0000-0000-0000001700%';
     ALTER TABLE public.applications ENABLE TRIGGER applications_guard;
@@ -93,7 +104,7 @@ SELECT extensions.dblink_exec(pg_temp.conn(), $$
 CREATE FUNCTION pg_temp.as_sql(p text) RETURNS text LANGUAGE sql IMMUTABLE AS $$
   SELECT format($q$ SET request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000001700%s"}' $q$, p) $$;
 CREATE FUNCTION pg_temp.choose_sql(p_request text, p_application text) RETURNS text LANGUAGE sql IMMUTABLE AS $$
-  SELECT format($q$ SELECT public.choose_provider('00000000-0000-0000-0000-0000001700%s', '00000000-0000-0000-0000-0000001700%s')::text $q$,
+  SELECT format($q$ SELECT public.choose_provider('00000000-0000-0000-0000-0000001700%s', '00000000-0000-0000-0000-0000001700%s', 'draft-1')::text $q$,
                 p_request, p_application) $$;
 CREATE FUNCTION pg_temp.one(p_sql text) RETURNS text LANGUAGE sql AS $$
   SELECT r FROM extensions.dblink(pg_temp.conn(), p_sql) AS t(r text) $$;

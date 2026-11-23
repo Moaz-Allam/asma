@@ -55,7 +55,7 @@ BEGIN
   VALUES (pg_temp.app(p), 'TR', pg_temp.r(p), pg_temp.u('a1'), 'An offer for the payment tests, long enough.');
   IF p_choose THEN
     PERFORM set_config('request.jwt.claims', jsonb_build_object('sub', pg_temp.u('c1'), 'role', 'authenticated')::text, true);
-    PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p));
+    PERFORM public.choose_provider(pg_temp.r(p), pg_temp.app(p), 'draft-1');
   END IF;
   RETURN pg_temp.r(p);
 END $$;
@@ -84,9 +84,10 @@ BEGIN
   RETURN v;
 END $$;
 -- pay_commission as c1 (or another user) on request p.
-CREATE FUNCTION pg_temp.pay(p integer, p_locale text DEFAULT 'tr', p_ip text DEFAULT NULL, p_user text DEFAULT 'c1')
+CREATE FUNCTION pg_temp.pay(p integer, p_locale text DEFAULT 'tr', p_ip text DEFAULT NULL, p_user text DEFAULT 'c1',
+                             p_version text DEFAULT 'draft-1')
   RETURNS text LANGUAGE sql AS $$
-  SELECT pg_temp.call_as(p_user, format('SELECT public.pay_commission(%L, %L, %L)::text', pg_temp.r(p), p_locale, p_ip)) $$;
+  SELECT pg_temp.call_as(p_user, format('SELECT public.pay_commission(%L, %L, %L, %L)::text', pg_temp.r(p), p_locale, p_ip, p_version)) $$;
 -- Run setup statements and an expression, then roll all of it back. Returns the expression as text, or the
 -- refusal of the first statement that raised (with its hint after a slash).
 CREATE FUNCTION pg_temp.probe(p_setup text[], p_expr text) RETURNS text LANGUAGE plpgsql AS $$
@@ -218,7 +219,7 @@ SELECT is(pg_temp.err(format('SELECT public.start_checkout(%L, %L, NULL)', gen_r
 
 -- ══ AC-4: pay_commission, its refusals in order ═══════════════════════════════
 SELECT is(pg_temp.pay(1, 'de'), 'validation_failed', 'AC-4 step 1: an unknown locale');
-SELECT is(pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL)::text', gen_random_uuid(), 'tr')),
+SELECT is(pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, ''draft-1'')::text', gen_random_uuid(), 'tr')),
   'not_found', 'AC-4 step 2: an unknown request');
 SELECT is(pg_temp.pay(1, 'tr', NULL, 'c2'), 'not_found', 'AC-4 step 2: another customer''s request answers the same');
 SELECT is(pg_temp.pay(1, 'tr', NULL, 'anon'), '42501', 'AC-4: anon cannot call it');
@@ -244,7 +245,7 @@ SELECT is(pg_temp.probe(ARRAY[format($$UPDATE public.providers SET status = 'sus
 
 SELECT is(pg_temp.probe(ARRAY[pg_temp.as_c1(), 'ALTER TABLE public.platform_settings DISABLE TRIGGER pricing_settings_guard',
                               $$DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'checkout_hold_minutes'$$],
-                        format('public.pay_commission(%L, %L, NULL)', pg_temp.r(1), 'tr')),
+                        format('public.pay_commission(%L, %L, NULL, ''draft-1'')', pg_temp.r(1), 'tr')),
   'checkout_settings_invalid', 'AC-4 step 7: a missing hold setting refuses');
 
 -- A new attempt, then the same one again.
@@ -299,7 +300,7 @@ SELECT results_eq(
 SELECT is(pg_temp.probe(ARRAY[pg_temp.as_c1(), 'ALTER TABLE public.platform_settings DISABLE TRIGGER pricing_settings_guard',
                               $$DELETE FROM public.platform_settings WHERE region = 'TR' AND key = 'checkouts_per_fee_hour'$$,
                               format('UPDATE public.action_counters SET count = 1 WHERE subject_id = %L', pg_temp.fee(5))],
-                        format('public.pay_commission(%L, %L, NULL)', pg_temp.r(5), 'tr')),
+                        format('public.pay_commission(%L, %L, NULL, ''draft-1'')', pg_temp.r(5), 'tr')),
   'checkout_settings_invalid', 'R-6: a missing limit refuses');
 
 -- ══ AC-5, R-1: accept_commission ═════════════════════════════════════════════

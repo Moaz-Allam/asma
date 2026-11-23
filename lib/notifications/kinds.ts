@@ -2,7 +2,7 @@ import type { Role } from '@/lib/auth/roles';
 import { NUMBER_LOCALE } from '@/lib/requests/view';
 
 /**
- * The in app notices (spec 0011-18): the 25 kinds (24, plus 19a's `document_expiring`), where each one leads, and the pure formatting the bell and the page
+ * The in app notices (spec 0011-18): the 26 kinds (24, plus 19a's `document_expiring` and 20's `agreement_ready`), where each one leads, and the pure formatting the bell and the page
  * share. No `server-only`: nothing here reads data. The kinds equal the check on `notifications.kind`;
  * tests/notifications-kinds.test.ts reads it out of the migration.
  */
@@ -34,6 +34,8 @@ export const NOTICE_KINDS = [
   'rating_received',
   // Spec 0011-19a AC-14: a required document expires soon.
   'document_expiring',
+  // Spec 0011-20 AC-8: the service agreement is ready (each side), leading to the request or the job.
+  'agreement_ready',
 ] as const;
 export type NoticeKind = (typeof NOTICE_KINDS)[number];
 
@@ -82,6 +84,8 @@ export function noticeHref(
     if (REPORT_KINDS.includes(kind)) {
       return requestId ? `/provider/applications/${requestId}/report` : '/notifications';
     }
+    // Spec 0011-20 AC-8: My jobs, Active, where the job shows its agreement card.
+    if (kind === 'agreement_ready') return '/provider/applications?tab=active';
     return '/provider/applications';
   }
   // customer

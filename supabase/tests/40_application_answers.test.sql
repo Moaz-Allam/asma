@@ -395,7 +395,7 @@ SELECT is((SELECT jsonb_agg(jsonb_build_object('message', x -> 'message', 'hidde
 SELECT is(public.request_offers(pg_temp.r(5)) -> 'offers' -> 0 -> 'answers', 'null'::jsonb, 'a message card has answers null');
 
 -- A chosen provider suspended after the choose shows no answers (X-1).
-SELECT is(public.choose_provider(pg_temp.r(1), (SELECT j -> 'application' ->> 'id' FROM ok1)::uuid) ->> 'status', 'ok', 'c1 chooses a1');
+SELECT is(public.choose_provider(pg_temp.r(1), (SELECT j -> 'application' ->> 'id' FROM ok1)::uuid, 'draft-1') ->> 'status', 'ok', 'c1 chooses a1');
 RESET ROLE;
 UPDATE public.providers SET status = 'suspended', suspension_reason = 'Repeated complaints from customers' WHERE id = pg_temp.u('a1');
 SET LOCAL ROLE authenticated;
