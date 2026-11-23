@@ -15,7 +15,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(138);
+SELECT plan(154);
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -497,6 +497,9 @@ SELECT is(pg_temp.call_as('service', format('SELECT public.fail_agreement_render
   'AC-7: the last failed try marks it failed');
 SELECT is(pg_temp.call_as('ad', format($$ SELECT (r ->> 'failed') FROM jsonb_array_elements(public.admin_agreements(%L, NULL) -> 'rows') r $$, pg_temp.r(4))),
   'true', 'AC-10: the admin list shows it failed');
+-- The relay ended attempt 1 as failed (its last try).
+UPDATE public.outbox_events SET status = 'failed', next_attempt_at = NULL
+ WHERE idempotency_key = 'agreement.render:' || (SELECT id FROM ag4) || ':1';
 SELECT is(pg_temp.call_as('ad', format('SELECT public.admin_rerender_agreement(%L) ->> %L', (SELECT id FROM ag4), 'attempt')), '2',
   'AC-7: render again queues attempt 2');
 SELECT is((SELECT count(*)::integer FROM public.outbox_events WHERE idempotency_key = 'agreement.render:' || (SELECT id FROM ag4) || ':2'), 1,
@@ -540,6 +543,78 @@ SELECT is(pg_temp.err(format($$ UPDATE storage.objects SET metadata = '{}' WHERE
   '42501', 'AC-11: nor changes one');
 SELECT is(pg_temp.call_as('service', format($$ DELETE FROM storage.objects WHERE bucket_id = 'service-agreements' AND name = %L RETURNING 'x' $$, (SELECT p FROM path2))),
   '42501', 'AC-11: the service role neither');
+
+-- ══ Review fixes (20261205090000_service_agreement_fixes) ════════════════════
+-- S20-1: no API role reads service_agreements directly; admin goes through the functions.
+SELECT ok(NOT has_table_privilege('authenticated', 'public.service_agreements', 'SELECT'),
+  'S20-1: authenticated has no read on service_agreements');
+SELECT is(pg_temp.call_as('ad', $$ SELECT count(*)::text FROM public.service_agreements $$), '42501',
+  'S20-1: admin cannot dump the frozen street lines and phones');
+SELECT is(pg_temp.call_as('ad', format($$ SELECT (public.admin_agreements(%L, NULL) -> 'rows' -> 0 ->> 'timezone') $$, pg_temp.r(2))),
+  'Europe/Istanbul', 'admin rows carry the region time zone');
+
+-- S20-2: a provider suspended after the reveal loses the card, the open, the read and the mail.
+SELECT is(pg_temp.probe(ARRAY[format($q$UPDATE public.providers SET status = 'suspended', suspension_reason = 'A test of the agreement' WHERE id = %L$q$, pg_temp.u('a1'))],
+                        format('SELECT pg_temp.call_as(%L, %L) || pg_temp.call_as(%L, %L) || pg_temp.call_as(%L, %L)',
+                               'a1', format('SELECT public.agreement_visible(%L)::text', (SELECT id FROM ag2)),
+                               'a1', format('SELECT public.open_service_agreement(%L)::text', (SELECT id FROM ag2)),
+                               'a1', format('SELECT public.agreement_read_allowed(%L)::text', (SELECT p FROM path2)))),
+  'falsenot_foundfalse', 'S20-2: a suspended provider gets no card, no open, no storage read');
+SELECT is(pg_temp.probe(ARRAY[format($q$UPDATE public.providers SET status = 'suspended', suspension_reason = 'A test of the agreement' WHERE id = %L$q$, pg_temp.u('a1'))],
+                        format($q$SELECT public.email_context(id) ->> 'reason' FROM public.outbox_events WHERE idempotency_key = 'agreement:%s:provider'$q$, (SELECT id FROM ag2))),
+  'condition', 'S20-2: and no agreement mail');
+SELECT is(pg_temp.call_as('c1', format('SELECT public.agreement_visible(%L)::text', (SELECT id FROM ag2))), 'true',
+  'S20-6: the customer of a live job still sees the card');
+SELECT is(pg_temp.probe(ARRAY[$$ ALTER TABLE public.requests DISABLE TRIGGER requests_guard $$,
+                              format($$ UPDATE public.requests SET status = 'CANCELLED', cancelled_at = now() - interval '30 days', closed_at = now() - interval '30 days', closed_by = 'admin', cancelled_by = 'admin' WHERE id = %L $$, pg_temp.r(2)),
+                              $$ ALTER TABLE public.requests ENABLE TRIGGER requests_guard $$],
+                        format('SELECT pg_temp.call_as(%L, %L)', 'c1', format('SELECT public.agreement_visible(%L)::text', (SELECT id FROM ag2)))),
+  'false', 'S20-6: past the contacts window the card is gone too');
+
+-- S20-3: a failing agreement never rolls back the reveal.
+SELECT pg_temp.base(6, 0);
+SELECT pg_temp.as_user('c1');
+SELECT public.choose_provider(pg_temp.r(6), pg_temp.app(6, 'a1'));
+SELECT public.pay_commission(pg_temp.r(6), 'tr', NULL, 'draft-1');
+ALTER TABLE public.applications DISABLE TRIGGER applications_guard;
+UPDATE public.applications SET provider_fee_amount = 0 WHERE id = pg_temp.app(6, 'a1');
+ALTER TABLE public.applications ENABLE TRIGGER applications_guard;
+CREATE TEMP TABLE seq_before AS SELECT last_value, is_called FROM public.service_agreement_seq_tr;
+SELECT setval('public.service_agreement_seq_tr', 999999, true);
+SELECT is(pg_temp.call_as('a1', format('SELECT public.pay_provider_fee(%L, %L, NULL, %L) ->> %L', pg_temp.app(6, 'a1'), 'tr', 'draft-1', 'status')),
+  'settled', 'S20-3: the fee settles although the agreement number has run out');
+SELECT setval('public.service_agreement_seq_tr', (SELECT last_value FROM seq_before), (SELECT is_called FROM seq_before));
+SELECT is((SELECT status FROM public.requests WHERE id = pg_temp.r(6)) || ' ' ||
+          (SELECT count(*) FROM public.service_agreements WHERE request_id = pg_temp.r(6)),
+  'UNLOCKED 0', 'S20-3: the reveal stands with no agreement, which the heartbeat alerts');
+
+-- S20-4: a retry is bound to the version already accepted, even after the template changes.
+SELECT pg_temp.base(7, 10000);
+SELECT pg_temp.as_user('c1');
+SELECT public.choose_provider(pg_temp.r(7), pg_temp.app(7, 'a1'));
+SELECT pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, %L)::text', pg_temp.r(7), 'tr', 'draft-1'));
+UPDATE public.agreement_templates SET active = false WHERE version = 'draft-1';
+UPDATE public.agreement_templates SET active = true WHERE version = 'draft-2';
+SELECT is(pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, %L)::text', pg_temp.r(7), 'tr', 'draft-2')),
+  'agreement_required', 'S20-4: the new active version is refused once draft-1 was accepted for this pick');
+SELECT is(pg_temp.call_as('c1', format('SELECT public.pay_commission(%L, %L, NULL, %L) ->> %L', pg_temp.r(7), 'tr', 'draft-1', 'status')),
+  'checkout', 'S20-4: the accepted version still pays (the retry page offers it)');
+UPDATE public.agreement_templates SET active = false WHERE version = 'draft-2';
+UPDATE public.agreement_templates SET active = true WHERE version = 'draft-1';
+
+-- S20-5 and the single alert: no re-render while one is queued; a second failure does not alert again.
+SELECT is(pg_temp.call_as('service', format('SELECT public.fail_agreement_render(%L) ->> %L', (SELECT id FROM ag4), 'status')), 'failed',
+  'the queued attempt 2 fails');
+SELECT is(pg_temp.call_as('service', format('SELECT public.fail_agreement_render(%L) ->> %L', (SELECT id FROM ag4), 'status')), 'already_failed',
+  'a second failure reports already_failed, so the relay alerts once');
+SELECT is(pg_temp.call_as('ad', format('SELECT public.admin_rerender_agreement(%L)::text', (SELECT id FROM ag4))), 'invalid_state',
+  'S20-5: no re-render while attempt 2 is still queued');
+UPDATE public.outbox_events SET status = 'failed', next_attempt_at = NULL
+ WHERE idempotency_key = 'agreement.render:' || (SELECT id FROM ag4) || ':2';
+SELECT is(pg_temp.call_as('ad', format('SELECT public.admin_rerender_agreement(%L) ->> %L', (SELECT id FROM ag4), 'attempt')), '3',
+  'S20-5: once it ended, attempt 3 is queued');
+SELECT ok(EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'service_agreements_storage_path_idx'),
+  'the storage read check has its index');
 
 -- ══ grants ═══════════════════════════════════════════════════════════════════
 SELECT ok(NOT has_function_privilege('authenticated', 'public.finish_agreement_render(uuid, text, text, integer)', 'EXECUTE')

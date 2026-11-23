@@ -90,7 +90,7 @@ export function PayButton({ target, label }: { target: PayTarget; label: string 
       <Button
         className="self-start"
         disabled={busy || !accepted}
-        aria-disabled={busy || !accepted}
+
         onClick={pay}
       >
         {label}

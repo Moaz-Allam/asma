@@ -20,7 +20,7 @@ import { PriceCard } from '@/components/shared/PriceCard';
 import { StatusChip } from '@/components/shared/StatusChip';
 import { Button } from '@/components/ui/button';
 import { needsEmailNudge } from '@/lib/account/profile';
-import { activeAgreementVersion, loadMyAgreement } from '@/lib/agreements';
+import { activeAgreementVersion, loadMyAgreement, myAcceptedAgreement } from '@/lib/agreements';
 import { guardPage } from '@/lib/auth/session';
 import { localized } from '@/lib/catalog/localized';
 import { formatMoney } from '@/lib/format/money';
@@ -139,8 +139,13 @@ export default async function Page({ params, searchParams }: Props) {
   const contacts = revealed ? await loadContacts(request.id, { region: user.region, userId: user.id }) : null;
   // Spec 0011-20 AC-2, AC-4: the version the customer accepts now (the pay tick, and the carried re-pick's tick);
   // AC-9: the agreement card after the reveal, while Postgres still shows it.
+  // Security review S20-4: once the customer accepted for this pick, a retry takes exactly that version.
   const agreementVersion =
-    current === 'SELECTED' || (current === 'OPEN' && offers.carried) ? await activeAgreementVersion() : null;
+    current === 'SELECTED'
+      ? ((await myAcceptedAgreement(request.id)) ?? (await activeAgreementVersion()))
+      : current === 'OPEN' && offers.carried
+        ? await activeAgreementVersion()
+        : null;
   const agreement = revealed || current === 'CANCELLED' ? await loadMyAgreement(request.id) : null;
   // Spec 0011-11 AC-8, R-2, R-5: whether the job closes by itself here, and whether "Job done" may be pressed now.
   const working = ['UNLOCKED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION'].includes(current);

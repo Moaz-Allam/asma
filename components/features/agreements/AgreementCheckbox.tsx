@@ -44,12 +44,17 @@ export function AgreementCheckbox({
         <Label htmlFor={id} className="text-body-s font-medium text-text-primary">
           {t.rich('checkbox', {
             agreement: (chunks) => (
-              <Link href={`/agreement/${encodeURIComponent(version)}`} target="_blank" className={link}>
+              <Link
+                href={`/agreement/${encodeURIComponent(version)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={link}
+              >
                 {chunks}
               </Link>
             ),
             terms: (chunks) => (
-              <Link href="/terms" target="_blank" className={link}>
+              <Link href="/terms" target="_blank" rel="noopener noreferrer" className={link}>
                 {chunks}
               </Link>
             ),

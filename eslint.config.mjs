@@ -35,6 +35,11 @@ const posthogMessage =
 const emailImportMessage =
   'Only the outbox relay sends mail (spec 0011-13 AC-1, rule 3): lib/email is imported by lib/relay alone. ' +
   'A move writes its audit row; a trigger queues the mail.';
+// Security review S20 (guardrail): the agreement file door takes the relay's handle and the renderer runs only in the
+// relay (rule 3), so only lib/relay imports them.
+const agreementFilesMessage =
+  'lib/storage/agreements and lib/agreements/render belong to the relay (spec 0011-20 AC-6): pages and actions ' +
+  'read agreements through lib/agreements and lib/admin-agreements.';
 
 /**
  * Builds the import restrictions, minus whatever the door being configured may use.
@@ -49,6 +54,7 @@ function restrictedImports({
   posthog = false,
   relay = false,
   email = false,
+  agreementFiles = false,
 } = {}) {
   const paths = [];
   const patterns = [
@@ -82,6 +88,12 @@ function restrictedImports({
       message: emailImportMessage,
     });
   }
+  if (!agreementFiles) {
+    patterns.push({
+      group: ['@/lib/storage/agreements', '@/lib/agreements/render'],
+      message: agreementFilesMessage,
+    });
+  }
   if (!relay) {
     patterns.push({
       group: ['@/lib/relay', '@/lib/relay/*'],
@@ -109,6 +121,7 @@ function restrictedModules({
   sentry = false,
   posthog = false,
   email = false,
+  agreementFiles = false,
 } = {}) {
   const modules = [];
   if (sentry === false) modules.push(['^@sentry.', sentryMessage]);
@@ -130,6 +143,9 @@ function restrictedModules({
     );
   }
   if (!email) modules.push(['^@.lib.email(.|$)', emailImportMessage]);
+  if (!agreementFiles) {
+    modules.push(['^@.lib.(storage.agreements|agreements.render)$', agreementFilesMessage]);
+  }
   if (!admin) {
     modules.push([
       '^@.lib.db.admin$',
@@ -320,11 +336,17 @@ const config = [
   {
     files: RELAY,
     rules: {
-      'no-restricted-imports': restrictedImports({ psp: true, admin: true, relay: true, email: true }),
+      'no-restricted-imports': restrictedImports({
+        psp: true,
+        admin: true,
+        relay: true,
+        email: true,
+        agreementFiles: true,
+      }),
       // The relay route's secret is checked inside lib/relay (spec 0011-08 AC-5).
       'no-restricted-syntax': restrictedSyntax({
         exempt: ['RELAY_SECRET'],
-        modules: { psp: true, admin: true, email: true },
+        modules: { psp: true, admin: true, email: true, agreementFiles: true },
       }),
     },
   },
@@ -423,7 +445,14 @@ const config = [
   // still holds in tests.
   {
     files: TESTS,
-    rules: { 'no-restricted-imports': restrictedImports({ psp: true, relay: true, email: true }) },
+    rules: {
+      'no-restricted-imports': restrictedImports({
+        psp: true,
+        relay: true,
+        email: true,
+        agreementFiles: true,
+      }),
+    },
   },
   { files: RELAY_CALLERS, rules: { 'no-restricted-imports': restrictedImports({ relay: true }) } },
 ];

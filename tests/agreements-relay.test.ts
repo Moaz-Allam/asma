@@ -188,7 +188,7 @@ describe('renderAgreement (AC-6)', () => {
 });
 
 describe('agreementGaveUp and the gap alert (AC-5, AC-7)', () => {
-  function failDb(status: 'failed' | 'rendered') {
+  function failDb(status: 'failed' | 'already_failed' | 'rendered') {
     const rpc = vi.fn(async (fn: string) =>
       fn === 'fail_agreement_render'
         ? { data: { status }, error: null }
@@ -204,6 +204,12 @@ describe('agreementGaveUp and the gap alert (AC-5, AC-7)', () => {
     await agreementGaveUp(db, renderRow());
     expect(rpc).toHaveBeenCalledWith('fail_agreement_render', { p_id: ID });
     expect(mocks.raiseAlert).toHaveBeenCalledWith('agreement_render_failed', { recordId: ID, region: 'TR' });
+  });
+
+  it('alerts once: a second give up (drain, then the heartbeat) stays quiet', async () => {
+    const { db } = failDb('already_failed');
+    await agreementGaveUp(db, renderRow());
+    expect(mocks.raiseAlert).not.toHaveBeenCalled();
   });
 
   it('stays quiet when the file exists after all', async () => {

@@ -20,8 +20,6 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const ZONE: Readonly<Record<string, string>> = { TR: 'Europe/Istanbul', KSA: 'Asia/Riyadh' };
-
 function one(value: string | string[] | undefined): string | null {
   return typeof value === 'string' && value !== '' ? value : null;
 }
@@ -80,7 +78,7 @@ export default async function Page({ params, searchParams }: Props) {
       ) : (
         <ul className="flex flex-col gap-3">
           {list.rows.map((row) => {
-            const tz = ZONE[row.region] ?? 'UTC';
+            const tz = row.timezone;
             return (
               <li
                 key={row.id}
