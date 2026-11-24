@@ -190,9 +190,10 @@ describe('the copy (AC-12)', () => {
     });
   }
 
-  it('Turkish waits for the translator, marked [tr] (D58, D100)', () => {
+  it('Turkish is translated: no [tr] marker, not the English line (owner, 2026-11-24)', () => {
     for (const kind of NOTICE_KINDS) {
-      expect(tr.NoticeKinds[kind].title.startsWith('[tr] ')).toBe(true);
+      expect(tr.NoticeKinds[kind].title).not.toContain('[tr]');
+      expect(tr.NoticeKinds[kind].title).not.toBe(en.NoticeKinds[kind].title);
     }
   });
 });

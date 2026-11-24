@@ -208,7 +208,7 @@ describe('the banned words (R-13, AC-3)', () => {
   const EN = ['balance', 'wallet', 'withdraw', 'earning', 'payout', 'held'];
   const BANNED: Record<string, string[]> = {
     en: EN,
-    // The Turkish file holds English lines under the `[tr]` marker until translated (D100), so both lists apply.
+    // The English list stays on Turkish too: a line left untranslated must not slip a banned word through.
     tr: [...EN, 'bakiye', 'cüzdan', 'para çek', 'kazanç'],
     ar: ['رصيد', 'محفظة', 'سحب', 'أرباح'],
   };

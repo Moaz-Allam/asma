@@ -138,6 +138,11 @@ Product brief: `docs/brief/` (not imported yet, owner step S12). Until then the 
   `20261204090000_service_agreement` pushed with the CLI right before the merge. GitHub's checks with the repo public for
   the run (D202 route). Review fixes (S20-1 to S20-7, D227) in `20261205090000_service_agreement_fixes` on
   `feat/20-review-fixes`. Next: 20b, then 21.
+- 2026-11-24 · **20b merged** (spec 0011-20b, PR #77, `b7076c8`, D229, D231): structured addresses (il and ilçe from the zone,
+  mahalle, street, numbers, postal code, directions) and an optional MapLibre pin; the provider's address at onboarding, on
+  the agreement after both paid. Migration `20261206090000_structured_address` pushed with the CLI before the merge. Review
+  fixes: MapTiler paths out of Sentry, hidden Unicode refused, zod jitless (CSP eval probe). Carry overs in its two reviews.
+  Demo accounts and a demo catalog seeded in the cloud for the client. Turkish translated in full (D232, PR #78).
 
 ## Stack (pinned exactly)
 
