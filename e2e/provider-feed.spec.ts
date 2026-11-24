@@ -117,9 +117,11 @@ async function axe(page: Page) {
 async function tick(scope: Page | Locator, group: string, option: string) {
   const fieldset = scope.getByRole('group', { name: group, exact: true });
   // Exact name: in Turkish "Pazar" (Sunday) is the start of "Pazartesi" (Monday).
+  // A `has` locator is matched inside each label, so it is built from the page, not the fieldset.
+  const page = 'goto' in scope ? scope : scope.page();
   const label = fieldset
     .locator('label')
-    .filter({ has: fieldset.getByRole('checkbox', { name: option, exact: true }) });
+    .filter({ has: page.getByRole('checkbox', { name: option, exact: true }) });
   await label.click();
   await expect(label.getByRole('checkbox')).toBeChecked();
 }
