@@ -200,7 +200,7 @@ export default async function Page({ params }: Props) {
                     price={row.fixed_price}
                     currency={row.currency}
                     offers={tFeed('feed.offers', { count: row.applied_count, cap: row.cap })}
-                    appliedLabel={row.applied ? tFeed('feed.applied') : null}
+                    appliedLabel={row.application ? tFeed('feed.applied') : null}
                     full={row.full}
                     fullLabel={tFeed('feed.full')}
                     actionLabel={tFeed('feed.details')}

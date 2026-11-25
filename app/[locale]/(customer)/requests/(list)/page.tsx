@@ -141,7 +141,7 @@ export default async function Page({ params, searchParams }: Props) {
                     {urgent.status === 'SELECTED' ? t('price.online') : t('price.total')}
                   </span>
                   <MoneyDisplay
-                    amount={urgent.status === 'SELECTED' ? urgent.commission_amount : urgent.fixed_price}
+                    amount={urgent.fixed_price}
                     currency={urgent.currency}
                     className="font-bold text-text-primary"
                   />
