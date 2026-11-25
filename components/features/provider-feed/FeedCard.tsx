@@ -36,8 +36,8 @@ export function FeedCard({
   return (
     <li
       className={cn(
-        'flex flex-col gap-4 rounded-panel border-2 border-border-light bg-surface p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6',
-        full && 'opacity-60',
+        'flex flex-col gap-4 rounded-panel border-2 border-border bg-surface p-5 transition-colors hover:border-accent sm:flex-row sm:items-center sm:justify-between lg:p-6',
+        full && 'opacity-60 hover:border-border',
       )}
     >
       <div className="flex min-w-0 flex-col gap-2">

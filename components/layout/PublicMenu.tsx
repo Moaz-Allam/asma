@@ -22,7 +22,7 @@ export function PublicMenu() {
         <button
           type="button"
           aria-label={t('openMenu')}
-          className="flex h-11 shrink-0 flex-col justify-center gap-1.25 ps-1.5"
+          className="flex size-11 shrink-0 flex-col items-center justify-center gap-1.25 rounded-full transition-colors hover:bg-surface-secondary"
         >
           <span className="h-0.75 w-6.5 rounded-xs bg-accent" />
           <span className="h-0.75 w-6.5 rounded-xs bg-accent" />

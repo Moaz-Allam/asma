@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { reportServerError } from '@/lib/observability/server';
 import type { ReactNode } from 'react';
 
@@ -57,11 +58,18 @@ export async function AdminShell({ children }: { children: ReactNode }) {
         })
       : null;
   const items = role ? menuFor(role) : [];
+  const tHomes = await getTranslations('Homes');
 
   return (
     <div className="lg:flex lg:min-h-dvh">
       {role === 'admin' ? (
-        <AdminRail items={ADMIN_RAIL} pending={pending} reports={reports} flags={flags} />
+        <AdminRail
+          items={ADMIN_RAIL}
+          pending={pending}
+          reports={reports}
+          flags={flags}
+          note={tHomes('railNote')}
+        />
       ) : null}
       <div className="min-w-0 flex-1">
         <SiteHeader
@@ -69,7 +77,10 @@ export async function AdminShell({ children }: { children: ReactNode }) {
           railFromLg={role === 'admin'}
           notices={user && role ? { userId: user.id, count: notices } : null}
         />
-        <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 pb-28 lg:px-8.5 lg:pb-8.5">
+        <main
+          id="main-content"
+          className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 pb-28 lg:px-8.5 lg:pb-8.5"
+        >
           {children}
         </main>
       </div>

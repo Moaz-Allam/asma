@@ -78,7 +78,7 @@ export default async function Page({ params, searchParams }: Props) {
               <li key={row.id}>
                 <Link
                   href={`/admin/reports/${row.id}`}
-                  className="flex flex-col gap-2 rounded-panel border border-border-light bg-surface p-5 hover:bg-surface-secondary"
+                  className="flex flex-col gap-2 rounded-panel border-2 border-border bg-surface p-5 transition-colors hover:border-accent hover:bg-surface-secondary/50"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusChip

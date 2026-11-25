@@ -1,12 +1,10 @@
-import { Check, Circle } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
 /**
  * The status timeline of a request (ui-registry `RequestTimeline`, spec 0010 AC-10): the steps that happened,
- * each with its time, and the next one greyed. Built from stored columns only; 09 to 11 add their steps.
- * Display only; the page passes the labels and the formatted times. A step is done when it has a time, or
- * when the page says so with no time (spec 0011-09 AC-10: a commission of 0 is settled with no payment).
+ * each with its time, and the next one greyed, connected by a vertical track. Built from stored columns only.
  */
 export function RequestTimeline({
   title,
@@ -18,24 +16,41 @@ export function RequestTimeline({
   return (
     <section
       aria-label={title}
-      className="flex flex-col gap-3 rounded-panel border border-border-light bg-surface p-5"
+      className="flex flex-col gap-4 rounded-panel border-2 border-border bg-surface p-5.5 lg:p-6.5"
     >
-      <h2 className="text-body-s font-bold text-text-primary">{title}</h2>
-      <ol className="flex flex-col gap-3">
-        {steps.map((step) => {
+      <h2 className="font-display text-subhead text-text-primary">{title}</h2>
+      <ol className="flex flex-col">
+        {steps.map((step, index) => {
           const done = step.done ?? step.at !== null;
+          const last = index === steps.length - 1;
           return (
-            <li key={step.key} className="flex items-start gap-3">
-              {done ? (
-                <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
-              ) : (
-                <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-text-secondary" />
-              )}
-              <div className="flex flex-col">
+            <li key={step.key} className="flex items-stretch gap-3.5">
+              <div className="flex flex-col items-center">
+                {done ? (
+                  <span
+                    aria-hidden
+                    className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground"
+                  >
+                    <Check className="size-3.5" />
+                  </span>
+                ) : (
+                  <span
+                    aria-hidden
+                    className="mt-0.5 size-5 shrink-0 rounded-full border-2 border-control bg-surface"
+                  />
+                )}
+                {last ? null : (
+                  <span
+                    aria-hidden
+                    className={cn('my-1 w-0.5 flex-1', done ? 'bg-accent-light' : 'bg-border')}
+                  />
+                )}
+              </div>
+              <div className={cn('flex flex-col gap-0.5', last ? 'pb-0' : 'pb-4')}>
                 <span
                   className={cn(
-                    'text-body-s font-semibold',
-                    done ? 'text-text-primary' : 'text-text-secondary',
+                    'text-body-s',
+                    done ? 'font-bold text-text-primary' : 'font-medium text-text-secondary',
                   )}
                 >
                   {step.label}

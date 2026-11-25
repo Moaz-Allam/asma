@@ -86,7 +86,7 @@ export default async function Page({ params, searchParams }: Props) {
             {mine.ok ? <MyRatingCard rating={mine.rating} /> : null}
             {quality.ok ? <MyQualityCard quality={quality.quality} /> : null}
             {address !== undefined ? (
-              <section className="flex flex-col gap-2 rounded-panel border border-border-light bg-surface p-5">
+              <section className="flex flex-col gap-2 rounded-panel border-2 border-border bg-surface p-5">
                 <h2 className="font-display text-section text-text-primary">{ta('provider.title')}</h2>
                 <p className="text-body-s text-text-primary" data-pii>
                   {address?.line ?? ta('card.notGiven')}

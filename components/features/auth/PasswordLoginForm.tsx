@@ -123,7 +123,7 @@ export function PasswordLoginForm({ dialCodes, siteKey, nonce, next, asProvider,
         />
         <Link
           href={{ pathname: '/login', query: { mode: 'code', reset: '1', ...carried } }}
-          className="self-start text-body-s font-semibold text-link underline underline-offset-4"
+          className="inline-flex min-h-11 items-center self-start text-body-s font-semibold text-link underline underline-offset-4"
         >
           {t('password.forgot')}
         </Link>
@@ -148,7 +148,7 @@ export function PasswordLoginForm({ dialCodes, siteKey, nonce, next, asProvider,
         </Button>
         <Link
           href={{ pathname: '/login', query: { mode: 'code', ...carried } }}
-          className="self-start text-body-s font-semibold text-link underline underline-offset-4"
+          className="inline-flex min-h-11 items-center self-start text-body-s font-semibold text-link underline underline-offset-4"
         >
           {t('password.newHere')}
         </Link>

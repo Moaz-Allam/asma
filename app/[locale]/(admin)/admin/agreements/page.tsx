@@ -82,7 +82,7 @@ export default async function Page({ params, searchParams }: Props) {
             return (
               <li
                 key={row.id}
-                className="flex flex-col gap-3 rounded-panel border border-border-light bg-surface p-5"
+                className="flex flex-col gap-3 rounded-panel border-2 border-border bg-surface p-5"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-display text-title-s break-all text-text-primary">{row.number}</span>

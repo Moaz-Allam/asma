@@ -154,7 +154,8 @@
     "flags": "Deadline flags",
     "revenue": "Revenue",
     "quality": "Quality",
-    "agreements": "Agreements"
+    "agreements": "Agreements",
+    "skipToContent": "Skip to main content"
   },
   "Login": {
     "title": "Welcome",
@@ -375,7 +376,8 @@
     "termsTitle": "Terms",
     "termsBody": "[draft] These terms are a draft and are being reviewed. The service contract and the cash payment are between the customer and the provider. We connect them and take only our two fees.",
     "privacyTitle": "Privacy notice",
-    "privacyBody": "[draft] This notice is a draft and is being reviewed. We use your mobile number to sign you in, and share it with the provider or customer only after both of you have paid."
+    "privacyBody": "[draft] This notice is a draft and is being reviewed. We use your mobile number to sign you in, and share it with the provider or customer only after both of you have paid.",
+    "backHome": "Back to home"
   },
   "Homes": {
     "requestsTitle": "My requests",
@@ -395,14 +397,36 @@
     "profileEmpty": "Your provider profile opens soon",
     "profileBody": "You will add your details and services here.",
     "adminTitle": "Dashboard",
+    "adminIntro": "Live operations queue, platform fee revenue and request status overview.",
     "adminLead": "0",
-    "adminEmpty": "Nothing to review yet",
-    "adminBody": "Work that needs an admin will appear here.",
-    "adminLinks": "Console pages"
+    "adminEmpty": "Nothing waiting on an admin",
+    "adminBody": "Provider reviews, problem reports, deadline flags and watchlist alerts appear here as soon as they open.",
+    "adminLinks": "Console pages",
+    "kpiNeedsAction": "Needs action",
+    "kpiNeedsActionNote": "Providers, reports, flags and watchlist",
+    "kpiNetRevenue": "Net fee revenue (30d)",
+    "kpiNetRevenueNote": "Gross {gross} · Refunds {refunds}",
+    "kpiNetRevenueEmpty": "No ledger postings in the last 30 days",
+    "kpiTotalRequests": "Total requests",
+    "kpiTotalRequestsNote": "Across active and closed requests",
+    "kpiWatchlist": "Probation & watchlist",
+    "kpiWatchlistNote": "{probation} on probation · {flags} watchlist flags",
+    "queueTitle": "Needs your attention",
+    "queueKindProvider": "Provider file",
+    "queueKindReport": "Problem report",
+    "queueKindFlag": "Deadline flag",
+    "queueKindQuality": "Quality alert",
+    "queueOpen": "Review",
+    "statusBreakdownTitle": "Requests by status",
+    "statusBreakdownNote": "Counts across all regions",
+    "railNote": "Ledger entries are append-only. Every administrative refund or adjustment is recorded with an audited reason."
   },
   "Error": {
     "notFound": "Page not found.",
+    "notFoundBody": "The link may have moved, been mistyped, or belongs to another account. Nothing in your account was changed.",
+    "notFoundRequests": "My requests",
     "generic": "Something went wrong. Please try again.",
+    "genericBody": "Your account and any payments stay safe. Try loading this page again or return to the home page.",
     "backHome": "Back to home",
     "retry": "Try again"
   },
@@ -1097,7 +1121,16 @@
       "emptyActiveBody": "Requests waiting for offers or in progress show here.",
       "emptyClosedTitle": "No closed requests",
       "emptyClosedBody": "Completed, cancelled and expired requests show here.",
-      "emptyAction": "Post a request"
+      "emptyAction": "Post a request",
+      "needsAction": "Needs your action",
+      "payAction": "Pay commission",
+      "confirmAction": "Review & confirm",
+      "openDetails": "View request",
+      "summaryTitle": "Overview",
+      "summaryShown": "On this page",
+      "summaryActive": "In progress",
+      "summaryCompleted": "Completed",
+      "privacyNote": "Your name, phone and street stay hidden until both you and your chosen provider have paid."
     },
     "status": {
       "OPEN": "Open, waiting for offers",
@@ -1411,7 +1444,18 @@
         "body": "Please try again in a moment."
       },
       "selected": "Chosen, waiting for the customer",
-      "selectedBody": "The customer is paying the commission."
+      "selectedBody": "The customer is paying the commission.",
+      "chosenBannerEyebrow": "Action attention",
+      "chosenBannerTitle": "A customer chose your offer",
+      "chosenBannerBody": "Open My jobs to follow the commission window and pay the provider fee once your turn opens.",
+      "chosenBannerAction": "Open chosen jobs",
+      "recentOpen": "Latest matching requests",
+      "viewAllFeed": "See all requests",
+      "quickLinksTitle": "Workspace",
+      "rulesTitle": "How applying works",
+      "rule1": "Applying is free. Each request accepts up to 10 offers.",
+      "rule2": "Customer details open only after both sides have paid their fee.",
+      "rule3": "Do not include phone numbers, emails or links in application messages."
     },
     "errors": {
       "forbidden": "This page is for providers.",
@@ -2094,6 +2138,9 @@
     "invalid": "The range must go forward: at most 92 days by day, or 24 months by month.",
     "period": "Period",
     "late": "Late payments (not revenue)",
+    "summaryGross": "Gross fee revenue",
+    "summaryRefunds": "Refunds & PSP fees",
+    "summaryNet": "Net revenue",
     "columns": {
       "commission_revenue": "Commission revenue",
       "provider_fee_revenue": "Provider fee revenue",

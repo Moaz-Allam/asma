@@ -7,6 +7,7 @@ import { saveProviderSetup } from '@/actions/provider-feed';
 import { FormField } from '@/components/shared/FormField';
 import { ToggleChips } from '@/components/shared/ToggleChips';
 import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select';
 import { track } from '@/lib/analytics/client';
 import { localized } from '@/lib/catalog/localized';
 import { useRouter } from '@/lib/i18n/navigation';
@@ -26,9 +27,6 @@ const FIELD_OF: Readonly<Record<string, SetupField>> = {
   setup_invalid_work_days: 'work_days',
   setup_invalid_hours: 'hours',
 };
-
-const selectClass =
-  'h-15.25 w-full rounded-field border-2 border-input bg-surface px-4.5 text-body text-text-primary disabled:opacity-50';
 
 export function ProviderSetupForm({ setup, readOnly }: { setup: ProviderSetup; readOnly: boolean }) {
   const t = useTranslations('ProviderFeed');
@@ -184,9 +182,8 @@ export function ProviderSetupForm({ setup, readOnly }: { setup: ProviderSetup; r
           {fieldError('work_days')}
           <div className="grid gap-3.5 sm:grid-cols-2">
             <FormField id="start-hour" label={t('setup.from')}>
-              <select
+              <Select
                 id="start-hour"
-                className={selectClass}
                 value={startHour}
                 disabled={readOnly || pending}
                 aria-invalid={errors.hours ? true : undefined}
@@ -197,12 +194,11 @@ export function ProviderSetupForm({ setup, readOnly }: { setup: ProviderSetup; r
                     {hourText(h)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </FormField>
             <FormField id="end-hour" label={t('setup.to')}>
-              <select
+              <Select
                 id="end-hour"
-                className={selectClass}
                 value={endHour}
                 disabled={readOnly || pending}
                 aria-invalid={errors.hours ? true : undefined}
@@ -213,7 +209,7 @@ export function ProviderSetupForm({ setup, readOnly }: { setup: ProviderSetup; r
                     {hourText(h)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </FormField>
           </div>
           {fieldError('hours')}

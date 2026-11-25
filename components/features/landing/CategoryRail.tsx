@@ -5,7 +5,7 @@ import { useRef, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 
-const ARROW = 'hidden size-11 p-0 text-text-primary lg:inline-flex';
+const ARROW = 'hidden size-11 min-h-11 min-w-11 p-0 text-text-primary lg:inline-flex';
 
 /**
  * The row of categories with its two arrows (`s1`). The row scrolls by finger on a phone. On a wide screen

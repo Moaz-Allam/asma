@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { StatCard } from '@/components/shared/StatCard';
 import { StatusChip } from '@/components/shared/StatusChip';
 import { Button } from '@/components/ui/button';
 import { guardPage } from '@/lib/auth/session';
@@ -91,18 +92,17 @@ export default async function Page({ params, searchParams }: Props) {
     </nav>
   );
 
-  const stat = (label: string, value: ReactNode, note?: string) => (
-    <div className="flex flex-col gap-1.5 rounded-panel bg-accent-light p-5">
-      <dt className="text-body-s text-text-secondary">{label}</dt>
-      <dd className="font-display text-card text-text-primary">{value}</dd>
-      {note ? <dd className="text-meta text-text-secondary">{note}</dd> : null}
-    </div>
+  const stat = (label: string, value: ReactNode, note?: string, emphasis = false) => (
+    <StatCard label={label} value={value} note={note} tone={emphasis ? 'emphasis' : 'tinted'} />
   );
 
   const row = (item: HistoryRow) => {
     const cancelled = item.request_status === 'CANCELLED';
     return (
-      <li key={item.application_id} className="flex flex-col gap-3 rounded-card bg-surface-secondary p-5">
+      <li
+        key={item.application_id}
+        className="flex flex-col gap-3.5 rounded-panel border-2 border-border bg-surface p-5 lg:p-6"
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
             <h3 className="font-display text-card text-text-primary">
@@ -117,7 +117,7 @@ export default async function Page({ params, searchParams }: Props) {
             label={tFeed(`status.${item.application_status}`)}
           />
         </div>
-        <dl className="flex flex-col gap-2 rounded-block bg-surface p-4 text-body-s">
+        <dl className="flex flex-col gap-2 rounded-block bg-surface-secondary p-4 text-body-s">
           <div className="flex items-baseline justify-between gap-3">
             <dt className="text-text-secondary">{t('cash')}</dt>
             <dd className="font-semibold text-text-primary">
@@ -170,13 +170,13 @@ export default async function Page({ params, searchParams }: Props) {
         <h2 id="history-totals" className="font-display text-section text-text-primary">
           {t('totals')} · {monthLabel(history.month, locale)}
         </h2>
-        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           {stat(t('jobs'), <span className="tabular-nums">{totals.jobs}</span>)}
           {stat(t('feesPaid'), money(totals.fees_paid))}
           {stat(t('refunds'), money(totals.refunds))}
-          {stat(t('netFees'), money(totals.net_fees))}
-          {stat(t('cashClosed'), money(totals.cash_closed), t('cashClosedNote'))}
-        </dl>
+          {stat(t('netFees'), money(totals.net_fees), undefined, true)}
+          {stat(t('cashClosed'), money(totals.cash_closed), t('cashClosedNote'), true)}
+        </div>
       </section>
       {history.rows.length === 0 ? (
         <EmptyState
