@@ -24,7 +24,7 @@ export function indexable(): boolean {
 
 /** A legal page stays out of search while it is a draft: the marker is the switch (D100). */
 export function legalPageIsFinal(page: 'terms' | 'privacy'): boolean {
-  return !en.Legal[`${page}Body`].startsWith('[draft] ');
+  return !en.Legal[`${page}Body`].includes('[draft] ');
 }
 
 /** `hreflang` for one public path: the three locales, and `x-default` on the bare path (D19). */

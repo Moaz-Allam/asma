@@ -105,10 +105,11 @@ describe('the markers in the catalogues (D58, D100)', () => {
   });
 
   it.each(['Legal.termsBody', 'Legal.privacyBody', 'Onboarding.agreement', 'ProviderDocs.consent'])(
-    '%s starts with the [draft] marker in all three locales',
+    '%s does not start with the [draft] marker in any locale',
     (key) => {
       for (const catalogue of [ar, tr, en]) {
-        expect(new Map(flatten(catalogue)).get(key)).toMatch(/^\[draft\] /);
+        const value = new Map(flatten(catalogue)).get(key);
+        expect(value).not.toMatch(/^\[draft\] /);
       }
     },
   );

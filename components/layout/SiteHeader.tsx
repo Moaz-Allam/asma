@@ -43,7 +43,7 @@ export async function SiteHeader({
     >
       <SkipLink />
       <Link
-        href="/"
+        href="/provider"
         dir="ltr"
         aria-label={t('home')}
         className={cn(

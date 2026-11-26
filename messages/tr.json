@@ -232,7 +232,7 @@
     "providerPoint2": "Hizmet veren ücretini yalnızca bir müşteri sizi seçince ödeyin",
     "providerPoint3": "Yönetici profilinizi onaylayınca başvurun",
     "nameLabel": "Ad soyad",
-    "agreement": "[draft] <terms>Kullanım koşullarını</terms> ve <privacy>aydınlatma metnini</privacy> kabul ediyorum; taraflardan biri yanlış bir şey yaparsa platformun yasal yollara başvurabileceğini onaylıyorum.",
+    "agreement": "<terms>Kullanım koşullarını</terms> ve <privacy>aydınlatma metnini</privacy> kabul ediyorum; taraflardan biri yanlış bir şey yaparsa platformun yasal yollara başvurabileceğini onaylıyorum.",
     "continueCustomer": "Müşteri olarak devam et",
     "continueProvider": "Hizmet veren olarak devam et",
     "saving": "Kaydediliyor…",
@@ -374,9 +374,9 @@
   },
   "Legal": {
     "termsTitle": "Kullanım koşulları",
-    "termsBody": "[draft] Bu koşullar bir taslaktır ve inceleniyor. Hizmet sözleşmesi ve nakit ödeme müşteri ile hizmet veren arasındadır. Biz onları buluşturur, yalnızca iki ücretimizi alırız.",
+    "termsBody": "Bu koşullar inceleniyor. Hizmet sözleşmesi ve nakit ödeme müşteri ile hizmet veren arasındadır. Biz onları buluşturur, yalnızca iki ücretimizi alırız.",
     "privacyTitle": "Aydınlatma metni",
-    "privacyBody": "[draft] Bu metin bir taslaktır ve inceleniyor. Cep telefonu numaranızı giriş yapmanız için kullanır, hizmet veren ya da müşteriyle ancak ikiniz de ödeme yaptıktan sonra paylaşırız.",
+    "privacyBody": "Bu metin inceleniyor. Cep telefonu numaranızı giriş yapmanız için kullanır, hizmet veren ya da müşteriyle ancak ikiniz de ödeme yaptıktan sonra paylaşırız.",
     "backHome": "Ana sayfaya dön"
   },
   "Homes": {
@@ -599,7 +599,7 @@
     "intro": "Yönetici her belgeyi elle kontrol eder. Hiçbiri müşterilere asla gösterilmez.",
     "introAfter": "Belgeleriniz. Birini değiştirmek dosyanızı yeniden incelemeye gönderir.",
     "reviewNote": "İnceleme, dosyanızı gönderdiğinizde başlar. Genellikle iki iş günü sürer.",
-    "consent": "[draft] Platformun beni doğrulamak için kimliğimi, selfiemi ve adli sicil kaydımı saklamasını, bunları yalnızca yöneticilerin görebilmesini ve her görüntülemenin kaydedilmesini kabul ediyorum.",
+    "consent": "Platformun beni doğrulamak için kimliğimi, selfiemi ve adli sicil kaydımı saklamasını, bunları yalnızca yöneticilerin görebilmesini ve her görüntülemenin kaydedilmesini kabul ediyorum.",
     "readOnly": "Hesabınız askıya alındı. Belgelerinizi görebilir ama değiştiremezsiniz.",
     "acceptsImage": "JPEG veya PNG · en fazla 10 MB",
     "acceptsAny": "JPEG, PNG veya PDF · en fazla 10 MB",
@@ -1222,7 +1222,7 @@
       "checkout_settings_invalid": "Şu anda ödeme yapılamıyor. Lütfen daha sonra tekrar deneyin.",
       "unlock_settings_invalid": "Şu anda ödeme yapılamıyor. Lütfen daha sonra tekrar deneyin.",
       "provider_not_eligible": "Bu hizmet veren artık bu talep için seçilemez.",
-      "agreement_required": "[draft] Önce hizmet sözleşmesini kabul etmek için kutuyu işaretleyin.",
+      "agreement_required": "Önce hizmet sözleşmesini kabul etmek için kutuyu işaretleyin.",
       "pin_invalid": "İşaret Türkiye sınırları içinde olmalıdır.",
       "contact_info_in_address": "Lütfen adrese telefon numarası, e-posta ya da bağlantı yazmayın."
     },
@@ -1249,10 +1249,10 @@
       "confirm": "Bu hizmet vereni seç",
       "keep": "Geri",
       "chosenTitle": "Hizmet vereniniz",
-      "answerYes": "[draft] Evet",
-      "answerNo": "[draft] Hayır",
-      "answerHidden": "[draft] Gizlendi: iletişim bilgisi içeriyordu",
-      "answersLabel": "[draft] {name} adlı hizmet verenin yanıtları"
+      "answerYes": "Evet",
+      "answerNo": "Hayır",
+      "answerHidden": "Gizlendi: iletişim bilgisi içeriyordu",
+      "answersLabel": "{name} adlı hizmet verenin yanıtları"
     },
     "next": {
       "title": "Sırada: komisyonu ödeyin",
@@ -1406,16 +1406,16 @@
       "appliedOn": "Başvuru tarihi: {date}",
       "full": "Bu talep teklif sınırına ulaştı.",
       "closed": "Bu talep kapandı.",
-      "probationLimit": "[draft] İlk {needed} işiniz boyunca aynı anda {limit} iş alabilirsiniz. Tekrar başvurmak için birini bitirin.",
-      "questionsTitle": "[draft] Müşterinin sorularını yanıtlayın",
-      "answersWarning": "[draft] Telefon numarası, e-posta, bağlantı ya da sosyal medya kullanıcı adı paylaşmayın. İletişim bilgisi içeren yanıtlar reddedilir.",
-      "required": "[draft] Zorunlu",
-      "optional": "[draft] İsteğe bağlı",
-      "yes": "[draft] Evet",
-      "no": "[draft] Hayır",
-      "questionsChanged": "[draft] Bu işin soruları değişti. Kontrol edip tekrar gönderin.",
-      "checkAnswers": "[draft] Yukarıda işaretli yanıtı kontrol edip tekrar gönderin.",
-      "yourAnswers": "[draft] Yanıtlarınız"
+      "probationLimit": "İlk {needed} işiniz boyunca aynı anda {limit} iş alabilirsiniz. Tekrar başvurmak için birini bitirin.",
+      "questionsTitle": "Müşterinin sorularını yanıtlayın",
+      "answersWarning": "Telefon numarası, e-posta, bağlantı ya da sosyal medya kullanıcı adı paylaşmayın. İletişim bilgisi içeren yanıtlar reddedilir.",
+      "required": "Zorunlu",
+      "optional": "İsteğe bağlı",
+      "yes": "Evet",
+      "no": "Hayır",
+      "questionsChanged": "Bu işin soruları değişti. Kontrol edip tekrar gönderin.",
+      "checkAnswers": "Yukarıda işaretli yanıtı kontrol edip tekrar gönderin.",
+      "yourAnswers": "Yanıtlarınız"
     },
     "applications": {
       "title": "İşlerim",
@@ -1478,10 +1478,10 @@
       "apply_settings_invalid": "Şu anda başvuru yapılamıyor. Lütfen daha sonra tekrar deneyin.",
       "action_failed": "Bir şeyler ters gitti. Hiçbir şey gönderilmedi. Tekrar deneyin.",
       "email_unconfirmed": "Başvurmadan önce hesap sayfanızdan e-postanızı onaylayın.",
-      "probation_limit": "[draft] İlk işleriniz boyunca aynı anda yalnızca birkaç iş alabilirsiniz. Tekrar başvurmak için birini bitirin.",
-      "questions_changed": "[draft] Bu işin soruları değişti. Kontrol edip tekrar gönderin.",
-      "answers_invalid": "[draft] Bu soruyu sınırları içinde yanıtlayın: metin için 10 karakter ya da daha fazla, veya bir seçenek seçin.",
-      "contact_info_in_answer": "[draft] Bu yanıtta iletişim bilgisi var. Telefon numaralarını, e-postaları, bağlantıları ve sosyal medya kullanıcı adlarını kaldırın.",
+      "probation_limit": "İlk işleriniz boyunca aynı anda yalnızca birkaç iş alabilirsiniz. Tekrar başvurmak için birini bitirin.",
+      "questions_changed": "Bu işin soruları değişti. Kontrol edip tekrar gönderin.",
+      "answers_invalid": "Bu soruyu sınırları içinde yanıtlayın: metin için 10 karakter ya da daha fazla, veya bir seçenek seçin.",
+      "contact_info_in_answer": "Bu yanıtta iletişim bilgisi var. Telefon numaralarını, e-postaları, bağlantıları ve sosyal medya kullanıcı adlarını kaldırın.",
       "address_required": "Teklif göndermeden önce adresinizi ekleyin."
     },
     "chosen": {
@@ -1769,139 +1769,139 @@
   },
   "Email": {
     "shell": {
-      "footer": "[draft] Bu e-postayı bizde bir hesabınız olduğu için alıyorsunuz. Bazı bildirimleri hesap sayfanızdan kapatabilirsiniz.",
-      "linkHint": "[draft] Düğme çalışmazsa bu bağlantıyı tarayıcınıza kopyalayın:",
-      "openRequest": "[draft] Talebimi aç",
-      "openReceipt": "[draft] Makbuzu gör",
-      "openApplications": "[draft] Başvurularımı aç",
-      "openAccount": "[draft] Hesabımı aç"
+      "footer": "Bu e-postayı bizde bir hesabınız olduğu için alıyorsunuz. Bazı bildirimleri hesap sayfanızdan kapatabilirsiniz.",
+      "linkHint": "Düğme çalışmazsa bu bağlantıyı tarayıcınıza kopyalayın:",
+      "openRequest": "Talebimi aç",
+      "openReceipt": "Makbuzu gör",
+      "openApplications": "Başvurularımı aç",
+      "openAccount": "Hesabımı aç"
     },
     "new_offer": {
-      "subject": "[draft] {service} talebinize yeni teklif",
-      "lead": "[draft] Bir hizmet veren size {service} için teklif gönderdi. Teklifleri karşılaştırmak için talebinizi açın."
+      "subject": "{service} talebinize yeni teklif",
+      "lead": "Bir hizmet veren size {service} için teklif gönderdi. Teklifleri karşılaştırmak için talebinizi açın."
     },
     "chosen": {
-      "subject": "[draft] {service} için seçildiniz",
-      "lead": "[draft] Müşteri sizi {start} tarihindeki {service} için seçti. Önce müşteri komisyonu öder; ardından sizden ücretinizi ödemenizi isteriz ve birbirinizin iletişim bilgilerini görürsünüz."
+      "subject": "{service} için seçildiniz",
+      "lead": "Müşteri sizi {start} tarihindeki {service} için seçti. Önce müşteri komisyonu öder; ardından sizden ücretinizi ödemenizi isteriz ve birbirinizin iletişim bilgilerini görürsünüz."
     },
     "pay_your_fee": {
-      "subject": "[draft] {service} için ücretinizi ödeyin",
-      "lead": "[draft] Müşteri komisyonu ödedi. Müşterinin iletişim bilgilerini görmek ve işi kaybetmemek için {amount} ücretinizi en geç {deadline} tarihine kadar ödeyin."
+      "subject": "{service} için ücretinizi ödeyin",
+      "lead": "Müşteri komisyonu ödedi. Müşterinin iletişim bilgilerini görmek ve işi kaybetmemek için {amount} ücretinizi en geç {deadline} tarihine kadar ödeyin."
     },
     "commission_received": {
-      "subject": "[draft] {service} komisyonunuz ödendi",
-      "lead": "[draft] {amount} komisyonunuzu aldık. Şimdi hizmet veren ücretini öder; ardından birbirinizin iletişim bilgilerini görürsünüz.",
-      "leadFree": "[draft] {service} için komisyon ödenmesi gerekmiyor. Şimdi hizmet veren ücretini öder; ardından birbirinizin iletişim bilgilerini görürsünüz."
+      "subject": "{service} komisyonunuz ödendi",
+      "lead": "{amount} komisyonunuzu aldık. Şimdi hizmet veren ücretini öder; ardından birbirinizin iletişim bilgilerini görürsünüz.",
+      "leadFree": "{service} için komisyon ödenmesi gerekmiyor. Şimdi hizmet veren ücretini öder; ardından birbirinizin iletişim bilgilerini görürsünüz."
     },
     "contacts_ready": {
-      "subject": "[draft] {service} için iletişim bilgileri açıldı",
-      "leadCustomer": "[draft] Siz ve hizmet veren artık birbirinizin iletişim bilgilerini görebilirsiniz. İş {start} tarihinde. Hizmetten sonra hizmet verene nakit ödersiniz.",
-      "leadProvider": "[draft] Siz ve müşteri artık birbirinizin iletişim bilgilerini görebilirsiniz. İş {start} tarihinde. Müşteri hizmetten sonra size nakit öder."
+      "subject": "{service} için iletişim bilgileri açıldı",
+      "leadCustomer": "Siz ve hizmet veren artık birbirinizin iletişim bilgilerini görebilirsiniz. İş {start} tarihinde. Hizmetten sonra hizmet verene nakit ödersiniz.",
+      "leadProvider": "Siz ve müşteri artık birbirinizin iletişim bilgilerini görebilirsiniz. İş {start} tarihinde. Müşteri hizmetten sonra size nakit öder."
     },
     "job_started": {
-      "subject": "[draft] {service} işi başladı",
-      "lead": "[draft] Hizmet veren {service} işini başladı olarak işaretledi."
+      "subject": "{service} işi başladı",
+      "lead": "Hizmet veren {service} işini başladı olarak işaretledi."
     },
     "please_confirm": {
-      "subject": "[draft] Lütfen {service} işini onaylayın",
-      "lead": "[draft] Hizmet veren {service} işini bitti olarak işaretledi. Lütfen kontrol edip onaylayın.",
-      "deadline": "[draft] Hiçbir şey yapmazsanız iş {deadline} tarihinde kendiliğinden kapanır."
+      "subject": "Lütfen {service} işini onaylayın",
+      "lead": "Hizmet veren {service} işini bitti olarak işaretledi. Lütfen kontrol edip onaylayın.",
+      "deadline": "Hiçbir şey yapmazsanız iş {deadline} tarihinde kendiliğinden kapanır."
     },
     "job_completed": {
-      "subject": "[draft] {service} işi tamamlandı",
-      "lead": "[draft] {service} işi kapandı. Emeğiniz için teşekkür ederiz."
+      "subject": "{service} işi tamamlandı",
+      "lead": "{service} işi kapandı. Emeğiniz için teşekkür ederiz."
     },
     "request_cancelled": {
-      "subject": "[draft] {service} talebi iptal edildi",
-      "leadCustomer": "[draft] {start} tarihindeki {service} talebiniz iptal edildi.",
-      "leadProvider": "[draft] {start} tarihindeki {service} işi iptal edildi. Gitmenize gerek yok.",
-      "refund": "[draft] {amount} komisyonunuzu kartınıza iade ediyoruz."
+      "subject": "{service} talebi iptal edildi",
+      "leadCustomer": "{start} tarihindeki {service} talebiniz iptal edildi.",
+      "leadProvider": "{start} tarihindeki {service} işi iptal edildi. Gitmenize gerek yok.",
+      "refund": "{amount} komisyonunuzu kartınıza iade ediyoruz."
     },
     "pick_again": {
-      "subject": "[draft] {service} için başka bir hizmet veren seçin",
-      "lead": "[draft] {service} için seçiminiz sona erdi. Tekliflerinizden bir hizmet veren seçin.",
-      "carried": "[draft] Komisyonunuz ödenmiş olarak kalır, tekrar ödemezsiniz."
+      "subject": "{service} için başka bir hizmet veren seçin",
+      "lead": "{service} için seçiminiz sona erdi. Tekliflerinizden bir hizmet veren seçin.",
+      "carried": "Komisyonunuz ödenmiş olarak kalır, tekrar ödemezsiniz."
     },
     "pick_ended": {
-      "subject": "[draft] {service} için seçiminiz sona erdi",
-      "lead": "[draft] Müşteri komisyonu zamanında ödemedi, bu yüzden {service} için seçiminiz sona erdi."
+      "subject": "{service} için seçiminiz sona erdi",
+      "lead": "Müşteri komisyonu zamanında ödemedi, bu yüzden {service} için seçiminiz sona erdi."
     },
     "window_missed": {
-      "subject": "[draft] {service} için ücret ödeme süreniz doldu",
-      "lead": "[draft] Ücretiniz zamanında ödenmedi, bu yüzden müşteri artık başka bir hizmet veren seçebilir."
+      "subject": "{service} için ücret ödeme süreniz doldu",
+      "lead": "Ücretiniz zamanında ödenmedi, bu yüzden müşteri artık başka bir hizmet veren seçebilir."
     },
     "payment_too_late": {
-      "subject": "[draft] Ödemeniz geç geldi",
-      "lead": "[draft] {amount} ödemeniz ödeme süresi dolduktan sonra geldi. Tamamını iade ediyoruz."
+      "subject": "Ödemeniz geç geldi",
+      "lead": "{amount} ödemeniz ödeme süresi dolduktan sonra geldi. Tamamını iade ediyoruz."
     },
     "fee_refunded": {
-      "subject": "[draft] {amount} iadeniz yapıldı",
-      "lead": "[draft] {amount} tutarını kartınıza iade ettik. Bankanızın göstermesi birkaç gün sürebilir."
+      "subject": "{amount} iadeniz yapıldı",
+      "lead": "{amount} tutarını kartınıza iade ettik. Bankanızın göstermesi birkaç gün sürebilir."
     },
     "confirm_email": {
-      "subject": "[draft] E-posta adresinizi onaylayın",
-      "lead": "[draft] Bildirimlerimizin bu adrese ulaşması için bağlantıyı açıp Onayla'ya basın. Bağlantı {deadline} tarihine kadar geçerlidir.",
-      "ignore": "[draft] Bunu siz istemediyseniz bu e-postayı yok sayın.",
-      "action": "[draft] E-postamı onayla"
+      "subject": "E-posta adresinizi onaylayın",
+      "lead": "Bildirimlerimizin bu adrese ulaşması için bağlantıyı açıp Onayla'ya basın. Bağlantı {deadline} tarihine kadar geçerlidir.",
+      "ignore": "Bunu siz istemediyseniz bu e-postayı yok sayın.",
+      "action": "E-postamı onayla"
     },
     "account_approved": {
-      "subject": "[draft] Hizmet veren hesabınız onaylandı",
-      "lead": "[draft] Artık semtlerinizdeki taleplere başvurabilirsiniz."
+      "subject": "Hizmet veren hesabınız onaylandı",
+      "lead": "Artık semtlerinizdeki taleplere başvurabilirsiniz."
     },
     "account_rejected": {
-      "subject": "[draft] Hizmet veren hesabınızı onaylayamadık",
-      "lead": "[draft] Nedenini ve neyi değiştirmeniz gerektiğini görmek için hesabınızı açın."
+      "subject": "Hizmet veren hesabınızı onaylayamadık",
+      "lead": "Nedenini ve neyi değiştirmeniz gerektiğini görmek için hesabınızı açın."
     },
     "account_suspended": {
-      "subject": "[draft] Hizmet veren hesabınız askıya alındı",
-      "lead": "[draft] Şimdilik yeni taleplere başvuramazsınız. Ayrıntılar için hesabınızı açın."
+      "subject": "Hizmet veren hesabınız askıya alındı",
+      "lead": "Şimdilik yeni taleplere başvuramazsınız. Ayrıntılar için hesabınızı açın."
     },
     "pay_window_closing": {
-      "subjectCustomer": "[draft] {service} komisyonunu yakında ödeyin",
-      "subjectProvider": "[draft] {service} için ücretinizi yakında ödeyin",
-      "leadCustomer": "[draft] Seçiminiz {deadline} tarihine kadar geçerli. Komisyonu o zamana kadar ödeyin, yoksa seçim sona erer.",
-      "leadProvider": "[draft] İşi kaybetmemek için ücretinizi {deadline} tarihinden önce ödeyin."
+      "subjectCustomer": "{service} komisyonunu yakında ödeyin",
+      "subjectProvider": "{service} için ücretinizi yakında ödeyin",
+      "leadCustomer": "Seçiminiz {deadline} tarihine kadar geçerli. Komisyonu o zamana kadar ödeyin, yoksa seçim sona erer.",
+      "leadProvider": "İşi kaybetmemek için ücretinizi {deadline} tarihinden önce ödeyin."
     },
     "closes_soon": {
-      "subject": "[draft] {service} işi yakında kapanıyor",
-      "lead": "[draft] Hiçbir şey yapmazsanız iş {deadline} tarihinde kendiliğinden kapanır. O zamana kadar onaylayın ya da bize bir sorun bildirin."
+      "subject": "{service} işi yakında kapanıyor",
+      "lead": "Hiçbir şey yapmazsanız iş {deadline} tarihinde kendiliğinden kapanır. O zamana kadar onaylayın ya da bize bir sorun bildirin."
     },
     "report_received": {
-      "subject": "[draft] {service} hakkındaki bildiriminizi aldık",
-      "lead": "[draft] Bize bildirdiğiniz için teşekkür ederiz. Ekibimiz bildiriminizi inceleyecek ve incelendiğinde size e-posta gönderecek."
+      "subject": "{service} hakkındaki bildiriminizi aldık",
+      "lead": "Bize bildirdiğiniz için teşekkür ederiz. Ekibimiz bildiriminizi inceleyecek ve incelendiğinde size e-posta gönderecek."
     },
     "report_handled": {
-      "subject": "[draft] {service} hakkındaki bildiriminiz incelendi",
-      "lead": "[draft] Ekibimiz bildiriminizi inceledi. Aldebyani'yi güvenli tutmaya yardım ettiğiniz için teşekkür ederiz."
+      "subject": "{service} hakkındaki bildiriminiz incelendi",
+      "lead": "Ekibimiz bildiriminizi inceledi. Aldebyani'yi güvenli tutmaya yardım ettiğiniz için teşekkür ederiz."
     },
     "report_new_admin": {
-      "subject": "[draft] Yeni sorun bildirimi: {service}",
-      "lead": "[draft] Bir müşteri ya da hizmet veren bir sorun bildirdi. İncelemek için bildirimi açın.",
-      "action": "[draft] Bildirimi aç"
+      "subject": "Yeni sorun bildirimi: {service}",
+      "lead": "Bir müşteri ya da hizmet veren bir sorun bildirdi. İncelemek için bildirimi açın.",
+      "action": "Bildirimi aç"
     },
     "password_changed": {
-      "subject": "[draft] Hesabınıza bir şifre kaydedildi",
-      "lead": "[draft] Aldebyani hesabınıza {when} tarihinde bir şifre kaydedildi.",
-      "notYou": "[draft] Bu siz değilseniz şifrenizi hemen bir SMS koduyla sıfırlayın, ardından destek ekibimizle iletişime geçin.",
-      "action": "[draft] Şifremi sıfırla"
+      "subject": "Hesabınıza bir şifre kaydedildi",
+      "lead": "Aldebyani hesabınıza {when} tarihinde bir şifre kaydedildi.",
+      "notYou": "Bu siz değilseniz şifrenizi hemen bir SMS koduyla sıfırlayın, ardından destek ekibimizle iletişime geçin.",
+      "action": "Şifremi sıfırla"
     },
     "rate_provider": {
-      "subject": "[draft] {service} nasıldı?",
-      "lead": "[draft] {name} ile {service} işiniz kapandı. İsterseniz puan verebilirsiniz.",
-      "leadNoName": "[draft] {service} işiniz kapandı. İsterseniz puan verebilirsiniz.",
-      "until": "[draft] {deadline} tarihine kadar puan verebilirsiniz.",
-      "optional": "[draft] Puan vermek isteğe bağlıdır ve hiçbir ödemeyi değiştirmez.",
-      "action": "[draft] İşi puanla"
+      "subject": "{service} nasıldı?",
+      "lead": "{name} ile {service} işiniz kapandı. İsterseniz puan verebilirsiniz.",
+      "leadNoName": "{service} işiniz kapandı. İsterseniz puan verebilirsiniz.",
+      "until": "{deadline} tarihine kadar puan verebilirsiniz.",
+      "optional": "Puan vermek isteğe bağlıdır ve hiçbir ödemeyi değiştirmez.",
+      "action": "İşi puanla"
     },
     "rating_received": {
-      "subject": "[draft] Yeni bir puanınız var",
-      "lead": "[draft] Bir müşteri işlerinizden birini puanladı. Puanınızı profilinizde görün.",
-      "action": "[draft] Profilimi aç"
+      "subject": "Yeni bir puanınız var",
+      "lead": "Bir müşteri işlerinizden birini puanladı. Puanınızı profilinizde görün.",
+      "action": "Profilimi aç"
     },
     "document_expiring": {
-      "subject": "[draft] Zorunlu bir belgenin süresi yakında doluyor",
-      "lead": "[draft] {document} belgenizin süresi {until} tarihinde doluyor. Başvurmaya devam etmek için o tarihten önce yenisini yükleyin.",
-      "action": "[draft] Belgelerimi aç",
+      "subject": "Zorunlu bir belgenin süresi yakında doluyor",
+      "lead": "{document} belgenizin süresi {until} tarihinde doluyor. Başvurmaya devam etmek için o tarihten önce yenisini yükleyin.",
+      "action": "Belgelerimi aç",
       "types": {
         "profile_photo": "profil fotoğrafı",
         "id_front": "kimlik ön yüzü",
@@ -1912,10 +1912,10 @@
       }
     },
     "agreement_ready": {
-      "subject": "[draft] {number} numaralı hizmet sözleşmeniz",
-      "leadCustomer": "[draft] İki ücret de ödendi, hizmet verenle hizmet sözleşmeniz hazır. Bu e-postaya PDF olarak eklendi.",
-      "leadProvider": "[draft] İki ücret de ödendi, müşteriyle hizmet sözleşmeniz hazır. Bu e-postaya PDF olarak eklendi.",
-      "keep": "[draft] Bu e-postayı saklayın: iş sayfası indirmeyi yalnızca kısa bir süre sunar."
+      "subject": "{number} numaralı hizmet sözleşmeniz",
+      "leadCustomer": "İki ücret de ödendi, hizmet verenle hizmet sözleşmeniz hazır. Bu e-postaya PDF olarak eklendi.",
+      "leadProvider": "İki ücret de ödendi, müşteriyle hizmet sözleşmeniz hazır. Bu e-postaya PDF olarak eklendi.",
+      "keep": "Bu e-postayı saklayın: iş sayfası indirmeyi yalnızca kısa bir süre sunar."
     }
   },
   "Reports": {
@@ -1934,11 +1934,11 @@
       "safety_or_behaviour": "Bir işte güvenlik ya da davranışla ilgili bir bildirim aldık. Lütfen herkese saygıyla davranın.",
       "asked_money_off_platform": "Aldebyani dışında para istendiğine dair bir bildirim aldık. Ücretlerimiz yalnızca Aldebyani üzerinden ödenir.",
       "other": "İşlerinizden biriyle ilgili bir bildirim aldık. Lütfen Aldebyani koşullarına uyun.",
-      "low_rating": "[draft] Müşteriler son işlerinize düşük puan verdi. Lütfen her işi anlaşılan standartta bitirin.",
-      "high_reports": "[draft] İşlerinizle ilgili birkaç bildirim aldık. Lütfen her randevuya uyun ve her işi anlaşılan standartta bitirin.",
-      "high_cancellations": "[draft] Çok fazla iş iptal ettiniz. Lütfen yalnızca işi gerçekten yapamayacağınızda iptal edin.",
-      "low_follow_through": "[draft] Sizi seçen birçok müşterinin işi yapılmadı. Lütfen ücretinizi ödeyin ve seçildiğiniz her işe sahip çıkın.",
-      "probation_issue": "[draft] Aldebyani'deki ilk işlerinizde bir sorun oldu. Lütfen her randevuya uyun ve her işi anlaşılan standartta bitirin."
+      "low_rating": "Müşteriler son işlerinize düşük puan verdi. Lütfen her işi anlaşılan standartta bitirin.",
+      "high_reports": "İşlerinizle ilgili birkaç bildirim aldık. Lütfen her randevuya uyun ve her işi anlaşılan standartta bitirin.",
+      "high_cancellations": "Çok fazla iş iptal ettiniz. Lütfen yalnızca işi gerçekten yapamayacağınızda iptal edin.",
+      "low_follow_through": "Sizi seçen birçok müşterinin işi yapılmadı. Lütfen ücretinizi ödeyin ve seçildiğiniz her işe sahip çıkın.",
+      "probation_issue": "Aldebyani'deki ilk işlerinizde bir sorun oldu. Lütfen her randevuya uyun ve her işi anlaşılan standartta bitirin."
     },
     "cta": "Sorun bildir",
     "notDone": "Yapılmadı, sorun bildir",
@@ -2163,7 +2163,7 @@
     "count": "{count, plural, one {# puan} other {# puan}}",
     "label": "{count, plural, one {# puana} other {# puana}} göre 5 üzerinden {score}",
     "see": "Puanları gör",
-    "disclosure": "[draft] Yalnızca tamamlanan işlerin müşterileri puan verebilir. Yönetici bir puanı yalnızca sahte ya da zorla verilmişse gizler, düşük olduğu için asla gizlemez.",
+    "disclosure": "Yalnızca tamamlanan işlerin müşterileri puan verebilir. Yönetici bir puanı yalnızca sahte ya da zorla verilmişse gizler, düşük olduğu için asla gizlemez.",
     "form": {
       "title": "Puanınız",
       "optional": "İsteğe bağlı",
@@ -2361,29 +2361,29 @@
       "lineDeadline": "Zorunlu bir belgenin süresi {deadline} tarihinde doluyor. Başvurmaya devam etmek için yenisini yükleyin."
     },
     "agreement_ready": {
-      "title": "[draft] Hizmet sözleşmeniz hazır",
-      "line": "[draft] {service} sözleşmesi hazır. İş sayfasından indirin ya da e-postanızdaki kopyayı saklayın."
+      "title": "Hizmet sözleşmeniz hazır",
+      "line": "{service} sözleşmesi hazır. İş sayfasından indirin ya da e-postanızdaki kopyayı saklayın."
     }
   },
   "Quality": {
     "card": {
-      "jobs": "[draft] Aldebyani'de {count, plural, one {# iş} other {# iş}}",
-      "completed": "[draft] {pct} tamamlandı",
-      "onTime": "[draft] {pct} zamanında",
-      "how": "[draft] Nasıl sayıyoruz",
-      "windowMonths": "[draft] {count, plural, one {# ay} other {# ay}}",
-      "windowDays": "[draft] {count, plural, one {# gün} other {# gün}}",
-      "note": "[draft] Son {window} içinde Aldebyani'deki işlerden sayılır. Tamamlanan, müşterinin iptal etmediği işleri sayar; zamanında, randevu saatinden sonraki {grace} dakika içinde başlamak demektir."
+      "jobs": "Aldebyani'de {count, plural, one {# iş} other {# iş}}",
+      "completed": "{pct} tamamlandı",
+      "onTime": "{pct} zamanında",
+      "how": "Nasıl sayıyoruz",
+      "windowMonths": "{count, plural, one {# ay} other {# ay}}",
+      "windowDays": "{count, plural, one {# gün} other {# gün}}",
+      "note": "Son {window} içinde Aldebyani'deki işlerden sayılır. Tamamlanan, müşterinin iptal etmediği işleri sayar; zamanında, randevu saatinden sonraki {grace} dakika içinde başlamak demektir."
     },
     "mine": {
-      "title": "[draft] Kaliteniz",
-      "jobs": "[draft] Aldebyani'deki işler",
-      "completed": "[draft] Tamamlanan",
-      "onTime": "[draft] Zamanında",
-      "notYet": "[draft] Yeterli iş sayılınca gösterilir",
-      "unavailable": "[draft] Rakamlarınız şu anda kullanılamıyor.",
-      "probation": "[draft] İlk {needed} işiniz: {done} bitti",
-      "probationLimit": "[draft] İlk işleriniz boyunca aynı anda {limit} iş alabilirsiniz."
+      "title": "Kaliteniz",
+      "jobs": "Aldebyani'deki işler",
+      "completed": "Tamamlanan",
+      "onTime": "Zamanında",
+      "notYet": "Yeterli iş sayılınca gösterilir",
+      "unavailable": "Rakamlarınız şu anda kullanılamıyor.",
+      "probation": "İlk {needed} işiniz: {done} bitti",
+      "probationLimit": "İlk işleriniz boyunca aynı anda {limit} iş alabilirsiniz."
     },
     "admin": {
       "title": "Kalite",
@@ -2504,53 +2504,53 @@
     }
   },
   "Agreement": {
-    "checkbox": "[draft] <agreement>Hizmet sözleşmesini</agreement> ve <terms>kullanım koşullarını</terms> kabul ediyorum.",
-    "required": "[draft] Önce hizmet sözleşmesini kabul etmek için kutuyu işaretleyin.",
+    "checkbox": "<agreement>Hizmet sözleşmesini</agreement> ve <terms>kullanım koşullarını</terms> kabul ediyorum.",
+    "required": "Önce hizmet sözleşmesini kabul etmek için kutuyu işaretleyin.",
     "card": {
-      "title": "[draft] Hizmet sözleşmeniz hazır",
-      "number": "[draft] Sözleşme {number}",
-      "download": "[draft] İndir",
-      "again": "[draft] Tekrar indir",
-      "opened": "[draft] Açıldı. Kopyanız e-postanızda.",
-      "failed": "[draft] İndirme başlamadı. Tekrar deneyin."
+      "title": "Hizmet sözleşmeniz hazır",
+      "number": "Sözleşme {number}",
+      "download": "İndir",
+      "again": "Tekrar indir",
+      "opened": "Açıldı. Kopyanız e-postanızda.",
+      "failed": "İndirme başlamadı. Tekrar deneyin."
     },
     "page": {
-      "title": "[draft] Hizmet sözleşmesi",
-      "version": "[draft] Sürüm {version}",
-      "turkish": "[draft] Aşağıdaki Türkçe metin sözleşmenin kendisidir. Köşeli parantez içindeki kısımlar, ikiniz de ödedikten sonra işinizin bilgileriyle doldurulur.",
-      "inactive": "[draft] Bu sürüm artık yeni işler için sunulmuyor. Onu kabul eden işler için hâlâ bağlayıcıdır."
+      "title": "Hizmet sözleşmesi",
+      "version": "Sürüm {version}",
+      "turkish": "Aşağıdaki Türkçe metin sözleşmenin kendisidir. Köşeli parantez içindeki kısımlar, ikiniz de ödedikten sonra işinizin bilgileriyle doldurulur.",
+      "inactive": "Bu sürüm artık yeni işler için sunulmuyor. Onu kabul eden işler için hâlâ bağlayıcıdır."
     },
     "admin": {
-      "title": "[draft] Sözleşmeler",
-      "intro": "[draft] Tüm hizmet sözleşmeleri, en yenisi önce. Her görüntüleme kaydedilir.",
-      "search": "[draft] Numara ya da talep kimliği",
-      "searchButton": "[draft] Ara",
-      "clear": "[draft] Temizle",
-      "empty": "[draft] Eşleşen sözleşme yok.",
-      "request": "[draft] Talep",
-      "customer": "[draft] Müşteri",
-      "provider": "[draft] Hizmet veren",
-      "rendered": "[draft] Hazır: {date}",
-      "queued": "[draft] Hazırlanıyor",
-      "failed": "[draft] Oluşturma başarısız",
-      "openedCustomer": "[draft] Müşteri açtı",
-      "openedProvider": "[draft] Hizmet veren açtı",
-      "notOpened": "[draft] Henüz açılmadı",
-      "view": "[draft] PDF'yi görüntüle",
-      "renderAgain": "[draft] Yeniden oluştur",
-      "renderQueued": "[draft] Yeni bir oluşturma sıraya alındı.",
-      "next": "[draft] Sonraki sayfa",
-      "requestLink": "[draft] Hizmet sözleşmesi {number}",
-      "none": "[draft] Bu iş için hizmet sözleşmesi yok.",
+      "title": "Sözleşmeler",
+      "intro": "Tüm hizmet sözleşmeleri, en yenisi önce. Her görüntüleme kaydedilir.",
+      "search": "Numara ya da talep kimliği",
+      "searchButton": "Ara",
+      "clear": "Temizle",
+      "empty": "Eşleşen sözleşme yok.",
+      "request": "Talep",
+      "customer": "Müşteri",
+      "provider": "Hizmet veren",
+      "rendered": "Hazır: {date}",
+      "queued": "Hazırlanıyor",
+      "failed": "Oluşturma başarısız",
+      "openedCustomer": "Müşteri açtı",
+      "openedProvider": "Hizmet veren açtı",
+      "notOpened": "Henüz açılmadı",
+      "view": "PDF'yi görüntüle",
+      "renderAgain": "Yeniden oluştur",
+      "renderQueued": "Yeni bir oluşturma sıraya alındı.",
+      "next": "Sonraki sayfa",
+      "requestLink": "Hizmet sözleşmesi {number}",
+      "none": "Bu iş için hizmet sözleşmesi yok.",
       "errors": {
-        "forbidden": "[draft] Bu sayfa yöneticiler içindir.",
-        "not_found": "[draft] Bu sözleşme kullanılamıyor.",
-        "invalid_state": "[draft] Yalnızca başarısız bir sözleşme yeniden oluşturulabilir.",
-        "validation_failed": "[draft] Bu arama çok uzun.",
-        "action_failed": "[draft] Bir şeyler ters gitti. Tekrar deneyin."
+        "forbidden": "Bu sayfa yöneticiler içindir.",
+        "not_found": "Bu sözleşme kullanılamıyor.",
+        "invalid_state": "Yalnızca başarısız bir sözleşme yeniden oluşturulabilir.",
+        "validation_failed": "Bu arama çok uzun.",
+        "action_failed": "Bir şeyler ters gitti. Tekrar deneyin."
       }
     },
-    "unavailable": "[draft] Bu işin hizmet sözleşmesi kullanılamıyor, bu yüzden ücret burada ödenemez. Lütfen destekle iletişime geçin."
+    "unavailable": "Bu işin hizmet sözleşmesi kullanılamıyor, bu yüzden ücret burada ödenemez. Lütfen destekle iletişime geçin."
   },
   "Address": {
     "title": "Adres",

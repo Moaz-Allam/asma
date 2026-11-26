@@ -35,7 +35,6 @@ const MENUS: Readonly<Record<Role, readonly MenuItem[]>> = {
   // Spec 0009 AC-15: the phone tabs are the daily work. Setup, profile and account sit in the header from
   // `lg` (`PROVIDER_NAV`) and as links on `/provider` below it (`PROVIDER_LINKS`), as the admin rail does.
   provider: [
-    { key: 'dashboard', href: '/provider' },
     { key: 'feed', href: '/provider/feed' },
     { key: 'applications', href: '/provider/applications' },
   ],
