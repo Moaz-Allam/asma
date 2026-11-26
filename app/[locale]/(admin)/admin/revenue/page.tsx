@@ -54,7 +54,6 @@ export default async function Page({ params, searchParams }: Props) {
   const t = await getTranslations('AdminRevenue');
   const csv = `/api/admin/revenue?${new URLSearchParams({ from, to, grain }).toString()}`;
   const row = 'flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-body-s';
-  const maxNet = outcome.ok ? Math.max(1, ...outcome.report.rows.map((r) => Math.max(0, r.net))) : 1;
 
   return (
     <div className="flex flex-col gap-5">
@@ -105,60 +104,52 @@ export default async function Page({ params, searchParams }: Props) {
         <EmptyState lead={t('title')} title={t('empty')} body={t('emptyBody')} />
       ) : (
         <ul className="flex flex-col gap-3.5">
-          {outcome.report.rows.map((line) => {
-            const pct = Math.min(100, Math.max(0, Math.round((Math.max(0, line.net) / maxNet) * 100)));
-            return (
-              <li
-                key={`${line.region}-${line.currency}-${line.bucket}`}
-                className="flex flex-col gap-3.5 rounded-panel border-2 border-border bg-surface p-5.5 lg:p-6"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-eyebrow uppercase text-text-secondary">
-                    <span dir="ltr">{grain === 'month' ? line.bucket.slice(0, 7) : line.bucket}</span> ·{' '}
-                    {line.region} · {line.currency}
-                  </h2>
-                  <MoneyDisplay
-                    amount={line.net}
-                    currency={line.currency}
-                    className="text-amount-s text-text-primary"
-                  />
-                </div>
-                <div aria-hidden className="h-2 overflow-hidden rounded-full bg-accent-muted">
-                  <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
-                </div>
-                <dl className="flex flex-col gap-2 rounded-block bg-surface-secondary p-4">
-                  {MONEY_ROWS.map((column) => (
+          {outcome.report.rows.map((line) => (
+            <li
+              key={`${line.region}-${line.currency}-${line.bucket}`}
+              className="flex flex-col gap-3.5 rounded-panel border-2 border-border bg-surface p-5.5 lg:p-6"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-eyebrow uppercase text-text-secondary">
+                  <span dir="ltr">{grain === 'month' ? line.bucket.slice(0, 7) : line.bucket}</span> ·{' '}
+                  {line.region} · {line.currency}
+                </h2>
+                <MoneyDisplay
+                  amount={line.net}
+                  currency={line.currency}
+                  className="text-amount-s text-text-primary"
+                />
+              </div>
+              <dl className="flex flex-col gap-2 rounded-block bg-surface-secondary p-4">
+                {MONEY_ROWS.map((column) => (
+                  <div key={column} className={row}>
+                    <dt className={column === 'net' ? 'font-bold text-text-primary' : 'text-text-secondary'}>
+                      {t(`columns.${column}`)}
+                    </dt>
+                    <dd
+                      className={column === 'net' ? 'font-bold text-text-primary' : 'text-text-primary'}
+                      dir="ltr"
+                    >
+                      <MoneyDisplay amount={line[column]} currency={line.currency} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="flex flex-col gap-2 border-t-2 border-border-light pt-3">
+                <p className="text-meta font-bold text-text-secondary">{t('late')}</p>
+                <dl className="flex flex-col gap-2">
+                  {(['late_received', 'late_refunded'] as const).map((column) => (
                     <div key={column} className={row}>
-                      <dt
-                        className={column === 'net' ? 'font-bold text-text-primary' : 'text-text-secondary'}
-                      >
-                        {t(`columns.${column}`)}
-                      </dt>
-                      <dd
-                        className={column === 'net' ? 'font-bold text-text-primary' : 'text-text-primary'}
-                        dir="ltr"
-                      >
+                      <dt className="text-text-secondary">{t(`columns.${column}`)}</dt>
+                      <dd className="text-text-primary" dir="ltr">
                         <MoneyDisplay amount={line[column]} currency={line.currency} />
                       </dd>
                     </div>
                   ))}
                 </dl>
-                <div className="flex flex-col gap-2 border-t-2 border-border-light pt-3">
-                  <p className="text-meta font-bold text-text-secondary">{t('late')}</p>
-                  <dl className="flex flex-col gap-2">
-                    {(['late_received', 'late_refunded'] as const).map((column) => (
-                      <div key={column} className={row}>
-                        <dt className="text-text-secondary">{t(`columns.${column}`)}</dt>
-                        <dd className="text-text-primary" dir="ltr">
-                          <MoneyDisplay amount={line[column]} currency={line.currency} />
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              </li>
-            );
-          })}
+              </div>
+            </li>
+          ))}
         </ul>
       )}
     </div>

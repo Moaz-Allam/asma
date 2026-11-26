@@ -7,7 +7,7 @@ import { PublicMenu } from '@/components/layout/PublicMenu';
 import { SkipLink } from '@/components/layout/SkipLink';
 import { InitialAvatar } from '@/components/shared/InitialAvatar';
 import { Button } from '@/components/ui/button';
-import type { Role } from '@/lib/auth/roles';
+import { homeFor, type Role } from '@/lib/auth/roles';
 import { Link } from '@/lib/i18n/navigation';
 import { PUBLIC_ANCHORS, headerMenuFor } from '@/lib/navigation/menus';
 import { cn } from '@/lib/utils';
@@ -43,7 +43,7 @@ export async function SiteHeader({
     >
       <SkipLink />
       <Link
-        href="/provider"
+        href={user ? homeFor(user.role) : '/'}
         dir="ltr"
         aria-label={t('home')}
         className={cn(

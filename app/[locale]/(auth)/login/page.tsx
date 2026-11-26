@@ -46,7 +46,7 @@ export default async function LoginPage({ params, searchParams }: Props) {
       <section className="flex min-h-[calc(100dvh-1.5rem)] flex-col rounded-card bg-accent-light px-5 py-6 lg:min-h-[calc(100dvh-2rem)] lg:px-10 lg:py-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
-            href="/provider"
+            href="/"
             dir="ltr"
             className="inline-flex min-h-11 items-center font-wordmark text-wordmark-sm text-text-primary"
           >

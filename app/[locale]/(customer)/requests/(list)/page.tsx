@@ -137,9 +137,7 @@ export default async function Page({ params, searchParams }: Props) {
                 </h2>
                 <p className="text-body-s text-text-secondary">{t(`status.${urgent.status}`)}</p>
                 <div className="flex items-baseline justify-between rounded-row bg-surface px-4 py-3">
-                  <span className="text-body-s text-text-secondary">
-                    {urgent.status === 'SELECTED' ? t('price.online') : t('price.total')}
-                  </span>
+                  <span className="text-body-s text-text-secondary">{t('price.total')}</span>
                   <MoneyDisplay
                     amount={urgent.fixed_price}
                     currency={urgent.currency}
@@ -158,18 +156,18 @@ export default async function Page({ params, searchParams }: Props) {
               <h2 className="text-eyebrow uppercase text-text-secondary">{t('list.summaryTitle')}</h2>
               <dl className="grid grid-cols-3 gap-3 text-center">
                 <div className="flex flex-col gap-1 rounded-row bg-surface p-3">
+                  <dt className="text-meta text-text-secondary">{t('list.summaryShown')}</dt>
                   <dd className="font-display text-tile tabular-nums text-text-primary">
                     {page.rows.length}
                   </dd>
-                  <dt className="text-meta text-text-secondary">{t('list.summaryShown')}</dt>
                 </div>
                 <div className="flex flex-col gap-1 rounded-row bg-surface p-3">
-                  <dd className="font-display text-tile tabular-nums text-text-primary">{activeCount}</dd>
                   <dt className="text-meta text-text-secondary">{t('list.summaryActive')}</dt>
+                  <dd className="font-display text-tile tabular-nums text-text-primary">{activeCount}</dd>
                 </div>
                 <div className="flex flex-col gap-1 rounded-row bg-surface p-3">
-                  <dd className="font-display text-tile tabular-nums text-text-primary">{completedCount}</dd>
                   <dt className="text-meta text-text-secondary">{t('list.summaryCompleted')}</dt>
+                  <dd className="font-display text-tile tabular-nums text-text-primary">{completedCount}</dd>
                 </div>
               </dl>
               <div className="flex items-start gap-2.5 border-t-2 border-border pt-3.5 text-meta text-text-secondary">

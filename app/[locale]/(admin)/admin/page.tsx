@@ -30,10 +30,13 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function utcDay(days: number): string {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
+async function readDashboardPart<T>(operation: string, read: Promise<T>): Promise<T | null> {
+  try {
+    return await read;
+  } catch (error) {
+    reportServerError(operation, error);
+    return null;
+  }
 }
 
 type ActionItem = {
@@ -47,7 +50,7 @@ type ActionItem = {
 
 /**
  * The admin console dashboard (`app-01`): live KPI stat cards, unified "Needs action" queue across
- * provider approvals, problem reports, deadline flags, and quality watchlist, plus request funnel bars
+ * provider approvals, problem reports, deadline flags, and quality watchlist, plus regional provider vetting stages
  * and "Find request by id" (spec 0011-12 AC-12). Every reader re-verifies `is_admin()`.
  */
 export default async function Page({ params, searchParams }: Props) {
@@ -59,34 +62,20 @@ export default async function Page({ params, searchParams }: Props) {
   const tFind = await getTranslations('AdminRequests');
   const tReasons = await getTranslations('Reports.reasons');
   const tQuality = await getTranslations('Quality.admin');
+  const tRevenue = await getTranslations('AdminRevenue');
+  const tStatus = await getTranslations('Requests.status');
   const format = await getFormatter();
   const invalid = (await searchParams).find === 'invalid';
 
-  const today = utcDay(0);
-  const monthStart = `${today.slice(0, 7)}-01`;
-
-  const [pending, reports, flags, watchlist, probation, requestsOutcome, funnel, revenueOutcome] =
-    await Promise.all([
-      queuePage({ tab: 'pending', sort: 'oldest', page: 1 }).catch((error: unknown) => {
-        reportServerError('adminHomePending', error);
-        return { entries: [], page: 1, pages: 1, total: 0 };
-      }),
-      loadReports('open', 1).catch((error: unknown) => {
-        reportServerError('adminHomeReports', error);
-        return { rows: [], total: 0 };
-      }),
-      listFlags(1).catch((error: unknown) => {
-        reportServerError('adminHomeFlags', error);
-        return { rows: [], total: 0 };
-      }),
-      loadQualityFlags(1).catch((error: unknown) => {
-        reportServerError('adminHomeQuality', error);
-        return { rows: [], total: 0 };
-      }),
-      loadProbation(1).catch((error: unknown) => {
-        reportServerError('adminHomeProbation', error);
-        return { rows: [], total: 0 };
-      }),
+  const today = new Date().toISOString().slice(0, 10);
+  const [pending, reports, flags, watchlist, probation, requests, funnel, revenue] = await Promise.all([
+    readDashboardPart('adminHomePending', queuePage({ tab: 'pending', sort: 'oldest', page: 1 })),
+    readDashboardPart('adminHomeReports', loadReports('open', 1)),
+    readDashboardPart('adminHomeFlags', listFlags(1)),
+    readDashboardPart('adminHomeQuality', loadQualityFlags(1)),
+    readDashboardPart('adminHomeProbation', loadProbation(1)),
+    readDashboardPart(
+      'adminHomeRequests',
       listRequests({
         status: null,
         region: null,
@@ -94,27 +83,27 @@ export default async function Page({ params, searchParams }: Props) {
         to: null,
         hasFlag: null,
         page: 1,
-      }).catch((error: unknown) => {
-        reportServerError('adminHomeRequests', error);
-        return { ok: false as const, code: 'action_failed' };
       }),
-      loadFunnel().catch((error: unknown) => {
-        reportServerError('adminHomeFunnel', error);
-        return [];
-      }),
-      loadRevenue({ from: monthStart, to: utcDay(1), grain: 'month' }).catch((error: unknown) => {
-        reportServerError('adminHomeRevenue', error);
-        return { ok: false as const, code: 'action_failed' };
-      }),
-    ]);
+    ),
+    readDashboardPart('adminHomeFunnel', loadFunnel()),
+    readDashboardPart('adminHomeRevenue', loadRevenue({ from: today, to: today, grain: 'month' })),
+  ]);
 
-  const needsActionTotal = pending.total + reports.total + flags.total + watchlist.total;
-  const totalRequests = 'ok' in requestsOutcome ? 0 : requestsOutcome.total;
-  const currentRevenueRow =
-    revenueOutcome.ok && revenueOutcome.report.rows.length > 0 ? revenueOutcome.report.rows[0] : null;
+  const unavailable = tFind('errors.action_failed');
+  const needsActionTotal =
+    pending && reports && flags && watchlist
+      ? pending.total + reports.total + flags.total + watchlist.total
+      : null;
+  const requestCount = requests && !('ok' in requests) ? requests.total : null;
+  const revenueRows = revenue?.ok ? revenue.report.rows : null;
+  const monthLabel = format.dateTime(new Date(today + 'T12:00:00Z'), {
+    year: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  });
 
   const queueItems: ActionItem[] = [
-    ...pending.entries.slice(0, 4).map((entry) => ({
+    ...(pending?.entries ?? []).slice(0, 4).map((entry) => ({
       key: `provider-${entry.id}`,
       kindLabel: t('queueKindProvider'),
       tone: 'waiting' as const,
@@ -122,7 +111,7 @@ export default async function Page({ params, searchParams }: Props) {
       meta: entry.date ? format.dateTime(new Date(entry.date), { dateStyle: 'medium' }) : '',
       href: `/admin/providers/${entry.id}`,
     })),
-    ...reports.rows.slice(0, 4).map((row) => ({
+    ...(reports?.rows ?? []).slice(0, 4).map((row) => ({
       key: `report-${row.id}`,
       kindLabel: t('queueKindReport'),
       tone: 'negative' as const,
@@ -130,15 +119,15 @@ export default async function Page({ params, searchParams }: Props) {
       meta: `${row.region} · ${instantLabel(row.created_at, row.timezone, locale)}`,
       href: `/admin/reports/${row.id}`,
     })),
-    ...flags.rows.slice(0, 4).map((row) => ({
+    ...(flags?.rows ?? []).slice(0, 4).map((row) => ({
       key: `flag-${row.id}`,
       kindLabel: t('queueKindFlag'),
       tone: 'negative' as const,
-      title: `${tFind(`flag.${row.kind}`)} · ${row.request_status}`,
+      title: `${tFind(`flag.${row.kind}`)} · ${tStatus(row.request_status)}`,
       meta: `${row.region} · ${instantLabel(row.raised_at, row.timezone, locale)}`,
       href: `/admin/requests/${row.request_id}`,
     })),
-    ...watchlist.rows.slice(0, 3).map((row) => ({
+    ...(watchlist?.rows ?? []).slice(0, 3).map((row) => ({
       key: `quality-${row.id}`,
       kindLabel: t('queueKindQuality'),
       tone: 'waiting' as const,
@@ -147,11 +136,6 @@ export default async function Page({ params, searchParams }: Props) {
       href: `/admin/providers/${row.provider_id}`,
     })),
   ];
-
-  const primaryFunnel = funnel.find((r) => r.region === 'TR') ?? funnel[0] ?? null;
-  const maxStage = primaryFunnel
-    ? Math.max(1, ...FUNNEL_STAGES.map((stage) => primaryFunnel.stages[stage]))
-    : 1;
 
   return (
     <div className="flex flex-col gap-6">
@@ -175,28 +159,31 @@ export default async function Page({ params, searchParams }: Props) {
       <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t('kpiNeedsAction')}
-          value={needsActionTotal}
-          note={t('kpiNeedsActionNote')}
+          value={needsActionTotal === null ? '—' : formatCount(needsActionTotal, locale)}
+          note={needsActionTotal === null ? unavailable : t('kpiNeedsActionNote')}
           icon={<AlertCircle aria-hidden className="size-5" />}
           tone="emphasis"
         />
         <StatCard
-          label={t('kpiNetRevenue')}
+          label={tRevenue('summaryNet')}
           value={
-            currentRevenueRow ? (
-              <MoneyDisplay amount={currentRevenueRow.net} currency={currentRevenueRow.currency} />
-            ) : (
-              '—'
-            )
+            revenueRows?.length
+              ? revenueRows.map((line) => (
+                  <span key={line.region + line.currency} className="flex flex-wrap items-baseline gap-x-2">
+                    <MoneyDisplay amount={line.net} currency={line.currency} />
+                    <span className="text-meta text-text-secondary">
+                      {line.region} · {line.currency}
+                    </span>
+                  </span>
+                ))
+              : '—'
           }
           note={
-            currentRevenueRow ? (
-              <span>
-                {currentRevenueRow.region} · {currentRevenueRow.bucket.slice(0, 7)}
-              </span>
-            ) : (
-              t('kpiNetRevenueEmpty')
-            )
+            revenueRows === null
+              ? unavailable
+              : revenueRows.length
+                ? monthLabel
+                : `${monthLabel} · ${tRevenue('empty')}`
           }
           icon={<ChartColumn aria-hidden className="size-5" />}
           tone="tinted"
@@ -204,15 +191,19 @@ export default async function Page({ params, searchParams }: Props) {
         />
         <StatCard
           label={t('kpiTotalRequests')}
-          value={formatCount(totalRequests, locale)}
-          note={t('kpiTotalRequestsNote')}
+          value={requestCount === null ? '—' : formatCount(requestCount, locale)}
+          note={requestCount === null ? unavailable : t('kpiTotalRequestsNote')}
           icon={<ClipboardList aria-hidden className="size-5" />}
           tone="tinted"
         />
         <StatCard
           label={t('kpiWatchlist')}
-          value={watchlist.total + probation.total}
-          note={t('kpiWatchlistNote', { probation: probation.total, flags: watchlist.total })}
+          value={watchlist && probation ? formatCount(watchlist.total + probation.total, locale) : '—'}
+          note={
+            watchlist && probation
+              ? t('kpiWatchlistNote', { probation: probation.total, flags: watchlist.total })
+              : unavailable
+          }
           icon={<ShieldCheck aria-hidden className="size-5" />}
           tone="tinted"
           href="/admin/quality"
@@ -229,11 +220,16 @@ export default async function Page({ params, searchParams }: Props) {
               {t('queueTitle')}
             </h2>
             <span className="rounded-full bg-accent-light px-3 py-1 text-chip tabular-nums text-text-primary">
-              {needsActionTotal}
+              {needsActionTotal === null ? '—' : formatCount(needsActionTotal, locale)}
             </span>
           </div>
 
-          {queueItems.length === 0 ? (
+          {needsActionTotal === null ? (
+            <p role="alert" className="text-body-s text-error-foreground">
+              {unavailable}
+            </p>
+          ) : null}
+          {queueItems.length === 0 && needsActionTotal === 0 ? (
             <EmptyState lead={t('adminLead')} title={t('adminEmpty')} body={t('adminBody')} />
           ) : (
             <ul className="divide-y-2 divide-border-light">
@@ -289,40 +285,50 @@ export default async function Page({ params, searchParams }: Props) {
             ) : null}
           </form>
 
-          {primaryFunnel ? (
-            <section
-              aria-labelledby="admin-status-breakdown"
-              className="flex flex-col gap-4 rounded-panel border-2 border-border bg-surface p-5.5 lg:p-6.5"
-            >
-              <div className="flex flex-col gap-1">
-                <h2 id="admin-status-breakdown" className="font-display text-card text-text-primary">
-                  {t('statusBreakdownTitle')}
-                </h2>
-                <p className="text-meta text-text-secondary">
-                  {t('statusBreakdownNote')} · {primaryFunnel.region}
-                </p>
-              </div>
-              <ul className="flex flex-col gap-3">
-                {FUNNEL_STAGES.map((stage) => {
-                  const value = primaryFunnel.stages[stage];
-                  const pct = Math.min(100, Math.round((value / maxStage) * 100));
-                  return (
-                    <li key={stage} className="flex flex-col gap-1.5">
-                      <div className="flex items-baseline justify-between gap-3 text-body-s">
-                        <span className="text-text-secondary">{tQuality(`stage.${stage}`)}</span>
-                        <span className="font-display font-bold tabular-nums text-text-primary">
-                          {formatCount(value, locale)}
-                        </span>
-                      </div>
-                      <div aria-hidden className="h-2 overflow-hidden rounded-full bg-accent-muted">
-                        <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ) : null}
+          {funnel === null ? (
+            <p role="alert" className="text-body-s text-error-foreground">
+              {tQuality('tabs.funnel')} · {unavailable}
+            </p>
+          ) : (
+            funnel.map((region) => {
+              const maxStage = Math.max(1, ...FUNNEL_STAGES.map((stage) => region.stages[stage]));
+              return (
+                <section
+                  key={region.region}
+                  aria-labelledby={`admin-funnel-${region.region}`}
+                  className="flex flex-col gap-4 rounded-panel border-2 border-border bg-surface p-5.5 lg:p-6.5"
+                >
+                  <h2
+                    id={`admin-funnel-${region.region}`}
+                    className="font-display text-card text-text-primary"
+                  >
+                    {t('statusBreakdownTitle')} · {region.region}
+                  </h2>
+                  <ul className="flex flex-col gap-3">
+                    {FUNNEL_STAGES.map((stage) => {
+                      const value = region.stages[stage];
+                      return (
+                        <li key={stage} className="flex flex-col gap-1.5">
+                          <div className="flex items-baseline justify-between gap-3 text-body-s">
+                            <span className="text-text-secondary">{tQuality(`stage.${stage}`)}</span>
+                            <span className="font-display font-bold tabular-nums text-text-primary">
+                              {formatCount(value, locale)}
+                            </span>
+                          </div>
+                          <div aria-hidden className="h-2 overflow-hidden rounded-full bg-accent-muted">
+                            <div
+                              className="h-full rounded-full bg-accent"
+                              style={{ width: `${(value / maxStage) * 100}%` }}
+                            />
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              );
+            })
+          )}
         </aside>
       </div>
     </div>

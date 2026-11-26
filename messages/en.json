@@ -232,7 +232,7 @@
     "providerPoint2": "Pay the provider fee only when a customer chooses you",
     "providerPoint3": "Apply once the admin approves your profile",
     "nameLabel": "Full name",
-    "agreement": "I accept the <terms>terms</terms> and the <privacy>privacy notice</privacy>, and I agree that the platform may take legal action if one of the two parties does something wrong.",
+    "agreement": "[draft] I accept the <terms>terms</terms> and the <privacy>privacy notice</privacy>, and I agree that the platform may take legal action if one of the two parties does something wrong.",
     "continueCustomer": "Continue as a customer",
     "continueProvider": "Continue as a provider",
     "saving": "Saving…",
@@ -374,9 +374,9 @@
   },
   "Legal": {
     "termsTitle": "Terms",
-    "termsBody": "These terms are being reviewed. The service contract and the cash payment are between the customer and the provider. We connect them and take only our two fees.",
+    "termsBody": "[draft] These terms are a draft and are being reviewed. The service contract and the cash payment are between the customer and the provider. We connect them and take only our two fees.",
     "privacyTitle": "Privacy notice",
-    "privacyBody": "This notice is being reviewed. We use your mobile number to sign you in, and share it with the provider or customer only after both of you have paid.",
+    "privacyBody": "[draft] This notice is a draft and is being reviewed. We use your mobile number to sign you in, and share it with the provider or customer only after both of you have paid.",
     "backHome": "Back to home"
   },
   "Homes": {
@@ -397,7 +397,7 @@
     "profileEmpty": "Your provider profile opens soon",
     "profileBody": "You will add your details and services here.",
     "adminTitle": "Dashboard",
-    "adminIntro": "Live operations queue, platform fee revenue and request status overview.",
+    "adminIntro": "Review pending work, fee revenue and provider vetting.",
     "adminLead": "0",
     "adminEmpty": "Nothing waiting on an admin",
     "adminBody": "Provider reviews, problem reports, deadline flags and watchlist alerts appear here as soon as they open.",
@@ -417,7 +417,7 @@
     "queueKindFlag": "Deadline flag",
     "queueKindQuality": "Quality alert",
     "queueOpen": "Review",
-    "statusBreakdownTitle": "Requests by status",
+    "statusBreakdownTitle": "Provider vetting stages",
     "statusBreakdownNote": "Counts across all regions",
     "railNote": "Ledger entries are append-only. Every administrative refund or adjustment is recorded with an audited reason."
   },
@@ -599,7 +599,7 @@
     "intro": "Admin checks each document by hand. None of them is ever shown to customers.",
     "introAfter": "Your documents. Replacing one sends your file back to review.",
     "reviewNote": "Review starts when you send your file. It usually takes two working days.",
-    "consent": "I agree that the platform stores my ID, my selfie and my criminal record to verify me, that only admins can see them, and that each view is recorded.",
+    "consent": "[draft] I agree that the platform stores my ID, my selfie and my criminal record to verify me, that only admins can see them, and that each view is recorded.",
     "readOnly": "Your account is suspended. You can see your documents but not change them.",
     "acceptsImage": "JPEG or PNG · up to 10 MB",
     "acceptsAny": "JPEG, PNG or PDF · up to 10 MB",
@@ -1222,7 +1222,7 @@
       "checkout_settings_invalid": "Payments are not possible right now. Please try again later.",
       "unlock_settings_invalid": "Payments are not possible right now. Please try again later.",
       "provider_not_eligible": "This provider can no longer be chosen for this request.",
-      "agreement_required": "Tick the box to accept the service agreement first.",
+      "agreement_required": "[draft] Tick the box to accept the service agreement first.",
       "pin_invalid": "The pin must be inside Turkey.",
       "contact_info_in_address": "Please leave phone numbers, emails and links out of the address."
     },
@@ -1249,10 +1249,10 @@
       "confirm": "Choose this provider",
       "keep": "Back",
       "chosenTitle": "Your provider",
-      "answerYes": "Yes",
-      "answerNo": "No",
-      "answerHidden": "Hidden: it contained contact details",
-      "answersLabel": "Answers from {name}"
+      "answerYes": "[draft] Yes",
+      "answerNo": "[draft] No",
+      "answerHidden": "[draft] Hidden: it contained contact details",
+      "answersLabel": "[draft] Answers from {name}"
     },
     "next": {
       "title": "Next: pay the commission",
@@ -1406,16 +1406,16 @@
       "appliedOn": "Applied on {date}",
       "full": "This request has reached the limit of offers.",
       "closed": "This request is closed.",
-      "probationLimit": "You can hold {limit} jobs at once during your first {needed} jobs. Finish one to apply again.",
-      "questionsTitle": "Answer the customer’s questions",
-      "answersWarning": "Do not share phone numbers, emails, links or social handles. Answers with contact details are refused.",
-      "required": "Required",
-      "optional": "Optional",
-      "yes": "Yes",
-      "no": "No",
-      "questionsChanged": "The questions for this job changed. Check them and send again.",
-      "checkAnswers": "Check the answer marked above and send again.",
-      "yourAnswers": "Your answers"
+      "probationLimit": "[draft] You can hold {limit} jobs at once during your first {needed} jobs. Finish one to apply again.",
+      "questionsTitle": "[draft] Answer the customer’s questions",
+      "answersWarning": "[draft] Do not share phone numbers, emails, links or social handles. Answers with contact details are refused.",
+      "required": "[draft] Required",
+      "optional": "[draft] Optional",
+      "yes": "[draft] Yes",
+      "no": "[draft] No",
+      "questionsChanged": "[draft] The questions for this job changed. Check them and send again.",
+      "checkAnswers": "[draft] Check the answer marked above and send again.",
+      "yourAnswers": "[draft] Your answers"
     },
     "applications": {
       "title": "My jobs",
@@ -1478,10 +1478,10 @@
       "apply_settings_invalid": "Applying is not possible right now. Please try again later.",
       "action_failed": "Something went wrong. Nothing was sent. Try again.",
       "email_unconfirmed": "Confirm your email on your account page before you apply.",
-      "probation_limit": "During your first jobs you can hold only a few jobs at once. Finish one to apply again.",
-      "questions_changed": "The questions for this job changed. Check them and send again.",
-      "answers_invalid": "Answer this question within its limits: 10 characters or more for a text, or pick one option.",
-      "contact_info_in_answer": "This answer has contact details. Remove phone numbers, emails, links and social handles.",
+      "probation_limit": "[draft] During your first jobs you can hold only a few jobs at once. Finish one to apply again.",
+      "questions_changed": "[draft] The questions for this job changed. Check them and send again.",
+      "answers_invalid": "[draft] Answer this question within its limits: 10 characters or more for a text, or pick one option.",
+      "contact_info_in_answer": "[draft] This answer has contact details. Remove phone numbers, emails, links and social handles.",
       "address_required": "Add your address before you send an offer."
     },
     "chosen": {
@@ -1769,139 +1769,139 @@
   },
   "Email": {
     "shell": {
-      "footer": "You get this email because you have an account with us. You can turn some notices off on your account page.",
-      "linkHint": "If the button does not work, copy this link into your browser:",
-      "openRequest": "Open my request",
-      "openReceipt": "See the receipt",
-      "openApplications": "Open my applications",
-      "openAccount": "Open my account"
+      "footer": "[draft] You get this email because you have an account with us. You can turn some notices off on your account page.",
+      "linkHint": "[draft] If the button does not work, copy this link into your browser:",
+      "openRequest": "[draft] Open my request",
+      "openReceipt": "[draft] See the receipt",
+      "openApplications": "[draft] Open my applications",
+      "openAccount": "[draft] Open my account"
     },
     "new_offer": {
-      "subject": "New offer on your {service} request",
-      "lead": "A provider sent you an offer for {service}. Open your request to compare the offers."
+      "subject": "[draft] New offer on your {service} request",
+      "lead": "[draft] A provider sent you an offer for {service}. Open your request to compare the offers."
     },
     "chosen": {
-      "subject": "You were chosen for {service}",
-      "lead": "The customer chose you for {service} on {start}. The customer pays the commission first; then we ask you to pay your fee, and you both see each other’s contact details."
+      "subject": "[draft] You were chosen for {service}",
+      "lead": "[draft] The customer chose you for {service} on {start}. The customer pays the commission first; then we ask you to pay your fee, and you both see each other’s contact details."
     },
     "pay_your_fee": {
-      "subject": "Pay your fee for {service}",
-      "lead": "The customer paid the commission. Pay your fee of {amount} by {deadline} to see the customer’s contact details and keep the job."
+      "subject": "[draft] Pay your fee for {service}",
+      "lead": "[draft] The customer paid the commission. Pay your fee of {amount} by {deadline} to see the customer’s contact details and keep the job."
     },
     "commission_received": {
-      "subject": "Your commission for {service} is paid",
-      "lead": "We received your commission of {amount}. The provider now pays their fee; then you both see each other’s contact details.",
-      "leadFree": "No commission is due for {service}. The provider now pays their fee; then you both see each other’s contact details."
+      "subject": "[draft] Your commission for {service} is paid",
+      "lead": "[draft] We received your commission of {amount}. The provider now pays their fee; then you both see each other’s contact details.",
+      "leadFree": "[draft] No commission is due for {service}. The provider now pays their fee; then you both see each other’s contact details."
     },
     "contacts_ready": {
-      "subject": "Contact details are open for {service}",
-      "leadCustomer": "You and the provider can now see each other’s contact details. The work is on {start}. You pay the provider in cash after the service.",
-      "leadProvider": "You and the customer can now see each other’s contact details. The work is on {start}. The customer pays you in cash after the service."
+      "subject": "[draft] Contact details are open for {service}",
+      "leadCustomer": "[draft] You and the provider can now see each other’s contact details. The work is on {start}. You pay the provider in cash after the service.",
+      "leadProvider": "[draft] You and the customer can now see each other’s contact details. The work is on {start}. The customer pays you in cash after the service."
     },
     "job_started": {
-      "subject": "Work has started on {service}",
-      "lead": "The provider marked the work on {service} as started."
+      "subject": "[draft] Work has started on {service}",
+      "lead": "[draft] The provider marked the work on {service} as started."
     },
     "please_confirm": {
-      "subject": "Please confirm the work on {service}",
-      "lead": "The provider marked the work on {service} as done. Please check it and confirm.",
-      "deadline": "If you do nothing, the job closes by itself on {deadline}."
+      "subject": "[draft] Please confirm the work on {service}",
+      "lead": "[draft] The provider marked the work on {service} as done. Please check it and confirm.",
+      "deadline": "[draft] If you do nothing, the job closes by itself on {deadline}."
     },
     "job_completed": {
-      "subject": "The work on {service} is complete",
-      "lead": "The job for {service} is closed. Thank you for your work."
+      "subject": "[draft] The work on {service} is complete",
+      "lead": "[draft] The job for {service} is closed. Thank you for your work."
     },
     "request_cancelled": {
-      "subject": "The request for {service} was cancelled",
-      "leadCustomer": "Your request for {service} on {start} was cancelled.",
-      "leadProvider": "The job for {service} on {start} was cancelled. You do not need to go.",
-      "refund": "We are refunding your commission of {amount} to your card."
+      "subject": "[draft] The request for {service} was cancelled",
+      "leadCustomer": "[draft] Your request for {service} on {start} was cancelled.",
+      "leadProvider": "[draft] The job for {service} on {start} was cancelled. You do not need to go.",
+      "refund": "[draft] We are refunding your commission of {amount} to your card."
     },
     "pick_again": {
-      "subject": "Choose another provider for {service}",
-      "lead": "Your pick for {service} ended. Choose a provider from your offers.",
-      "carried": "Your commission stays paid, so you do not pay it again."
+      "subject": "[draft] Choose another provider for {service}",
+      "lead": "[draft] Your pick for {service} ended. Choose a provider from your offers.",
+      "carried": "[draft] Your commission stays paid, so you do not pay it again."
     },
     "pick_ended": {
-      "subject": "Your pick for {service} ended",
-      "lead": "The customer did not pay the commission in time, so your pick for {service} ended."
+      "subject": "[draft] Your pick for {service} ended",
+      "lead": "[draft] The customer did not pay the commission in time, so your pick for {service} ended."
     },
     "window_missed": {
-      "subject": "The time to pay your fee for {service} ended",
-      "lead": "Your fee was not paid in time, so the customer may now choose another provider."
+      "subject": "[draft] The time to pay your fee for {service} ended",
+      "lead": "[draft] Your fee was not paid in time, so the customer may now choose another provider."
     },
     "payment_too_late": {
-      "subject": "Your payment came too late",
-      "lead": "Your payment of {amount} came after the time to pay ended. We are refunding it in full."
+      "subject": "[draft] Your payment came too late",
+      "lead": "[draft] Your payment of {amount} came after the time to pay ended. We are refunding it in full."
     },
     "fee_refunded": {
-      "subject": "Your refund of {amount} is done",
-      "lead": "We refunded {amount} to your card. Your bank may take a few days to show it."
+      "subject": "[draft] Your refund of {amount} is done",
+      "lead": "[draft] We refunded {amount} to your card. Your bank may take a few days to show it."
     },
     "confirm_email": {
-      "subject": "Confirm your email address",
-      "lead": "Open the link, then press Confirm, so that our notices reach this address. The link works until {deadline}.",
-      "ignore": "If you did not ask for this, ignore this email.",
-      "action": "Confirm my email"
+      "subject": "[draft] Confirm your email address",
+      "lead": "[draft] Open the link, then press Confirm, so that our notices reach this address. The link works until {deadline}.",
+      "ignore": "[draft] If you did not ask for this, ignore this email.",
+      "action": "[draft] Confirm my email"
     },
     "account_approved": {
-      "subject": "Your provider account is approved",
-      "lead": "You can now apply to requests in your districts."
+      "subject": "[draft] Your provider account is approved",
+      "lead": "[draft] You can now apply to requests in your districts."
     },
     "account_rejected": {
-      "subject": "We could not approve your provider account",
-      "lead": "Open your account to see why and what to change."
+      "subject": "[draft] We could not approve your provider account",
+      "lead": "[draft] Open your account to see why and what to change."
     },
     "account_suspended": {
-      "subject": "Your provider account is suspended",
-      "lead": "You cannot apply to new requests for now. Open your account for details."
+      "subject": "[draft] Your provider account is suspended",
+      "lead": "[draft] You cannot apply to new requests for now. Open your account for details."
     },
     "pay_window_closing": {
-      "subjectCustomer": "Pay the commission for {service} soon",
-      "subjectProvider": "Pay your fee for {service} soon",
-      "leadCustomer": "Your pick holds until {deadline}. Pay the commission before then, or the pick ends.",
-      "leadProvider": "Pay your fee before {deadline} to keep the job."
+      "subjectCustomer": "[draft] Pay the commission for {service} soon",
+      "subjectProvider": "[draft] Pay your fee for {service} soon",
+      "leadCustomer": "[draft] Your pick holds until {deadline}. Pay the commission before then, or the pick ends.",
+      "leadProvider": "[draft] Pay your fee before {deadline} to keep the job."
     },
     "closes_soon": {
-      "subject": "The job for {service} closes soon",
-      "lead": "If you do nothing, the job closes by itself on {deadline}. Confirm it, or tell us about a problem before then."
+      "subject": "[draft] The job for {service} closes soon",
+      "lead": "[draft] If you do nothing, the job closes by itself on {deadline}. Confirm it, or tell us about a problem before then."
     },
     "report_received": {
-      "subject": "We received your report about {service}",
-      "lead": "Thank you for telling us. Our team will look at your report and email you when it has been reviewed."
+      "subject": "[draft] We received your report about {service}",
+      "lead": "[draft] Thank you for telling us. Our team will look at your report and email you when it has been reviewed."
     },
     "report_handled": {
-      "subject": "Your report about {service} was reviewed",
-      "lead": "Our team has reviewed your report. Thank you for helping keep Aldebyani safe."
+      "subject": "[draft] Your report about {service} was reviewed",
+      "lead": "[draft] Our team has reviewed your report. Thank you for helping keep Aldebyani safe."
     },
     "report_new_admin": {
-      "subject": "New problem report: {service}",
-      "lead": "A customer or provider reported a problem. Open the report to review it.",
-      "action": "Open the report"
+      "subject": "[draft] New problem report: {service}",
+      "lead": "[draft] A customer or provider reported a problem. Open the report to review it.",
+      "action": "[draft] Open the report"
     },
     "password_changed": {
-      "subject": "A password was saved on your account",
-      "lead": "A password was saved on your Aldebyani account on {when}.",
-      "notYou": "If this was not you, reset your password with an SMS code now, then contact our support.",
-      "action": "Reset my password"
+      "subject": "[draft] A password was saved on your account",
+      "lead": "[draft] A password was saved on your Aldebyani account on {when}.",
+      "notYou": "[draft] If this was not you, reset your password with an SMS code now, then contact our support.",
+      "action": "[draft] Reset my password"
     },
     "rate_provider": {
-      "subject": "How was {service}?",
-      "lead": "Your job for {service} with {name} is closed. You can rate it if you like.",
-      "leadNoName": "Your job for {service} is closed. You can rate it if you like.",
-      "until": "You can rate until {deadline}.",
-      "optional": "Rating is optional and changes nothing about any payment.",
-      "action": "Rate the job"
+      "subject": "[draft] How was {service}?",
+      "lead": "[draft] Your job for {service} with {name} is closed. You can rate it if you like.",
+      "leadNoName": "[draft] Your job for {service} is closed. You can rate it if you like.",
+      "until": "[draft] You can rate until {deadline}.",
+      "optional": "[draft] Rating is optional and changes nothing about any payment.",
+      "action": "[draft] Rate the job"
     },
     "rating_received": {
-      "subject": "You have a new rating",
-      "lead": "A customer rated one of your jobs. See your rating on your profile.",
-      "action": "Open my profile"
+      "subject": "[draft] You have a new rating",
+      "lead": "[draft] A customer rated one of your jobs. See your rating on your profile.",
+      "action": "[draft] Open my profile"
     },
     "document_expiring": {
-      "subject": "A required document expires soon",
-      "lead": "Your {document} expires on {until}. Upload a new one before then to keep applying.",
-      "action": "Open my documents",
+      "subject": "[draft] A required document expires soon",
+      "lead": "[draft] Your {document} expires on {until}. Upload a new one before then to keep applying.",
+      "action": "[draft] Open my documents",
       "types": {
         "profile_photo": "profile photo",
         "id_front": "ID front side",
@@ -1912,10 +1912,10 @@
       }
     },
     "agreement_ready": {
-      "subject": "Your service agreement {number}",
-      "leadCustomer": "Both fees are paid, so your service agreement with the provider is ready. It is attached to this email as a PDF.",
-      "leadProvider": "Both fees are paid, so your service agreement with the customer is ready. It is attached to this email as a PDF.",
-      "keep": "Keep this email: the job page offers the download only for a short time."
+      "subject": "[draft] Your service agreement {number}",
+      "leadCustomer": "[draft] Both fees are paid, so your service agreement with the provider is ready. It is attached to this email as a PDF.",
+      "leadProvider": "[draft] Both fees are paid, so your service agreement with the customer is ready. It is attached to this email as a PDF.",
+      "keep": "[draft] Keep this email: the job page offers the download only for a short time."
     }
   },
   "Reports": {
@@ -1934,11 +1934,11 @@
       "safety_or_behaviour": "We received a report about safety or behaviour on a job. Please treat everyone with respect.",
       "asked_money_off_platform": "We received a report that money was asked for outside Aldebyani. Our fees are paid only on Aldebyani.",
       "other": "We received a report about one of your jobs. Please follow the terms of Aldebyani.",
-      "low_rating": "Customers have rated your recent jobs low. Please finish every job to the agreed standard.",
-      "high_reports": "We received several reports about your jobs. Please keep every booking and finish each job to the agreed standard.",
-      "high_cancellations": "You have cancelled too many jobs. Please cancel only when you truly cannot do the job.",
-      "low_follow_through": "Many customers who chose you did not get their job done. Please pay your fee and keep every job you are chosen for.",
-      "probation_issue": "There was a problem during your first jobs on Aldebyani. Please keep every booking and finish each job to the agreed standard."
+      "low_rating": "[draft] Customers have rated your recent jobs low. Please finish every job to the agreed standard.",
+      "high_reports": "[draft] We received several reports about your jobs. Please keep every booking and finish each job to the agreed standard.",
+      "high_cancellations": "[draft] You have cancelled too many jobs. Please cancel only when you truly cannot do the job.",
+      "low_follow_through": "[draft] Many customers who chose you did not get their job done. Please pay your fee and keep every job you are chosen for.",
+      "probation_issue": "[draft] There was a problem during your first jobs on Aldebyani. Please keep every booking and finish each job to the agreed standard."
     },
     "cta": "Report a problem",
     "notDone": "Not done, report a problem",
@@ -2163,7 +2163,7 @@
     "count": "{count, plural, one {# rating} other {# ratings}}",
     "label": "Rated {score} out of 5 from {count, plural, one {# rating} other {# ratings}}",
     "see": "See ratings",
-    "disclosure": "Only customers of completed jobs can rate. Admin hides a rating only when it was fake or forced, never for being low.",
+    "disclosure": "[draft] Only customers of completed jobs can rate. Admin hides a rating only when it was fake or forced, never for being low.",
     "form": {
       "title": "Your rating",
       "optional": "Optional",
@@ -2361,29 +2361,29 @@
       "lineDeadline": "A required document expires on {deadline}. Upload a new one to keep applying."
     },
     "agreement_ready": {
-      "title": "Your service agreement is ready",
-      "line": "The agreement for {service} is ready. Download it from the job, or keep the copy in your email."
+      "title": "[draft] Your service agreement is ready",
+      "line": "[draft] The agreement for {service} is ready. Download it from the job, or keep the copy in your email."
     }
   },
   "Quality": {
     "card": {
-      "jobs": "{count, plural, one {# job} other {# jobs}} on Aldebyani",
-      "completed": "{pct} completed",
-      "onTime": "{pct} on time",
-      "how": "How we count",
-      "windowMonths": "{count, plural, one {# month} other {# months}}",
-      "windowDays": "{count, plural, one {# day} other {# days}}",
-      "note": "Counted from jobs on Aldebyani in the last {window}. Completed counts jobs not cancelled by the customer; on time means started within {grace} minutes of the booked time."
+      "jobs": "[draft] {count, plural, one {# job} other {# jobs}} on Aldebyani",
+      "completed": "[draft] {pct} completed",
+      "onTime": "[draft] {pct} on time",
+      "how": "[draft] How we count",
+      "windowMonths": "[draft] {count, plural, one {# month} other {# months}}",
+      "windowDays": "[draft] {count, plural, one {# day} other {# days}}",
+      "note": "[draft] Counted from jobs on Aldebyani in the last {window}. Completed counts jobs not cancelled by the customer; on time means started within {grace} minutes of the booked time."
     },
     "mine": {
-      "title": "Your quality",
-      "jobs": "Jobs on Aldebyani",
-      "completed": "Completed",
-      "onTime": "On time",
-      "notYet": "Shown once enough jobs count",
-      "unavailable": "Your figures are not available right now.",
-      "probation": "Your first {needed} jobs: {done} done",
-      "probationLimit": "While in your first jobs you can hold {limit} jobs at once."
+      "title": "[draft] Your quality",
+      "jobs": "[draft] Jobs on Aldebyani",
+      "completed": "[draft] Completed",
+      "onTime": "[draft] On time",
+      "notYet": "[draft] Shown once enough jobs count",
+      "unavailable": "[draft] Your figures are not available right now.",
+      "probation": "[draft] Your first {needed} jobs: {done} done",
+      "probationLimit": "[draft] While in your first jobs you can hold {limit} jobs at once."
     },
     "admin": {
       "title": "Quality",
@@ -2504,53 +2504,53 @@
     }
   },
   "Agreement": {
-    "checkbox": "I accept the <agreement>service agreement</agreement> and the <terms>terms</terms>.",
-    "required": "Tick the box to accept the service agreement first.",
+    "checkbox": "[draft] I accept the <agreement>service agreement</agreement> and the <terms>terms</terms>.",
+    "required": "[draft] Tick the box to accept the service agreement first.",
     "card": {
-      "title": "Your service agreement is ready",
-      "number": "Agreement {number}",
-      "download": "Download",
-      "again": "Download again",
-      "opened": "Opened. Your copy is in your email.",
-      "failed": "The download did not start. Try again."
+      "title": "[draft] Your service agreement is ready",
+      "number": "[draft] Agreement {number}",
+      "download": "[draft] Download",
+      "again": "[draft] Download again",
+      "opened": "[draft] Opened. Your copy is in your email.",
+      "failed": "[draft] The download did not start. Try again."
     },
     "page": {
-      "title": "Service agreement",
-      "version": "Version {version}",
-      "turkish": "The Turkish text below is the agreement. The parts in brackets are filled in with your job’s details once both of you have paid.",
-      "inactive": "This version is no longer offered for new jobs. It still binds the jobs that accepted it."
+      "title": "[draft] Service agreement",
+      "version": "[draft] Version {version}",
+      "turkish": "[draft] The Turkish text below is the agreement. The parts in brackets are filled in with your job’s details once both of you have paid.",
+      "inactive": "[draft] This version is no longer offered for new jobs. It still binds the jobs that accepted it."
     },
     "admin": {
-      "title": "Agreements",
-      "intro": "Every service agreement, newest first. Each view is recorded.",
-      "search": "Number or request id",
-      "searchButton": "Search",
-      "clear": "Clear",
-      "empty": "No agreements match.",
-      "request": "Request",
-      "customer": "Customer",
-      "provider": "Provider",
-      "rendered": "Ready {date}",
-      "queued": "Being prepared",
-      "failed": "Render failed",
-      "openedCustomer": "Customer opened",
-      "openedProvider": "Provider opened",
-      "notOpened": "Not opened yet",
-      "view": "View PDF",
-      "renderAgain": "Render again",
-      "renderQueued": "A new render is queued.",
-      "next": "Next page",
-      "requestLink": "Service agreement {number}",
-      "none": "No service agreement for this job.",
+      "title": "[draft] Agreements",
+      "intro": "[draft] Every service agreement, newest first. Each view is recorded.",
+      "search": "[draft] Number or request id",
+      "searchButton": "[draft] Search",
+      "clear": "[draft] Clear",
+      "empty": "[draft] No agreements match.",
+      "request": "[draft] Request",
+      "customer": "[draft] Customer",
+      "provider": "[draft] Provider",
+      "rendered": "[draft] Ready {date}",
+      "queued": "[draft] Being prepared",
+      "failed": "[draft] Render failed",
+      "openedCustomer": "[draft] Customer opened",
+      "openedProvider": "[draft] Provider opened",
+      "notOpened": "[draft] Not opened yet",
+      "view": "[draft] View PDF",
+      "renderAgain": "[draft] Render again",
+      "renderQueued": "[draft] A new render is queued.",
+      "next": "[draft] Next page",
+      "requestLink": "[draft] Service agreement {number}",
+      "none": "[draft] No service agreement for this job.",
       "errors": {
-        "forbidden": "This page is for admins.",
-        "not_found": "That agreement is not available.",
-        "invalid_state": "Only a failed agreement can be rendered again.",
-        "validation_failed": "That search is too long.",
-        "action_failed": "Something went wrong. Try again."
+        "forbidden": "[draft] This page is for admins.",
+        "not_found": "[draft] That agreement is not available.",
+        "invalid_state": "[draft] Only a failed agreement can be rendered again.",
+        "validation_failed": "[draft] That search is too long.",
+        "action_failed": "[draft] Something went wrong. Try again."
       }
     },
-    "unavailable": "The service agreement for this job is not available, so the fee cannot be paid here. Please contact support."
+    "unavailable": "[draft] The service agreement for this job is not available, so the fee cannot be paid here. Please contact support."
   },
   "Address": {
     "title": "Address",

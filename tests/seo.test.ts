@@ -65,10 +65,10 @@ describe('siteUrl', () => {
 });
 
 describe('legal pages and alternates', () => {
-  it('returns true when legal pages are final (not draft)', async () => {
+  it('holds a draft out of search', async () => {
     const site = await loadSite({});
-    expect(site.legalPageIsFinal('terms')).toBe(true);
-    expect(site.legalPageIsFinal('privacy')).toBe(true);
+    expect(site.legalPageIsFinal('terms')).toBe(false);
+    expect(site.legalPageIsFinal('privacy')).toBe(false);
   });
 
   it('names the three locales and x-default', async () => {

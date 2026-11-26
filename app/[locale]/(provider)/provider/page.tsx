@@ -179,7 +179,9 @@ export default async function Page({ params }: Props) {
                 <Link href="/provider/feed">{tFeed('home.viewAllFeed')}</Link>
               </Button>
             </div>
-            {previewRows.length === 0 ? (
+            {!recentFeed.ok ? (
+              <ErrorState title={tFeed('feed.error.title')} body={tFeed('feed.error.body')} />
+            ) : previewRows.length === 0 ? (
               <EmptyState
                 lead={tFeed('feed.empty.lead')}
                 title={tFeed('feed.empty.title')}

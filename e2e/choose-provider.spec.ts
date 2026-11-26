@@ -191,6 +191,13 @@ test('a customer reads two offers and chooses one; each provider sees the outcom
   await axe(page);
   await dialog.getByRole('button', { name: m(locale, 'Requests.offers.confirm') }).click();
 
+  await page.goto('/' + locale + '/requests');
+  const urgent = page.locator('aside section').first();
+  await expect(urgent).toContainText(m(locale, 'Requests.price.total'));
+  await expect(urgent).toContainText(money(300000, locale));
+  await axe(page);
+  await page.goto('/' + locale + '/requests/' + f.request);
+
   // After the choose (AC-9, AC-10): the chosen card, the next step, the timeline.
   const next = page.getByRole('region', { name: m(locale, 'Requests.next.title') });
   await expect(next).toBeVisible({ timeout: 20_000 });
