@@ -125,7 +125,7 @@ export default async function Page({ params, searchParams }: Props) {
             ) : null}
           </div>
 
-          <aside className="flex flex-col gap-3.5 max-lg:order-first lg:sticky lg:top-4">
+          <aside className="flex flex-col gap-3.5 lg:sticky lg:top-4">
             {urgent ? (
               <section className="flex flex-col gap-3.5 rounded-panel bg-accent-light p-6 lg:p-7">
                 <div className="flex items-center gap-2">
@@ -145,9 +145,7 @@ export default async function Page({ params, searchParams }: Props) {
                   />
                 </div>
                 <Button asChild size="block">
-                  <Link href={`/requests/${urgent.id}`}>
-                    {urgent.status === 'SELECTED' ? t('list.payAction') : t('list.confirmAction')}
-                  </Link>
+                  <Link href={`/requests/${urgent.id}`}>{t('list.openDetails')}</Link>
                 </Button>
               </section>
             ) : null}
