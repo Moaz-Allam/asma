@@ -4,7 +4,6 @@ import { headers } from 'next/headers';
 import { LoginForm } from '@/components/features/auth/LoginForm';
 import { PasswordLoginForm } from '@/components/features/auth/PasswordLoginForm';
 import { LandingPhoto } from '@/components/features/landing/LandingPhoto';
-import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
 import { safeNext } from '@/lib/auth/roles';
 import { getSessionUser } from '@/lib/auth/session';
 import { getEnv } from '@/lib/env';
@@ -43,17 +42,16 @@ export default async function LoginPage({ params, searchParams }: Props) {
 
   return (
     <div className="grid min-h-dvh grid-cols-1 gap-3 p-3 lg:grid-cols-2 lg:gap-4 lg:p-4">
-      {/* The form box: the wordmark + language switcher at the top, the card centred in the rest. */}
+      {/* The form box: the wordmark at the top, the card centred in the rest. */}
       <section className="flex min-h-[calc(100dvh-1.5rem)] flex-col rounded-card bg-accent-light px-5 py-6 lg:min-h-[calc(100dvh-2rem)] lg:px-10 lg:py-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
-            href="/"
+            href="/provider"
             dir="ltr"
             className="inline-flex min-h-11 items-center font-wordmark text-wordmark-sm text-text-primary"
           >
             Aldebyani
           </Link>
-          <LocaleSwitcher />
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-5 py-6">
           <div className="flex max-w-2xl flex-col items-center gap-2 text-center">
