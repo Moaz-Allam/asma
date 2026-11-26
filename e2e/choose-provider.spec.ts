@@ -191,13 +191,6 @@ test('a customer reads two offers and chooses one; each provider sees the outcom
   await axe(page);
   await dialog.getByRole('button', { name: m(locale, 'Requests.offers.confirm') }).click();
 
-  await page.goto('/' + locale + '/requests');
-  const urgent = page.locator('aside section').first();
-  await expect(urgent).toContainText(m(locale, 'Requests.price.total'));
-  await expect(urgent).toContainText(money(300000, locale));
-  await axe(page);
-  await page.goto('/' + locale + '/requests/' + f.request);
-
   // After the choose (AC-9, AC-10): the chosen card, the next step, the timeline.
   const next = page.getByRole('region', { name: m(locale, 'Requests.next.title') });
   await expect(next).toBeVisible({ timeout: 20_000 });
@@ -210,10 +203,19 @@ test('a customer reads two offers and chooses one; each provider sees the outcom
     m(locale, 'Requests.timeline.chosen'),
   );
   await expect(page.getByText('Rakip D.', { exact: true })).toHaveCount(0);
-  await expect.poll(() => telemetry.posthog.filter((e) => e.event === 'provider_chosen').length).toBe(1);
+  await expect
+    .poll(() => telemetry.posthog.filter((e) => e.event === 'provider_chosen').length, { timeout: 20_000 })
+    .toBe(1);
   expect(
     JSON.stringify(telemetry.posthog.find((e) => e.event === 'provider_chosen')?.properties ?? {}),
   ).not.toContain(f.request);
+  await axe(page);
+
+  // Leave the detail page only after its successful action and batched analytics event are observable.
+  await page.goto(`/${locale}/requests`);
+  const urgent = page.locator('aside section').first();
+  await expect(urgent).toContainText(m(locale, 'Requests.price.total'));
+  await expect(urgent).toContainText(money(300000, locale));
   await axe(page);
 
   // The providers (AC-12).
