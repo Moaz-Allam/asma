@@ -18,6 +18,6 @@ Request ownership resolves before the detail loading boundary streams, preservin
 
 The current PR is #79. Full checks, the build, database tests, security advisors, secret scanning, and e2e run on GitHub Actions. The public visual suite captures landing, login, and 404 in ar, tr, and en at 390px and 1440px and checks keyboard navigation and overflow. The public-visual-qa artifact contains only these public pages.
 
-Remote verification of the corrected commit is in progress. Earlier claims of complete accessibility compliance and a passing 1887/1890 suite are superseded by the specific evidence reported for the new run. Automated accessibility checks cover their tested paths and do not establish comprehensive WCAG conformance.
+Remote verification is recorded on PR #79. Run 45898290212 passed the public visual matrix and 170 journeys, then found analytics assertion ordering failures. Run 45903435696 passed those fixes with 174 journeys and found two provider onboarding accessibility waits. The follow-up checks observe batched analytics before navigation and wait for rendered form readiness before accessibility scans. The latest PR checks carry the final result. Earlier claims of complete accessibility compliance and a passing 1887/1890 suite are superseded by the specific evidence reported for the new run. Automated accessibility checks cover their tested paths and do not establish comprehensive WCAG conformance.
 
 Legal draft approval and the production launch gate remain pending under the existing product decisions.
