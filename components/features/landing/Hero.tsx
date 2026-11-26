@@ -15,8 +15,7 @@ export function Hero() {
       <div className="grid gap-3.5 lg:grid-cols-hero">
         <div className="flex flex-col rounded-panel bg-surface-inverse px-5 py-8 text-text-inverse sm:px-6.5 lg:px-10 lg:py-11">
           <h1 className="font-display text-title font-bold lg:text-band xl:text-hero">
-            <span className="block">{t('heroLine1')}</span>
-            <span className="block">{t('heroLine2')}</span>
+            <span className="block">{t('heroLine1')}</span> <span className="block">{t('heroLine2')}</span>
           </h1>
           <p className="mt-6.5 max-w-36ch text-body-l">{t('heroBody')}</p>
           <div className="min-h-6.5 flex-1" />

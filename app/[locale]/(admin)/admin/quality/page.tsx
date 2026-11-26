@@ -122,7 +122,7 @@ async function Watchlist({
           return (
             <li
               key={row.id}
-              className="flex flex-col gap-3 rounded-panel border border-border-light bg-surface p-5"
+              className="flex flex-col gap-3 rounded-panel border-2 border-border bg-surface p-5"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <StatusChip tone="negative" label={t(`kind.${row.kind}`)} />
@@ -175,7 +175,7 @@ async function ProbationList({
           return (
             <li
               key={row.provider_id}
-              className="flex flex-col gap-2 rounded-panel border border-border-light bg-surface p-5"
+              className="flex flex-col gap-2 rounded-panel border-2 border-border bg-surface p-5"
             >
               <Link href={`/admin/providers/${row.provider_id}`} className="text-body font-bold text-link">
                 {name}
@@ -224,7 +224,7 @@ async function FunnelTab({ locale }: { locale: string }) {
         <section
           key={region.region}
           aria-labelledby={`funnel-${region.region}`}
-          className="flex flex-col gap-4 rounded-panel border border-border-light bg-surface p-5"
+          className="flex flex-col gap-4 rounded-panel border-2 border-border bg-surface p-5.5"
         >
           <h2 id={`funnel-${region.region}`} className="font-display text-title-s text-text-primary">
             {region.region}

@@ -15,7 +15,7 @@ export function MyRatingCard({ rating }: { rating: RatingSummary }) {
   return (
     <section
       aria-labelledby="my-rating-title"
-      className="flex flex-col gap-4 rounded-panel border-2 border-border-light bg-surface p-5 lg:p-6"
+      className="flex flex-col gap-4 rounded-panel border-2 border-border bg-surface p-5 lg:p-6"
     >
       <h2 id="my-rating-title" className="font-display text-title-s text-text-primary">
         {t('mine.title')}

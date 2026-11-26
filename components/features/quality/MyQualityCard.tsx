@@ -17,7 +17,7 @@ export function MyQualityCard({ quality }: { quality: MyQuality }) {
   return (
     <section
       aria-labelledby="my-quality-title"
-      className="flex flex-col gap-4 rounded-panel border-2 border-border-light bg-surface p-5 lg:p-6"
+      className="flex flex-col gap-4 rounded-panel border-2 border-border bg-surface p-5 lg:p-6"
     >
       <h2 id="my-quality-title" className="font-display text-title-s text-text-primary">
         {t('title')}

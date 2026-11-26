@@ -94,7 +94,7 @@ export function BellMenu({ userId, initialCount }: { userId: string; initialCoun
         <button
           type="button"
           aria-label={label ? t('bellUnread', { count: label }) : t('bell')}
-          className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-secondary text-text-primary hover:bg-accent-light"
+          className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-surface-secondary text-text-primary transition-colors hover:bg-accent-light"
         >
           <Bell aria-hidden className="size-5" />
           {label ? (

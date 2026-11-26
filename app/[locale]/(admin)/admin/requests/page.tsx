@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { toneOf } from '@/components/features/requests/RequestRow';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -8,6 +9,7 @@ import { StatusChip } from '@/components/shared/StatusChip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { listRequests, type ListFilters } from '@/lib/admin-requests';
 import { ADMIN_PAGE_SIZE, LIST_STATUSES, requestIdFrom } from '@/lib/admin-requests/constants';
 import { guardPage } from '@/lib/auth/session';
@@ -62,6 +64,7 @@ export default async function Page({ params, searchParams }: Props) {
   }
   const list = 'ok' in outcome ? null : outcome;
   const t = await getTranslations('AdminRequests');
+  const tStatus = await getTranslations('Requests.status');
   const tFlag = await getTranslations('AdminRequests.flag');
   const pages = list ? Math.max(1, Math.ceil(list.total / ADMIN_PAGE_SIZE)) : 1;
 
@@ -76,8 +79,6 @@ export default async function Page({ params, searchParams }: Props) {
     const text = search.toString();
     return `/admin/requests${text ? `?${text}` : ''}`;
   };
-  const select =
-    'min-h-11 rounded-block border border-border-light bg-surface px-4 text-body-s text-text-primary';
 
   return (
     <div className="flex flex-col gap-5">
@@ -87,30 +88,30 @@ export default async function Page({ params, searchParams }: Props) {
         action={`/${locale}/admin/requests`}
         method="get"
         aria-label={t('filters')}
-        className="flex flex-col gap-4 rounded-block bg-surface-secondary p-5"
+        className="flex flex-col gap-4 rounded-panel bg-surface-secondary p-5.5"
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="filter-status">{t('filterStatus')}</Label>
-            <select id="filter-status" name="status" defaultValue={filters.status ?? ''} className={select}>
+            <Select id="filter-status" name="status" defaultValue={filters.status ?? ''}>
               <option value="">{t('any')}</option>
               {LIST_STATUSES.map((value) => (
                 <option key={value} value={value}>
                   {value}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="filter-region">{t('filterRegion')}</Label>
-            <select id="filter-region" name="region" defaultValue={filters.region ?? ''} className={select}>
+            <Select id="filter-region" name="region" defaultValue={filters.region ?? ''}>
               <option value="">{t('any')}</option>
               {REGIONS.map((value) => (
                 <option key={value} value={value}>
                   {value}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="filter-from">{t('from')}</Label>
@@ -158,11 +159,14 @@ export default async function Page({ params, searchParams }: Props) {
                   <li key={row.id}>
                     <Link
                       href={`/admin/requests/${row.id}`}
-                      className="flex flex-col gap-2 rounded-panel border border-border-light bg-surface p-5 hover:bg-surface-secondary"
+                      className="flex flex-col gap-2.5 rounded-panel border-2 border-border bg-surface p-5 transition-colors hover:border-accent hover:bg-surface-secondary/50"
                     >
                       <div className="flex flex-wrap items-center gap-2">
-                        <code className="text-meta text-text-primary">{row.status}</code>
-                        <span className="text-meta text-text-secondary">{row.region}</span>
+                        <StatusChip tone={toneOf(row.status)} label={tStatus(row.status)} />
+                        <code className="text-meta text-text-secondary">{row.status}</code>
+                        <span className="rounded-full bg-surface-secondary px-2.5 py-0.5 text-meta font-semibold text-text-primary">
+                          {row.region}
+                        </span>
                         {row.open_flags.map((kind) => (
                           <StatusChip key={kind} tone="negative" label={tFlag(kind)} />
                         ))}

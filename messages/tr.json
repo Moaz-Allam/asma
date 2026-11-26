@@ -154,7 +154,8 @@
     "flags": "Gecikme işaretleri",
     "revenue": "Gelir",
     "quality": "Kalite",
-    "agreements": "Sözleşmeler"
+    "agreements": "Sözleşmeler",
+    "skipToContent": "Ana içeriğe geç"
   },
   "Login": {
     "title": "Hoş geldiniz",
@@ -375,7 +376,8 @@
     "termsTitle": "Kullanım koşulları",
     "termsBody": "[draft] Bu koşullar bir taslaktır ve inceleniyor. Hizmet sözleşmesi ve nakit ödeme müşteri ile hizmet veren arasındadır. Biz onları buluşturur, yalnızca iki ücretimizi alırız.",
     "privacyTitle": "Aydınlatma metni",
-    "privacyBody": "[draft] Bu metin bir taslaktır ve inceleniyor. Cep telefonu numaranızı giriş yapmanız için kullanır, hizmet veren ya da müşteriyle ancak ikiniz de ödeme yaptıktan sonra paylaşırız."
+    "privacyBody": "[draft] Bu metin bir taslaktır ve inceleniyor. Cep telefonu numaranızı giriş yapmanız için kullanır, hizmet veren ya da müşteriyle ancak ikiniz de ödeme yaptıktan sonra paylaşırız.",
+    "backHome": "Ana sayfaya dön"
   },
   "Homes": {
     "requestsTitle": "Taleplerim",
@@ -395,14 +397,36 @@
     "profileEmpty": "Hizmet veren profiliniz yakında açılıyor",
     "profileBody": "Bilgilerinizi ve hizmetlerinizi buraya ekleyeceksiniz.",
     "adminTitle": "Panel",
+    "adminIntro": "Canlı işlem kuyruğu, platform ücret geliri ve talep durumu özeti.",
     "adminLead": "0",
-    "adminEmpty": "Henüz incelenecek bir şey yok",
-    "adminBody": "Yönetici gerektiren işler burada görünecek.",
-    "adminLinks": "Yönetim sayfaları"
+    "adminEmpty": "Yönetici bekleyen bir iş yok",
+    "adminBody": "Hizmet veren incelemeleri, sorun bildirimleri, gecikme işaretleri ve kalite uyarıları açıldığında burada görünür.",
+    "adminLinks": "Yönetim sayfaları",
+    "kpiNeedsAction": "İşlem bekliyor",
+    "kpiNeedsActionNote": "Hizmet verenler, şikayetler, gecikme ve kalite",
+    "kpiNetRevenue": "Net ücret geliri (30g)",
+    "kpiNetRevenueNote": "Brüt {gross} · İadeler {refunds}",
+    "kpiNetRevenueEmpty": "Son 30 günde defter kaydı yok",
+    "kpiTotalRequests": "Toplam talep",
+    "kpiTotalRequestsNote": "Etkin ve kapanan tüm talepler",
+    "kpiWatchlist": "Deneme ve izleme",
+    "kpiWatchlistNote": "{probation} deneme süresinde · {flags} kalite uyarısı",
+    "queueTitle": "İncelemeniz gerekenler",
+    "queueKindProvider": "Hizmet veren dosyası",
+    "queueKindReport": "Sorun bildirimi",
+    "queueKindFlag": "Gecikme işareti",
+    "queueKindQuality": "Kalite uyarısı",
+    "queueOpen": "İncele",
+    "statusBreakdownTitle": "Duruma göre talepler",
+    "statusBreakdownNote": "Tüm bölgelerdeki sayılar",
+    "railNote": "Defter kayıtları yalnızca eklenir. Her yönetici iadesi veya düzeltmesi gerekçesiyle denetim kaydına yazılır."
   },
   "Error": {
     "notFound": "Sayfa bulunamadı.",
+    "notFoundBody": "Bağlantı taşınmış, yanlış yazılmış ya da başka bir hesaba ait olabilir. Hesabınızda hiçbir şey değişmedi.",
+    "notFoundRequests": "Taleplerim",
     "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "genericBody": "Hesabınız ve ödemeleriniz güvende. Sayfayı yeniden yükleyin ya da ana sayfaya dönün.",
     "backHome": "Ana sayfaya dön",
     "retry": "Tekrar dene"
   },
@@ -1097,7 +1121,16 @@
       "emptyActiveBody": "Teklif bekleyen ya da devam eden talepler burada görünür.",
       "emptyClosedTitle": "Kapanan talep yok",
       "emptyClosedBody": "Tamamlanan, iptal edilen ve süresi dolan talepler burada görünür.",
-      "emptyAction": "Talep oluştur"
+      "emptyAction": "Talep oluştur",
+      "needsAction": "İşleminizi bekliyor",
+      "payAction": "Komisyonu öde",
+      "confirmAction": "İncele ve onayla",
+      "openDetails": "Talebi gör",
+      "summaryTitle": "Özet",
+      "summaryShown": "Bu sayfada",
+      "summaryActive": "Devam eden",
+      "summaryCompleted": "Tamamlanan",
+      "privacyNote": "Adınız, telefonunuz ve sokak adresiniz hem siz hem seçtiğiniz hizmet veren ödeme yapana kadar gizli kalır."
     },
     "status": {
       "OPEN": "Açık, teklif bekliyor",
@@ -1411,7 +1444,18 @@
         "body": "Lütfen biraz sonra tekrar deneyin."
       },
       "selected": "Seçildiniz, müşteri bekleniyor",
-      "selectedBody": "Müşteri komisyonu ödüyor."
+      "selectedBody": "Müşteri komisyonu ödüyor.",
+      "chosenBannerEyebrow": "Önemli bildirim",
+      "chosenBannerTitle": "Bir müşteri teklifinizi seçti",
+      "chosenBannerBody": "Komisyon süresini takip etmek ve sıranız açıldığında hizmet veren ücretini ödemek için İşlerim sayfasını açın.",
+      "chosenBannerAction": "Seçilen işleri aç",
+      "recentOpen": "Size uygun son talepler",
+      "viewAllFeed": "Tüm talepleri gör",
+      "quickLinksTitle": "Çalışma alanı",
+      "rulesTitle": "Başvuru kuralları",
+      "rule1": "Başvurmak ücretsizdir. Her talep en fazla 10 teklif alır.",
+      "rule2": "Müşteri bilgileri yalnızca iki taraf da ücretini ödedikten sonra açılır.",
+      "rule3": "Başvuru mesajlarına telefon numarası, e-posta veya bağlantı yazmayın."
     },
     "errors": {
       "forbidden": "Bu sayfa hizmet verenler içindir.",
@@ -2094,6 +2138,9 @@
     "invalid": "Aralık ileri gitmeli: günlükte en fazla 92 gün, aylıkta en fazla 24 ay.",
     "period": "Dönem",
     "late": "Geç ödemeler (gelir değil)",
+    "summaryGross": "Brüt ücret geliri",
+    "summaryRefunds": "İadeler ve kesintiler",
+    "summaryNet": "Net gelir",
     "columns": {
       "commission_revenue": "Komisyon geliri",
       "provider_fee_revenue": "Hizmet veren ücreti geliri",

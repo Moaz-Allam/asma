@@ -7,6 +7,7 @@ import {
   AdminCancelAction,
   AdminExtendAction,
 } from '@/components/features/admin/requests/AdminRequestActions';
+import { toneOf } from '@/components/features/requests/RequestRow';
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusChip, type ChipTone } from '@/components/shared/StatusChip';
@@ -48,6 +49,7 @@ export default async function Page({ params }: Props) {
   if (!detail) notFound();
 
   const t = await getTranslations('AdminRequests');
+  const tStatus = await getTranslations('Requests.status');
   // Spec 0011-20 AC-10: the request's agreement (its current pick's), linked to the agreements page.
   const tAgreement = await getTranslations('Agreement.admin');
   const agreements = await listAgreements(id, null);
@@ -98,8 +100,9 @@ export default async function Page({ params }: Props) {
           </div>
           <div className={row}>
             <dt className="text-text-secondary">{t('status')}</dt>
-            <dd>
-              <code className="text-text-primary">{request.status}</code>
+            <dd className="flex flex-wrap items-center gap-2">
+              <StatusChip tone={toneOf(request.status)} label={tStatus(request.status)} />
+              <code className="text-meta text-text-secondary">{request.status}</code>
             </dd>
           </div>
           <div className={row}>

@@ -21,16 +21,18 @@ export function LandingPhoto({
   focus?: string;
 }) {
   return (
-    <div className={cn('relative overflow-hidden rounded-panel', className)}>
-      <Image
-        src={`/landing/${slot}.jpg`}
-        alt=""
-        fill
-        sizes={sizes}
-        priority={priority}
-        className="object-cover"
-        style={focus ? { objectPosition: focus } : undefined}
-      />
+    <div className={cn('flex overflow-hidden rounded-panel', className)}>
+      <div className="relative w-full flex-1">
+        <Image
+          src={`/landing/${slot}.jpg`}
+          alt=""
+          fill
+          sizes={sizes}
+          priority={priority}
+          className="object-cover"
+          style={focus ? { objectPosition: focus } : undefined}
+        />
+      </div>
     </div>
   );
 }

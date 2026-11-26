@@ -45,7 +45,7 @@ export async function ContactCard({
     <section
       aria-label={title}
       data-pii
-      className="flex flex-col gap-4 rounded-panel border border-border-light bg-surface p-5 lg:p-7.5"
+      className="flex flex-col gap-4 rounded-panel border-2 border-border bg-surface p-5 lg:p-7.5"
     >
       <ContactsSeen side={contacts.side} requestId={requestId} />
       <div className="flex flex-col gap-1">

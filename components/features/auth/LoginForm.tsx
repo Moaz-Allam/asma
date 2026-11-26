@@ -312,7 +312,7 @@ export function LoginForm({
           pathname: '/login',
           query: { ...(next ? { next } : {}), ...(asProvider ? { as: 'provider' } : {}) },
         }}
-        className="self-start text-body-s font-semibold text-link underline underline-offset-4"
+        className="inline-flex min-h-11 items-center self-start text-body-s font-semibold text-link underline underline-offset-4"
       >
         {t('havePassword')}
       </Link>

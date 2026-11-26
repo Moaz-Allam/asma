@@ -52,7 +52,7 @@ export function AgreementCard({
   return (
     <section
       aria-labelledby={`agreement-${agreementId}`}
-      className="flex flex-col gap-3 rounded-panel border border-border-light bg-surface p-5 lg:p-7.5"
+      className="flex flex-col gap-3 rounded-panel border-2 border-border bg-surface p-5 lg:p-7.5"
     >
       <div className="flex items-start gap-3">
         <FileText aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-accent" />

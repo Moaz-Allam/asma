@@ -40,7 +40,7 @@ export default async function Page({ params }: Props) {
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
       <h1 className="font-display text-title text-text-primary">{t('title')}</h1>
-      <dl className="divide-y divide-border-light rounded-panel border border-border-light bg-surface">
+      <dl className="divide-y-2 divide-border-light rounded-panel border-2 border-border bg-surface">
         {rows.map((row) => (
           <div key={row.term} className="grid gap-1 px-5 py-4 sm:grid-cols-[1fr_2fr]">
             <dt className="text-body-s text-text-secondary">{row.term}</dt>
