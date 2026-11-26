@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { SiteHeader } from '@/components/layout/SiteHeader';
+import { SkipLink } from '@/components/layout/SkipLink';
 import { getProfile } from '@/lib/account/profile';
 import { getSessionUser } from '@/lib/auth/session';
 import { ADMIN_RAIL, menuFor } from '@/lib/navigation/menus';
@@ -61,7 +62,8 @@ export async function AdminShell({ children }: { children: ReactNode }) {
   const tHomes = await getTranslations('Homes');
 
   return (
-    <div className="lg:flex lg:min-h-dvh">
+    <div className="relative lg:flex lg:min-h-dvh">
+      <SkipLink />
       {role === 'admin' ? (
         <AdminRail
           items={ADMIN_RAIL}
@@ -79,6 +81,7 @@ export async function AdminShell({ children }: { children: ReactNode }) {
         />
         <main
           id="main-content"
+          tabIndex={-1}
           className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 pb-28 lg:px-8.5 lg:pb-8.5"
         >
           {children}

@@ -49,6 +49,7 @@ for (const screen of screens) {
             await expect(page.locator('a[href="#main-content"]')).toBeFocused();
             await page.keyboard.press('Enter');
             await expect(page).toHaveURL(/#main-content$/);
+            await expect(main).toBeFocused();
             await page.keyboard.press('Tab');
             await expect(main.locator(':focus')).toHaveCount(1);
           }

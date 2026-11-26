@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { SiteHeader } from '@/components/layout/SiteHeader';
+import { SkipLink } from '@/components/layout/SkipLink';
 import { getProfile } from '@/lib/account/profile';
 import { getSessionUser } from '@/lib/auth/session';
 import { menuFor } from '@/lib/navigation/menus';
@@ -28,6 +29,7 @@ export async function AppShell({ children, badge }: { children: ReactNode; badge
 
   return (
     <>
+      <SkipLink />
       <SiteHeader
         user={role && profile ? { role, name: profile.fullName } : null}
         badge={badge}
@@ -35,6 +37,7 @@ export async function AppShell({ children, badge }: { children: ReactNode; badge
       />
       <main
         id="main-content"
+        tabIndex={-1}
         className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 pb-28 lg:px-8.5 lg:pb-8.5"
       >
         {children}

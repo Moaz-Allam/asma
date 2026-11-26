@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative min-h-dvh w-full">
       <SkipLink />
-      <main id="main-content" className="min-h-dvh w-full">
+      <main id="main-content" tabIndex={-1} className="min-h-dvh w-full">
         {children}
       </main>
     </div>

@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import { BellMenu } from '@/components/features/notifications/BellMenu';
 import { NavLinks } from '@/components/layout/NavLinks';
 import { PublicMenu } from '@/components/layout/PublicMenu';
-import { SkipLink } from '@/components/layout/SkipLink';
 import { InitialAvatar } from '@/components/shared/InitialAvatar';
 import { Button } from '@/components/ui/button';
 import { homeFor, type Role } from '@/lib/auth/roles';
@@ -41,7 +40,6 @@ export async function SiteHeader({
         user ? 'gap-2.5 sm:gap-4 lg:gap-7.5 lg:pt-6.5 lg:pb-5.5' : 'gap-4 lg:gap-8.5 lg:py-6.5',
       )}
     >
-      <SkipLink />
       <Link
         href={user ? homeFor(user.role) : '/'}
         dir="ltr"
