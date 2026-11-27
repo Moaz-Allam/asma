@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 
 import { openInMapsUrl } from '@/lib/address/parts';
 import { AgreementCard } from '@/components/features/agreements/AgreementCard';
@@ -18,6 +18,7 @@ import { RatingSummary } from '@/components/features/ratings/RatingSummary';
 import { ReportStatus } from '@/components/features/reports/ReportStatus';
 import { ContactCard } from '@/components/shared/ContactCard';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { PageSkeleton } from '@/components/shared/PageSkeleton';
 import { PriceCard } from '@/components/shared/PriceCard';
 import { StatusChip } from '@/components/shared/StatusChip';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,7 @@ type Props = {
  * customer's id, an unknown id and a malformed id are all the 404 page. Spec 0010 adds the offers and the
  * choose while OPEN, the chosen provider and the next step once SELECTED, and the timeline.
  */
-export default async function Page({ params, searchParams }: Props) {
+async function loadRequestDetail({ params, searchParams }: Props) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const user = await guardPage(['customer', 'admin']);
@@ -69,6 +70,29 @@ export default async function Page({ params, searchParams }: Props) {
   if (!found || !offers) notFound();
 
   const t = await getTranslations('Requests');
+  return { locale, user, query, found, offers, fee, preview, t };
+}
+
+export default async function Page(props: Props) {
+  // Resolve ownership before streaming so an inaccessible or invalid id returns HTTP 404.
+  const detail = await loadRequestDetail(props);
+  return (
+    <Suspense fallback={<PageSkeleton label={detail.t('states.loading')} variant="split" />}>
+      <RequestDetail {...detail} />
+    </Suspense>
+  );
+}
+
+async function RequestDetail({
+  locale,
+  user,
+  query,
+  found,
+  offers,
+  fee,
+  preview,
+  t,
+}: Awaited<ReturnType<typeof loadRequestDetail>>) {
   // Spec 0011-13 AC-4: a customer without a confirmed email, while mail is on, sees a nudge in the choose dialog.
   const emailNudge = user.role === 'customer' ? await needsEmailNudge(user.id, 'customer') : false;
   const { request, address, now } = found;
@@ -326,7 +350,7 @@ export default async function Page({ params, searchParams }: Props) {
               </p>
             ) : null}
           </div>
-          <dl className="divide-y divide-border-light rounded-panel border border-border-light bg-surface">
+          <dl className="divide-y-2 divide-border-light rounded-panel border-2 border-border bg-surface">
             {rows.map((row) => (
               <div key={row.term} className="grid gap-1 px-5 py-4 sm:grid-cols-[1fr_2fr]">
                 <dt className="text-body-s text-text-secondary">{row.term}</dt>

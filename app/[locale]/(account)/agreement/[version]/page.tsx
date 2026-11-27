@@ -42,7 +42,7 @@ export default async function AgreementPage({ params }: Props) {
       <article
         lang="tr"
         dir="ltr"
-        className="flex flex-col gap-5 rounded-panel border border-border-light bg-surface p-5 lg:p-7.5"
+        className="flex flex-col gap-5 rounded-panel border-2 border-border bg-surface p-5 lg:p-7.5"
       >
         {template.sections.map((section, index) => (
           <section key={index} className="flex flex-col gap-2">

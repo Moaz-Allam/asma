@@ -33,7 +33,7 @@ export function ApplicationRow({
     <li>
       <Link
         href={href}
-        className="flex flex-col gap-3 rounded-panel border border-border-light bg-surface p-5 transition hover:border-accent focus-visible:ring-2 focus-visible:ring-ring lg:p-6"
+        className="flex flex-col gap-3 rounded-panel border-2 border-border bg-surface p-5 transition hover:border-accent focus-visible:ring-2 focus-visible:ring-ring lg:p-6"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <StatusChip tone={applicationTone(status)} label={statusLabel} />

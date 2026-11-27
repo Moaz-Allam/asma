@@ -6,7 +6,7 @@ import { NavLinks } from '@/components/layout/NavLinks';
 import { PublicMenu } from '@/components/layout/PublicMenu';
 import { InitialAvatar } from '@/components/shared/InitialAvatar';
 import { Button } from '@/components/ui/button';
-import type { Role } from '@/lib/auth/roles';
+import { homeFor, type Role } from '@/lib/auth/roles';
 import { Link } from '@/lib/i18n/navigation';
 import { PUBLIC_ANCHORS, headerMenuFor } from '@/lib/navigation/menus';
 import { cn } from '@/lib/utils';
@@ -35,17 +35,17 @@ export async function SiteHeader({
   return (
     <header
       className={cn(
-        'mx-auto flex w-full max-w-7xl items-center px-5 pt-5 pb-5 lg:px-8.5',
+        'relative mx-auto flex w-full max-w-7xl items-center px-5 pt-5 pb-5 lg:px-8.5',
         // Spec 0011-18: signed in, the bell joins the chip and the avatar, so a 360px phone needs the smaller gap.
         user ? 'gap-2.5 sm:gap-4 lg:gap-7.5 lg:pt-6.5 lg:pb-5.5' : 'gap-4 lg:gap-8.5 lg:py-6.5',
       )}
     >
       <Link
-        href="/"
+        href={user ? homeFor(user.role) : '/'}
         dir="ltr"
         aria-label={t('home')}
         className={cn(
-          'font-wordmark text-wordmark-sm text-text-primary',
+          'inline-flex min-h-11 items-center font-wordmark text-wordmark-sm text-text-primary',
           user ? 'lg:text-wordmark' : 'lg:text-wordmark-lg',
         )}
       >
@@ -59,18 +59,22 @@ export async function SiteHeader({
           {notices ? (
             <BellMenu key={notices.userId} userId={notices.userId} initialCount={notices.count} />
           ) : null}
-          <Link href="/account" aria-label={t('account')}>
-            <InitialAvatar name={user.name} className="text-label font-extrabold" />
+          <Link
+            href="/account"
+            aria-label={t('account')}
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full transition-transform hover:-translate-y-px"
+          >
+            <InitialAvatar name={user.name} className="size-11 text-label font-extrabold" />
           </Link>
         </>
       ) : (
         <>
-          <nav aria-label={t('main')} className="hidden flex-1 items-center gap-6.5 xl:flex">
+          <nav aria-label={t('main')} className="hidden flex-1 items-center gap-3 xl:flex">
             {PUBLIC_ANCHORS.map(({ key, hash }) => (
               <Link
                 key={key}
                 href={{ pathname: '/', hash }}
-                className="text-nav text-text-primary hover:text-link"
+                className="inline-flex min-h-11 items-center rounded-full px-3.5 text-nav text-text-primary transition-colors hover:bg-surface-secondary hover:text-link"
               >
                 {t(key)}
               </Link>

@@ -294,6 +294,17 @@ test('a change from the account page needs the current password, moves "last cha
   await expect(passwordSection(page).getByRole('status')).toBeVisible({ timeout: 20_000 });
   await expect(lastChanged).not.toHaveText(before);
 
+  // Observe the account page's batched event before signing out and loading another document.
+  await expect
+    .poll(
+      () =>
+        telemetry.posthog.filter((event) => event.event === 'password_set').map((e) => e.properties.reason),
+      {
+        timeout: 20_000,
+      },
+    )
+    .toEqual(expect.arrayContaining(['first', 'change']));
+
   // Its cookie is still there, so the proxy lets it through and the page guard sends it to a bare /login (0005).
   await other.goto(`/${locale}/requests`);
   await expect(other).toHaveURL(new RegExp(`/${locale}/login$`));
@@ -313,15 +324,6 @@ test('a change from the account page needs the current password, moves "last cha
   await signInWithPassword(page, locale, phone, NEW_PASSWORD);
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`));
 
-  await expect
-    .poll(
-      () =>
-        telemetry.posthog.filter((event) => event.event === 'password_set').map((e) => e.properties.reason),
-      {
-        timeout: 20_000,
-      },
-    )
-    .toEqual(expect.arrayContaining(['first', 'change']));
   expectNothingSecret(telemetry, [TEST_PASSWORD, NEW_PASSWORD, 'Not-The-Password-2', phone]);
 });
 

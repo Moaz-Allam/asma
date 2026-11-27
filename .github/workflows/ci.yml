@@ -195,8 +195,16 @@ jobs:
       # (gitignored); the CLI's default image lacks the archived_at column pgTAP 07 needs.
       - name: Pin the Storage version
         run: mkdir -p supabase/.temp && echo v1.96.4 > supabase/.temp/storage-version
-      - name: End to end at 390px in ar, tr, en
+      - name: End to end journeys and public visual QA in ar, tr, en
         run: npm run test:e2e
+      - name: Public page screenshots across locales and viewports
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: public-visual-qa
+          path: test-results/**/public-visual/*.png
+          if-no-files-found: error
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

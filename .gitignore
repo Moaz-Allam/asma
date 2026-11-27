@@ -27,6 +27,7 @@ supabase/.temp/
 coverage/
 playwright-report/
 test-results/
+.playwright-mcp/
 
 # Editor / OS
 .DS_Store
@@ -40,3 +41,4 @@ Thumbs.db
 
 # Sentry Config File
 .env.sentry-build-plugin
+.vercel

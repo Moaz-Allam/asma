@@ -317,6 +317,10 @@ test('a customer pays the commission, gets a receipt, and the request moves on',
   await toCardPage(page, request, locale);
   await chooseAndReturn(page, locale, 'success', attempt);
   await untilTitle(page, request, m(locale, 'Payment.successTitle'));
+  // AC-14: observe the return page's batched event before navigation can discard its in-memory queue.
+  await expect
+    .poll(() => telemetry.posthog.filter((e) => e.event === 'payment_succeeded').length, { timeout: 20_000 })
+    .toBe(1);
   await axe(page);
   await page.getByRole('link', { name: m(locale, 'Payment.toReceipt') }).click();
 
@@ -341,11 +345,8 @@ test('a customer pays the commission, gets a receipt, and the request moves on',
     status: 'COMMISSION_PAID',
   });
 
-  // Analytics (AC-14): one start, one success, which fee only.
-  // posthog-js sends in batches, so under a busy runner an event can take longer than the default 5 seconds.
-  await expect
-    .poll(() => telemetry.posthog.filter((e) => e.event === 'payment_succeeded').length, { timeout: 20_000 })
-    .toBe(1);
+  // The receipt and request visits must not emit either event again.
+  expect(telemetry.posthog.filter((e) => e.event === 'payment_succeeded')).toHaveLength(1);
   expect(telemetry.posthog.filter((e) => e.event === 'payment_started').length).toBe(1);
   for (const event of telemetry.posthog.filter((e) => e.event.startsWith('payment_'))) {
     expect(event.properties.fee).toBe('commission');

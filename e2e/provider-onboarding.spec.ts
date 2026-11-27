@@ -50,13 +50,15 @@ function sql(query: string): string {
 }
 
 async function axe(page: Page) {
-  // A button fades from disabled when the page hydrates; scan the settled page, not a frame of the fade.
-  // Hydration starts the fade, so wait for it first (network idle, then two frames), or getAnimations() can
-  // still be empty here and axe reads a frame of the fade (it failed this way in full runs on 2026-11-11 and 11-14).
-  await page.waitForLoadState('networkidle');
+  // Each caller waits for its form or review state. Give its transitions two frames to start before scanning.
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
   await page.evaluate(() =>
-    Promise.allSettled(document.getAnimations().map((animation) => animation.finished)),
+    Promise.allSettled(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+        .map((animation) => animation.finished),
+    ),
   );
   const scan = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -166,6 +168,7 @@ test('a provider is reviewed, rejected, fixed and approved, then a replaced docu
   // The browser names the missing building number before anything is sent.
   await expect(page.getByText(m(locale, 'Address.errors.required'))).toBeVisible();
   await page.locator('#provider-address-building_no').fill('3');
+  await expect(page.getByRole('button', { name: m(locale, 'Address.provider.save') })).toBeEnabled();
   await axe(page);
   await noOverflow(page);
   await page.getByRole('button', { name: m(locale, 'Address.provider.save') }).click();
@@ -184,6 +187,7 @@ test('a provider is reviewed, rejected, fixed and approved, then a replaced docu
     .setInputFiles(join(FILES, 'not-a-pdf.pdf'));
   await expect(page.getByText(m(locale, 'ProviderErrors.file_type_refused'))).toBeVisible();
   await upload(page, m(locale, 'ProviderDocs.criminal_record.title'), 'record.pdf');
+  await expect(page.getByRole('button', { name: m(locale, 'ProviderDocs.submit') })).toBeEnabled();
   await axe(page);
   await noOverflow(page);
   await page.getByRole('button', { name: m(locale, 'ProviderDocs.submit') }).click();
@@ -194,11 +198,15 @@ test('a provider is reviewed, rejected, fixed and approved, then a replaced docu
   const admin = await newAdmin(browser, locale, 'admin');
   await admin.goto(`/${locale}/admin/providers`);
   await admin.getByRole('link', { name: new RegExp(name) }).click();
-  await axe(admin);
-  await noOverflow(admin);
   const selfieTitle = m(locale, 'ProviderDocs.missing.selfie');
   const selfie = card(admin, selfieTitle);
-  await selfie.getByRole('button', { name: m(locale, 'AdminReview.show', { what: selfieTitle }) }).click();
+  const showSelfie = selfie.getByRole('button', {
+    name: m(locale, 'AdminReview.show', { what: selfieTitle }),
+  });
+  await expect(showSelfie).toBeEnabled();
+  await axe(admin);
+  await noOverflow(admin);
+  await showSelfie.click();
   await expect(selfie.locator('img')).toBeVisible();
   await selfie.getByRole('button', { name: m(locale, 'Rejection.document_unclear') }).click();
   await selfie.getByRole('button', { name: m(locale, 'AdminReview.reject') }).click();

@@ -19,11 +19,11 @@ describe('activeMenuKey', () => {
   });
 
   it.each([
-    ['/provider', 'dashboard'],
+    ['/provider', null],
     ['/provider/feed', 'feed'],
     ['/provider/feed/00000000-0000-4000-8000-000000000001', 'feed'],
     ['/provider/applications', 'applications'],
-    ['/provider/profile', 'dashboard'],
+    ['/provider/profile', null],
     ['/account', null],
   ] as const)('provider tabs on %s: %s', (path, key) => {
     expect(activeMenuKey(menuFor('provider'), path)).toBe(key);
@@ -39,9 +39,15 @@ describe('activeMenuKey', () => {
     expect(activeMenuKey(PROVIDER_NAV, path)).toBe(key);
   });
 
-  it('the provider bar keeps three tabs, and the home links every other page', () => {
-    expect(menuFor('provider')).toHaveLength(3);
-    expect(PROVIDER_LINKS.map((item) => item.key)).toEqual(['history', 'setup', 'profile', 'account']);
+  it('the provider bar keeps two tabs, and the home links every other page', () => {
+    expect(menuFor('provider')).toHaveLength(2);
+    expect(PROVIDER_LINKS.map((item) => item.key)).toEqual([
+      'dashboard',
+      'history',
+      'setup',
+      'profile',
+      'account',
+    ]);
   });
 
   it.each([

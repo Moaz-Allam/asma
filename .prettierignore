@@ -19,3 +19,4 @@ supabase/.branches/
 docs/design/source/
 # Other sessions' git worktrees: their own checkouts, formatted on their own branches.
 .claude/worktrees/
+.playwright-mcp/

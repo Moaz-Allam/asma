@@ -32,6 +32,7 @@ through tokens (pills, 2px borders, the radius scale) before registering it.
 | --- | --- | --- | --- | --- |
 | Button | `components/ui/button.tsx` | ✅ variants primary, secondary, white, destructive, link; sizes sm, md, lg, block, text (`ui-rules.md` §18) | ✅ | everywhere |
 | Input | `components/ui/input.tsx` | ✅ 61px field, `read-only` tint (§19) | ✅ | `PhoneField`, onboarding, account |
+| Select | `components/ui/select.tsx` | ✅ 61px native select matching `Input` (`h-15.25 rounded-field border-2 border-input bg-surface px-4.5`) | ✅ | `/admin/requests`, `/admin/revenue` |
 | Label | `components/ui/label.tsx` | ✅ | ✅ | forms |
 | Checkbox | `components/ui/checkbox.tsx` | ✅ 24px | ✅ | onboarding |
 | InputOTP | `components/ui/input-otp.tsx` | ✅ boxes shrink to fit 360px, always LTR | ✅ | `CodeField` |
@@ -66,8 +67,9 @@ Cross-feature building blocks. Path: `components/shared/`.
 | `PageHeader` | Page title + explanation + optional actions | h1 44px Alexandria 900 (-0.04em) + 13–15px `text-text-secondary` | every page | ✅ done (`components/shared/PageHeader.tsx`, no actions slot yet) | ✅ |
 | `Panel` | The four card kinds of `ui-rules.md` §15 | tinted · emphasis · inverse · white, by `variant` | everywhere | 📋 planned | — |
 | `EmptyState` | Big lead + title + next action | Lead in Alexandria 900, one sentence, one or two pills | s17, p17, a4 | ✅ done | ✅ |
-| `ErrorState` | Plain-language error + retry; says what stayed safe | Same shape as `EmptyState` | s17, p17, a4 | ✅ built (02, §9) | — |
-| `LoadingSkeleton` | Layout-matching skeleton | Tinted blocks in the card shapes | — | 📋 planned | — |
+| `ErrorState` | Plain-language error + retry; says what stayed safe | Same shape as `EmptyState` | s17, p17, a4 | ✅ built (02, §9) | ✅ |
+| `PageSkeleton` | Layout-matching skeleton (`split`, `list`, `dashboard`) | Tinted `animate-pulse` blocks in card shapes (`components/shared/PageSkeleton.tsx`) | — | ✅ done | ✅ |
+| `StatCard` | KPI counts and amounts (`emphasis`, `tinted`, `white`, `inverse`) | Eyebrow, tabular display figure or `MoneyDisplay`, note, optional link (`components/shared/StatCard.tsx`) | app-01, p6, p9 | ✅ done | ✅ |
 | `ConfirmDialog` | Destructive or money action; states consequence + amount | White dialog `rounded-panel shadow-overlay`, the amount in `MoneyDisplay`, block pills | s9 (dispute), p8, p9 | ✅ built (02, §9) | — |
 | `DeadlineDisplay` | Absolute time + relative hint, from server time | Inline text; the countdown card for live windows | s9, p11 | 📋 planned | — |
 | `CountdownCard` | A running window in big digits | `19:24:08` Alexandria 900 ~72px in an emphasis panel, the deadline under it | p11 | 📋 planned | — |
@@ -228,9 +230,10 @@ Domain components. Path: `components/features/<domain>/`.
 
 | Layout | Path | Purpose | Design ref | Status |
 | --- | --- | --- | --- | --- |
-| `NotFound` | `app/[locale]/not-found.tsx` | Unknown locale or missing route; localised | s17 | ✅ done · ⚠️ restyle to the design |
-| `ErrorBoundary` | `app/[locale]/error.tsx` | Route error boundary; reports an error without a digest to Sentry, never renders it | s17 | ✅ done · ⚠️ restyle to the design |
-| `GlobalError` | `app/global-error.tsx` | Last resort for a crash outside the locale layout: own `<html>`, locale from the path (`localeOfPath`), `Error` copy from each catalogue | s17 | ✅ done · ⚠️ restyle to the design |
+| `NotFound` | `app/[locale]/not-found.tsx`, `app/[locale]/[...rest]/page.tsx` | Unknown locale or missing route; localised `s17` card with `404` display lead + two pill CTAs | s17 | ✅ done |
+| `ErrorBoundary` | `app/[locale]/error.tsx` | Route error boundary; reports an error without a digest to Sentry, never renders it; restyled to `s17` | s17 | ✅ done |
+| `GlobalError` | `app/global-error.tsx` | Last resort for a crash outside the locale layout: own `<html>`, locale from the path (`localeOfPath`), `Error` copy from each catalogue; restyled to `s17` | s17 | ✅ done |
+| `SkipLink` | `components/layout/SkipLink.tsx` | Keyboard skip-to-content pill targeting `#main-content` across Public, AppShell, Auth, and AdminShell | — | ✅ done |
 | `RootLayout` | `app/[locale]/layout.tsx` | `lang={locale}` + `dir={dirFor(locale)}`, **derived, never hardcoded**; providers; `setRequestLocale` | — | ✅ done (fonts per `ui-rules.md` §12 still to load) |
 | `LocaleSwitcher` | `components/layout/LocaleSwitcher.tsx` | ar / tr / en as a pill group; persists to the cookie, and to `profiles.locale` with `signedIn` | s12 | ✅ done |
 | `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, `NavLinks`, the bell (18, `notices` prop), avatar; signed-out pills | s1, s3, s6 | ✅ done |

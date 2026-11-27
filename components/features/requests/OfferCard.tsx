@@ -45,7 +45,7 @@ export function OfferCard({
 }) {
   const initial = [...name][0] ?? '';
   return (
-    <li className="flex flex-col gap-4 rounded-panel border-2 border-border-light bg-surface p-5 lg:p-6">
+    <li className="flex flex-col gap-4 rounded-panel border-2 border-border bg-surface p-5 lg:p-6">
       <div className="flex items-start gap-3.5">
         <span
           aria-hidden
