@@ -130,6 +130,7 @@ test('a customer posts with the map: search, a pin that fills the parts, one edi
   await page.getByRole('button', { name: m(locale, 'Address.map.open') }).click();
   const sheet = page.getByRole('dialog', { name: m(locale, 'Address.map.title') });
   await expect(sheet).toBeVisible();
+  await expect(sheet.locator('.maplibregl-map[data-ready="true"]')).toBeVisible({ timeout: 20_000 });
   await sheet.getByRole('searchbox', { name: m(locale, 'Address.map.search') }).fill('Kadıköy');
   const results = sheet.getByRole('list', { name: m(locale, 'Address.map.results') });
   await expect(results.getByRole('button')).toHaveCount(5, { timeout: 10_000 });
