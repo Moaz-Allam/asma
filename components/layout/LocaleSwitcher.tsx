@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 
 import { updateLocale } from '@/actions/account';
 import { track } from '@/lib/analytics/client';
@@ -21,49 +21,62 @@ import { cn } from '@/lib/utils';
  */
 export function LocaleSwitcher({ signedIn = false }: { signedIn?: boolean }) {
   const t = useTranslations('Nav');
+  const tAccount = useTranslations('Account.errors');
   const active = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [saveFailed, setSaveFailed] = useState(false);
 
   function onSelect(next: Locale) {
     if (next === active) return;
     startTransition(async () => {
       if (signedIn) {
         const result = await updateLocale({ locale: next });
-        if (!result.ok) return;
+        if (!result.ok) {
+          setSaveFailed(true);
+          return;
+        }
       }
+      setSaveFailed(false);
       if (isLocale(active)) track('locale_changed', { from_locale: active, to_locale: next });
       router.replace(pathname, { locale: next });
     });
   }
 
   return (
-    <nav
-      aria-label={t('language')}
-      className="flex w-fit items-center gap-1.5 rounded-full bg-surface-secondary p-1.25"
-    >
-      {LOCALES.map((locale) => {
-        const label = new Intl.DisplayNames([locale], { type: 'language' }).of(locale) ?? locale;
-        const isActive = locale === active;
-        return (
-          <button
-            key={locale}
-            type="button"
-            lang={locale}
-            disabled={isPending}
-            aria-current={isActive ? 'true' : undefined}
-            onClick={() => onSelect(locale)}
-            className={cn(
-              'rounded-full px-5 py-2.5 text-btn-sm transition-colors',
-              // Colour is never the only signal — aria-current carries it too.
-              isActive ? 'bg-accent text-accent-foreground' : 'text-text-primary hover:bg-accent-muted',
-            )}
-          >
-            {label}
-          </button>
-        );
-      })}
-    </nav>
+    <div>
+      <nav
+        aria-label={t('language')}
+        className="flex w-fit items-center gap-1.5 rounded-full bg-surface-secondary p-1.25"
+      >
+        {LOCALES.map((locale) => {
+          const label = new Intl.DisplayNames([locale], { type: 'language' }).of(locale) ?? locale;
+          const isActive = locale === active;
+          return (
+            <button
+              key={locale}
+              type="button"
+              lang={locale}
+              disabled={isPending}
+              aria-current={isActive ? 'true' : undefined}
+              onClick={() => onSelect(locale)}
+              className={cn(
+                'rounded-full px-5 py-2.5 text-btn-sm transition-colors',
+                // Colour is never the only signal — aria-current carries it too.
+                isActive ? 'bg-accent text-accent-foreground' : 'text-text-primary hover:bg-accent-muted',
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </nav>
+      {saveFailed ? (
+        <p role="status" className="mt-2 text-body-s text-error">
+          {tAccount('action_failed')}
+        </p>
+      ) : null}
+    </div>
   );
 }

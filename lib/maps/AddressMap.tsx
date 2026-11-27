@@ -72,6 +72,9 @@ export default function AddressMap({
       loaded = true;
       window.clearTimeout(loadTimeout);
     });
+    // MapLibre logs unhandled errors with the request URL. The map key is public, but the URL can
+    // carry location details; the watchdog handles a failed initial load without logging it.
+    instance.on('error', () => undefined);
     if (editable) {
       instance.on('click', (event) =>
         handlers.current.onPin?.({ lat: event.lngLat.lat, lng: event.lngLat.lng }),

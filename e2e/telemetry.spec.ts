@@ -5,6 +5,8 @@ import { captureKeys } from '../lib/analytics/capture-body';
 import { parseEuSentryDsn } from '../lib/deployment';
 
 import { expect, test } from './fixtures';
+import { onboard, signIn } from './auth';
+import { testPhone } from './numbers';
 
 /**
  * Spec 0004 at 390px in every locale: the security headers and the nonce CSP (AC-12, AC-13), both
@@ -100,16 +102,20 @@ test('switching language sends locale_changed and the next pageview', async ({
   await expect
     .poll(() => telemetry.posthog.some((e) => e.event === '$pageview'), { timeout: 20_000 })
     .toBe(true);
-
+  await signIn(page, from, testPhone(from, 'localeTelemetry'));
+  await onboard(page, 'Locale Tester');
+  await page.goto(`/${from}/account`);
   await page.locator(`nav button[lang="${to}"]`).click();
-  await expect(page).toHaveURL(new RegExp(`/${to}$`));
+  await expect(page).toHaveURL(new RegExp(`/${to}/account$`));
   await expect
     .poll(() => telemetry.posthog.find((e) => e.event === 'locale_changed'), { timeout: 20_000 })
     .toMatchObject({ properties: { from_locale: from, to_locale: to, app_env: 'local' } });
   await expect
     .poll(
       () =>
-        telemetry.posthog.some((e) => e.event === '$pageview' && String(e.properties.$pathname) === `/${to}`),
+        telemetry.posthog.some(
+          (e) => e.event === '$pageview' && String(e.properties.$pathname) === `/${to}/account`,
+        ),
       {
         timeout: 20_000,
       },

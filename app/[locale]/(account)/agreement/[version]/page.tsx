@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { loadAgreementTemplate } from '@/lib/agreements';
 import { labelText } from '@/lib/agreements/fields';
 import { guardPage } from '@/lib/auth/session';
+import { withoutDraftLabel } from '@/lib/i18n/draft-label';
 import { PRIVATE_PAGE_METADATA } from '@/lib/navigation/menus';
 
 export const metadata = PRIVATE_PAGE_METADATA;
@@ -47,11 +48,11 @@ export default async function AgreementPage({ params }: Props) {
         {template.sections.map((section, index) => (
           <section key={index} className="flex flex-col gap-2">
             <h2 className="font-display text-title-s break-words text-text-primary">
-              {labelText(section.heading)}
+              {withoutDraftLabel(labelText(section.heading))}
             </h2>
             {section.paragraphs.map((paragraph, i) => (
               <p key={i} className="text-body break-words text-text-primary">
-                {labelText(paragraph)}
+                {withoutDraftLabel(labelText(paragraph))}
               </p>
             ))}
           </section>

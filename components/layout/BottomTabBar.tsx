@@ -31,6 +31,7 @@ const ICONS: Readonly<Record<MenuItem['key'], LucideIcon>> = {
   dashboard: LayoutDashboard,
   profile: UserRound,
   account: UserRound,
+  publicAccount: UserRound,
   providers: UsersRound,
   catalog: LayoutList,
   pricing: Calculator,

@@ -66,13 +66,19 @@ export async function SiteHeader({
           ) : null}
           <Link
             href={user.role === 'provider' ? '/provider/profile' : '/account'}
-            aria-label={user.role === 'provider' ? t('profile') : t('account')}
+            aria-label={
+              user.role === 'provider'
+                ? approvedProvider
+                  ? `${t('profile')}, ${tStanding('approved')}`
+                  : t('profile')
+                : t('account')
+            }
             className="relative inline-flex size-11 shrink-0 items-center justify-center rounded-full transition-transform hover:-translate-y-px"
           >
             <InitialAvatar name={user.name} className="size-11 text-label font-extrabold" />
             {approvedProvider ? (
               <StarIcon
-                aria-label={tStanding('approved')}
+                aria-hidden
                 className="absolute -end-1 -bottom-1 size-5 rounded-full bg-surface p-0.5 text-approved"
                 fill="currentColor"
               />
