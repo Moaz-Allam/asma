@@ -252,9 +252,7 @@ test('a provider is reviewed, rejected, fixed and approved, then a replaced docu
 
   // The provider is approved; replacing a document asks first and returns the file to review (AC-12).
   await page.reload();
-  await expect(
-    page.locator('header').first().getByText(m(locale, 'Provider.standing.approved'), { exact: true }),
-  ).toBeVisible();
+  await expect(page.locator(`header a[href="/${locale}/provider/profile"] svg.text-approved`)).toBeVisible();
   await page.goto(`/${locale}/provider/profile/documents`);
   const selfieInput = page.locator(
     `input[type="file"][aria-label="${m(locale, 'ProviderDocs.selfie.title')}"]`,
@@ -303,10 +301,12 @@ test('admin suspends and lifts an approved provider', async ({ page, browser }, 
   await expect(admin.getByRole('button', { name: m(locale, 'AdminReview.suspend') })).toBeVisible();
   await page.reload();
   const chip = (standing: string) =>
-    page
-      .locator('header')
-      .first()
-      .getByText(m(locale, `Provider.standing.${standing}`), { exact: true });
+    standing === 'approved'
+      ? page.locator(`header a[href="/${locale}/provider/profile"] svg.text-approved`)
+      : page
+          .locator('header')
+          .first()
+          .getByText(m(locale, `Provider.standing.${standing}`), { exact: true });
   await expect(chip('approved')).toBeVisible();
   await admin.context().close();
 
