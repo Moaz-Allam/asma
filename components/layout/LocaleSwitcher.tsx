@@ -33,7 +33,7 @@ export function LocaleSwitcher({ signedIn = false }: { signedIn?: boolean }) {
     startTransition(async () => {
       if (signedIn) {
         const result = await updateLocale({ locale: next });
-        if (!result.ok) {
+        if (!result.success) {
           setSaveFailed(true);
           return;
         }
