@@ -2,7 +2,7 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import { Map as MapLibre, Marker, NavigationControl } from 'maplibre-gl';
+import { Map as MapLibre, Marker, NavigationControl, setWorkerUrl } from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
 
 /**
@@ -15,6 +15,10 @@ import { useEffect, useRef } from 'react';
 export type Point = { lat: number; lng: number };
 
 const STYLE = 'https://api.maptiler.com/maps/streets-v4/style.json';
+
+// MapLibre v6 needs an explicit worker URL when bundled by Next/Turbopack. The default inferred URL
+// fails in production; Next emits this as a hashed, same-origin asset under its build output.
+setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).toString());
 
 export default function AddressMap({
   apiKey,
@@ -71,6 +75,7 @@ export default function AddressMap({
     instance.once('load', () => {
       loaded = true;
       window.clearTimeout(loadTimeout);
+      box.current?.setAttribute('data-ready', 'true');
     });
     // MapLibre logs unhandled errors with the request URL. The map key is public, but the URL can
     // carry location details; the watchdog handles a failed initial load without logging it.
