@@ -2,7 +2,7 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import { Map as MapLibre, Marker, NavigationControl } from 'maplibre-gl';
+import { Map as MapLibre, Marker, NavigationControl, setWorkerUrl } from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
 
 /**
@@ -15,6 +15,10 @@ import { useEffect, useRef } from 'react';
 export type Point = { lat: number; lng: number };
 
 const STYLE = 'https://api.maptiler.com/maps/streets-v4/style.json';
+
+// MapLibre v6 needs an explicit worker URL when bundled by Next/Turbopack. The default inferred URL
+// fails in production; Next emits this as a hashed, same-origin asset under its build output.
+setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).toString());
 
 export default function AddressMap({
   apiKey,
@@ -62,20 +66,27 @@ export default function AddressMap({
     }
     map.current = instance;
     instance.addControl(new NavigationControl({ showCompass: false }), 'top-right');
-    // A failed tile, glyph or sprite is a blip MapLibre retries; only a map that never loaded its style fails (R20b-4).
+    // MapLibre can report a tile, glyph, or sprite error before its first load event. Give the style
+    // time to finish instead of replacing a usable map on the first recoverable resource error.
     let loaded = false;
+    const loadTimeout = window.setTimeout(() => {
+      if (!loaded) handlers.current.onFail?.();
+    }, 15000);
     instance.once('load', () => {
       loaded = true;
+      window.clearTimeout(loadTimeout);
+      box.current?.setAttribute('data-ready', 'true');
     });
-    instance.on('error', () => {
-      if (!loaded) handlers.current.onFail?.();
-    });
+    // MapLibre logs unhandled errors with the request URL. The map key is public, but the URL can
+    // carry location details; the watchdog handles a failed initial load without logging it.
+    instance.on('error', () => undefined);
     if (editable) {
       instance.on('click', (event) =>
         handlers.current.onPin?.({ lat: event.lngLat.lat, lng: event.lngLat.lng }),
       );
     }
     return () => {
+      window.clearTimeout(loadTimeout);
       marker.current = null;
       map.current = null;
       instance.remove();
