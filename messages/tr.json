@@ -137,6 +137,7 @@
     "dashboard": "Panel",
     "profile": "Profil",
     "account": "Hesap",
+    "publicAccount": "Herkese Açık Hesap",
     "signIn": "Giriş yap",
     "openMenu": "Menüyü aç",
     "closeMenu": "Menüyü kapat",

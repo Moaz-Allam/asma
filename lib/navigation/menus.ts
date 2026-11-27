@@ -11,6 +11,7 @@ export type MenuItem = {
     | 'dashboard'
     | 'profile'
     | 'account'
+    | 'publicAccount'
     | 'providers'
     | 'catalog'
     | 'pricing'
@@ -52,14 +53,12 @@ export function menuFor(role: Role): readonly MenuItem[] {
 
 /** Every provider page, in the header from `lg` (spec 0009 AC-15). */
 export const PROVIDER_NAV: readonly MenuItem[] = [
-  { key: 'dashboard', href: '/provider' },
   { key: 'feed', href: '/provider/feed' },
   { key: 'applications', href: '/provider/applications' },
   // Spec 0011-15 R-12: the jobs and fees history, in the header and the links on `/provider`, not a phone tab.
   { key: 'history', href: '/provider/history' },
   { key: 'setup', href: '/provider/setup' },
-  { key: 'profile', href: '/provider/profile' },
-  { key: 'account', href: '/account' },
+  { key: 'publicAccount', href: '/account' },
 ];
 
 /**

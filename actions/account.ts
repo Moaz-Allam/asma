@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 import {
@@ -18,6 +19,7 @@ import { signOutHere } from '@/lib/auth/session';
 import { savePreference } from '@/lib/notifications/preferences';
 import { TOPICS } from '@/lib/notifications/topics';
 import { LocaleSchema } from '@/lib/validation';
+import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE } from '@/lib/i18n/routing';
 
 /** Ends this device's session only (spec 0005 AC-19). The client then leaves with a full page load. */
 export const signOut = guardedAction(
@@ -79,6 +81,11 @@ export const updateLocale = guardedAction(
   { name: 'updateLocale', access: 'any_role', schema: z.object({ locale: LocaleSchema }) },
   async ({ locale }, user) => {
     await updateProfile(user.id, { locale });
+    (await cookies()).set(LOCALE_COOKIE, locale, {
+      path: '/',
+      sameSite: 'lax',
+      maxAge: LOCALE_COOKIE_MAX_AGE,
+    });
     return { done: true };
   },
 );

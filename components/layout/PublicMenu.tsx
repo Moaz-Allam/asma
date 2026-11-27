@@ -3,7 +3,6 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Link } from '@/lib/i18n/navigation';
@@ -59,7 +58,6 @@ export function PublicMenu() {
                 {tLanding('ctaProvider')}
               </Link>
             </Button>
-            <LocaleSwitcher />
           </div>
         </div>
       </SheetContent>

@@ -11,6 +11,7 @@ import { createTranslator } from 'next-intl';
 import { expect, test } from './fixtures';
 import { onboard, signIn } from './auth';
 import { testE164, testPhone } from './numbers';
+import { withoutDraftLabel } from '../lib/i18n/draft-label';
 
 /**
  * Spec 0011-17 AC-13 on the real local stack, at 390px with axe, in every locale. The customer confirms a job, sees
@@ -39,7 +40,9 @@ const CATALOGUES: Record<string, Catalogue> = Object.fromEntries(
 /** A catalogue string with ICU plurals, as the app renders it. */
 function m(locale: string, key: string, values: Record<string, string | number> = {}): string {
   const t = createTranslator({ locale, messages: CATALOGUES[locale] as never });
-  return (t as unknown as (k: string, v?: Record<string, string | number>) => string)(key, values);
+  return withoutDraftLabel(
+    (t as unknown as (k: string, v?: Record<string, string | number>) => string)(key, values),
+  );
 }
 
 function sql(query: string): Record<string, unknown>[] {

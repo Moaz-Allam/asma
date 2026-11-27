@@ -15,7 +15,15 @@ import { reportServerError } from '@/lib/observability/server';
  * the avatar: the provider's standing chip (spec 0006 AC-10). The bell's first count is read here (spec 0011-18
  * AC-8); a failed read shows no badge and is reported, never silent.
  */
-export async function AppShell({ children, badge }: { children: ReactNode; badge?: ReactNode }) {
+export async function AppShell({
+  children,
+  badge,
+  approvedProvider = false,
+}: {
+  children: ReactNode;
+  badge?: ReactNode;
+  approvedProvider?: boolean;
+}) {
   const user = await getSessionUser();
   const profile = user ? await getProfile(user.id) : null;
   const role = user?.role ?? null;
@@ -33,6 +41,7 @@ export async function AppShell({ children, badge }: { children: ReactNode; badge
       <SiteHeader
         user={role && profile ? { role, name: profile.fullName } : null}
         badge={badge}
+        approvedProvider={approvedProvider}
         notices={user && role ? { userId: user.id, count } : null}
       />
       <main

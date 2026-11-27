@@ -8,8 +8,8 @@ import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, routing } from '@/lib/i18n/routin
 
 /**
  * Where a sign in lands (spec 0005 AC-10, spec 0012 AC-4: the password step, `continueTarget`). A Route Handler, not a page: only here can a redirect also set
- * the locale cookie. This is the one place the URL moves to `profiles.locale`, so a shared `/en/...` link
- * opened later stays in English. Renders nothing.
+ * the locale cookie. Signed-in navigation stays in `profiles.locale`; account settings is the only
+ * place that changes it. Renders nothing.
  */
 
 /** A relative Location: the browser stays on the host it came on, and no Host header is trusted. */

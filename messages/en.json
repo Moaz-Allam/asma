@@ -137,6 +137,7 @@
     "dashboard": "Dashboard",
     "profile": "Profile",
     "account": "Account",
+    "publicAccount": "Public Account",
     "signIn": "Sign in",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",

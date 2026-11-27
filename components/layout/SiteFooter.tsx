@@ -1,12 +1,11 @@
 import { useTranslations } from 'next-intl';
 
-import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
 import { SupportLink } from '@/components/shared/SupportLink';
 import { Link } from '@/lib/i18n/navigation';
 
 const LINK = 'hover:text-link';
 
-/** The footer of `s1`, with the language added. The support link appears only when the region has a number (AC-34). */
+/** The public footer. The support link appears only when the region has a number (AC-34). */
 export function SiteFooter({ whatsapp }: { whatsapp: string | null | undefined }) {
   const t = useTranslations('Footer');
 
@@ -25,9 +24,6 @@ export function SiteFooter({ whatsapp }: { whatsapp: string | null | undefined }
         </Link>
         <SupportLink whatsapp={whatsapp} label={t('support')} className={LINK} />
       </nav>
-      <div className="ms-auto">
-        <LocaleSwitcher />
-      </div>
     </footer>
   );
 }
