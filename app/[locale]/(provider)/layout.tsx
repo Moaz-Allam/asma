@@ -26,7 +26,10 @@ export default async function Layout({ children }: { children: ReactNode }) {
       : null;
   // Spec 0011-14 AC-6: a warning from admin shows on every page of the area until acknowledged.
   return (
-    <AppShell badge={standing ? <StandingChip standing={standing} /> : null}>
+    <AppShell
+      approvedProvider={standing === 'approved'}
+      badge={standing && standing !== 'approved' ? <StandingChip standing={standing} /> : null}
+    >
       <UserWarning />
       {children}
     </AppShell>

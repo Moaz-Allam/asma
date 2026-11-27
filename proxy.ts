@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { refreshSession } from '@/lib/db/proxy';
 import { getEnv } from '@/lib/env';
-import { routing } from '@/lib/i18n/routing';
+import { LOCALE_COOKIE, routing } from '@/lib/i18n/routing';
 import { buildCsp, cspReportUri, reportingEndpoints } from '@/lib/security/csp';
 
 /**
@@ -45,6 +45,20 @@ function loginRedirect(request: NextRequest): URL | null {
   return url;
 }
 
+/** Once signed in, account settings and /continue own the language. Keep other page links in it. */
+function preferredLocaleRedirect(request: NextRequest, signedIn: boolean): URL | null {
+  if (!signedIn || request.method !== 'GET') return null;
+  const preferred = request.cookies.get(LOCALE_COOKIE)?.value;
+  if (!routing.locales.some((locale) => locale === preferred)) return null;
+  const match = /^\/(ar|tr|en)(\/.*|$)/.exec(request.nextUrl.pathname);
+  if (!match || match[1] === preferred || /^\/(?:login|continue|onboarding)(?:\/|$)/.test(match[2] || '')) {
+    return null;
+  }
+  const target = request.nextUrl.clone();
+  target.pathname = `/${preferred}${match[2]}`;
+  return target;
+}
+
 /**
  * The Supabase origin for connect-src. Never throws (AC-13): a broken environment already stops the
  * boot in instrumentation.ts, and if one ever slips past, the policy only gets stricter ('self').
@@ -74,10 +88,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   headers.set('x-nonce', nonce);
   headers.set('content-security-policy', csp);
   const login = session.state === 'signed_out' ? loginRedirect(request) : null;
+  const preferred = preferredLocaleRedirect(request, session.state === 'signed_in');
+  const redirectUrl = login ?? preferred;
   // next-intl forwards these request headers to the page. Only the URL, method and headers are carried
   // over: the body stays with the original request.
-  const response = login
-    ? NextResponse.redirect(login)
+  const response = redirectUrl
+    ? NextResponse.redirect(redirectUrl)
     : intlProxy(new NextRequest(request.url, { headers, method: request.method }));
 
   for (const { name, value, options } of session.cookies) response.cookies.set(name, value, options);

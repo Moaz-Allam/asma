@@ -28,14 +28,12 @@ export function LocaleSwitcher({ signedIn = false }: { signedIn?: boolean }) {
 
   function onSelect(next: Locale) {
     if (next === active) return;
-    // Analytics in the event handler, never in an effect (spec 0004 AC-7). The new page's pageview
-    // follows from the route change.
-    if (isLocale(active)) track('locale_changed', { from_locale: active, to_locale: next });
-    // `routing` defines no `pathnames`, so the plain form is correct AND fully
-    // typed — no cast. (The casted variant in the docs is only for the
-    // `pathnames` case.) next-intl's cookie keeps the choice sticky.
     startTransition(async () => {
-      if (signedIn) await updateLocale({ locale: next });
+      if (signedIn) {
+        const result = await updateLocale({ locale: next });
+        if (!result.ok) return;
+      }
+      if (isLocale(active)) track('locale_changed', { from_locale: active, to_locale: next });
       router.replace(pathname, { locale: next });
     });
   }

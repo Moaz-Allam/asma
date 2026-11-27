@@ -1,6 +1,8 @@
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
+import { StarIcon } from 'lucide-react';
+
 import { BellMenu } from '@/components/features/notifications/BellMenu';
 import { NavLinks } from '@/components/layout/NavLinks';
 import { PublicMenu } from '@/components/layout/PublicMenu';
@@ -19,11 +21,13 @@ import { cn } from '@/lib/utils';
 export async function SiteHeader({
   user,
   badge,
+  approvedProvider = false,
   railFromLg = false,
   notices,
 }: {
   user?: { role: Role; name: string } | null;
   badge?: ReactNode;
+  approvedProvider?: boolean;
   /** Spec 0011-18 AC-8, AC-10: who the bell listens for, and the unread count read on the server (null: unknown). */
   notices?: { userId: string; count: number | null } | null;
   /** Admin: from `lg` the navy rail holds the menu, so the header shows none there (spec 0006 AC-13). */
@@ -31,6 +35,7 @@ export async function SiteHeader({
 }) {
   const t = await getTranslations('Nav');
   const tLanding = await getTranslations('Landing');
+  const tStanding = await getTranslations('Provider.standing');
 
   return (
     <header
@@ -60,11 +65,18 @@ export async function SiteHeader({
             <BellMenu key={notices.userId} userId={notices.userId} initialCount={notices.count} />
           ) : null}
           <Link
-            href="/account"
-            aria-label={t('account')}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full transition-transform hover:-translate-y-px"
+            href={user.role === 'provider' ? '/provider/profile' : '/account'}
+            aria-label={user.role === 'provider' ? t('profile') : t('account')}
+            className="relative inline-flex size-11 shrink-0 items-center justify-center rounded-full transition-transform hover:-translate-y-px"
           >
             <InitialAvatar name={user.name} className="size-11 text-label font-extrabold" />
+            {approvedProvider ? (
+              <StarIcon
+                aria-label={tStanding('approved')}
+                className="absolute -end-1 -bottom-1 size-5 rounded-full bg-surface p-0.5 text-approved"
+                fill="currentColor"
+              />
+            ) : null}
           </Link>
         </>
       ) : (

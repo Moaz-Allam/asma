@@ -26,6 +26,7 @@
   --ramp-danger: #c0262d;
   --ramp-danger-alert: #e5484d;
   --ramp-danger-50: #fde2e2;
+  --ramp-approved: #15803d;
   --ramp-shadow: rgb(15 58 115 / 0.18);
 }
 
@@ -70,6 +71,7 @@
   --color-success: var(--ramp-primary-900);
   --color-success-light: var(--ramp-primary-50);
   --color-success-foreground: var(--ramp-primary-900);
+  --color-approved: var(--ramp-approved);
   --color-warning: var(--ramp-primary-900);
   --color-warning-light: var(--ramp-primary-100);
   --color-warning-foreground: var(--ramp-primary-900);

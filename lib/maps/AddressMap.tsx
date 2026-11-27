@@ -62,13 +62,15 @@ export default function AddressMap({
     }
     map.current = instance;
     instance.addControl(new NavigationControl({ showCompass: false }), 'top-right');
-    // A failed tile, glyph or sprite is a blip MapLibre retries; only a map that never loaded its style fails (R20b-4).
+    // MapLibre can report a tile, glyph, or sprite error before its first load event. Give the style
+    // time to finish instead of replacing a usable map on the first recoverable resource error.
     let loaded = false;
+    const loadTimeout = window.setTimeout(() => {
+      if (!loaded) handlers.current.onFail?.();
+    }, 15000);
     instance.once('load', () => {
       loaded = true;
-    });
-    instance.on('error', () => {
-      if (!loaded) handlers.current.onFail?.();
+      window.clearTimeout(loadTimeout);
     });
     if (editable) {
       instance.on('click', (event) =>
@@ -76,6 +78,7 @@ export default function AddressMap({
       );
     }
     return () => {
+      window.clearTimeout(loadTimeout);
       marker.current = null;
       map.current = null;
       instance.remove();

@@ -35,6 +35,7 @@ test('a new customer signs up, signs out and signs in again', async ({ page }, t
   const phone = testPhone(locale, 'customer');
 
   await page.goto(`/${locale}/login?mode=code`);
+  await expect(page.locator('button[lang]')).toHaveCount(0);
   await axe(page);
 
   await signIn(page, locale, phone);
@@ -63,6 +64,17 @@ test('a new customer signs up, signs out and signs in again', async ({ page }, t
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`));
   await page.goto(`/${locale}`);
   await expect(page).toHaveURL(new RegExp(`/${locale}/requests$`));
+
+  const nextLocale = locale === 'ar' ? 'tr' : locale === 'tr' ? 'en' : 'ar';
+  await page.goto(`/${locale}/account`);
+  await page.locator(`button[lang="${nextLocale}"]`).click();
+  await expect(page).toHaveURL(new RegExp(`/${nextLocale}/account$`));
+  await page.goto(`/${nextLocale}/requests`);
+  await expect(page.locator('html')).toHaveAttribute('lang', nextLocale);
+  await page.goto(`/${locale}/requests`);
+  await expect(page).toHaveURL(new RegExp(`/${nextLocale}/requests$`));
+  await page.goto(`/${nextLocale}/continue`);
+  await expect(page).toHaveURL(new RegExp(`/${nextLocale}/requests$`));
 });
 
 test('a provider link preselects the role, and one phone keeps one role', async ({ page }, testInfo) => {
@@ -85,6 +97,9 @@ test('a provider link preselects the role, and one phone keeps one role', async 
   await signOut(page, locale);
   await signIn(page, locale, phone);
   await expect(page).toHaveURL(new RegExp(`/${locale}/provider$`));
+  await expect(page.locator(`header a[href="/${locale}/provider"]`)).toBeVisible();
+  await expect(page.locator(`header a[href="/${locale}/provider/profile"]`)).toBeVisible();
+  await expect(page.locator(`a[href="/${locale}/account"]`)).toBeVisible();
 });
 
 test('a wrong code shows one message and the right one still works', async ({ page }, testInfo) => {

@@ -32,22 +32,16 @@ describe('activeMenuKey', () => {
   it.each([
     ['/provider/setup', 'setup'],
     ['/provider/history', 'history'],
-    ['/provider/profile', 'profile'],
-    ['/provider/profile/documents', 'profile'],
-    ['/account', 'account'],
+    ['/provider/profile', null],
+    ['/provider/profile/documents', null],
+    ['/account', 'publicAccount'],
   ] as const)('provider header on %s: %s (spec 0009 AC-15)', (path, key) => {
     expect(activeMenuKey(PROVIDER_NAV, path)).toBe(key);
   });
 
   it('the provider bar keeps two tabs, and the home links every other page', () => {
     expect(menuFor('provider')).toHaveLength(2);
-    expect(PROVIDER_LINKS.map((item) => item.key)).toEqual([
-      'dashboard',
-      'history',
-      'setup',
-      'profile',
-      'account',
-    ]);
+    expect(PROVIDER_LINKS.map((item) => item.key)).toEqual(['history', 'setup', 'publicAccount']);
   });
 
   it.each([

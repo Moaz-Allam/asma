@@ -3,6 +3,16 @@ import { getRequestConfig } from 'next-intl/server';
 
 import { routing } from './routing';
 
+/** Keep the legal draft markers in source for the launch gate; omit the label from rendered copy. */
+export function displayMessages<T>(value: T): T {
+  if (typeof value === 'string') return value.replaceAll('[draft] ', '').replaceAll('[draft]', '') as T;
+  if (Array.isArray(value)) return value.map(displayMessages) as T;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, displayMessages(item)])) as T;
+  }
+  return value;
+}
+
 /**
  * Per-request locale + messages.
  *
@@ -16,6 +26,6 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    messages: displayMessages((await import(`../../messages/${locale}.json`)).default),
   };
 });

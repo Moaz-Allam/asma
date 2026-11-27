@@ -236,7 +236,7 @@ Domain components. Path: `components/features/<domain>/`.
 | `SkipLink` | `components/layout/SkipLink.tsx` | Keyboard skip-to-content pill targeting `#main-content` across Public, AppShell, Auth, and AdminShell | — | ✅ done |
 | `RootLayout` | `app/[locale]/layout.tsx` | `lang={locale}` + `dir={dirFor(locale)}`, **derived, never hardcoded**; providers; `setRequestLocale` | — | ✅ done (fonts per `ui-rules.md` §12 still to load) |
 | `LocaleSwitcher` | `components/layout/LocaleSwitcher.tsx` | ar / tr / en as a pill group; persists to the cookie, and to `profiles.locale` with `signedIn` | s12 | ✅ done |
-| `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, `NavLinks`, the bell (18, `notices` prop), avatar; signed-out pills | s1, s3, s6 | ✅ done |
+| `SiteHeader` | `components/layout/SiteHeader.tsx` | Wordmark, `NavLinks`, the bell (18, `notices` prop), avatar; signed-out pills. Provider logo opens `/provider`; profile is reached through the avatar, with a small green `text-approved` star for approved standing | s1, s3, s6 | ✅ done |
 | `FlowHeader` | `components/layout/FlowHeader.tsx` | `Stepper` at the start, cancel or back at the end (the wordmark stays in `AppShell`) | s4, s5, s7 | ✅ built (04) |
 | `BottomTabBar` | `components/layout/BottomTabBar.tsx` | Phone: three tabs, fixed, from `lib/navigation/menus.ts` | s18, p18 | ✅ done |
 | `SiteFooter` | `components/layout/SiteFooter.tsx` | Copyright, legal links, join link, support link, language | s1 | ✅ done |
