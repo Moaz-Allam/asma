@@ -87,10 +87,25 @@ const MAPTILER_FORWARD = readFileSync(
   join(process.cwd(), 'tests/fixtures/maptiler/forward-kadikoy.json'),
   'utf8',
 );
+// The GeoJSON source needs MapLibre's worker. A background-only style can report load even when the
+// worker asset fails, so the structured-address readiness check uses this source-backed style.
 const BLANK_STYLE = JSON.stringify({
   version: 8,
-  sources: {},
-  layers: [{ id: 'background', type: 'background', paint: { 'background-color': 'rgb(240, 240, 240)' } }],
+  sources: {
+    workerProbe: {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: [
+          { type: 'Feature', geometry: { type: 'Point', coordinates: [29.04, 40.99] }, properties: {} },
+        ],
+      },
+    },
+  },
+  layers: [
+    { id: 'background', type: 'background', paint: { 'background-color': 'rgb(240, 240, 240)' } },
+    { id: 'worker-probe', type: 'circle', source: 'workerProbe', paint: { 'circle-radius': 6 } },
+  ],
 });
 export const mapTilerCalls: string[] = [];
 export async function stubMapTiler(page: Page) {
