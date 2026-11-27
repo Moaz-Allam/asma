@@ -10,6 +10,7 @@ import type { APIRequestContext, Browser, Page } from '@playwright/test';
 import { expect, stubMapTiler, test } from './fixtures';
 import { onboard, signIn } from './auth';
 import { testE164, testPhone } from './numbers';
+import { withoutDraftLabel } from '../lib/i18n/draft-label';
 
 /**
  * Spec 0011-20 AC-14 on the real local stack, at 390px with axe, in every locale. The customer ticks the service
@@ -41,7 +42,7 @@ function m(locale: string, path: string, vars: Record<string, string | number> =
   let node: unknown = CATALOGUES[locale];
   for (const part of path.split('.')) node = (node as Record<string, unknown>)[part];
   if (typeof node !== 'string') throw new Error(`no message ${path}`);
-  return node.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? `{${key}}`));
+  return withoutDraftLabel(node.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? `{${key}}`)));
 }
 
 /** A rich message's plain text, its tags dropped. */

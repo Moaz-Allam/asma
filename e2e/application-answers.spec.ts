@@ -9,6 +9,7 @@ import type { Browser, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { onboard, signIn } from './auth';
 import { testE164, testPhone } from './numbers';
+import { withoutDraftLabel } from '../lib/i18n/draft-label';
 
 /**
  * Spec 0011-19b AC-9 at 390px with axe in every locale, on the real local database: admin adds two questions for
@@ -32,7 +33,7 @@ function m(locale: string, path: string, vars: Record<string, string | number> =
   let node: unknown = CATALOGUES[locale];
   for (const part of path.split('.')) node = (node as Record<string, unknown>)[part];
   if (typeof node !== 'string') throw new Error(`no message ${path}`);
-  return node.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? `{${key}}`));
+  return withoutDraftLabel(node.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? `{${key}}`)));
 }
 
 function sql(query: string): string {

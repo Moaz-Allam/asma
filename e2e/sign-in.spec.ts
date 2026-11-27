@@ -99,7 +99,7 @@ test('a provider link preselects the role, and one phone keeps one role', async 
   await expect(page).toHaveURL(new RegExp(`/${locale}/provider$`));
   await expect(page.locator(`header a[href="/${locale}/provider"]`)).toBeVisible();
   await expect(page.locator(`header a[href="/${locale}/provider/profile"]`)).toBeVisible();
-  await expect(page.locator(`a[href="/${locale}/account"]`)).toBeVisible();
+  await expect(page.locator(`header a[href="/${locale}/account"]`)).toBeHidden();
 });
 
 test('a wrong code shows one message and the right one still works', async ({ page }, testInfo) => {
